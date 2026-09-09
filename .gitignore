@@ -1,0 +1,52 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vsp
+*.vspx
+*.sap
+*.vspscc
+*.vssscc
+*.pubxml
+*.publishsettings
+PublishScripts/
+TestResults/
+_UpgradeReport_Files/
+UpgradeLog*.htm
+*.cache
+*.pidb
+*.svclog
+*.scc
+
+# ReSharper / Rider / tooling
+_ReSharper*/
+*.DotSettings.user
+.idea/
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Misc
+*.bak
+*.tmp
+*.log
+.DS_Store
+Thumbs.db

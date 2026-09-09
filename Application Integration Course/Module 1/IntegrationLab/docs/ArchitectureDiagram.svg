@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640" width="1200" height="640" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#1a86ff"/>
+    </marker>
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#7d5ae0"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="640" fill="#f6f8fb"/>
+  <text x="40" y="46" font-size="24" font-weight="800" fill="#0d1b2a">IntegrationLab · Integration architecture (Module 1)</text>
+  <text x="40" y="72" font-size="14" fill="#5a6b7d">The server owns the state. The browser owns the DOM and the vendor instance. Only data crosses the wire.</text>
+
+  <!-- SERVER -->
+  <rect x="40" y="100" width="420" height="470" rx="16" fill="#ffffff" stroke="#c5ddff" stroke-width="2"/>
+  <rect x="40" y="100" width="420" height="40" rx="16" fill="#eaf3ff"/>
+  <text x="60" y="127" font-size="15" font-weight="800" fill="#1565d8">SERVER · .NET</text>
+
+  <rect x="64" y="160" width="372" height="120" rx="10" fill="#f7f9fc" stroke="#dce4ec"/>
+  <text x="80" y="185" font-size="14" font-weight="800" fill="#0d1b2a">Component / Control</text>
+  <text x="80" y="206" font-size="13" font-family="Consolas, monospace" fill="#16314e">TemperatureGauge : Wisej.Web.Widget</text>
+  <text x="80" y="228" font-size="12" fill="#5a6b7d">Packages = vendor-gauge.js · InitScript = temperature-gauge.js</text>
+  <text x="80" y="248" font-size="12" fill="#5a6b7d">WiredEvents = thresholdExceeded, rangeChanged, error</text>
+  <text x="80" y="268" font-size="12" fill="#5a6b7d">OnWidgetEvent → raises .NET events</text>
+
+  <rect x="64" y="296" width="372" height="120" rx="10" fill="#f7f9fc" stroke="#dce4ec"/>
+  <text x="80" y="321" font-size="14" font-weight="800" fill="#0d1b2a">State (authoritative)</text>
+  <text x="80" y="343" font-size="13" font-family="Consolas, monospace" fill="#1a86ff">Value = 104   Minimum = 40   Maximum = 120</text>
+  <text x="80" y="363" font-size="13" font-family="Consolas, monospace" fill="#1a86ff">WarnAt = 85   Threshold = 100</text>
+  <text x="80" y="388" font-size="12" fill="#5a6b7d">validated in property setters · Options mirrors it as JSON</text>
+  <text x="80" y="406" font-size="12" fill="#5a6b7d">Window1 (Form) · Timer (Component, no surface)</text>
+
+  <rect x="64" y="432" width="372" height="116" rx="10" fill="#f1eefc" stroke="#d8ccf6"/>
+  <text x="80" y="457" font-size="14" font-weight="800" fill="#4a2f86">.NET events</text>
+  <text x="80" y="480" font-size="13" font-family="Consolas, monospace" fill="#6a3fd6">ThresholdExceeded (object s, GaugeEventArgs e)</text>
+  <text x="80" y="500" font-size="13" font-family="Consolas, monospace" fill="#6a3fd6">RangeChanged · WidgetError</text>
+  <text x="80" y="524" font-size="12" fill="#5a6b7d">operator notified, alarm banner, trace line</text>
+
+  <!-- WIRE -->
+  <line x1="460" y1="230" x2="740" y2="230" stroke="#1a86ff" stroke-width="3" marker-end="url(#arrowBlue)"/>
+  <rect x="505" y="196" width="190" height="22" rx="6" fill="#eaf3ff" stroke="#c5ddff"/>
+  <text x="600" y="211" font-size="12" font-weight="800" fill="#1565d8" text-anchor="middle">RENDERING · compact JSON</text>
+  <text x="600" y="256" font-size="13" font-family="Consolas, monospace" fill="#1f3147" text-anchor="middle">{"value":104}</text>
+  <text x="600" y="276" font-size="11" fill="#5a6b7d" text-anchor="middle">init(options) once · update(options, old) on change</text>
+
+  <line x1="740" y1="470" x2="460" y2="470" stroke="#7d5ae0" stroke-width="3" marker-end="url(#arrowPurple)"/>
+  <rect x="505" y="436" width="190" height="22" rx="6" fill="#f1eefc" stroke="#d8ccf6"/>
+  <text x="600" y="451" font-size="12" font-weight="800" fill="#6a3fd6" text-anchor="middle">EVENT · small payload</text>
+  <text x="600" y="496" font-size="13" font-family="Consolas, monospace" fill="#4a2f86" text-anchor="middle">thresholdExceeded {"value":104}</text>
+  <text x="600" y="516" font-size="11" fill="#5a6b7d" text-anchor="middle">_addListener → deferred widgetEvent</text>
+  <text x="600" y="532" font-size="11" fill="#5a6b7d" text-anchor="middle">only meaningful events</text>
+
+  <rect x="520" y="330" width="160" height="60" rx="10" fill="#fff8e6" stroke="#f0d391"/>
+  <text x="600" y="354" font-size="12" font-weight="800" fill="#8a5a00" text-anchor="middle">data, never behavior</text>
+  <text x="600" y="374" font-size="11" fill="#8a5a00" text-anchor="middle">loggable · inspectable · reviewable</text>
+
+  <!-- CLIENT -->
+  <rect x="740" y="100" width="420" height="470" rx="16" fill="#ffffff" stroke="#d8ccf6" stroke-width="2"/>
+  <rect x="740" y="100" width="420" height="40" rx="16" fill="#f1eefc"/>
+  <text x="760" y="127" font-size="15" font-weight="800" fill="#6a3fd6">CLIENT · browser</text>
+
+  <rect x="764" y="160" width="372" height="388" rx="10" fill="#f7f9fc" stroke="#dce4ec"/>
+  <text x="780" y="185" font-size="14" font-weight="800" fill="#0d1b2a">Widget (wrapper) · owns this.container</text>
+  <text x="780" y="206" font-size="13" font-family="Consolas, monospace" fill="#16314e">wisej Widget element  ← framework positions, sizes,</text>
+  <text x="780" y="224" font-size="13" font-family="Consolas, monospace" fill="#16314e">                        shows, hides, themes, disposes</text>
+
+  <rect x="796" y="244" width="308" height="280" rx="10" fill="#ffffff" stroke="#b69bf2" stroke-dasharray="6 4"/>
+  <text x="812" y="268" font-size="13" font-weight="800" fill="#4a2f86">Adapter · temperature-gauge.js</text>
+  <text x="812" y="288" font-size="12" fill="#5a6b7d">init / update / resize / dispose</text>
+  <text x="812" y="306" font-size="12" fill="#5a6b7d">translates options → vendor calls</text>
+  <text x="812" y="324" font-size="12" fill="#5a6b7d">vendor "thresholdexceeded" → "thresholdExceeded"</text>
+
+  <rect x="828" y="342" width="244" height="164" rx="10" fill="#f1eefc" stroke="#d8ccf6"/>
+  <text x="844" y="366" font-size="13" font-weight="800" fill="#4a2f86">div.temperature-gauge-host</text>
+  <rect x="852" y="380" width="196" height="110" rx="8" fill="#ffffff" stroke="#e0563b"/>
+  <text x="950" y="404" font-size="13" font-weight="800" fill="#b23b27" text-anchor="middle">VendorGauge instance</text>
+  <text x="950" y="420" font-size="11" font-family="Consolas, monospace" fill="#5a6b7d" text-anchor="middle">stored as this.widget</text>
+  <path d="M 905 476 A 45 45 0 0 1 995 476" fill="none" stroke="#e6ebf1" stroke-width="8" stroke-linecap="round"/>
+  <path d="M 905 476 A 45 45 0 0 1 989 456" fill="none" stroke="#e0563b" stroke-width="8" stroke-linecap="round"/>
+  <line x1="950" y1="476" x2="976" y2="454" stroke="#16314e" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="950" y="484" font-size="10" fill="#5a6b7d" text-anchor="middle">&lt;svg&gt; owned by the vendor</text>
+
+  <text x="780" y="540" font-size="11" fill="#5a6b7d">Vendor subtree below the host, framework element above it: one owner each.</text>
+
+  <!-- legend -->
+  <rect x="40" y="590" width="1120" height="36" rx="10" fill="#ffffff" stroke="#dce4ec"/>
+  <text x="60" y="606" font-size="11" fill="#5a6b7d"><tspan font-weight="800" fill="#0d1b2a">Vocabulary:</tspan> Component = any server object Wisej.NET renders · Control = a Component with a surface · Widget = the browser object that draws it</text>
+  <text x="60" y="621" font-size="11" fill="#5a6b7d">Rendering = server → JSON → widget · Event = widget → JSON → server · State = what the server keeps between the two</text>
+</svg>
