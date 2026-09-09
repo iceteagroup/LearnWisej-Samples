@@ -1,0 +1,6 @@
+{
+	"url": "Default.html",
+	"startup": "EnterpriseOps.Program.Main, EnterpriseOps",
+	"theme": "Bootstrap-4",
+	"debug": true
+}

@@ -1,0 +1,33 @@
+/* VendorGrid 1.0 — stylesheet shipped with the stand-in grid library. */
+.vgrid { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; font: 12px/1.4 "Segoe UI", Arial, sans-serif; color: #1f3147; background: #fff; border: 1px solid #dce4ec; border-radius: 6px; overflow: hidden; }
+.vgrid-toolbar { flex: none; display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: #f4f7fb; border-bottom: 1px solid #dce4ec; }
+.vgrid-status { flex: 1; color: #5a6b7d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vgrid-error .vgrid-status { color: #b23b27; font-weight: 600; }
+.vgrid-pager { display: flex; align-items: center; gap: 6px; }
+.vgrid-page { min-width: 70px; text-align: center; color: #5a6b7d; }
+.vgrid-btn { font: inherit; padding: 2px 9px; border: 1px solid #c9d4e0; border-radius: 4px; background: #fff; color: #1f3147; cursor: pointer; }
+.vgrid-btn:hover { background: #e9f0f8; }
+.vgrid-btn:disabled { opacity: .45; cursor: default; }
+.vgrid-add { border-color: #1565d8; color: #1565d8; }
+.vgrid-save { border-color: #1f9d57; color: #1f9d57; }
+.vgrid-del { padding: 0 6px; border-color: transparent; color: #b23b27; }
+.vgrid-del:hover { background: #fdecea; }
+.vgrid-body { flex: 1; overflow: auto; }
+.vgrid-table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+.vgrid-th { position: sticky; top: 0; z-index: 1; text-align: left; padding: 5px 8px; background: #eef2f7; border-bottom: 1px solid #dce4ec; font-weight: 700; color: #34495e; cursor: pointer; user-select: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vgrid-th:hover { background: #e2e9f2; }
+.vgrid-th-actions { width: 40px; cursor: default; }
+.vgrid-sort { color: #1565d8; font-size: 10px; }
+.vgrid-td { padding: 4px 8px; border-bottom: 1px solid #eef2f7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
+.vgrid-type-number { text-align: right; font-variant-numeric: tabular-nums; }
+.vgrid-editable { cursor: cell; }
+.vgrid-row:hover { background: #f7f9fc; }
+.vgrid-selected, .vgrid-selected:hover { background: #e3edfb; }
+.vgrid-editing { padding: 1px 3px; }
+.vgrid-editor { width: 100%; box-sizing: border-box; font: inherit; padding: 2px 4px; border: 1px solid #1565d8; border-radius: 3px; outline: none; }
+.vgrid-new { background: #f1faf4; }
+.vgrid-new .vgrid-td { padding: 3px 4px; }
+.vgrid-muted { color: #94a3b8; font-style: italic; }
+.vgrid-actions { text-align: center; padding: 2px 4px; }
+.vgrid-empty td { padding: 20px; text-align: center; color: #94a3b8; }
+.vgrid-loading .vgrid-body { opacity: .55; pointer-events: none; }

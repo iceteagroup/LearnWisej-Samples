@@ -5,13 +5,13 @@ walkthrough video: a `TemperatureGauge : Widget` hosts a third-party gauge insid
 widget container, `Value` is a server property, and `ThresholdExceeded` is a normal .NET event
 that fires when the reading crosses 100°.
 
-Nothing here is deployed anywhere; it is a plain Wisej.NET 4 project on this machine.
+Nothing here is deployed anywhere; it is a plain Wisej.NET 4 project on this machine (the original build lives in D:ProjectsPlayIntegrationLab).
 
 ## Run it
 
 ```bash
-cd D:/Projects/Play/IntegrationLab/IntegrationLab
-dotnet run --urls http://localhost:5071
+cd "D:/Projects/LearnWisej-Samples/Application Integration Course/Module 1/IntegrationLab"
+dotnet run -f net10.0 --urls http://localhost:5071
 ```
 
 Then open <http://localhost:5071>. (Visual Studio: open `IntegrationLab.slnx`, press F5.)

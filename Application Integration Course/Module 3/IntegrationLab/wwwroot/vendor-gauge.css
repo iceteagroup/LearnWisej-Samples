@@ -1,0 +1,77 @@
+/*
+ * vendor-gauge.css — the stylesheet that travels with the gauge widget.
+ * Declared as a Package next to vendor-gauge.js, so it is loaded once per
+ * browser session before the InitScript runs and is never forgotten on the
+ * next screen (see docs/WidgetPackages.md).
+ *
+ * The adapter (gauge-init.js) builds this structure inside this.container:
+ *
+ *   div.gauge-frame[.gauge-frame--compact]   layout owned by the adapter
+ *     div.gauge-host                          the element VendorGauge is bound to
+ *     div.gauge-bands                         adapter-drawn legend: one chip per band
+ */
+
+.gauge-frame {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.gauge-host {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    border-radius: 12px;
+    outline: 0 solid rgba(26, 134, 255, 0);
+    transition: outline-width 120ms ease-out, outline-color 120ms ease-out;
+}
+
+/* style = "compact": the vendor is bound to a smaller, dark, padded host (a different element) */
+.gauge-frame--compact {
+    padding: 10px 24px 4px 24px;
+}
+.gauge-frame--compact .gauge-host {
+    background: #0d1b2a;
+    padding: 8px 6px 2px 6px;
+    box-sizing: border-box;
+}
+.gauge-frame--compact .gauge-host svg text { fill: #e8eef5; }
+
+/* band legend */
+.gauge-bands {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    padding: 4px 0 2px 0;
+}
+.gauge-band {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #5a6b7d;
+    border: 1px solid #dce4ec;
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: #fff;
+}
+.gauge-band i {
+    width: 9px; height: 9px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+/* Call("flash"): one imperative vendor-side behavior reached from the server */
+@keyframes gauge-flash {
+    0%   { outline: 6px solid rgba(26, 134, 255, 0.0); box-shadow: 0 0 0 0 rgba(26, 134, 255, 0.0); }
+    25%  { outline: 6px solid rgba(26, 134, 255, 0.9); box-shadow: 0 0 22px 4px rgba(26, 134, 255, 0.45); }
+    100% { outline: 6px solid rgba(26, 134, 255, 0.0); box-shadow: 0 0 0 0 rgba(26, 134, 255, 0.0); }
+}
+.gauge-host--flash {
+    animation: gauge-flash 650ms ease-out 1;
+}

@@ -1,0 +1,15 @@
+/* VendorChart 1.0 — vendor stylesheet (loaded as a Wisej.NET Package). */
+.vendor-chart { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: #fff; border-radius: 8px; overflow: hidden; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; user-select: none; }
+.vendor-chart--dark { background: #16314e; }
+.vendor-chart .vc-svg { display: block; width: 100%; height: 100%; }
+.vendor-chart .vc-gridline { stroke: #e6ebf1; stroke-width: 1; }
+.vendor-chart--dark .vc-gridline { stroke: rgba(255,255,255,.14); }
+.vendor-chart .vc-tick { font-size: 11px; fill: #8a98a8; }
+.vendor-chart--dark .vc-tick { fill: #9fb6cf; }
+.vendor-chart .vc-legend-item { cursor: pointer; }
+.vendor-chart .vc-legend-item--off { opacity: .4; }
+.vendor-chart .vc-legend-text { font-size: 12px; font-weight: 700; fill: #0d1b2a; }
+.vendor-chart--dark .vc-legend-text { fill: #fff; }
+.vendor-chart .vc-hoverline { stroke: #c9d3de; stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.vendor-chart .vc-point { cursor: pointer; transition: r 90ms ease-out; }
+.vendor-chart .vc-point:hover { r: 8; }

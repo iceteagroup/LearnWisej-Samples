@@ -1,0 +1,19 @@
+/*! VendorHeatmap 1.2.0 — stylesheet. Loaded as a Wisej.NET package before vendor-heatmap.js. */
+.vendor-heatmap {
+  position: relative;
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.vendor-heatmap svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.vendor-heatmap .vh-title { font-size: 11px; font-weight: 700; fill: #8a98a8; letter-spacing: .3px; }
+.vendor-heatmap .vh-label { font-size: 10px; font-weight: 700; fill: #5a6b7d; }
+.vendor-heatmap .vh-cell { stroke: #ffffff; stroke-width: 1; cursor: pointer; transition: fill .25s ease; }
+.vendor-heatmap .vh-cell.vh-empty { fill: #f1f4f8; }
+.vendor-heatmap .vh-cell:hover { stroke: #0d1b2a; stroke-width: 1.5; }
+.vendor-heatmap .vh-cell.vh-selected { stroke: #0d1b2a; stroke-width: 2; }
+.vendor-heatmap .vh-cell.vh-highlight { stroke: #e0563b; stroke-width: 3; animation: vh-pulse 1s ease-in-out infinite; }
+@keyframes vh-pulse {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: .2; }
+}

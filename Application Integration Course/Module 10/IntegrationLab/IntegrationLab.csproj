@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    IntegrationLab — Application Integration Course, Module 10 lab (Production Readiness & Capstone).
+    Single target (net10.0, Kestrel). Run with:  dotnet run (add the urls switch for http://localhost:5080)   (from this folder)
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <RootNamespace>IntegrationLab</RootNamespace>
+    <NoWarn>CA1416;WFO1000</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Client adapters ship inside the assembly: the server hands each one to its wrapper as InitScript.
+         The logical name must match the string passed to GetResourceString(...). -->
+    <EmbeddedResource Include="wwwroot\heatmap-init.js" LogicalName="IntegrationLab.wwwroot.heatmap-init.js" />
+    <EmbeddedResource Include="wwwroot\temperature-gauge.js" LogicalName="IntegrationLab.wwwroot.temperature-gauge.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Default.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Web.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+    <None Remove="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Default.html">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.0" />
+  </ItemGroup>
+
+</Project>

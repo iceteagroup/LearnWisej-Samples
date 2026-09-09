@@ -1,0 +1,52 @@
+/*!
+ * vendor-knob.css — the stylesheet that ships with the VendorKnob plugin.
+ *
+ * Load order (the course's common case): jQuery → vendor CSS → vendor JS → InitScript.
+ * A stylesheet has no runtime dependency, but it must be present before the widget
+ * paints, otherwise the first frame renders unstyled. In Wisej.NET it is declared as a
+ * Package exactly like a script:  Source = "wwwroot/vendor-knob.css".
+ */
+
+/* The element the proof page (and the InitScript, through this.container) hands to the plugin. */
+.knob-host {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border: 1px solid #dce4ec;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+/* The dial the plugin inserts right after the <input> it enhances. */
+.vendor-knob {
+  cursor: grab;
+  background: #fff;
+  border-radius: 12px;
+}
+.vendor-knob:active {
+  cursor: grabbing;
+}
+
+/*
+ * Fallback look of the raw <input class="knob"> BEFORE the plugin enhances it.
+ * The plugin hides the input when it runs; if it never runs (plugin missing, wrong
+ * package order, script error) this dashed red box stays visible — a failure you
+ * can see in the page instead of only in the console.
+ */
+input.knob {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 12px;
+  font: 12px/1.4 Consolas, "Courier New", monospace;
+  text-align: center;
+  color: #b23b27;
+  background: #fff5f3;
+  border: 1px dashed #e0563b;
+  border-radius: 8px;
+}
+input.knob::placeholder {
+  color: #b23b27;
+}

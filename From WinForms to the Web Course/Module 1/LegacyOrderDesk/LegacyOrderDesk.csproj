@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    LegacyOrderDesk — the WinForms application the course migrates ("the desktop original").
+    Windows-only by nature (System.Windows.Forms, PrintDocument, HKCU registry, Excel Interop).
+    Build:  dotnet build      Run (Windows):  dotnet run   — or F5 in Visual Studio.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>LegacyOrderDesk</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <NoWarn>CA1416;WFO1000</NoWarn>
+  </PropertyGroup>
+
+</Project>

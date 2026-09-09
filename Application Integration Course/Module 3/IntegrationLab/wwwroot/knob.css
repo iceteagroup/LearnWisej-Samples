@@ -1,0 +1,34 @@
+/*
+ * knob.css — the stylesheet that travels with the knob widget.
+ * Declared as a Package between jquery-lite.js and vendor-knob.js (list order:
+ * jQuery → knob.css → vendor-knob.js; only the scripts have an ordering
+ * constraint, the stylesheet just has to be listed so it is not forgotten).
+ *
+ * The adapter (knob-init.js) creates:
+ *
+ *   this.container.innerHTML = "<div class='knob-host'></div>";
+ *     input.knob-input    the <input> the jQuery plugin enhances in place
+ *     div.vendor-knob     drawn by the plugin next to the input
+ */
+
+.knob-host {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    padding: 6px 18px;
+    box-sizing: border-box;
+    cursor: grab;
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.knob-host:active { cursor: grabbing; }
+
+/* the plugin hides the input itself; this keeps it out of the layout even before the plugin runs */
+.knob-host .knob-input {
+    position: absolute;
+    width: 1px; height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.knob-host .vendor-knob {
+    border-radius: 12px;
+}

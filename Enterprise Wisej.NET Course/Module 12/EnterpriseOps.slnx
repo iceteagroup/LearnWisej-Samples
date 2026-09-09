@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/deployment/">
+    <File Path="deployment/DeploymentReleasePatterns.md" />
+    <File Path="deployment/Dockerfile" />
+    <File Path="deployment/docker-compose.yml" />
+    <File Path="deployment/nginx.conf" />
+    <File Path="deployment/Dockerfile.notes.md" />
+    <File Path="deployment/nginx.proxy.notes.md" />
+    <File Path="deployment/LoadBalancerNotes.md" />
+  </Folder>
+  <Project Path="EnterpriseOps/EnterpriseOps.csproj" />
+</Solution>

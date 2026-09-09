@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    IntegrationLab — Application Integration Course, Module 5 lab (Custom Controls & Theming).
+    Single target (net10.0, Kestrel). Run with:  dotnet run  (from this folder; port from launchSettings.json)
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <RootNamespace>IntegrationLab</RootNamespace>
+    <NoWarn>CA1416;WFO1000</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Client half of the custom control. Every embedded /Platform/*.js resource is bundled into the
+      client by Wisej.NET because Properties/AssemblyInfo.cs carries [assembly: Wisej.Core.WisejResources].
+      Resource names become IntegrationLab.Platform.SimpleGaugeControl.js and IntegrationLab.Platform.vendor-gauge.js.
+    -->
+    <EmbeddedResource Include="Platform\*.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Theme mixin: merged into the active theme at runtime (read from the app's /Themes folder). -->
+    <Content Include="Themes\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Default.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Web.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+    <None Remove="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Default.html">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.0" />
+  </ItemGroup>
+
+</Project>

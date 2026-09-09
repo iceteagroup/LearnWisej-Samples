@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    IntegrationLab — Application Integration Course, Module 7 lab (Events & Handler Contracts).
+    Single target (net10.0, Kestrel). Run from this folder with:  dotnet run  (port 5077, see Properties/launchSettings.json)
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <RootNamespace>IntegrationLab</RootNamespace>
+    <NoWarn>CA1416;WFO1000</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The three client adapters ship inside the assembly: each server widget hands its own to the wrapper as InitScript. -->
+    <EmbeddedResource Include="wwwroot\gauge-init.js" LogicalName="IntegrationLab.wwwroot.gauge-init.js" />
+    <EmbeddedResource Include="wwwroot\knob-init.js" LogicalName="IntegrationLab.wwwroot.knob-init.js" />
+    <EmbeddedResource Include="wwwroot\chart-init.js" LogicalName="IntegrationLab.wwwroot.chart-init.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Default.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Web.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+    <None Remove="favicon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Default.html">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.0" />
+  </ItemGroup>
+
+</Project>

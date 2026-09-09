@@ -1,0 +1,94 @@
+// OrderEntryLegacy.cs.txt — DELIBERATELY BAD. Not compiled (the .txt extension keeps it out of the build).
+//
+// This is the handler the walkthrough video feeds to the review gate: btnSubmitOrder_Click, 74 lines from
+// its signature to its closing brace, validation + pricing + persistence + notification all inline, and not
+// one call into an application service. Click "Review gate: legacy handler" on the dashboard to run
+// ReviewGate.CheckEventHandler over this file — it reports 2 issues and the change is blocked before merge.
+//
+// The fix is architectural, not cosmetic: move the workflow into EnterpriseOps.Services/Workflow
+// (an OrderWorkflow.SubmitAsync(SubmitOrderCommand, CommandContext) returning a CommandResult), and the
+// handler shrinks to the shape in UI/CommandCenterDashboard.cs.
+
+using System;
+using System.IO;
+using Wisej.Web;
+
+namespace EnterpriseOps.UI.Legacy
+{
+    public partial class OrderEntryPage : Page
+    {
+        private void btnSubmitOrder_Click(object sender, EventArgs e)
+        {
+            // 1. Validation, inline
+            if (string.IsNullOrWhiteSpace(txtCustomer.Text))
+            {
+                MessageBox.Show("Customer is required.");
+                return;
+            }
+            if (cboSite.SelectedItem == null)
+            {
+                MessageBox.Show("Pick a site.");
+                return;
+            }
+            int quantity;
+            if (!int.TryParse(txtQuantity.Text, out quantity) || quantity <= 0)
+            {
+                MessageBox.Show("Quantity must be a positive number.");
+                return;
+            }
+            if (dtpDue.Value < DateTime.Today)
+            {
+                MessageBox.Show("Due date cannot be in the past.");
+                return;
+            }
+
+            // 2. Pricing rules, inline (and duplicated in two other screens)
+            decimal unitPrice = 120m;
+            if (cboPriority.Text == "High") unitPrice *= 1.25m;
+            if (cboPriority.Text == "Critical") unitPrice *= 1.6m;
+            if (quantity >= 10) unitPrice *= 0.9m;
+            if (txtCustomer.Text.StartsWith("Contoso")) unitPrice *= 0.95m;
+            decimal total = Math.Round(unitPrice * quantity, 2);
+            if (total > 5000m && Application.Session.Role != "Manager")
+            {
+                MessageBox.Show("Orders over 5,000 need a manager.");
+                return;
+            }
+
+            // 3. Persistence, inline: a connection string and SQL in the click handler
+            string connection = "Server=ops-sql01;Database=EnterpriseOps;Trusted_Connection=True;";
+            string sql = "INSERT INTO WorkOrders (TenantId, Title, Customer, Site, Priority, DueUtc, Total) VALUES ('" +
+                Application.Session.TenantId + "', '" + txtTitle.Text.Replace("'", "''") + "', '" +
+                txtCustomer.Text.Replace("'", "''") + "', '" + cboSite.Text + "', '" + cboPriority.Text + "', '" +
+                dtpDue.Value.ToUniversalTime().ToString("s") + "', " + total + ")";
+            try
+            {
+                LegacySql.Execute(connection, sql);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Database error: " + ex.Message + "\n" + ex.StackTrace);
+                return;
+            }
+
+            // 4. Side effects, inline: audit file and e-mail
+            File.AppendAllText(@"C:\logs\orders.log",
+                DateTime.Now + " " + Application.Session.UserName + " submitted " + txtTitle.Text + " total " + total + Environment.NewLine);
+            if (chkNotifyCustomer.Checked)
+            {
+                LegacyMail.Send("orders@enterpriseops.local", txtCustomerEmail.Text,
+                    "Order received", "Your order " + txtTitle.Text + " for " + total + " was received.");
+            }
+
+            // 5. UI updates
+            lblTotal.Text = total.ToString("C2");
+            lblStatus.Text = "Submitted";
+            lblStatus.ForeColor = System.Drawing.Color.Green;
+            txtTitle.Text = "";
+            txtQuantity.Text = "";
+            gridOrders.DataSource = null;
+            gridOrders.DataSource = LegacySql.Query(connection, "SELECT * FROM WorkOrders WHERE TenantId = '" + Application.Session.TenantId + "'");
+            MessageBox.Show("Order submitted. Total: " + total.ToString("C2"));
+        }
+    }
+}

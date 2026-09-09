@@ -1,0 +1,13 @@
+{
+	"profiles": {
+		"EnterpriseOps": {
+			"commandName": "Project",
+			"launchBrowser": true,
+			"applicationUrl": "http://localhost:5212",
+			"environmentVariables": {
+				"WEBSITE_PATH": "$(MSBuildProjectDirectory)",
+				"ASPNETCORE_ENVIRONMENT": "Development"
+			}
+		}
+	}
+}

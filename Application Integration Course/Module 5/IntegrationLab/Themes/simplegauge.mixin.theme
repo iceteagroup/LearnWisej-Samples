@@ -1,0 +1,41 @@
+{
+	"name": "simplegauge",
+
+	"colors": {
+		"simplegauge-accent": "primary",
+		"simplegauge-track": "windowFrame"
+	},
+
+	"appearances": {
+
+		"simplegauge": {
+			"text": "SimpleGauge",
+			"states": {
+				"default": {
+					"styles": {
+						"backgroundColor": "window",
+						"width": 1,
+						"style": "solid",
+						"color": "windowFrame",
+						"radius": 10
+					},
+					"properties": {
+						"textColor": "windowText",
+						"padding": 8
+					}
+				},
+				"alarm": {
+					"styles": {
+						"width": 2,
+						"color": "#E0563B"
+					}
+				},
+				"disabled": {
+					"properties": {
+						"opacity": 0.5
+					}
+				}
+			}
+		}
+	}
+}

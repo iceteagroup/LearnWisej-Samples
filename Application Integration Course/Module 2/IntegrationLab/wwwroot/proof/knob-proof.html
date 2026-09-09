@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>VendorKnob — plain JavaScript proof (Module 2)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!--
+    LOAD ORDER — the whole point of this page. Scripts execute in the order they appear:
+      1. jquery-lite.js   defines window.$ / window.jQuery and the $.fn plugin mechanism
+      2. vendor-knob.css  the vendor stylesheet (no runtime dependency, but before the widget paints)
+      3. vendor-knob.js   a jQuery plugin: registers $.fn.vendorKnob — THROWS if jQuery is missing
+    In Wisej.NET the Packages list of the Widget plays exactly this role, in exactly this order.
+    Try it: swap lines 1 and 3, reload, and read the console.
+  -->
+  <script src="../jquery-lite.js"></script>
+  <link rel="stylesheet" href="../vendor-knob.css" />
+  <script src="../vendor-knob.js"></script>
+
+  <style>
+    body { margin: 0; background: #eef2f7; color: #0d1b2a; font: 14px/1.5 "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    header { background: #1565d8; color: #fff; padding: 12px 28px; font-weight: 600; font-size: 15px; }
+    header span { opacity: .8; font-weight: 400; margin-left: 12px; }
+    main { max-width: 1180px; margin: 0 auto; padding: 24px 28px 48px; display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
+    .card { background: #fff; border: 1px solid #dce4ec; border-radius: 12px; padding: 18px 20px; }
+    .card h2 { margin: 0 0 6px; font-size: 15px; }
+    .card p { margin: 6px 0; color: #46586a; }
+    .knob-host { width: 300px; height: 240px; margin: 10px auto; }
+    .readout { text-align: center; font: 700 22px/1.2 Consolas, monospace; color: #16314e; }
+    .readout small { display: block; font: 11px/1.4 Consolas, monospace; color: #8a98a8; margin-top: 4px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    button { border: 1px solid #c7d2de; background: #f7f9fc; color: #16314e; padding: 7px 13px; border-radius: 8px; cursor: pointer; font: 600 13px "Segoe UI", sans-serif; }
+    button:hover { background: #e8eef6; }
+    button.bad { border-color: #e0563b; color: #b23b27; background: #fff5f3; }
+    button.good { border-color: #1f9d57; color: #14653a; background: #effaf3; }
+    code, pre { font: 12.5px/1.55 Consolas, "Courier New", monospace; }
+    pre { background: #0d1b2a; color: #d6e4f3; padding: 12px 14px; border-radius: 8px; overflow: auto; margin: 10px 0 0; }
+    pre .k { color: #569cd6; } pre .s { color: #ce9178; } pre .c { color: #6a9955; } pre .bad { color: #ff8a7a; } pre .good { color: #7ee0a0; }
+    .log { margin-top: 10px; min-height: 64px; border-radius: 8px; padding: 10px 12px; font: 12.5px/1.5 Consolas, monospace; white-space: pre-wrap; }
+    .log.ok { background: #effaf3; border: 1px solid #b7e2c8; color: #14653a; }
+    .log.err { background: #fff5f3; border: 1px solid #f0b8ad; color: #b23b27; }
+    .log.idle { background: #f7f9fc; border: 1px dashed #c7d2de; color: #5a6b7d; }
+    .check { display: flex; gap: 10px; align-items: center; margin: 4px 0; font-family: Consolas, monospace; font-size: 12.5px; }
+    .check .dot { width: 10px; height: 10px; border-radius: 999px; background: #c7d2de; flex: none; }
+    .check .dot.ok { background: #1f9d57; } .check .dot.err { background: #e0563b; }
+    .pill { display: inline-block; font: 700 11px/1 Consolas, monospace; padding: 4px 8px; border-radius: 999px; background: #f1eefc; color: #5b46c9; border: 1px solid rgba(125,90,224,.45); margin-left: 6px; vertical-align: middle; }
+    .two { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  </style>
+</head>
+<body>
+  <header>IntegrationLab — plain JavaScript proof <span>Module 2 · no Wisej.NET on this page: three files, one &lt;input&gt;, one plugin</span></header>
+
+  <main>
+    <!-- ───────── 1. the knob ───────── -->
+    <section class="card">
+      <h2>1 · The vendor sample, isolated <span class="pill">$(input).vendorKnob()</span></h2>
+      <p>An <code>&lt;input class="knob"&gt;</code> is created inside <code>div.knob-host</code>, then the plugin enhances it in place.</p>
+      <div class="knob-host" id="host"></div>
+      <div class="readout"><span id="readout">–</span><small id="readoutSource">waiting for the first knobchange…</small></div>
+      <div class="row">
+        <button onclick="setKnob(25)">Set 25</button>
+        <button onclick="setKnob(60)">Set 60</button>
+        <button onclick="setKnob(85)">Set 85</button>
+        <button onclick="nudge(5)">Turn +5</button>
+        <button onclick="logInstance()">Log instance to console</button>
+      </div>
+      <p style="margin-top:12px">Drag the dial or use the mouse wheel: every change dispatches the vendor event <code>knobchange</code> on the <code>&lt;input&gt;</code>.</p>
+    </section>
+
+    <!-- ───────── 2. load-order checks ───────── -->
+    <section class="card">
+      <h2>2 · Load-order checks (run when this page loaded)</h2>
+      <div id="checks"></div>
+      <p>Where the vendor keeps its instance: <code>$(input).data("vendorKnob")</code>. The InitScript copies that reference to <code>this.instance</code> so Wisej.NET code can find it.</p>
+
+      <h2 style="margin-top:18px">Wrong load order — what you would see</h2>
+      <p>Swap the first and third tags in the <code>&lt;head&gt;</code> of this file so the plugin runs before the library:</p>
+<pre><span class="c">&lt;!-- wrong: plugin first --&gt;</span>
+<span class="bad">&lt;script src="../vendor-knob.js"&gt;&lt;/script&gt;</span>
+&lt;link rel="stylesheet" href="../vendor-knob.css" /&gt;
+&lt;script src="../jquery-lite.js"&gt;&lt;/script&gt;</pre>
+      <p>Then reload. The knob never appears (the raw dashed <code>&lt;input&gt;</code> stays visible) and the console shows, at load time, before any code of yours runs:</p>
+<pre><span class="bad">Uncaught ReferenceError: jQuery is not defined — vendor-knob.js must be loaded after jQuery.</span>
+    at vendor-knob.js:19</pre>
+      <p>Later, <code>$(input).vendorKnob(...)</code> fails too: <code>$.fn.vendorKnob</code> was never registered, so <em>TypeError: $(...).vendorKnob is not a function</em>. The first error names an undefined symbol from the <strong>vendor</strong> library, not anything you wrote — that is the signature of a load-order bug. In Wisej.NET the same thing happens when <code>Packages</code> lists the plugin before jQuery; the "Wrong package order" button in the Knob Demo reproduces it.</p>
+    </section>
+
+    <!-- ───────── 3. context: broken vs fixed ───────── -->
+    <div class="two">
+      <section class="card">
+        <h2>3a · Callback wired the BROKEN way</h2>
+        <p>A fake widget object stands in for the Wisej.NET wrapper. Its method is called through <code>this</code> inside the vendor callback — but there <code>this</code> is the <code>&lt;input&gt;</code> that dispatched the event.</p>
+<pre>fakeWidget.wireBroken = <span class="k">function</span> () {
+  $(input).on(<span class="s">"knobchange"</span>, <span class="k">function</span> (e) {
+    <span class="c">// ✕ "this" is the &lt;input&gt; here, not fakeWidget</span>
+    <span class="bad">this.fireWidgetEvent(<span class="s">"valueChanged"</span>, { value: e.detail.value });</span>
+  });
+};</pre>
+        <div class="row">
+          <button class="bad" onclick="wireBroken()">Wire the broken way, then turn the knob</button>
+        </div>
+        <div id="logBroken" class="log idle">not wired</div>
+      </section>
+
+      <section class="card">
+        <h2>3b · Callback wired the FIXED way <span class="pill">var me = this</span></h2>
+        <p>Capture the widget in a local variable before the callback. Only a captured reference survives into a callback that the vendor invokes later.</p>
+<pre>fakeWidget.wireFixed = <span class="k">function</span> () {
+  <span class="good"><span class="k">var</span> me = <span class="k">this</span>;</span>                       <span class="c">// capture the widget</span>
+  $(input).on(<span class="s">"knobchange"</span>, <span class="k">function</span> (e) {
+    <span class="good">me.fireWidgetEvent(<span class="s">"valueChanged"</span>, { value: e.detail.value });</span>
+  });
+};</pre>
+        <div class="row">
+          <button class="good" onclick="wireFixed()">Wire the fixed way, then turn the knob</button>
+          <button onclick="unwire()">Unwire</button>
+        </div>
+        <div id="logFixed" class="log idle">not wired</div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    // ---- 1. create the element the vendor wants, INSIDE the host, then apply the plugin ----
+    var host = document.getElementById("host");
+    host.innerHTML = "<input class='knob'/>";
+    var input = host.firstChild;
+    input.placeholder = "raw <input> - plugin not applied";
+
+    var knob = null, initError = null;
+    try {
+      $(input).vendorKnob({ value: 40, min: 0, max: 100, step: 1, label: "Pressure", units: " psi" });
+      knob = $(input).data("vendorKnob");          // the vendor instance
+    }
+    catch (ex) { initError = ex; }
+
+    // ---- the vendor event, shown in the page ----
+    $(input).on("knobchange", function (e) {
+      document.getElementById("readout").textContent = e.detail.value + " psi";
+      document.getElementById("readoutSource").textContent = "knobchange  e.detail = " + JSON.stringify(e.detail);
+    });
+    if (knob) document.getElementById("readout").textContent = knob.getValue() + " psi";
+
+    function setKnob(v) { if (knob) knob.setValue(v); }          // not silent -> fires knobchange
+    function nudge(d) { if (knob) knob.setValue(knob.getValue() + d); }
+    function logInstance() {
+      console.log("$(input).data(\"vendorKnob\") ->", $(input).data("vendorKnob"));
+      console.log("methods:", Object.keys(Object.getPrototypeOf(knob) || {}).join(", "));
+      document.getElementById("readoutSource").textContent = "instance logged to the console (F12)";
+    }
+
+    // ---- 2. load-order checks ----
+    var checks = [
+      ["typeof jQuery",        typeof jQuery,                          typeof jQuery === "function"],
+      ["typeof $.fn.vendorKnob", typeof (window.$ && $.fn && $.fn.vendorKnob), !!(window.$ && $.fn && $.fn.vendorKnob)],
+      ["vendor-knob.css applied", getComputedStyle(host).borderRadius,  getComputedStyle(host).borderRadius === "12px"],
+      ["plugin applied to <input>", knob ? "instance created" : "FAILED: " + (initError && initError.message), !!knob],
+      ["vendor children inside host", host.querySelector(".vendor-knob") ? "div.vendor-knob after the input" : "missing", !!host.querySelector(".vendor-knob")]
+    ];
+    function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    document.getElementById("checks").innerHTML = checks.map(function (c) {
+      return "<div class='check'><span class='dot " + (c[2] ? "ok" : "err") + "'></span><span>" + esc(c[0]) + " → <b>" + esc(c[1]) + "</b></span></div>";
+    }).join("");
+
+    // ---- 3. context: a stand-in for the Wisej.NET widget wrapper ----
+    var fakeWidget = {
+      name: "fakeWidget",
+      fireWidgetEvent: function (type, data) {
+        show("logFixed", "ok", "fireWidgetEvent(\"" + type + "\", " + JSON.stringify(data) + ") reached " + this.name + " ✓\n" +
+          "inside the callback: this = <input>, me = " + this.name);
+      },
+
+      wireBroken: function () {
+        var me = this;                             // captured, but the handler below ignores it on purpose
+        brokenHandler = function (e) {
+          try {
+            this.fireWidgetEvent("valueChanged", { value: e.detail.value });    // ✕ this = <input>
+          }
+          catch (ex) {
+            show("logBroken", "err", ex.name + ": " + ex.message + "\n" +
+              "inside the callback: this = " + describe(this) + " (not " + me.name + ")\n" +
+              "→ the event never reaches the widget");
+          }
+        };
+        $(input).on("knobchange", brokenHandler);
+      },
+
+      wireFixed: function () {
+        var me = this;                             // 1. capture the widget
+        fixedHandler = function (e) {
+          me.fireWidgetEvent("valueChanged", { value: e.detail.value });        // ✓ me = the widget
+        };
+        $(input).on("knobchange", fixedHandler);
+      }
+    };
+
+    var brokenHandler = null, fixedHandler = null;
+    function unwire() {
+      if (brokenHandler) { $(input).off("knobchange", brokenHandler); brokenHandler = null; }
+      if (fixedHandler) { $(input).off("knobchange", fixedHandler); fixedHandler = null; }
+      show("logBroken", "idle", "not wired"); show("logFixed", "idle", "not wired");
+    }
+    function wireBroken() { unwire(); fakeWidget.wireBroken(); show("logBroken", "idle", "wired the broken way — now drag the knob or click Turn +5"); nudge(1); }
+    function wireFixed()  { unwire(); fakeWidget.wireFixed();  show("logFixed",  "idle", "wired the fixed way — now drag the knob or click Turn +5"); nudge(1); }
+
+    function describe(o) { return Object.prototype.toString.call(o).slice(8, -1); }
+    function show(id, kind, text) { var el = document.getElementById(id); el.className = "log " + kind; el.textContent = text; }
+  </script>
+</body>
+</html>

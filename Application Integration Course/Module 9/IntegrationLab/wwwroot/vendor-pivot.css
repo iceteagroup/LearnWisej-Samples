@@ -1,0 +1,18 @@
+/* VendorPivot 1.0 — stylesheet shipped with the stand-in pivot library. */
+.vpivot { position: absolute; left: 0; top: 0; right: 0; bottom: 0; display: flex; flex-direction: column; font: 12px/1.4 "Segoe UI", Arial, sans-serif; color: #1f3147; background: #fff; border: 1px solid #dce4ec; border-radius: 6px; overflow: hidden; }
+.vpivot-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; background: #f4f7fb; border-bottom: 1px solid #dce4ec; }
+.vpivot-title { font-weight: 700; color: #34495e; }
+.vpivot-status { color: #5a6b7d; }
+.vpivot-error .vpivot-status { color: #b23b27; font-weight: 600; }
+.vpivot-body { flex: 1; overflow: auto; }
+.vpivot-table { border-collapse: collapse; width: 100%; }
+.vpivot-table th, .vpivot-table td { padding: 4px 10px; border-bottom: 1px solid #eef2f7; white-space: nowrap; }
+.vpivot-corner { text-align: left; background: #eef2f7; color: #5a6b7d; font-weight: 600; font-style: italic; }
+.vpivot-col { position: sticky; top: 0; background: #eef2f7; color: #34495e; text-align: right; }
+.vpivot-rowhead { text-align: left; background: #f7f9fc; color: #34495e; font-weight: 600; }
+.vpivot-cell { text-align: right; font-variant-numeric: tabular-nums; cursor: pointer; }
+.vpivot-cell:hover { background: #e3edfb; }
+.vpivot-empty { color: #b8c2cc; cursor: default; }
+.vpivot-total { font-weight: 700; background: #f4f7fb; }
+.vpivot-grand { color: #1565d8; }
+.vpivot-loading .vpivot-body { opacity: .55; }

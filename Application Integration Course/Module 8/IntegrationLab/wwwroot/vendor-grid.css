@@ -1,0 +1,108 @@
+/* VendorGrid 1.0 — stylesheet (loaded as a Widget package, like the script). */
+
+.vgrid {
+    position: absolute;
+    left: 0; top: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    font: 12px/1.35 "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1f3147;
+    background: #fff;
+    border: 1px solid #dce4ec;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.vgrid-scroll {
+    flex: 1 1 auto;
+    overflow: auto;
+    min-height: 0;
+}
+
+.vgrid-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    white-space: nowrap;
+}
+
+.vgrid-table th,
+.vgrid-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #e9eef4;
+    text-align: left;
+}
+
+.vgrid-table th {
+    position: sticky;
+    top: 0;
+    background: #f4f7fb;
+    color: #46586a;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    border-bottom: 1px solid #d5dee8;
+    user-select: none;
+}
+
+.vgrid-table th.vgrid-sortable { cursor: pointer; }
+.vgrid-table th.vgrid-sortable:hover { color: #1565d8; }
+.vgrid-table th.vgrid-sorted { color: #1565d8; }
+
+.vgrid-table tbody tr:hover td { background: #f7f9fc; }
+.vgrid-table tbody tr { cursor: default; }
+
+.vgrid-table td.vgrid-status-open       { color: #1565d8; font-weight: 600; }
+.vgrid-table td.vgrid-status-inprogress { color: #b8730f; font-weight: 600; }
+.vgrid-table td.vgrid-status-done       { color: #1f8a4c; font-weight: 600; }
+
+.vgrid-table tr.vgrid-loading td {
+    color: #5a6b7d;
+    font-style: italic;
+    padding: 14px 10px;
+}
+
+.vgrid-table tr.vgrid-empty td {
+    color: #5a6b7d;
+    padding: 14px 10px;
+}
+
+/* the red error row a real grid shows when its data source fails */
+.vgrid-table tr.vgrid-error td {
+    background: #fdecea;
+    color: #b23b27;
+    font-weight: 600;
+    padding: 12px 10px;
+    border-left: 4px solid #e05a5a;
+    white-space: normal;
+}
+
+.vgrid-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border-top: 1px solid #d5dee8;
+    background: #f4f7fb;
+    font-size: 11.5px;
+    color: #46586a;
+}
+
+.vgrid-pageinfo { min-width: 84px; text-align: center; }
+
+.vgrid-status { margin-left: auto; color: #5a6b7d; }
+
+.vgrid-btn {
+    font: inherit;
+    padding: 3px 9px;
+    border: 1px solid #c9d4e0;
+    border-radius: 4px;
+    background: #fff;
+    color: #1f3147;
+    cursor: pointer;
+}
+
+.vgrid-btn:hover:not(:disabled) { border-color: #1565d8; color: #1565d8; }
+.vgrid-btn:disabled { opacity: .45; cursor: default; }

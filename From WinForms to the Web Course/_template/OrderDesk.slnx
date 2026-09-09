@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="OrderDesk.Web/OrderDesk.Web.csproj" />
+  <Project Path="LegacyOrderDesk/LegacyOrderDesk.csproj" />
+</Solution>

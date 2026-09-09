@@ -1,0 +1,105 @@
+# Deliverable 3 · Debugging notes — where the widget instance is stored
+
+These notes are the first page of the troubleshooting guide for the Pressure knob. They record where the
+vendor object lives, how that was verified, and how to read the failures the lab reproduces.
+
+## Where the instance is stored
+
+| Reference | Set by | Use it for |
+|---|---|---|
+| `this.instance` (on the Wisej.NET client widget) | `gauge-init.js`, step 5 | the adapter's own `update`, `dispose`, `pulse`, `getState`; what the course and the walkthrough show |
+| `this.widget` (same object) | `gauge-init.js`, step 5 | the name Wisej.NET's server-side `Widget.Instance` proxy targets: `this.gaugeKnob.Instance.pulse()` reaches the vendor |
+| `$(input).data("vendorKnob")` | the plugin itself (`$.fn.vendorKnob`) | the vendor's own convention; the adapter copies it to `this.instance` once, in `init` |
+| `app.getWidget("gaugeKnob")` | the registry at the top of `gauge-init.js` | DevTools shortcut: returns the Wisej.NET widget wrapper; `.instance` is the vendor object, `.container` the host element |
+
+The DOM tree under the widget, after `init`:
+
+```
+div  (this.container — owned by Wisej.NET; do not touch)
+├─ input.knob            (created by the adapter, hidden by the plugin, holds the value)
+└─ div.vendor-knob       (inserted by the plugin right after the input; the SVG dial)
+   └─ svg
+```
+
+## How to confirm it (Chrome / Edge DevTools, F12)
+
+**Console**
+
+```js
+app.getWidget("gaugeKnob")                     // › wisej.web.Widget {…}  — the wrapper
+app.getWidget("gaugeKnob").instance            // › VendorKnob {input: input.knob, opts: {…}, value: 40, host: div.vendor-knob, …}
+app.getWidget("gaugeKnob").instance.getValue() // › 40
+app.getWidget("gaugeKnob").instance.setValue(72)   // dial moves, "knobchange" fires → valueChanged reaches .NET (watch the trace)
+Object.keys(Object.getPrototypeOf(app.getWidget("gaugeKnob").instance))
+                                               // › ["_build", "getValue", "setValue", "setOptions", "pulse", "resize", "destroy", "_draw"]
+app.getWidget("gaugeKnobBroken").instance      // exists too — the broken script creates the vendor fine; it only loses events
+```
+
+`app.getWidget` is a four-line registry added by the InitScript (Wisej.NET has none of its own). Two
+built-in alternatives that need no registry:
+
+```js
+// 1. From the Elements panel: select the knob's host element, then in the Console
+qx.ui.core.Widget.getWidgetByElement($0)       // the qooxdoo/Wisej widget that owns the selected element
+// 2. From the server-side id shown in the Elements panel (id="id_…")
+Wisej.Core.getComponent("id_…")
+```
+
+Logging the instance right after creation is the fastest check that it exists and which methods it exposes
+— `console.log(this.instance)` after step 5 (remove before committing).
+
+**Sources — `//# sourceURL=gauge-init.js`**
+
+An InitScript is injected at runtime; without the comment it is an anonymous `VM123` script and no
+breakpoint can be set on it by name. With `//# sourceURL=gauge-init.js` as the **last line**, the Sources
+panel lists `gauge-init.js` (search with Ctrl+P) as if it were a real file; set breakpoints in it, step
+through `init`, `update`, `_onKnobChange`. The broken twin is listed as `gauge-init.broken.js`.
+
+**`debugger;`**
+
+`gauge-init.js` has a commented-out `debugger;` at the top of `init`. Uncomment it, keep DevTools open,
+reload: execution pauses before the vendor object exists. The Scope panel then shows exactly what the
+walkthrough shows: `this` = the widget, `options` = the server Options as JSON, `this.container` = the
+host element. Step over the `$(input).vendorKnob(...)` line and `this.instance` appears. Put a second
+breakpoint inside `_onKnobChange` and turn the knob: in the fixed script the Scope shows `me` = widget and
+`this` = `input.knob`; in the broken script the same Scope explains the `TypeError` at a glance.
+`debugger;` is a no-op when DevTools is closed, but it stops every page load when it is open — commit it
+commented out.
+
+**Elements**
+
+Select the knob and confirm the tree above: the vendor's children are **inside** the widget's container,
+not elsewhere in the document. The un-enhanced `<input class="knob">` is styled red/dashed by
+`vendor-knob.css`, so if the plugin never ran you see it in the page.
+
+**Network**
+
+Filter by `wwwroot/`: `jquery-lite.js`, `vendor-knob.css`, `vendor-knob.js` — three `200`s, in that order,
+loaded **once** although two widgets declare them (Wisej.NET caches packages by name). After
+**Wrong package order**: `hide-jquery.js`, `vendor-knob.js?order=wrong`,
+`vendor-knob.css?order=wrong`, `jquery-lite.js?order=wrong` appear, in that order, and the Console shows
+the `ReferenceError` right after the second one.
+
+**Server side**
+
+`Widget.IsLoaded` tells whether the client widget has initialized. The state label in the Knob Demo prints
+it for all three widgets; the wrong-order button re-checks it 2 s after creating the widget.
+
+## Symptom → cause → fix
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Console: `TypeError: this.fireWidgetEvent is not a function` inside the `knobchange` handler; .NET never receives `valueChanged`; the Knob Demo shows `← JS→.NET gaugeKnobBroken.contextError {"thisWas":"HTMLInputElement"}` | `this` inside a vendor callback is the vendor's choice (here the `<input>`), not the widget — `gauge-init.broken.js` | capture `var me = this` before the callback and call `me.fireWidgetEvent(...)` (or `.bind(this)`, or route through a widget method) — `gauge-init.js` |
+| Console at load time: `Uncaught ReferenceError: jQuery is not defined — vendor-knob.js must be loaded after jQuery.`; the dial never appears, a red dashed input is visible; later `$(...).vendorKnob is not a function`; banner "widget never initialized — check Packages order" or "init failed" | the plugin ran before its library — Packages (or script tags) in the wrong order | list jQuery first, then the vendor CSS, then the vendor JS; the InitScript always runs last |
+| Empty box, **no** error | the vendor was handed the wrong element (a `div` when it wants an `<input>`/`canvas`), or its CSS did not load | check the vendor sample for the element it enhances; create that element inside `this.container`; check the Network panel for the stylesheet |
+| Event fires in the console but never reaches .NET, and it happened right after a server change | `fireWidgetEvent` called synchronously inside a vendor callback that ran during `update()` — dropped | apply server values silently (`setValue(v, true)` / `setOptions`) so they do not echo; if the vendor must raise the event, defer with `setTimeout(..., 0)` |
+| Two copies of jQuery on the page, plugins registered on the wrong one | different package names for the same library across widgets, or the app already ships jQuery | one package name for one library, shared by every widget; check what the application already loads before adding a copy |
+| Breakpoint cannot be set, script shows as `VM…` | InitScript injected at runtime without a name | `//# sourceURL=gauge-init.js` as the last line |
+| Knob keeps working after the widget is removed; memory grows | vendor object not destroyed, listeners not removed | wrap `dispose`: `off("knobchange")`, `instance.destroy()`, remove the child element, then call the framework dispose |
+
+## Evidence checklist for the review
+
+- Trace shows `← JS→.NET gaugeKnob.valueChanged {"value":…}` on every turn of the left knob.
+- Trace shows `← JS→.NET gaugeKnobBroken.contextError {…"thisWas":"HTMLInputElement"…}` and **no** `valueChanged` for the right knob.
+- `app.getWidget("gaugeKnob").instance` returns the `VendorKnob` in the console; `gauge-init.js` is listed in Sources.
+- "Wrong package order" produces the `ReferenceError` in the console and the red banner in the page.

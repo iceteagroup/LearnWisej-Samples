@@ -1,0 +1,36 @@
+{
+  "$schema-note": "EnterpriseOps health-check contract. Read once at startup by HealthProbeService; served by GET /healthz (readiness) and GET /healthz/live (liveness). Never served as a static file.",
+  "endpoints": {
+    "readiness": "/healthz",
+    "liveness": "/healthz/live"
+  },
+  "probe": {
+    "intervalSeconds": 10,
+    "timeoutSeconds": 3,
+    "unhealthyThreshold": 3,
+    "healthyThreshold": 2,
+    "expectedStatusCode": 200,
+    "unhealthyStatusCode": 503
+  },
+  "checks": [
+    { "name": "configuration", "critical": true,  "description": "startup validation passed for the active environment" },
+    { "name": "database",      "critical": true,  "description": "a known query returns rows (work orders for the probe tenant)" },
+    { "name": "storage",       "critical": true,  "description": "the upload/storage root is writable" },
+    { "name": "websocket",     "critical": false, "description": "the WebSocket transport is available through the proxy" },
+    { "name": "sessionStore",  "critical": false, "description": "the in-memory session store accepts sessions (count below the node limit)" },
+    { "name": "theme",         "critical": false, "description": "the default theme named in Default.json / Web.config is resolvable" }
+  ],
+  "safeToExpose": {
+    "status": true,
+    "release": true,
+    "node": true,
+    "checks": true,
+    "exceptionMessages": false,
+    "connectionStrings": false
+  },
+  "notes": [
+    "Readiness fails (503) when any critical check fails; the balancer stops sending NEW sessions to the node.",
+    "Liveness never inspects dependencies: it answers 200 while the process can run code, so an orchestrator restarts only truly dead nodes.",
+    "Existing sessions on a node that turns unhealthy are drained: the node keeps answering pinned sessions until sessionTimeout, then leaves the pool."
+  ]
+}

@@ -1,0 +1,11 @@
+/* Widgets/statusGauge.css — scoped to the widget's own class names (lw-gauge-…)
+   so the stylesheet cannot accidentally restyle the rest of the application. */
+.lw-gauge { font: 13px/1.4 inherit; padding: 8px; }
+.lw-gauge-track { height: 14px; border-radius: 7px; background: #e6e6ee; overflow: hidden; }
+.lw-gauge-fill { height: 100%; width: 0; border-radius: 7px; transition: width .4s ease; }
+.lw-gauge-ok { background: #1f9d57; }
+.lw-gauge-warn { background: #e8a317; }
+.lw-gauge-error { background: #d64545; }
+.lw-gauge-label { margin-top: 6px; color: #444; }
+.lw-gauge-pulse { animation: lwPulse .6s ease; }
+@keyframes lwPulse { 50% { opacity: .5; } }
