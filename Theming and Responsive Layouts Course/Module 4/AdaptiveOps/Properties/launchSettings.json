@@ -1,0 +1,12 @@
+{
+	"profiles": {
+		"AdaptiveOps": {
+			"commandName": "Project",
+			"launchBrowser": true,
+			"applicationUrl": "http://localhost:5504",
+			"environmentVariables": {
+				"WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+			}
+		}
+	}
+}

@@ -25,7 +25,7 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
     <!-- HealthCheck.json rides with the build/publish output like appsettings*.json; never served (Startup.cs skips *.json). -->
-    <Content Include="HealthCheck.json">
+    <Content Update="HealthCheck.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

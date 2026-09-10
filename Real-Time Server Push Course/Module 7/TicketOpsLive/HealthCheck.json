@@ -1,0 +1,5 @@
+{
+	"maxMemory": "2GB",
+	"maxSessions": 500,
+	"cpuThreshold": 85
+}

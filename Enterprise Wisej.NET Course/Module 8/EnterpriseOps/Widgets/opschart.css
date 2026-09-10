@@ -1,0 +1,153 @@
+/*
+ * EnterpriseOps.Widgets.WorkOrderChartWidget — the component's own stylesheet, version 1.2.0.
+ *
+ * It is registered as a Widget package AFTER the vendor library so that the component's rules win
+ * over the vendor's (the lesson's packaging rule: "the component's own stylesheet loads after the
+ * vendor's so its overrides win"). Every class name is prefixed `eops-` so it cannot collide with
+ * the Wisej.NET theme or with another component on the same page.
+ *
+ * Nothing here is theme-specific except the two colour groups at the bottom, which follow the
+ * Wisej.NET dark theme through the `qx-dark` body class the framework adds.
+ */
+
+.eops-chart,
+.eops-chart-fallback {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    padding: 10px 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1f2d3a;
+    overflow: hidden;
+}
+
+.eops-chart-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.eops-chart-title {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #4a5a6a;
+    white-space: nowrap;
+}
+
+.eops-chart-badge {
+    font-size: 9.5px;
+    font-weight: 800;
+    color: #b9770e;
+    background: #fff8ec;
+    border: 1px solid #e8c98f;
+    border-radius: 999px;
+    padding: 2px 8px;
+    white-space: nowrap;
+}
+
+.eops-chart-vendor {
+    margin-left: auto;
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    color: #9aa7b4;
+    white-space: nowrap;
+}
+
+.eops-chart-bar {
+    display: block;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.eops-chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.eops-chart-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #5a6b7d;
+    white-space: nowrap;
+}
+
+.eops-chart-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+}
+
+/* ---- the embedded fallback: what the adapter draws when the vendor never loaded ---- */
+
+.eops-chart-fallback {
+    border: 1.5px solid rgba(232, 161, 60, .6);
+    border-radius: 6px;
+    background: #fffdf6;
+}
+
+.eops-chart-fallback .eops-chart-title {
+    color: #7a5210;
+}
+
+.eops-chart-fallback .eops-chart-vendor {
+    color: #9a7a3a;
+}
+
+.eops-fallback-row {
+    display: flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 10px;
+    font-size: 11.5px;
+    border-bottom: 1px solid #f7eeda;
+}
+
+.eops-fallback-row:last-child {
+    border-bottom: none;
+}
+
+.eops-fallback-row .eops-chart-swatch {
+    margin-right: 9px;
+}
+
+.eops-fallback-label {
+    font-weight: 700;
+    color: #1f2d3a;
+}
+
+.eops-fallback-value {
+    margin-left: auto;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    color: #46586a;
+}
+
+/* ---- dark theme ---- */
+
+.qx-dark .eops-chart,
+.qx-dark .eops-chart-fallback {
+    color: #d6e4f3;
+}
+
+.qx-dark .eops-chart-title {
+    color: #9fc0e8;
+}
+
+.qx-dark .eops-chart-legend-item {
+    color: #9fc0e8;
+}
+
+.qx-dark .eops-chart-fallback {
+    background: #24201a;
+}
+
+.qx-dark .eops-fallback-label {
+    color: #f0e6d2;
+}

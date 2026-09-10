@@ -1,3 +1,4 @@
+using EnterpriseOps.Services;
 using System.Collections.Specialized;
 using Wisej.Web;
 
@@ -12,6 +13,10 @@ namespace EnterpriseOps
         /// </summary>
         static void Main(NameValueCollection args)
         {
+            // The node counts the sessions it holds: it is what the "sessionStore" health check reports,
+            // and it is exactly the state that makes sticky sessions a requirement rather than a tuning knob.
+            HealthProbeService.SessionStarted();
+
             Application.MainPage = new UI.ReleaseDashboardPage();
         }
     }

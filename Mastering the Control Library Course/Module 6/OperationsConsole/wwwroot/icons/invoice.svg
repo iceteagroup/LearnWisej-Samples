@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Document of kind "invoice". Key: "invoice". -->
+  <path d="M3.5 1.5h9v13l-2-1.2-2 1.2-2-1.2-2 1.2z" fill="#ffffff" stroke="#3a4d63" stroke-width="1"/>
+  <path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="#3f7fd0" stroke-width="1" stroke-linecap="round"/>
+</svg>

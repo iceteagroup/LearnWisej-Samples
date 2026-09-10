@@ -13,14 +13,17 @@ namespace EnterpriseOps.Data
     /// </summary>
     public class WorkOrderRepository
     {
-        private static readonly List<WorkOrder> Seed = CreateSeed();
-
+        // Declaration order matters: static field initializers run top to bottom, and CreateSeed() reads
+        // Tenants. Declaring Seed first hands it a null array, and the database health check then reports
+        // "check threw TypeInitializationException" — a real failure, raised in the wrong place.
         public static readonly Tenant[] Tenants =
         {
             new Tenant { Id = "contoso",   Name = "Contoso Field Services" },
             new Tenant { Id = "fabrikam",  Name = "Fabrikam Utilities" },
             new Tenant { Id = "northwind", Name = "Northwind Facilities" },
         };
+
+        private static readonly List<WorkOrder> Seed = CreateSeed();
 
         /// <summary>The "known query" the smoke test and the database health check run.</summary>
         public int CountOpen(string tenantId)

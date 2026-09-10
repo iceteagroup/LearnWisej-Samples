@@ -3,7 +3,7 @@
   <!--
     AdaptiveOps — Theming & Responsive Layouts course lab (Adaptive Operations Console).
     Multi-targets net10.0-windows and net10.0 (Kestrel). Run with:
-      dotnet run -f net10.0 --urls http://localhost:550N   (from this folder)
+      dotnet run -f net10.0 [urls option] http://localhost:550N   (from this folder; see README.md for the exact command)
   -->
   <PropertyGroup>
     <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>

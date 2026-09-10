@@ -3,7 +3,7 @@
 		"EnterpriseOps": {
 			"commandName": "Project",
 			"launchBrowser": true,
-			"applicationUrl": "http://localhost:5201",
+			"applicationUrl": "http://localhost:5209",
 			"environmentVariables": {
 				"WEBSITE_PATH": "$(MSBuildProjectDirectory)"
 			}

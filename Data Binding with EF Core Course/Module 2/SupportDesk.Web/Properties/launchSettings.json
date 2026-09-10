@@ -1,0 +1,13 @@
+{
+	"profiles": {
+		"SupportDesk.Web": {
+			"commandName": "Project",
+			"launchBrowser": true,
+			"applicationUrl": "http://localhost:5402",
+			"environmentVariables": {
+				"ASPNETCORE_ENVIRONMENT": "Development",
+				"WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+			}
+		}
+	}
+}

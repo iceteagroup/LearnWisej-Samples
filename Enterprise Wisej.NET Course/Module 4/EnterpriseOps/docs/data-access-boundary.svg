@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="600" viewBox="0 0 1060 600" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1a86ff"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a4c"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1060" height="600" fill="#ffffff"/>
+
+  <text x="24" y="32" font-size="19" font-weight="700" fill="#0d1b2a">Data access boundary — EnterpriseOps Approvals (Module 4)</text>
+  <text x="24" y="55" font-size="13" fill="#5a6b7d">Commands and queries go in, results and read models come out. Nothing else crosses; no screen holds a DbContext.</text>
+
+  <!-- the boundary -->
+  <line x1="300" y1="78" x2="300" y2="416" stroke="#c0392b" stroke-width="2.5" stroke-dasharray="9 6"/>
+  <text x="300" y="72" font-size="11.5" font-weight="700" fill="#c0392b" text-anchor="middle" letter-spacing="1">THE BOUNDARY</text>
+
+  <!-- ───────────── write path ───────────── -->
+  <text x="24" y="104" font-size="11.5" font-weight="700" fill="#1a86ff" letter-spacing="1">WRITE PATH — one command, one transaction</text>
+
+  <rect x="24" y="116" width="240" height="94" rx="9" fill="#f4f8fd" stroke="#a9c6e8" stroke-width="1.4"/>
+  <text x="40" y="139" font-size="12.5" font-weight="700" fill="#0d1b2a">EnterpriseOps.UI</text>
+  <text x="40" y="160" font-size="12" fill="#31414f">ApprovalsPage</text>
+  <text x="40" y="179" font-size="11.5" font-family="Consolas, monospace" fill="#5a6b7d">btnApprove_Click</text>
+  <text x="40" y="197" font-size="11" fill="#5a6b7d">builds a command, shows a result</text>
+
+  <line x1="268" y1="150" x2="428" y2="150" stroke="#1a86ff" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <text x="348" y="142" font-size="11" font-family="Consolas, monospace" fill="#1565d8" text-anchor="middle">ApproveWorkOrderCommand</text>
+  <text x="348" y="168" font-size="10.5" fill="#5a6b7d" text-anchor="middle">+ CommandContext</text>
+
+  <line x1="428" y1="192" x2="268" y2="192" stroke="#1f8a4c" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="348" y="185" font-size="11" font-family="Consolas, monospace" fill="#177a43" text-anchor="middle">CommandResult</text>
+
+  <rect x="432" y="116" width="300" height="94" rx="9" fill="#f7fbf8" stroke="#9ecbb0" stroke-width="1.4"/>
+  <text x="448" y="139" font-size="12.5" font-weight="700" fill="#0d1b2a">IWorkOrderCommandService</text>
+  <text x="448" y="158" font-size="11.5" fill="#31414f">Data/WorkOrderCommandService.cs</text>
+  <text x="448" y="177" font-size="10.5" fill="#5a6b7d">authorize · BEGIN · load · check version</text>
+  <text x="448" y="194" font-size="10.5" fill="#5a6b7d">validate · persist · audit · COMMIT / ROLLBACK</text>
+
+  <line x1="736" y1="163" x2="782" y2="163" stroke="#1a86ff" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <rect x="786" y="116" width="250" height="94" rx="9" fill="#fbf8f4" stroke="#dcc7a6" stroke-width="1.4"/>
+  <text x="802" y="139" font-size="12.5" font-weight="700" fill="#0d1b2a">EF Core</text>
+  <text x="802" y="158" font-size="11.5" fill="#31414f">WorkOrderRepository (aggregate)</text>
+  <text x="802" y="176" font-size="11.5" fill="#31414f">EnterpriseOpsDbContext (unit of work)</text>
+  <text x="802" y="194" font-size="10.5" fill="#5a6b7d">SQLite · one open connection per session</text>
+
+  <!-- ───────────── read path ───────────── -->
+  <text x="24" y="262" font-size="11.5" font-weight="700" fill="#1a86ff" letter-spacing="1">READ PATH — projections shaped for the screen</text>
+
+  <rect x="24" y="274" width="240" height="94" rx="9" fill="#f4f8fd" stroke="#a9c6e8" stroke-width="1.4"/>
+  <text x="40" y="297" font-size="12.5" font-weight="700" fill="#0d1b2a">EnterpriseOps.UI</text>
+  <text x="40" y="318" font-size="12" fill="#31414f">dgvWorkQueue · dgvAudit</text>
+  <text x="40" y="337" font-size="11" fill="#5a6b7d">binds rows it cannot save</text>
+  <text x="40" y="355" font-size="11" fill="#5a6b7d">no IQueryable, no lazy loading</text>
+
+  <line x1="268" y1="308" x2="428" y2="308" stroke="#1a86ff" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <text x="348" y="300" font-size="11" font-family="Consolas, monospace" fill="#1565d8" text-anchor="middle">WorkQueueQuery</text>
+
+  <line x1="428" y1="348" x2="268" y2="348" stroke="#1f8a4c" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="348" y="341" font-size="11" font-family="Consolas, monospace" fill="#177a43" text-anchor="middle">PagedResult&lt;WorkQueueRow&gt;</text>
+  <text x="348" y="364" font-size="10.5" fill="#5a6b7d" text-anchor="middle">AuditQueryResult</text>
+
+  <rect x="432" y="274" width="300" height="94" rx="9" fill="#f7fbf8" stroke="#9ecbb0" stroke-width="1.4"/>
+  <text x="448" y="297" font-size="12.5" font-weight="700" fill="#0d1b2a">IWorkOrderQueryService</text>
+  <text x="448" y="316" font-size="11.5" fill="#31414f">Data/WorkOrderQueryService.cs</text>
+  <text x="448" y="335" font-size="10.5" fill="#5a6b7d">tenant filter · AsNoTracking · Select(…)</text>
+  <text x="448" y="352" font-size="10.5" fill="#5a6b7d">audit read is authorized here, not in the screen</text>
+
+  <line x1="736" y1="321" x2="782" y2="321" stroke="#1a86ff" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <rect x="786" y="274" width="250" height="94" rx="9" fill="#fbf8f4" stroke="#dcc7a6" stroke-width="1.4"/>
+  <text x="802" y="297" font-size="12.5" font-weight="700" fill="#0d1b2a">EF Core</text>
+  <text x="802" y="316" font-size="11.5" fill="#31414f">EnterpriseOpsDbContext (per query)</text>
+  <text x="802" y="335" font-size="10.5" fill="#5a6b7d">read-only: nothing is tracked,</text>
+  <text x="802" y="352" font-size="10.5" fill="#5a6b7d">so nothing can be saved by accident</text>
+
+  <!-- ───────────── what crosses / what never does ───────────── -->
+  <rect x="24" y="404" width="496" height="172" rx="9" fill="#f7fbf8" stroke="#1f8a4c" stroke-width="1.6"/>
+  <text x="42" y="430" font-size="12.5" font-weight="700" fill="#155f33">Crosses the boundary</text>
+  <text x="42" y="454" font-size="11.5" fill="#31414f">• CreateWorkOrderCommand · UpdateWorkOrderCommand · ApproveWorkOrderCommand</text>
+  <text x="42" y="475" font-size="11.5" fill="#31414f">• CommandContext (tenant · user · role · correlation id)</text>
+  <text x="42" y="496" font-size="11.5" fill="#31414f">• CommandResult (Success · UserMessage · ErrorCode · Detail · CorrelationId)</text>
+  <text x="42" y="517" font-size="11.5" fill="#31414f">• WorkQueueQuery · PagedResult&lt;WorkQueueRow&gt; · WorkOrderHeader</text>
+  <text x="42" y="538" font-size="11.5" fill="#31414f">• AuditQueryResult · AuditLogRow</text>
+  <text x="42" y="561" font-size="11" fill="#5a6b7d">Every one of them is a plain class. None of them needs a Form to exist.</text>
+
+  <rect x="540" y="404" width="496" height="172" rx="9" fill="#fdf4f3" stroke="#c0392b" stroke-width="1.6"/>
+  <text x="558" y="430" font-size="12.5" font-weight="700" fill="#8c2b1e">Never crosses</text>
+  <text x="558" y="454" font-size="11.5" fill="#31414f">• EnterpriseOpsDbContext, DbSet&lt;T&gt;, IQueryable&lt;T&gt;, change tracking</text>
+  <text x="558" y="475" font-size="11.5" fill="#31414f">• Domain.WorkOrder / Domain.AuditEntry entities</text>
+  <text x="558" y="496" font-size="11.5" fill="#31414f">• DbUpdateException · DbUpdateConcurrencyException · SqliteException</text>
+  <text x="558" y="517" font-size="11.5" fill="#31414f">• SQL text, table names, index names, connection strings</text>
+  <text x="558" y="538" font-size="11.5" fill="#31414f">• transactions — the service opens and closes every one of them</text>
+  <text x="558" y="561" font-size="11" fill="#5a6b7d">A pull request that puts any of these in UI/ is rejected on sight.</text>
+</svg>

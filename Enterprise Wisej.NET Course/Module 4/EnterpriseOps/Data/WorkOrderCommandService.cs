@@ -7,6 +7,7 @@ using EnterpriseOps.Security;
 using EnterpriseOps.Services;
 using EnterpriseOps.Services.Commands;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace EnterpriseOps.Data
 {
@@ -163,81 +164,111 @@ namespace EnterpriseOps.Data
 
         private async Task<CommandResult> RunAsync(string operation, int? workOrderId, CommandContext context, CancellationToken cancellationToken, CommandBody body)
         {
-            // Security first: no transaction is opened for a caller who may not perform the operation.
-            var op = (Operation)Enum.Parse(typeof(Operation), operation);
-            if (!Permissions.IsAllowed(context.Role, op, out string denied))
-            {
-                _trace.Trace(TraceLayer.Security, $"authorize {context.UserId} ({context.Role}) → {operation} DENIED");
-                await WriteRejectionAuditAsync(context, operation, workOrderId, ErrorMap.PermissionDenied, denied, cancellationToken);
-                return ErrorMap.Rejected(ErrorMap.PermissionDenied, denied, context.CorrelationId, _trace);
-            }
-            _trace.Trace(TraceLayer.Security, $"authorize {context.UserId} ({context.Role}) → {operation} allowed");
-
             // A bounded wait: a command that cannot finish becomes DB_TIMEOUT, not a hung session.
             var timeout = _faults.TakeTimeout() ?? _commandTimeout();
             using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutSource.CancelAfter(timeout);
             var ct = timeoutSource.Token;
 
+            // One session, one SQLite connection: commands and queries take turns instead of overlapping.
             await _database.Gate.WaitAsync(cancellationToken);
-            EnterpriseOpsDbContext dbContext = null;
             try
             {
-                dbContext = _database.CreateContext($"{operation} command");
-                var repository = new WorkOrderRepository(dbContext, _trace);
-
-                await using var transaction = await dbContext.Database.BeginTransactionAsync(ct);
-                _trace.Trace(TraceLayer.Data, $"BEGIN TRANSACTION (timeout {timeout.TotalMilliseconds:0} ms)");
-
-                int delay = _faults.TakeDelayMs();
-                if (delay > 0)
+                // Security first: no transaction is opened for a caller who may not perform the operation.
+                var op = (Operation)Enum.Parse(typeof(Operation), operation);
+                if (!Permissions.IsAllowed(context.Role, op, out string denied))
                 {
-                    _trace.Trace(TraceLayer.Data, $"simulated slow query: {delay} ms inside the transaction…");
-                    await Task.Delay(delay, ct);
+                    _trace.Trace(TraceLayer.Security, $"authorize {context.UserId} ({context.Role}) → {operation} DENIED");
+                    await WriteRejectionAuditAsync(context, operation, workOrderId, ErrorMap.PermissionDenied, denied);
+                    return ErrorMap.Rejected(ErrorMap.PermissionDenied, denied, context.CorrelationId, _trace);
+                }
+                _trace.Trace(TraceLayer.Security, $"authorize {context.UserId} ({context.Role}) → {operation} allowed");
+
+                CommandResult result = null;
+                string auditDetail = null;
+
+                // The unit of work: created here, disposed in the finally below. Nothing outside this
+                // method ever sees the DbContext — that is the whole point of the boundary.
+                var dbContext = _database.CreateContext($"{operation} command");
+                try
+                {
+                    var repository = new WorkOrderRepository(dbContext, _trace);
+                    var transaction = await dbContext.Database.BeginTransactionAsync(ct);
+                    _trace.Trace(TraceLayer.Data, $"BEGIN TRANSACTION (timeout {timeout.TotalMilliseconds:0} ms)");
+                    try
+                    {
+                        int delay = _faults.TakeDelayMs();
+                        if (delay > 0)
+                        {
+                            _trace.Trace(TraceLayer.Data, $"simulated slow query: {delay} ms inside the transaction…");
+                            await Task.Delay(delay, ct);
+                        }
+
+                        result = await body(repository, dbContext, ct);
+
+                        if (result.Success)
+                        {
+                            await transaction.CommitAsync(ct);
+                            _trace.Trace(TraceLayer.Data, "COMMIT");
+                            _trace.Trace(TraceLayer.Audit, $"{operation} Committed · corr {context.CorrelationId} (written inside the transaction)");
+                            _trace.Trace(TraceLayer.Service, $"CommandResult.Ok → \"{result.UserMessage}\"");
+                        }
+                        else
+                        {
+                            // A domain rejection: nothing was persisted, roll back explicitly so the trace shows it.
+                            await transaction.RollbackAsync(CancellationToken.None);
+                            _trace.Trace(TraceLayer.Data, $"ROLLBACK ({result.ErrorCode})");
+                        }
+                    }
+                    catch (Exception exception)
+                    {
+                        // The database's vocabulary stops here. The user gets a message, the audit gets a code.
+                        var mapped = ErrorMap.Map(exception, operation, context.CorrelationId);
+                        _trace.Trace(TraceLayer.Data, $"ROLLBACK ← {exception.GetType().Name}{(exception.InnerException != null ? " / " + exception.InnerException.GetType().Name : "")}");
+                        _trace.Trace(TraceLayer.Service, $"ErrorMap: {exception.GetType().Name} → {mapped.Code}");
+
+                        TryRollback(transaction);
+                        auditDetail = mapped.AuditDetail;
+                        result = CommandResult.Fail(mapped.UserMessage, mapped.Code, context.CorrelationId);
+                        _trace.Trace(TraceLayer.Service, $"CommandResult.Fail {mapped.Code} → \"{mapped.UserMessage}\"");
+                    }
+                    finally
+                    {
+                        await transaction.DisposeAsync();
+                    }
+                }
+                finally
+                {
+                    // Short-lived means short-lived: the context dies with the operation, committed or not.
+                    _database.Release(dbContext, result != null && result.Success ? null : "rolled back");
                 }
 
-                CommandResult result = await body(repository, dbContext, ct);
-
-                if (result.Success)
+                // Written after the rollback, in its own context and its own transaction — an audit row that
+                // rolls back with the failure it records is no audit at all.
+                if (!result.Success)
                 {
-                    await transaction.CommitAsync(ct);
-                    _trace.Trace(TraceLayer.Data, "COMMIT");
-                    _trace.Trace(TraceLayer.Audit, $"{operation} Committed · corr {context.CorrelationId} (written inside the transaction)");
-                    _trace.Trace(TraceLayer.Service, $"CommandResult.Ok → \"{result.UserMessage}\"");
-                    return result;
+                    await WriteRejectionAuditAsync(context, operation, workOrderId ?? result.WorkOrderId,
+                        result.ErrorCode, auditDetail ?? result.UserMessage);
                 }
 
-                // A domain rejection: nothing was persisted, roll back explicitly so the trace shows it.
-                await transaction.RollbackAsync(CancellationToken.None);
-                _trace.Trace(TraceLayer.Data, $"ROLLBACK ({result.ErrorCode})");
-                _database.Release(dbContext, "rolled back");
-                dbContext = null;
-
-                await WriteRejectionAuditAsync(context, operation, workOrderId ?? result.WorkOrderId, result.ErrorCode, result.UserMessage, cancellationToken);
                 return result;
-            }
-            catch (Exception exception)
-            {
-                // The database's vocabulary stops here. The user gets a message, the audit gets a code.
-                var mapped = ErrorMap.Map(exception, operation, context.CorrelationId);
-                _trace.Trace(TraceLayer.Data, $"ROLLBACK ← {exception.GetType().Name}{(exception.InnerException != null ? " / " + exception.InnerException.GetType().Name : "")}");
-                _trace.Trace(TraceLayer.Service, $"ErrorMap: {exception.GetType().Name} → {mapped.Code}");
-
-                if (dbContext != null)
-                {
-                    _database.Release(dbContext, "rolled back");    // disposing the context disposes the open transaction → rollback
-                    dbContext = null;
-                }
-
-                await WriteRejectionAuditAsync(context, operation, workOrderId, mapped.Code, mapped.AuditDetail, CancellationToken.None);
-                _trace.Trace(TraceLayer.Service, $"CommandResult.Fail {mapped.Code} → \"{mapped.UserMessage}\"");
-                return CommandResult.Fail(mapped.UserMessage, mapped.Code, context.CorrelationId);
             }
             finally
             {
-                if (dbContext != null)
-                    _database.Release(dbContext);
                 _database.Gate.Release();
+            }
+        }
+
+        /// <summary>Best-effort rollback: the transaction may already be gone (timeout, connection loss).</summary>
+        private void TryRollback(IDbContextTransaction transaction)
+        {
+            try
+            {
+                transaction.Rollback();
+            }
+            catch (Exception exception)
+            {
+                _trace.Trace(TraceLayer.Data, $"rollback was already done by the provider ({exception.GetType().Name})");
             }
         }
 
@@ -252,7 +283,7 @@ namespace EnterpriseOps.Data
         /// A rejection is audited in its own short-lived context and its own transaction, after the
         /// command's transaction rolled back — otherwise the audit row would roll back with it.
         /// </summary>
-        private async Task WriteRejectionAuditAsync(CommandContext context, string operation, int? workOrderId, string code, string detail, CancellationToken ct)
+        private async Task WriteRejectionAuditAsync(CommandContext context, string operation, int? workOrderId, string code, string detail)
         {
             EnterpriseOpsDbContext auditContext = null;
             try

@@ -21,6 +21,12 @@ namespace EnterpriseOps.Services.WorkQueues
         /// <summary>Per-row pause so progress is visible in the UI (a real batch would be as slow as its writes).</summary>
         public static readonly TimeSpan RowDelay = TimeSpan.FromMilliseconds(450);
 
+        /// <summary>The pause for a whole page of rows, so a 50-row lab run stays watchable without being tedious.</summary>
+        public static readonly TimeSpan BulkRowDelay = TimeSpan.FromMilliseconds(60);
+
+        /// <summary>A small batch is paced so every row can be read; a big one is paced so the bar still moves.</summary>
+        public static TimeSpan DelayFor(int rowCount) => rowCount > 10 ? BulkRowDelay : RowDelay;
+
         private readonly WorkOrderStore _store;
         private readonly PermissionService _permissions;
         private readonly AuditTrail _audit;
@@ -51,6 +57,7 @@ namespace EnterpriseOps.Services.WorkQueues
                          $"by {ctx.UserName} ({ctx.Role}) @ {ctx.TenantId}");
 
             var results = new List<BatchRowResult>(command.Items.Count);
+            var rowDelay = DelayFor(command.Items.Count);
             var sw = Stopwatch.StartNew();
             int done = 0;
 
@@ -68,7 +75,7 @@ namespace EnterpriseOps.Services.WorkQueues
                 done++;
                 onProgress?.Invoke(new BatchProgress(done, command.Items.Count, item.Number, result.Outcome));
 
-                await Task.Delay(RowDelay, cancellation).ConfigureAwait(false);
+                await Task.Delay(rowDelay, cancellation).ConfigureAwait(false);
             }
 
             sw.Stop();

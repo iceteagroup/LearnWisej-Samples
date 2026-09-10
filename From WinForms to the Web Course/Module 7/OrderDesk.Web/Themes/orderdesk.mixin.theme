@@ -1,0 +1,30 @@
+{
+	"name": "orderdesk",
+
+	"colors": {
+		"orderdesk-accent": "#1A86FF"
+	},
+
+	"appearances": {
+
+		"button": {
+			"states": {
+				"default": {
+					"styles": {
+						"radius": 14
+					}
+				}
+			}
+		},
+
+		"toolbar/button": {
+			"states": {
+				"default": {
+					"styles": {
+						"radius": 14
+					}
+				}
+			}
+		}
+	}
+}

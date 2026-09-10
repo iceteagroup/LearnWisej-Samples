@@ -1,0 +1,6 @@
+{
+	"url": "Default.html",
+	"startup": "TicketOpsLive.Program.Main, TicketOpsLive",
+	"theme": "Bootstrap-4",
+	"debug": true
+}

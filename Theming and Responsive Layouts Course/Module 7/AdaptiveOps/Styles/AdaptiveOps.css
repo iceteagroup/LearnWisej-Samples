@@ -1,0 +1,47 @@
+/*
+  AdaptiveOps · scoped application stylesheet (Module 7 capstone)
+  ---------------------------------------------------------------
+  Linked from Default.html and served by the static file server as /Styles/AdaptiveOps.css.
+
+  Rules here reach only application-specific content through Control.CssClass. Standard controls take
+  their identity from Themes/AdaptiveOps.theme; nothing below selects a widget's internal DOM, and every
+  property used is an inherited text property, so the rules keep working when the widget markup changes.
+  The governance review (rule G7) fails when a CssClass is used that is not defined in this file, and
+  docs/ArchitectureNote.md lists why each class is CSS rather than a theme appearance.
+*/
+
+/* Metric cards: the theme owns surface, border, shadow, fonts and colours (metric-card / metric-title /
+   metric-value appearances). CSS adds the app-specific typography treatment only. */
+.metric-card .metric-title {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.metric-card .metric-value {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The "Layout cost" card and its proportional bar (two Percent columns of a TableLayoutPanel). */
+.cost-card .cost-bar {
+  opacity: 0.95;
+}
+
+/* The live trace list keeps monospace glyphs unligatured so → ← • stay aligned. */
+.trace-list {
+  font-variant-ligatures: none;
+}
+
+/* Governance review summary: pass/fail is text + icon + theme state; CSS adds emphasis only. */
+.gov-summary {
+  font-variant-numeric: tabular-nums;
+}
+
+.gov-summary-pass {
+  letter-spacing: 0.01em;
+}
+
+.gov-summary-fail {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}

@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560" font-family="Segoe UI, system-ui, sans-serif">
+  <title>EnterpriseOps migration path — seven verifiable steps, each with a fallback point</title>
+  <desc>Compile, Run, Compare behavior, Check themes, Verify sessions, Review deployment, Measure performance. Step 4 is the failure path the walkthrough shows.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5a9bf0"/>
+    </marker>
+    <marker id="arrowBack" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#b9770e"/>
+    </marker>
+  </defs>
+
+  <rect width="1180" height="560" fill="#f4f7fb"/>
+
+  <text x="40" y="46" font-size="13" font-weight="700" letter-spacing="1.6" fill="#1565d8">INCREMENTAL UPGRADE</text>
+  <text x="40" y="80" font-size="26" font-weight="700" fill="#0d1b2a">Small steps, real fallback points</text>
+  <text x="40" y="108" font-size="14" fill="#5a6b7d">TicketOps Console (Wisej.NET 3.5 / .NET Framework 4.8) → EnterpriseOps baseline (Wisej.NET 4.1 / .NET 10)</text>
+
+  <!-- ================= row 1: steps 1-4 ================= -->
+  <g>
+    <!-- step 1 -->
+    <rect x="40" y="150" width="240" height="76" rx="10" fill="#ffffff" stroke="#c9d8ea" stroke-width="1.5"/>
+    <rect x="40" y="150" width="240" height="4" rx="2" fill="#1565d8"/>
+    <circle cx="70" cy="192" r="15" fill="#1565d8"/>
+    <text x="70" y="197" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="95" y="186" font-size="16" font-weight="700" fill="#0d1b2a">Compile</text>
+    <text x="95" y="207" font-size="12" fill="#5a6b7d">both targets, 0 errors</text>
+    <text x="52" y="248" font-size="11.5" font-weight="700" fill="#b9770e">↩ FALLBACK · git tag pre-fx</text>
+
+    <!-- step 2 -->
+    <rect x="330" y="150" width="240" height="76" rx="10" fill="#ffffff" stroke="#c9d8ea" stroke-width="1.5"/>
+    <rect x="330" y="150" width="240" height="4" rx="2" fill="#1565d8"/>
+    <circle cx="360" cy="192" r="15" fill="#1565d8"/>
+    <text x="360" y="197" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="385" y="186" font-size="16" font-weight="700" fill="#0d1b2a">Run</text>
+    <text x="385" y="207" font-size="12" fill="#5a6b7d">session starts, MainPage loads</text>
+    <text x="342" y="248" font-size="11.5" font-weight="700" fill="#b9770e">↩ FALLBACK · config backup</text>
+
+    <!-- step 3 -->
+    <rect x="620" y="150" width="240" height="76" rx="10" fill="#ffffff" stroke="#c9d8ea" stroke-width="1.5"/>
+    <rect x="620" y="150" width="240" height="4" rx="2" fill="#1565d8"/>
+    <circle cx="650" cy="192" r="15" fill="#1565d8"/>
+    <text x="650" y="197" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="675" y="186" font-size="16" font-weight="700" fill="#0d1b2a">Compare behavior</text>
+    <text x="675" y="207" font-size="12" fill="#5a6b7d">flows 1–5 · security + behavior</text>
+    <text x="632" y="248" font-size="11.5" font-weight="700" fill="#b9770e">↩ FALLBACK · package pin 3.5</text>
+
+    <!-- step 4 — the failure path -->
+    <rect x="910" y="150" width="240" height="76" rx="10" fill="#fdf0ee" stroke="#e0563b" stroke-width="2"/>
+    <rect x="910" y="150" width="240" height="4" rx="2" fill="#e0563b"/>
+    <circle cx="940" cy="192" r="15" fill="#e0563b"/>
+    <text x="940" y="197" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="965" y="186" font-size="16" font-weight="700" fill="#0d1b2a">Check themes</text>
+    <text x="965" y="207" font-size="12" fill="#8a4436">all 10 flows · visual diff</text>
+    <text x="922" y="248" font-size="11.5" font-weight="700" fill="#b9770e">↩ FALLBACK · theme folder copy</text>
+
+    <line x1="286" y1="188" x2="322" y2="188" stroke="#5a9bf0" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <line x1="576" y1="188" x2="612" y2="188" stroke="#5a9bf0" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <line x1="866" y1="188" x2="902" y2="188" stroke="#5a9bf0" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- ================= row 2: steps 5-7 ================= -->
+  <g>
+    <!-- step 5 -->
+    <rect x="40" y="330" width="240" height="76" rx="10" fill="#ffffff" stroke="#c9d8ea" stroke-width="1.5"/>
+    <rect x="40" y="330" width="240" height="4" rx="2" fill="#1565d8"/>
+    <circle cx="70" cy="372" r="15" fill="#1565d8"/>
+    <text x="70" y="377" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+    <text x="95" y="366" font-size="16" font-weight="700" fill="#0d1b2a">Verify sessions</text>
+    <text x="95" y="387" font-size="12" fill="#5a6b7d">flows 9–10 · session + job</text>
+    <text x="52" y="428" font-size="11.5" font-weight="700" fill="#b9770e">↩ FALLBACK · feature flag off</text>
+
+    <!-- step 6 -->
+    <rect x="330" y="330" width="240" height="76" rx="10" fill="#ffffff" stroke="#c9d8ea" stroke-width="1.5"/>
+    <rect x="330" y="330" width="240" height="4" rx="2" fill="#1565d8"/>
+    <circle cx="360" cy="372" r="15" fill="#1565d8"/>
+    <text x="360" y="377" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+    <text x="385" y="366" font-size="16" font-weight="700" fill="#0d1b2a">Review deployment</text>
+    <text x="385" y="387" font-size="12" fill="#5a6b7d">staging answers /healthz</text>
+    <text x="342" y="428" font-size="11.5" font-weight="700" fill="#b9770e">↩ FALLBACK · previous package</text>
+
+    <!-- step 7 -->
+    <rect x="620" y="330" width="240" height="76" rx="10" fill="#ffffff" stroke="#c9d8ea" stroke-width="1.5"/>
+    <rect x="620" y="330" width="240" height="4" rx="2" fill="#1565d8"/>
+    <circle cx="650" cy="372" r="15" fill="#1565d8"/>
+    <text x="650" y="377" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">7</text>
+    <text x="675" y="366" font-size="16" font-weight="700" fill="#0d1b2a">Measure performance</text>
+    <text x="675" y="387" font-size="12" fill="#5a6b7d">query under the 3.5 budget</text>
+    <text x="632" y="428" font-size="11.5" font-weight="700" fill="#b9770e">↩ FALLBACK · previous package</text>
+
+    <line x1="286" y1="368" x2="322" y2="368" stroke="#5a9bf0" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <line x1="576" y1="368" x2="612" y2="368" stroke="#5a9bf0" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+
+    <!-- wrap connector 4 -> 5, gated by the harness -->
+    <path d="M1030 262 L1030 292 L160 292 L160 322" fill="none" stroke="#5a9bf0" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+    <rect x="470" y="278" width="300" height="28" rx="8" fill="#eaf3ff" stroke="#9cc4ff"/>
+    <text x="620" y="297" font-size="12.5" font-weight="700" fill="#1565d8" text-anchor="middle">only if the harness passes 10/10</text>
+  </g>
+
+  <!-- ================= the failure path callout ================= -->
+  <g>
+    <rect x="910" y="278" width="240" height="128" rx="10" fill="#fdf0ee" stroke="#e0563b" stroke-width="1.5"/>
+    <text x="928" y="302" font-size="11.5" font-weight="700" letter-spacing="1.2" fill="#b23b27">THE FAILURE PATH</text>
+    <text x="928" y="326" font-size="12.5" fill="#6c3a2f">It compiles. It runs.</text>
+    <text x="928" y="344" font-size="12.5" font-weight="700" fill="#8a2f1d">The visual diff says no:</text>
+    <text x="928" y="364" font-size="12" fill="#6c3a2f">· accent color lost</text>
+    <text x="928" y="381" font-size="12" fill="#6c3a2f">· corner radius 0</text>
+    <text x="928" y="398" font-size="12" fill="#6c3a2f">· priority colors dropped</text>
+
+    <path d="M1030 412 L1030 448 L700 448" fill="none" stroke="#b9770e" stroke-width="2.5" marker-end="url(#arrowBack)"/>
+    <rect x="330" y="434" width="370" height="30" rx="8" fill="#fff4e5" stroke="#e8a13c"/>
+    <text x="515" y="454" font-size="12.5" font-weight="700" fill="#8a5a10" text-anchor="middle">roll back to “theme folder copy”, map the mixin, re-run step 4</text>
+  </g>
+
+  <!-- ================= footer rule ================= -->
+  <rect x="40" y="492" width="1110" height="38" rx="9" fill="#ffffff" stroke="#c9d8ea"/>
+  <text x="60" y="516" font-size="13.5" fill="#33475b">
+    <tspan font-weight="700" fill="#0d1b2a">The review question:</tspan> which migration step can be rolled back independently? If the answer is “none”, it is a rewrite — not a migration.
+  </text>
+</svg>

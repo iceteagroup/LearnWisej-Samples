@@ -79,7 +79,7 @@ namespace TicketOps.Diagnostics
                 LogLevel.Error => "✖",
                 _ => " "
             };
-            // The ListBox renders HTML, so runs of spaces collapse: use explicit separators, not padding.
+            // The ListBox escapes item text (markup shows as characters) but still collapses runs of spaces: use explicit separators, not padding.
             string layer = entry.Layer switch
             {
                 LogLayer.UI => "UI",

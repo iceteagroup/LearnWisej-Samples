@@ -3,7 +3,7 @@
   <!--
     OperationsConsole — Mastering the Control Library course lab.
     Multi-targets net10.0-windows and net10.0 (Kestrel). Run with:
-      dotnet run -f net10.0 -&#45;urls http://localhost:509N   (from this folder; Module N → 509N)
+      dotnet run -f net10.0 -&#45;urls http://localhost:570N   (from this folder; Module N → 570N)
   -->
   <PropertyGroup>
     <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>

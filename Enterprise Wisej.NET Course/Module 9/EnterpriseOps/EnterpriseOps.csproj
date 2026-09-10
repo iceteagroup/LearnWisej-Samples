@@ -18,6 +18,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!--
+      The widget's client adapter ships INSIDE the assembly: CommandPaletteHost hands it to the
+      widget as InitScript via GetResourceString("EnterpriseOps.Interop.command-palette-host.js").
+      The palette library itself is NOT embedded — it is a Widget Package served as a static file
+      from the project folder (/Interop/palette.client.js), so a reviewer can open it in the
+      browser's dev tools and confirm it contains no business rule.
+    -->
+    <None Remove="Interop\command-palette-host.js" />
+    <EmbeddedResource Include="Interop\command-palette-host.js" LogicalName="EnterpriseOps.Interop.command-palette-host.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="Default.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>

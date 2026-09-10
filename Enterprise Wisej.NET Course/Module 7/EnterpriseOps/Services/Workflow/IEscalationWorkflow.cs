@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using EnterpriseOps.Domain;
 
 namespace EnterpriseOps.Services.Workflow
 {
@@ -20,6 +23,12 @@ namespace EnterpriseOps.Services.Workflow
         StepValidation ValidateStep(EscalationWizardState state, WizardStep step);
 
         EscalationCommand BuildCommand(EscalationWizardState state, SessionContext session);
+
+        /// <summary>
+        /// The Approver step's list. It goes through the workflow on purpose: a wizard page that held a
+        /// reference to IApproverDirectory would be a Form talking to an integration.
+        /// </summary>
+        Task<IReadOnlyList<Approver>> LookupApproversAsync(string tenantId, CancellationToken cancellationToken);
 
         /// <summary>Resumable: the manual-review queue retries the notification later.</summary>
         Task<WorkflowResult> RetryNotificationAsync(CompensationEntry entry, SessionContext session);

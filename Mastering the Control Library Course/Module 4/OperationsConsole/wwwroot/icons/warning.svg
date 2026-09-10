@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- A flagged document, and the "could not load" node in categoryTree. Key: "warning". -->
+  <path d="M8 1.6l6.6 11.6a.8.8 0 0 1-.7 1.2H2.1a.8.8 0 0 1-.7-1.2z" fill="#e8563b"/>
+  <path d="M8 5.4v4.2" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="8" cy="12" r="1" fill="#ffffff"/>
+</svg>

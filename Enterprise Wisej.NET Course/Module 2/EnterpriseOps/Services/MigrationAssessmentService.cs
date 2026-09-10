@@ -111,7 +111,7 @@ namespace EnterpriseOps.Services
         }
 
         /// <summary>The modernization decision memo, written from evidence — the last harness run, the steps, the theme state.</summary>
-        public string BuildDecisionMemo(CommandContext ctx, IReadOnlyList<MigrationStep> steps, HarnessResult lastHarness, ThemeMap theme)
+        public string BuildDecisionMemo(CommandContext ctx, IReadOnlyList<MigrationStep> steps, HarnessResult lastHarness, ThemeService theme)
         {
             int passed = steps.Count(s => s.State == StepState.Passed);
             var failed = steps.FirstOrDefault(s => s.State == StepState.Failed);
@@ -135,7 +135,8 @@ namespace EnterpriseOps.Services
             memo.AppendLine(lastHarness == null
                 ? "  Regression harness: not run yet."
                 : $"  Regression harness: {lastHarness.Verdict}");
-            memo.AppendLine($"  Theme: {theme.Name}" + (theme.IsMapped ? " — 0 differences from the 3.5 baseline" : $" — {ThemeMap.Diff(_store.DossierRows().Count > 0 ? new ThemeStore().Baseline() : theme, theme).Count} differences from the 3.5 baseline"));
+            int themeDiff = theme.Diff().Count;
+            memo.AppendLine($"  Theme: {theme.Current.Name} — {themeDiff} difference(s) from the 3.5 baseline" + (themeDiff == 0 ? "" : $" ({string.Join(" · ", theme.Diff())})"));
             memo.AppendLine();
             memo.AppendLine("WHAT MUST REMAIN UNCHANGED");
             memo.AppendLine("  Tab filters decided on the server; blank titles rejected; stale versions refused; ana.ops approves, ben.tech does not;");
@@ -145,7 +146,7 @@ namespace EnterpriseOps.Services
             memo.AppendLine("  git tag pre-fx · package pin 3.5 · config backup · theme folder copy · feature flag off · standalone gate · previous package.");
             memo.AppendLine("  Roll back the failed step only, fix on the fallback, re-run the harness — never fix forward on a broken build.");
             memo.AppendLine();
-            memo.AppendLine("DECIDED BY  ana.ops (Manager) with cara.admin (Admin) — reviewed against docs/migration/*.md.");
+            memo.AppendLine("DECIDED BY  ana.ops (Manager) with cara.admin (Admin) — reviewed against docs/*.md (MigrationDossier, RiskMatrix, RegressionPlan, RollbackPlan).");
 
             _trace.Service($"decision memo written from evidence: steps {passed}/{steps.Count}, harness {(lastHarness == null ? "not run" : lastHarness.Verdict)}");
             return memo.ToString();

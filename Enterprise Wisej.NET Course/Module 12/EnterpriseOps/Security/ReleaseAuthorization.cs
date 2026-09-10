@@ -13,7 +13,8 @@ namespace EnterpriseOps.Security
 
         public static bool CanRollback(SessionContext ctx) => CanDeploy(ctx);
 
+        /// <summary>One sentence for the activity trace; ActivityTrace.Security adds the layer prefix.</summary>
         public static string Explain(SessionContext ctx, string action)
-            => $"Security: {ctx.User} ({ctx.Role}) {(CanDeploy(ctx) ? "may" : "may NOT")} {action} — rule: Manager or Admin";
+            => $"{ctx.User} ({ctx.Role}) {(CanDeploy(ctx) ? "may" : "may NOT")} {action} — rule: Manager or Admin";
     }
 }

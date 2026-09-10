@@ -480,3 +480,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Module 12: the storage root the "storage" health check probes (EnterpriseOps:Storage:Root).
+# Uploads are runtime state, never repository content.
+_storage/

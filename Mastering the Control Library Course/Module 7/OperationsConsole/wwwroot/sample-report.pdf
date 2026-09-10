@@ -1,0 +1,62 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1691 >>
+stream
+BT /F1 18 Tf 72 760 Td (Operations Console) Tj ET
+BT /F1 14 Tf 72 734 Td (SLA report - sample) Tj ET
+BT /F2 10 Tf 72 706 Td (Mastering the Control Library - Module 6 lab \(Charts, Dashboards, Content, Media, Documents\)) Tj ET
+BT /F2 10 Tf 72 688 Td (This document ships in wwwroot/ and is what pdfPreview shows before anything is uploaded.) Tj ET
+BT /F1 12 Tf 72 650 Td (Question the dashboard answers) Tj ET
+BT /F2 10 Tf 72 630 Td (Are we on track for this month's ticket target?) Tj ET
+BT /F1 12 Tf 72 594 Td (Last six months \(aggregates, not the ticket table\)) Tj ET
+BT /F2 10 Tf 72 574 Td (Month      Opened   Closed) Tj ET
+BT /F2 10 Tf 72 558 Td (Apr           42       39) Tj ET
+BT /F2 10 Tf 72 542 Td (May           51       47) Tj ET
+BT /F2 10 Tf 72 526 Td (Jun           38       41) Tj ET
+BT /F2 10 Tf 72 510 Td (Jul           60       52) Tj ET
+BT /F2 10 Tf 72 494 Td (Aug           55       58) Tj ET
+BT /F2 10 Tf 72 478 Td (Sep           47       50) Tj ET
+BT /F1 12 Tf 72 442 Td (Monthly completion) Tj ET
+BT /F2 10 Tf 72 422 Td (Closed this month / monthly target \(64\) - shown by progressCompletion; the target is 85%.) Tj ET
+BT /F1 12 Tf 72 386 Td (Upload workflow) Tj ET
+BT /F2 10 Tf 72 366 Td (1. The user selects a file in the browser. 2. The browser uploads the bytes.) Tj ET
+BT /F2 10 Tf 72 350 Td (3. The server validates and stores them \(DocumentStore\) and the preview is rebuilt.) Tj ET
+BT /F2 10 Tf 72 334 Td (The server never browses the user's disk: it only ever sees what the browser sent.) Tj ET
+BT /F2 9 Tf 72 96 Td (Sample document - Wisej.NET 4 lab sample, generated for the LearnWisej course samples.) Tj ET
+0.86 0.89 0.92 RG 1 w 72 640 m 523 640 l S
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Title (Operations Console - SLA report sample) /Author (LearnWisej course samples) /Subject (Mastering the Control Library, Module 6) /Producer (hand-written PDF) >>
+endobj
+xref
+0 8
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000257 00000 n 
+0000001999 00000 n 
+0000002101 00000 n 
+0000002198 00000 n 
+trailer
+<< /Size 8 /Root 1 0 R /Info 7 0 R >>
+startxref
+2383
+%%EOF

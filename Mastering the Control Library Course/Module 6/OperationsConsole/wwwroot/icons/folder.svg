@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- Category / folder node in categoryTree. Key: "folder". -->
+  <path d="M1.5 3.5h4l1.2 1.6h7.8v7.4a1 1 0 0 1-1 1h-12a1 1 0 0 1-1-1z" fill="#e8a13c"/>
+  <path d="M1.5 5.1h13v7.4a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1z" fill="#f2bd6b"/>
+</svg>

@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 560" width="940" height="560" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="940" height="560" fill="#f4f7fb"/>
+
+  <text x="28" y="36" font-size="19" font-weight="700" fill="#0d1b2a">EnterpriseOps interop contract v1.0 — one boundary, five gates</text>
+  <text x="28" y="58" font-size="13" fill="#5a6b7d">The payload is a suggestion. Identity, tenant and permission are read on the server, every call.</text>
+
+  <!-- trust boundary -->
+  <line x1="352" y1="80" x2="352" y2="528" stroke="#c0392b" stroke-width="2" stroke-dasharray="7 6"/>
+  <text x="358" y="98" font-size="11.5" font-weight="700" fill="#c0392b">TRUST BOUNDARY</text>
+
+  <!-- ============ browser ============ -->
+  <rect x="28" y="80" width="300" height="270" rx="10" fill="#ffffff" stroke="#c6d2de"/>
+  <rect x="28" y="80" width="300" height="30" rx="10" fill="#e8eef6"/>
+  <rect x="28" y="100" width="300" height="10" fill="#e8eef6"/>
+  <text x="44" y="100" font-size="13" font-weight="700" fill="#1f2d3a">Browser — untrusted</text>
+
+  <rect x="44" y="124" width="268" height="58" rx="7" fill="#f7fafd" stroke="#d9e1ea"/>
+  <text x="56" y="144" font-size="12.5" font-weight="700" fill="#1f2d3a">palette.client.js  (Package)</text>
+  <text x="56" y="163" font-size="11.5" fill="#6a7d92">Ctrl+K · filter · select · feature detection</text>
+  <text x="56" y="177" font-size="11.5" fill="#6a7d92">keystrokes and pixels only</text>
+
+  <rect x="44" y="192" width="268" height="58" rx="7" fill="#f7fafd" stroke="#d9e1ea"/>
+  <text x="56" y="212" font-size="12.5" font-weight="700" fill="#1f2d3a">command-palette-host.js  (InitScript)</text>
+  <text x="56" y="231" font-size="11.5" fill="#6a7d92">attaches in init(), detaches in dispose()</text>
+  <text x="56" y="245" font-size="11.5" fill="#6a7d92">calls exactly one remote method</text>
+
+  <rect x="44" y="260" width="268" height="72" rx="7" fill="#fff7ec" stroke="#e8a13c"/>
+  <text x="56" y="280" font-size="12" font-weight="700" fill="#8a5a12">Capability report (data, not authority)</text>
+  <text x="56" y="298" font-size="11.5" fill="#8a6a3c">viewport · language · timeZone · online · touch</text>
+  <text x="56" y="313" font-size="11.5" fill="#8a6a3c">clipboard · storage · notifications · camera</text>
+  <text x="56" y="328" font-size="11.5" fill="#8a6a3c">unknown keys are dropped by the server</text>
+
+  <!-- request arrow -->
+  <path d="M328 168 H392" stroke="#1a86ff" stroke-width="2.2" fill="none" marker-end="url(#blue)"/>
+  <text x="336" y="140" font-size="11.5" font-weight="700" fill="#1a86ff">RunClientCommand(</text>
+  <text x="336" y="155" font-size="11.5" fill="#1a86ff">commandName, entityId, correlationId)</text>
+
+  <!-- response arrow -->
+  <path d="M392 470 H328" stroke="#1f8a4c" stroke-width="2.2" fill="none" marker-end="url(#green)"/>
+  <text x="336" y="446" font-size="11.5" font-weight="700" fill="#1f8a4c">{ Succeeded, Code,</text>
+  <text x="336" y="461" font-size="11.5" fill="#1f8a4c">Message, CorrelationId, ContractVersion }</text>
+
+  <defs>
+    <marker id="blue" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1a86ff"/>
+    </marker>
+    <marker id="green" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1f8a4c"/>
+    </marker>
+    <marker id="grey" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#8a97a4"/>
+    </marker>
+  </defs>
+
+  <!-- ============ server ============ -->
+  <rect x="392" y="80" width="520" height="448" rx="10" fill="#ffffff" stroke="#c6d2de"/>
+  <rect x="392" y="80" width="520" height="30" rx="10" fill="#e8eef6"/>
+  <rect x="392" y="100" width="520" height="10" fill="#e8eef6"/>
+  <text x="408" y="100" font-size="13" font-weight="700" fill="#1f2d3a">Server — the authority</text>
+
+  <rect x="410" y="124" width="484" height="46" rx="7" fill="#eef4fd" stroke="#a9c8f0"/>
+  <text x="424" y="143" font-size="12.5" font-weight="700" fill="#12508f">[WebMethod] CommandCenterShell.RunClientCommand</text>
+  <text x="424" y="161" font-size="11.5" fill="#3d6f9f">parses only — InteropContract.TryParse → MALFORMED_PAYLOAD</text>
+
+  <path d="M652 170 V186" stroke="#8a97a4" stroke-width="1.8" marker-end="url(#grey)"/>
+
+  <rect x="410" y="188" width="484" height="186" rx="7" fill="#f7fafd" stroke="#d9e1ea"/>
+  <text x="424" y="208" font-size="12.5" font-weight="700" fill="#1f2d3a">ClientCommandService — the owner of the boundary</text>
+
+  <rect x="424" y="218" width="456" height="26" rx="5" fill="#ffffff" stroke="#d9e1ea"/>
+  <text x="436" y="236" font-size="11.5" fill="#1f2d3a"><tspan font-weight="700">1 catalogue</tspan>   name is published?</text>
+  <text x="866" y="236" font-size="11" text-anchor="end" fill="#c0392b">UNKNOWN_COMMAND</text>
+
+  <rect x="424" y="248" width="456" height="26" rx="5" fill="#ffffff" stroke="#d9e1ea"/>
+  <text x="436" y="266" font-size="11.5" fill="#1f2d3a"><tspan font-weight="700">2 arity</tspan>          entity required ⇔ supplied?</text>
+  <text x="866" y="266" font-size="11" text-anchor="end" fill="#c0392b">MALFORMED_PAYLOAD</text>
+
+  <rect x="424" y="278" width="456" height="26" rx="5" fill="#fdecec" stroke="#e2b3b3"/>
+  <text x="436" y="296" font-size="11.5" fill="#1f2d3a"><tspan font-weight="700">3 permission</tspan>   session role holds it?</text>
+  <text x="866" y="296" font-size="11" text-anchor="end" fill="#c0392b">PERMISSION_DENIED</text>
+
+  <rect x="424" y="308" width="456" height="26" rx="5" fill="#ffffff" stroke="#d9e1ea"/>
+  <text x="436" y="326" font-size="11.5" fill="#1f2d3a"><tspan font-weight="700">4 target</tspan>         resolves in this tenant?</text>
+  <text x="866" y="326" font-size="11" text-anchor="end" fill="#c0392b">INVALID_TARGET</text>
+
+  <rect x="424" y="338" width="456" height="26" rx="5" fill="#ffffff" stroke="#d9e1ea"/>
+  <text x="436" y="356" font-size="11.5" fill="#1f2d3a"><tspan font-weight="700">5 state</tspan>          domain rule allows it?</text>
+  <text x="866" y="356" font-size="11" text-anchor="end" fill="#c0392b">INVALID_STATE</text>
+
+  <path d="M652 374 V390" stroke="#8a97a4" stroke-width="1.8" marker-end="url(#grey)"/>
+
+  <rect x="410" y="392" width="234" height="52" rx="7" fill="#eefaf2" stroke="#8fd3ae"/>
+  <text x="424" y="412" font-size="12.5" font-weight="700" fill="#146b3a">WorkOrderService</text>
+  <text x="424" y="430" font-size="11.5" fill="#2c7a52">state transition · version bump · repository</text>
+
+  <rect x="660" y="392" width="234" height="52" rx="7" fill="#eefaf2" stroke="#8fd3ae"/>
+  <text x="674" y="412" font-size="12.5" font-weight="700" fill="#146b3a">AuditLog (append-only)</text>
+  <text x="674" y="430" font-size="11.5" fill="#2c7a52">every outcome: allowed, denied, rejected</text>
+
+  <rect x="410" y="456" width="484" height="56" rx="7" fill="#fff7ec" stroke="#e8a13c"/>
+  <text x="424" y="476" font-size="12.5" font-weight="700" fill="#8a5a12">SessionContext — the only source of identity</text>
+  <text x="424" y="494" font-size="11.5" fill="#8a6a3c">user · role · tenant · correlation id. Never read from the payload; the browser cannot change it.</text>
+  <path d="M410 484 H396 V296 H424" stroke="#e8a13c" stroke-width="1.8" fill="none" marker-end="url(#grey)"/>
+</svg>

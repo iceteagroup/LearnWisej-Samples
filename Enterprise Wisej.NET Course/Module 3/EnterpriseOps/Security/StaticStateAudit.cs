@@ -37,6 +37,11 @@ namespace EnterpriseOps.Security
     /// </summary>
     public sealed class StaticStateAudit
     {
+        // The audit audits itself: this static is reference data, so it says so in the same way it expects
+        // every other static in the solution to.
+        [SharedState(StateScope.Application,
+            holds: "the value types the audit treats as immutable — a lookup table, no user or tenant data",
+            synchronization: "never mutated after initialization; read-only use")]
         private static readonly Type[] ImmutableTypes =
         {
             typeof(string), typeof(bool), typeof(int), typeof(long), typeof(short), typeof(byte), typeof(double),

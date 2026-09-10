@@ -4,7 +4,7 @@
     OrderDesk.Web — the Wisej.NET 4 web project that LegacyOrderDesk migrates into
     ("From WinForms to the Web" course labs).
     Multi-targets net10.0-windows and net10.0 (Kestrel). Run with:
-      dotnet run -f net10.0 -\-urls http://localhost:509N   (from this folder)
+      dotnet run -f net10.0 -\-urls http://localhost:560N   (from this folder; Module N listens on 5600 + N)
   -->
   <PropertyGroup>
     <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>

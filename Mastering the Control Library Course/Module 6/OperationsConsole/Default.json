@@ -1,0 +1,6 @@
+{
+	"url": "Default.html",
+	"startup": "OperationsConsole.Program.Main, OperationsConsole",
+	"theme": "Bootstrap-4",
+	"debug": true
+}

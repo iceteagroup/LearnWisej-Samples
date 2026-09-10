@@ -1,0 +1,45 @@
+{
+	"name": "TicketOps",
+
+	"colors": {
+		"chip-open": "primary",
+		"chip-inprogress": "#B9770E",
+		"chip-blocked": "danger",
+		"chip-done": "success"
+	},
+
+	"appearances": {
+
+		"chip": {
+			"text": "StatusChip",
+			"states": {
+				"default": {
+					"styles": {
+						"backgroundColor": "hotTrack",
+						"radius": 13,
+						"width": 0
+					},
+					"properties": {
+						"textColor": "windowText"
+					}
+				},
+				"open": {
+					"styles": { "backgroundColor": "rgba(0,122,255,0.14)" },
+					"properties": { "textColor": "chip-open" }
+				},
+				"inprogress": {
+					"styles": { "backgroundColor": "rgba(185,119,14,0.16)" },
+					"properties": { "textColor": "chip-inprogress" }
+				},
+				"blocked": {
+					"styles": { "backgroundColor": "rgba(220,52,68,0.14)" },
+					"properties": { "textColor": "chip-blocked" }
+				},
+				"done": {
+					"styles": { "backgroundColor": "rgba(40,167,69,0.16)" },
+					"properties": { "textColor": "chip-done" }
+				}
+			}
+		}
+	}
+}

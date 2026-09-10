@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 700" width="980" height="700" role="img"
+     aria-label="Batch reassignment workflow: one command, per-row validation, per-row commit, per-row report, retry of failures only">
+  <defs>
+    <style>
+      .ui   { fill:#eaf3ff; stroke:#1a86ff; }
+      .svc  { fill:#ffffff; stroke:#5a6b7d; }
+      .ok   { fill:#e9f7ee; stroke:#1f8a4c; }
+      .bad  { fill:#fdecea; stroke:#c0392b; }
+      .warn { fill:#fff4e5; stroke:#e8a13c; }
+      .data { fill:#f1f5fa; stroke:#4a5a6a; }
+      rect  { stroke-width:1.5; rx:8; }
+      text  { font-family:'Segoe UI',system-ui,sans-serif; fill:#1f2d3a; }
+      .t    { font-size:14px; font-weight:700; }
+      .s    { font-size:12.5px; }
+      .m    { font-family:Consolas,'Courier New',monospace; font-size:12px; fill:#46586a; }
+      .lbl  { font-size:11.5px; fill:#5a6b7d; }
+      .lane { font-size:12px; font-weight:700; fill:#8a97a4; letter-spacing:.08em; }
+      .arrow{ stroke:#5a6b7d; stroke-width:1.6; fill:none; marker-end:url(#a); }
+      .arrowbad { stroke:#c0392b; stroke-width:1.6; fill:none; marker-end:url(#ab); }
+      .arrowok  { stroke:#1f8a4c; stroke-width:1.6; fill:none; marker-end:url(#ag); }
+    </style>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5a6b7d"/>
+    </marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#c0392b"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1f8a4c"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="700" fill="#ffffff" stroke="none"/>
+
+  <text class="lane" x="24" y="26">UI · WorkQueuePage</text>
+  <line x1="24" y1="36" x2="956" y2="36" stroke="#e3e9f0" stroke-width="1"/>
+
+  <!-- selection -->
+  <rect class="ui" x="24" y="50" width="250" height="58"/>
+  <text class="t" x="40" y="72">Selection in GridState</text>
+  <text class="m" x="40" y="93">Dictionary&lt;int, WorkQueueRow&gt;</text>
+
+  <!-- command -->
+  <rect class="ui" x="310" y="50" width="300" height="58"/>
+  <text class="t" x="326" y="72">ReassignBatchCommand</text>
+  <text class="m" x="326" y="93">BatchItem(Id, Number, ExpectedVersion)[]</text>
+
+  <!-- confirm -->
+  <rect class="warn" x="646" y="50" width="310" height="58"/>
+  <text class="t" x="662" y="72">Confirm · progress shown first</text>
+  <text class="s" x="662" y="93">bar + status line before row 1 is touched</text>
+
+  <path class="arrow" d="M274 79 L306 79"/>
+  <path class="arrow" d="M610 79 L642 79"/>
+
+  <text class="lane" x="24" y="146">SERVICE · BatchReassignWorkflow.RunAsync</text>
+  <line x1="24" y1="156" x2="956" y2="156" stroke="#e3e9f0" stroke-width="1"/>
+
+  <!-- command level validation -->
+  <rect class="warn" x="24" y="170" width="330" height="66"/>
+  <text class="t" x="40" y="192">Command-level validation</text>
+  <text class="s" x="40" y="212">empty selection · unknown technician</text>
+  <text class="m" x="40" y="230">→ throws, nothing was written</text>
+
+  <!-- loop box -->
+  <rect class="svc" x="386" y="170" width="570" height="350" fill="#fbfcfe"/>
+  <text class="t" x="404" y="194">for each row — its own unit of work</text>
+  <text class="lbl" x="404" y="212">a failure here never stops the other rows</text>
+
+  <rect class="data" x="404" y="226" width="240" height="40"/>
+  <text class="s" x="418" y="251">1 · re-read the order from the store</text>
+
+  <rect class="data" x="404" y="274" width="240" height="40"/>
+  <text class="s" x="418" y="299">2 · tenant + PermissionService</text>
+
+  <rect class="data" x="404" y="322" width="240" height="40"/>
+  <text class="s" x="418" y="347">3 · approval lock? · version? · cert?</text>
+
+  <rect class="ok" x="404" y="370" width="240" height="40"/>
+  <text class="s" x="418" y="395">4 · TryReassign under the lock</text>
+
+  <rect class="data" x="404" y="418" width="240" height="40"/>
+  <text class="s" x="418" y="443">5 · AuditTrail.Record — always</text>
+
+  <rect class="ui" x="404" y="466" width="240" height="40"/>
+  <text class="s" x="418" y="491">6 · onProgress(Done, Total)</text>
+
+  <path class="arrow" d="M524 266 L524 270"/>
+  <path class="arrow" d="M524 314 L524 318"/>
+  <path class="arrow" d="M524 362 L524 366"/>
+  <path class="arrow" d="M524 410 L524 414"/>
+  <path class="arrow" d="M524 458 L524 462"/>
+  <path class="arrow" d="M660 486 L660 246 L648 246" />
+  <text class="lbl" x="668" y="370">next row</text>
+
+  <!-- outcomes -->
+  <rect class="ok" x="700" y="226" width="238" height="52"/>
+  <text class="t" x="716" y="248">Succeeded</text>
+  <text class="m" x="716" y="268">ok — v2 → v3</text>
+
+  <rect class="bad" x="700" y="292" width="238" height="120" fill="#fdecea"/>
+  <text class="t" x="716" y="314">Failed</text>
+  <text class="m" x="716" y="334">permission-denied · closed</text>
+  <text class="m" x="716" y="352">approval-lock · stale-version</text>
+  <text class="m" x="716" y="370">certification</text>
+  <text class="lbl" x="716" y="394">retryable: approval-lock, stale-version</text>
+
+  <rect class="warn" x="700" y="426" width="238" height="52"/>
+  <text class="t" x="716" y="448">Skipped</text>
+  <text class="m" x="716" y="468">not-found · no-change</text>
+
+  <path class="arrowok"  d="M644 390 L680 252 L696 252"/>
+  <path class="arrowbad" d="M644 342 L696 342"/>
+  <path class="arrow"    d="M644 342 L680 452 L696 452"/>
+
+  <text class="lane" x="24" y="562">RESULT · never a single “done”</text>
+  <line x1="24" y1="572" x2="956" y2="572" stroke="#e3e9f0" stroke-width="1"/>
+
+  <rect class="warn" x="24" y="586" width="420" height="86"/>
+  <text class="t" x="40" y="610">BatchResult · BatchResultDialog</text>
+  <text class="s" x="40" y="632">one line per row: glyph, outcome, reason</text>
+  <text class="m" x="40" y="652">“2 succeeded, 1 failed” · correlation 4e9d20b7</text>
+
+  <rect class="ui" x="486" y="586" width="452" height="86"/>
+  <text class="t" x="502" y="610">Retry failed rows — the failures only</text>
+  <text class="s" x="502" y="632">versions re-read from the store · new correlation id</text>
+  <text class="m" x="502" y="652">successes were dropped from the selection</text>
+
+  <path class="arrow" d="M700 524 L700 560 L240 560 L240 582"/>
+  <path class="arrow" d="M444 629 L482 629"/>
+  <path class="arrow" d="M712 586 L712 540 L960 540 L960 100 L820 100 L820 46" stroke-dasharray="5 4"/>
+  <text class="lbl" x="826" y="560">retry = the next turn of the same loop</text>
+</svg>

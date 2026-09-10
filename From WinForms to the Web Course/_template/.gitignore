@@ -480,3 +480,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Generated at runtime by the lab consoles (uploads, exports, reports, profiles, tmp, logs)
+App_Data/

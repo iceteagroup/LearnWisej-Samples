@@ -15,20 +15,20 @@ Requirements already on this machine: .NET 10 SDK and the `Wisej-4` 4.1.0 NuGet 
 
 | Module | Folder | What it adds to the Operations Console | Run |
 |---|---|---|---|
-| 1 · Control Library Mental Model | `Module 1` | the control catalog shell: `MainPage` with navigation / command / status / content areas, six placeholder section pages, `Navigate()`, Event log, `ControlSelection.md` | `dotnet run -f net10.0 --urls http://localhost:5091` |
-| 2 · Editors, Buttons, Validation, and Feedback | `Module 2` | `CustomerEditor` UserControl on the Editors page: value-matched editors, `ErrorProvider` validators, Save / Reset / Validate commands, busy state, Toast / AlertBox feedback | `http://localhost:5092` |
-| 3 · Containers, Layouts, Navigation, and Reuse | `Module 3` | the real shell: `ToolBar` + `StatusBar` + `SplitContainer` + `TabControl`, `RecordHeader` / `StatusStrip` UserControls, narrow-profile layout, `LayoutNotes.md` | `http://localhost:5093` |
-| 4 · Lists, Trees, Repeaters, and Hierarchical Data | `Module 4` | the document explorer: lazy `TreeView`, virtual-mode `ListView`, shared `ImageList`, `DocumentDetailControl`, `DocumentService` | `http://localhost:5094` |
-| 5 · DataGridView Mastery | `Module 5` | the Orders grid: `BindingSource` + explicit columns, HTML status badge, custom editor / command column, virtual mode with `OrderCache`, filter and status strips | `http://localhost:5095` |
-| 6 · Charts, Dashboards, Content, Media, and Documents | `Module 6` | the dashboard tab: ChartJS trend, `ProgressBar`, `PdfViewer` / `HtmlPanel` preview, `Upload` workflow, one `RefreshDashboard(model)` | `http://localhost:5096` |
-| 7 · Custom Widgets, Extensions, Theming, and Capstone | `Module 7` | `ratingWidget` (`Widget` + `rating.js` / `rating.css`), `WidgetEvent` → `RatingService`, `CallAsync("setSaved")`, theming, `CapstoneNotes.md` + demo script | `http://localhost:5097` |
+| 1 · Control Library Mental Model | `Module 1` | the control catalog shell: `MainPage` with navigation / command / status / content areas, six placeholder section pages, `Navigate()`, Event log, `ControlSelection.md` | `dotnet run -f net10.0 --urls http://localhost:5701` |
+| 2 · Editors, Buttons, Validation, and Feedback | `Module 2` | `CustomerEditor` UserControl on the Editors page: value-matched editors, `ErrorProvider` validators, Save / Reset / Validate commands, busy state, Toast / AlertBox feedback | `http://localhost:5702` |
+| 3 · Containers, Layouts, Navigation, and Reuse | `Module 3` | the real shell: `ToolBar` + `StatusBar` + `SplitContainer` + `TabControl`, `RecordHeader` / `StatusStrip` UserControls, narrow-profile layout, `LayoutNotes.md` | `http://localhost:5703` |
+| 4 · Lists, Trees, Repeaters, and Hierarchical Data | `Module 4` | the document explorer: lazy `TreeView`, virtual-mode `ListView`, shared `ImageList`, `DocumentDetailControl`, `DocumentService` | `http://localhost:5704` |
+| 5 · DataGridView Mastery | `Module 5` | the Orders grid: `BindingSource` + explicit columns, HTML status badge, custom editor / command column, virtual mode with `OrderCache`, filter and status strips | `http://localhost:5705` |
+| 6 · Charts, Dashboards, Content, Media, and Documents | `Module 6` | the dashboard tab: ChartJS trend, `ProgressBar`, `PdfViewer` / `HtmlPanel` preview, `Upload` workflow, one `RefreshDashboard(model)` | `http://localhost:5706` |
+| 7 · Custom Widgets, Extensions, Theming, and Capstone | `Module 7` | `ratingWidget` (`Widget` + `rating.js` / `rating.css`), `WidgetEvent` → `RatingService`, `CallAsync("setSaved")`, theming, `CapstoneNotes.md` + demo script | `http://localhost:5707` |
 
 Run any module from its `OperationsConsole` project folder. The projects multi-target `net10.0-windows` and
 `net10.0`, so `dotnet run` needs a framework (`-f net10.0`, or `-f net10.0-windows`), e.g.
 
 ```bash
 cd "D:/Projects/LearnWisej-Samples/Mastering the Control Library Course/Module 3/OperationsConsole"
-dotnet run -f net10.0 --urls http://localhost:5093
+dotnet run -f net10.0 --urls http://localhost:5703
 ```
 
 or open the `OperationsConsole.slnx` in the module folder with Visual Studio and press F5.

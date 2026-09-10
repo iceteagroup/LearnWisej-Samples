@@ -47,8 +47,14 @@ Module N/
 | `Views/MainView` | skeleton screen: left card 760×560, trace card 508×560 on the right, bottom button bar, 1348×680 form | rename/replace with the module's screen (Module 1 → `TicketEditor`) |
 
 Trace line format (`ActivityTracePanel.Format`): `HH:mm:ss.fff ⚠ [SVC] TicketService.SaveAsync — validate {…}`.
-**Verified gotcha:** the `ListBox` renders HTML, so runs of spaces collapse — never align columns with padding; use
+**Verified gotcha:** the `ListBox` collapses runs of spaces — never align columns with padding; use
 separators (`[LAYER]`, `—`, `→`). Keep `Source` short (`Class.Method`) so the line fits.
+**Verified (Module 9/11 review):** the `ListBox` *escapes* item text — markup shows as characters — so never
+HTML-encode a trace line before adding it (an encoded `·` shows up as the literal `&#183;`).
+**Verified (Module 8 review):** `StatusBanner` is a UserControl that spans the whole card header (24,20 → 712×58). WinForms z-order applies:
+the control added *first* to `Controls` is on top, so any button/combo you place inside that rectangle and add *after* the banner is
+covered by it and never receives clicks (no trace line, no error). Either add such controls to `panelScreen.Controls` **before** the
+banner or call `BringToFront()` on them after `InitializeComponent()`.
 
 ## Handler shape (verified — copy it)
 
@@ -88,13 +94,14 @@ private async void buttonSave_Click(object sender, EventArgs e)
 - **DI (Module 8):** `Application.Services` is a `Wisej.Services.ServiceProvider`: `AddService<TService, TImpl>(ServiceLifetime.Session)`, `AddService<T>(instance, lifetime)`, `AddService<T>(Func<Type, object>, lifetime)`, `AddOrReplaceService…`, `GetService<T>()`, `HasService<T>()`, `RemoveService<T>()`, `Inject(object)`. Lifetimes: `Shared` (application-wide), `Session`, `Thread`, `Transient`. `[Inject]` / `[Inject(Required = true)]` on properties (any visibility) of Forms/Pages/Desktops (top-level containers get injected automatically) and of services created by the container; call `Application.Services.Inject(obj)` for anything else **(unverified)**.
 - **Responsive (Module 3):** `Application.ActiveProfile` (`Wisej.Core.ClientProfile`: `Name`, `Device`, `MinWidth/MaxWidth`, `Landscape`…), `Application.ResponsiveProfileChanged` (`ResponsiveProfileChangedEventArgs`), `Control.ResponsiveProfileChanged`, `Application.BrowserSizeChanged`; `ClientProfiles.json` in the app folder defines custom profiles (`Wisej.Core.ClientBrowser.LoadClientProfiles`); `Application.Browser.Size/ScreenSize/Device/IsDarkMode/TimezoneId` **(unverified)**. Layout engines: `Dock`, `Anchor`, `FlowLayoutPanel`, `TableLayoutPanel`, `FlexLayoutPanel`, `SplitContainer`, `TabControl` **(unverified)**.
 - **Binding (Module 4):** `BindingSource`, `BindingList<T>`, `INotifyPropertyChanged`, `DataGridView.DataSource`, `CellFormatting` **(unverified)**.
+- **Binding gotcha (verified, Module 4 review):** `Wisej.Web.BindingSource.Current` throws `IndexOutOfRangeException` ("Index -1 does not have a value") while the list is empty or being reset (`Position == -1`) — e.g. inside a `ListChanged(Reset)` handler after `ResetBindings()`. Check `Count`/`Position` before reading `Current`; never assume it returns null.
 - **Validation (Module 5):** `ErrorProvider` (`SetError(control, text)`), `Control.Validating` **(unverified)**.
 - **Dialogs (Module 6):** `Form.ShowDialog(Action<Form, DialogResult>)`, `await Form.ShowDialogAsync()`, `Form.DialogResult`, `Form.AcceptButton/CancelButton`, `MessageBox.ShowAsync(...)`, `Application.ConfirmAsync(text)` **(unverified)**.
 - **Background (Module 7):** `Application.StartTask(() => { … Application.Update(this, () => { …touch controls… }); })` pushes UI changes over WebSocket from a worker thread; `Application.RunInContext(component, action)` runs code in the session context; `CancellationTokenSource` for cancellation; check `IsDisposed` and bound the update rate **(unverified)**.
 - **JavaScript (Module 9):** `Application.Eval("js")`, `await Application.EvalAsync("expr")`, `Application.Call("fn", args)`, `Control.Call/CallAsync/Eval/EvalAsync`, the `Wisej.Web.JavaScript` extender component (per-control script + `JavaScriptSource`), `Control.Click`-style callbacks arrive as normal server events; `[assembly: WisejResources]` + embedded `/Platform/*.js` bundles a script into the client **(unverified — see the Application Integration Course cookbook for the verified widget/InitScript details)**.
 - **Theming / localization (Module 10):** `Application.LoadTheme("Material-3")`, `Application.Theme`, `Application.ThemeChanged`; built-in themes include Bootstrap-4, Material-3, FluentDark-5; `Application.CurrentCulture = new CultureInfo("de-DE")`, `Application.CultureChanged`, `Application.AddTranslation(key, text)`, .resx via `ResourceManager` **(unverified)**.
 - **Security (Module 11):** `Application.User` (`IPrincipal`), `Application.IsAuthenticated`, `Application.IsSecure`, `Label.AllowHtml` (default false → text is escaped) **(unverified)**.
-- **Deployment (Module 12):** `Application.SessionCount`, `Application.ServerName/ServerPort`, `Application.RuntimeMode`, `Application.ProductVersion`, `Application.IsWebSocket`, `Application.Expired`, `Application.Idle` event; a `HealthCheck.json`/diagnostics page is app code (read it with `File.ReadAllText(Application.MapPath("HealthCheck.json"))`) **(unverified)**.
+- **Deployment (Module 12):** `Application.SessionCount`, `Application.ServerName/ServerPort`, `Application.RuntimeMode`, `Application.ProductVersion`, `Application.IsWebSocket` (`Application.Expired` is **not public** in 4.1.0 — do not use it), `Application.Idle` event; a `HealthCheck.json`/diagnostics page is app code (read it with `File.ReadAllText(Application.MapPath("HealthCheck.json"))`) **(unverified)**.
 - Browser note for reviewers: the Browser pane is small; call `resize_window` (1400×760) before screenshots. Give a freshly loaded page ~5 s before driving it.
 
 ## UI conventions used by every sample (so the samples feel like one course)

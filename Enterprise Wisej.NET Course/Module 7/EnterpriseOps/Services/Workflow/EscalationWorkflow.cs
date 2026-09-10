@@ -124,6 +124,19 @@ namespace EnterpriseOps.Services.Workflow
             return result;
         }
 
+        /// <summary>
+        /// The Approver step's list, fetched through the workflow so the wizard never holds an integration.
+        /// The list is NOT filtered down to people who may approve: a directory is a directory, and who may
+        /// approve is a rule — ValidateStep applies it, which is how the lab shows a "listed but not allowed" user.
+        /// </summary>
+        public async Task<IReadOnlyList<Approver>> LookupApproversAsync(string tenantId, System.Threading.CancellationToken cancellationToken)
+        {
+            _trace.Write($"Service: LookupApproversAsync tenant '{tenantId}' (external directory — the caller owns the timeout)");
+            var approvers = await _directory.LookupAsync(tenantId, cancellationToken);
+            _trace.Write($"Service: → {approvers.Count} directory entries; eligibility is decided at ValidateStep(Approver)");
+            return approvers;
+        }
+
         /// <summary>State → command. The only place the two shapes meet; the wizard never builds the command.</summary>
         public EscalationCommand BuildCommand(EscalationWizardState state, SessionContext session)
         {

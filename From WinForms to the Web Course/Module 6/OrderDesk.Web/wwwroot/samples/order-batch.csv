@@ -1,0 +1,9 @@
+Customer,PO,Sku,Qty,UnitPrice
+Northwind Traders,NW-88240,WJ-DEV-SEAT,6,190.00
+Northwind Traders,NW-88240,WJ-SUP-GOLD,2,330.00
+Fabrikam Inc,FB-2214,WJ-CTRL-STD,3,350.00
+Fabrikam Inc,FB-2214,WJ-TRN-DAY,1,150.00
+Tailspin Toys,TT-0093,WJ-ENT-SEAT,10,495.00
+Tailspin Toys,TT-0093,WJ-SUP-PLAT,2,500.00
+Wide World Importers,WW-7710,WJ-SRV-CORE,1,990.50
+Litware Inc,LW-3301,WJ-THEME-PK,2,1030.00

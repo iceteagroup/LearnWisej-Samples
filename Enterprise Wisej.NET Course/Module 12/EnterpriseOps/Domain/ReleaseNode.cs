@@ -73,7 +73,7 @@ namespace EnterpriseOps.Domain
                     case BalancerState.RoutedAway: return "ROUTED AWAY — no new sessions";
                     case BalancerState.Draining: return $"draining sessions ({PinnedSessions} pinned)";
                     case BalancerState.Deploying: return "out of rotation — deploying";
-                    default: return $"receiving traffic · {PinnedSessions} sessions pinned";
+                    default: return $"receiving traffic · {PinnedSessions} session(s) pinned";
                 }
             }
         }

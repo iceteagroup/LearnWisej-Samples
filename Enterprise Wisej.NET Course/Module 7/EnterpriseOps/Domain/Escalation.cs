@@ -40,9 +40,11 @@ namespace EnterpriseOps.Domain
     /// <summary>Who may approve an escalation (from the approver directory).</summary>
     public class Approver
     {
-        public string Id;
-        public string DisplayName;
-        public string Role;
+        // Properties, not fields: ComboBox.DisplayMember binds through the property descriptor and
+        // throws "Cannot bind to the new display member" for a public field (verified 2026-09-10).
+        public string Id { get; set; }
+        public string DisplayName { get; set; }
+        public string Role { get; set; }
 
         public override string ToString() => $"{Id} — {Role}";
     }

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TicketOps Console · German (de) values for the keys in Strings.resx.
+  Button.Export is missing on purpose: the ResourceManager falls back to the neutral English value and
+  LocalizationService traces "untranslated" so the gap is visible without breaking the screen.
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="App.Title" xml:space="preserve"><value>TicketOps Konsole</value></data>
+  <data name="Dashboard.Title" xml:space="preserve"><value>Betriebs-Übersicht</value></data>
+  <data name="Dashboard.Summary" xml:space="preserve"><value>{0} Arbeitsaufträge · {1} noch offen</value></data>
+
+  <data name="Header.Theme" xml:space="preserve"><value>Design</value></data>
+  <data name="Header.Culture" xml:space="preserve"><value>Sprache</value></data>
+  <data name="Header.SessionOnly" xml:space="preserve"><value>Nur diese Sitzung</value></data>
+  <data name="Theme.Light" xml:space="preserve"><value>Hell · Bootstrap-4</value></data>
+  <data name="Theme.Dark" xml:space="preserve"><value>Dunkel · BootstrapDark-4</value></data>
+
+  <data name="Column.Id" xml:space="preserve"><value>Nr.</value></data>
+  <data name="Column.WorkOrder" xml:space="preserve"><value>Arbeitsauftrag</value></data>
+  <data name="Column.Status" xml:space="preserve"><value>Status</value></data>
+  <data name="Column.Due" xml:space="preserve"><value>Fällig am</value></data>
+  <data name="Column.Cost" xml:space="preserve"><value>Kosten</value></data>
+
+  <data name="Status.Open" xml:space="preserve"><value>Offen</value></data>
+  <data name="Status.InProgress" xml:space="preserve"><value>In Bearbeitung</value></data>
+  <data name="Status.Blocked" xml:space="preserve"><value>Blockiert</value></data>
+  <data name="Status.Done" xml:space="preserve"><value>Erledigt</value></data>
+
+  <data name="Detail.Title" xml:space="preserve"><value>Arbeitsauftrag {0}</value></data>
+  <data name="Detail.Created" xml:space="preserve"><value>Erstellt</value></data>
+  <data name="Detail.Due" xml:space="preserve"><value>Fällig am</value></data>
+  <data name="Detail.Cost" xml:space="preserve"><value>Arbeitskosten</value></data>
+  <data name="Detail.Hours" xml:space="preserve"><value>Stunden</value></data>
+  <data name="Detail.Hint" xml:space="preserve"><value>Dieselben Werte wie in der Übersicht, formatiert für {0} — der Bildschirm kennt kein festes Datums- oder Währungsformat.</value></data>
+
+  <data name="Button.OpenDetail" xml:space="preserve"><value>Details öffnen…</value></data>
+  <data name="Button.NextStatus" xml:space="preserve"><value>Nächster Status</value></data>
+  <data name="Button.Close" xml:space="preserve"><value>Schließen</value></data>
+  <data name="Button.Refresh" xml:space="preserve"><value>Übersicht aktualisieren</value></data>
+
+  <data name="State.Ready" xml:space="preserve"><value>bereit</value></data>
+  <data name="State.Loading" xml:space="preserve"><value>lädt</value></data>
+  <data name="State.Failed" xml:space="preserve"><value>fehlgeschlagen</value></data>
+  <data name="State.Rejected" xml:space="preserve"><value>abgelehnt</value></data>
+  <data name="State.Walking" xml:space="preserve"><value>Status werden durchlaufen</value></data>
+  <data name="State.ResourceGap" xml:space="preserve"><value>Ressourcenlücke protokolliert</value></data>
+
+  <data name="Message.ActionFailed" xml:space="preserve"><value>Die Aktion konnte nicht abgeschlossen werden. Details stehen im Protokoll.</value></data>
+  <data name="Message.Saved" xml:space="preserve"><value>Gespeichert.</value></data>
+  <data name="Message.DashboardRefreshed" xml:space="preserve"><value>Übersicht aktualisiert.</value></data>
+  <data name="Message.StatusAdvanced" xml:space="preserve"><value>Arbeitsauftrag {0} ist jetzt „{1}“.</value></data>
+  <data name="Message.ThemeApplied" xml:space="preserve"><value>Design: {0} — auf allen Bildschirmen angewendet.</value></data>
+  <data name="Message.ThemeAppliedSession" xml:space="preserve"><value>Design: {0} — nur in dieser Sitzung.</value></data>
+  <data name="Message.CultureApplied" xml:space="preserve"><value>Sprache: {0} — Beschriftungen, Datum und Währung folgen der Kultur.</value></data>
+  <data name="Message.ResourceGap" xml:space="preserve"><value>Ressourcenlücken sicher angezeigt — die zu korrigierenden Schlüssel stehen im Protokoll.</value></data>
+
+  <data name="Rule.DoneCannotAdvance" xml:space="preserve"><value>Ein erledigter Arbeitsauftrag kann nicht weitergeschaltet werden.</value></data>
+  <data name="Rule.WorkOrderMissing" xml:space="preserve"><value>Der Arbeitsauftrag existiert nicht mehr. Aktualisieren Sie die Übersicht.</value></data>
+  <data name="Rule.SelectWorkOrder" xml:space="preserve"><value>Wählen Sie zuerst einen Arbeitsauftrag.</value></data>
+  <data name="Rule.CultureNotShipped" xml:space="preserve"><value>Die Sprache „{0}“ ist in diesem Build nicht enthalten — es bleibt bei {1}.</value></data>
+</root>

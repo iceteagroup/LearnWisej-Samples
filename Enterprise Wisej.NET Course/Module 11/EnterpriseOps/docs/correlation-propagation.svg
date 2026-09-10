@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 620" width="860" height="620" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Correlation ID propagation through EnterpriseOps</title>
+  <desc>One user click creates one correlation id, which travels through the command context, the application service, the data store, and back out into the structured log, the performance budget row, the audit trail and the message the user is shown.</desc>
+
+  <rect x="0" y="0" width="860" height="620" fill="#ffffff"/>
+
+  <!-- the correlation ribbon -->
+  <rect x="24" y="70" width="150" height="516" rx="12" fill="#eaf3ff" stroke="#c5ddff"/>
+  <text x="99" y="96" text-anchor="middle" font-size="12" font-weight="700" fill="#0b6ae6">ONE ACTION</text>
+  <text x="99" y="120" text-anchor="middle" font-size="15" font-weight="700" font-family="Consolas, monospace" fill="#0d1b2a">5e8a13f7</text>
+  <text x="99" y="142" text-anchor="middle" font-size="11.5" fill="#3a4d63">created once by</text>
+  <text x="99" y="158" text-anchor="middle" font-size="11.5" font-family="Consolas, monospace" fill="#3a4d63">SessionContext</text>
+  <text x="99" y="173" text-anchor="middle" font-size="11.5" font-family="Consolas, monospace" fill="#3a4d63">.NewCommand()</text>
+  <line x1="99" y1="196" x2="99" y2="556" stroke="#1a86ff" stroke-width="2.5" stroke-dasharray="6 5"/>
+  <text x="99" y="576" text-anchor="middle" font-size="11.5" fill="#3a4d63">carried, never re-generated</text>
+
+  <text x="24" y="42" font-size="20" font-weight="700" fill="#0d1b2a">Correlation ID propagation — click → command → query → log</text>
+  <text x="24" y="60" font-size="12.5" fill="#5a6b7d">EnterpriseOps Command Center · Module 11 · one id ties the user report to every line it produced</text>
+
+  <!-- 1. UI -->
+  <rect x="210" y="80" width="620" height="66" rx="10" fill="#f7f9fc" stroke="#c6d2de"/>
+  <rect x="210" y="80" width="5" height="66" rx="2.5" fill="#1a86ff"/>
+  <text x="232" y="104" font-size="13.5" font-weight="700" fill="#0d1b2a">1 · UI  —  DiagnosticsPage.NewAction("Slow query · pageSize 5,000")</text>
+  <text x="232" y="124" font-size="12" font-family="Consolas, monospace" fill="#3a4d63">CommandContext ctx = _session.NewCommand();   // tenant + user + a fresh id</text>
+  <text x="232" y="140" font-size="11.5" fill="#5a6b7d">the header shows it immediately: <tspan font-family="Consolas, monospace" fill="#0d1b2a">correlation 5e8a13f7</tspan></text>
+
+  <path d="M520 146 L520 168" stroke="#8fa8c0" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 2. Service -->
+  <rect x="210" y="172" width="620" height="82" rx="10" fill="#f7f9fc" stroke="#c6d2de"/>
+  <rect x="210" y="172" width="5" height="82" rx="2.5" fill="#1a86ff"/>
+  <text x="232" y="196" font-size="13.5" font-weight="700" fill="#0d1b2a">2 · Service  —  WorkOrderService.SearchWorkOrdersAsync(query, ctx, ct)</text>
+  <text x="232" y="216" font-size="12" font-family="Consolas, monospace" fill="#3a4d63">using (new OperationTimer("SearchWorkOrders", ctx.CorrelationId, RecordTiming))</text>
+  <text x="232" y="234" font-size="11.5" fill="#5a6b7d">the timer holds the id, so whatever happens inside the block is logged under it</text>
+  <text x="232" y="249" font-size="11.5" fill="#5a6b7d">— including an exception, because Dispose still runs</text>
+
+  <path d="M520 254 L520 276" stroke="#8fa8c0" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 3. Data -->
+  <rect x="210" y="280" width="620" height="66" rx="10" fill="#f7f9fc" stroke="#c6d2de"/>
+  <rect x="210" y="280" width="5" height="66" rx="2.5" fill="#1a86ff"/>
+  <text x="232" y="304" font-size="13.5" font-weight="700" fill="#0d1b2a">3 · Data  —  InMemoryWorkOrderStore.SearchAsync(query, ctx, ct)</text>
+  <text x="232" y="324" font-size="12" font-family="Consolas, monospace" fill="#3a4d63">Data: SearchAsync tenant=fabrikam page=1 pageSize=5,000 · correlation 5e8a13f7</text>
+  <text x="232" y="340" font-size="11.5" fill="#5a6b7d">the deepest layer still knows the id — no thread-local, no ambient state, just the parameter</text>
+
+  <path d="M520 346 L520 368" stroke="#8fa8c0" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 4. fan-out -->
+  <text x="232" y="384" font-size="13.5" font-weight="700" fill="#0d1b2a">4 · Everything the action produced carries the same id</text>
+
+  <rect x="210" y="396" width="196" height="80" rx="10" fill="#f0f9f3" stroke="#a9dcbf"/>
+  <text x="226" y="418" font-size="12.5" font-weight="700" fill="#0f7a3a">Structured log</text>
+  <text x="226" y="436" font-size="10.5" font-family="Consolas, monospace" fill="#25523a">"elapsedMs":2340,</text>
+  <text x="226" y="450" font-size="10.5" font-family="Consolas, monospace" fill="#25523a">"pageSize":5000,</text>
+  <text x="226" y="464" font-size="10.5" font-family="Consolas, monospace" fill="#25523a">"correlation":"5e8a13f7"</text>
+
+  <rect x="422" y="396" width="196" height="80" rx="10" fill="#fdf3f3" stroke="#eab7b0"/>
+  <text x="438" y="418" font-size="12.5" font-weight="700" fill="#c0392b">Budget row</text>
+  <text x="438" y="436" font-size="10.5" fill="#7a3129">Query — SearchWorkOrders</text>
+  <text x="438" y="450" font-size="10.5" font-family="Consolas, monospace" fill="#7a3129">2,340 ms  ≤ 400 ms</text>
+  <text x="438" y="464" font-size="10.5" font-weight="700" fill="#c0392b">OVER ✕ · 5e8a13f7</text>
+
+  <rect x="634" y="396" width="196" height="80" rx="10" fill="#fff8ec" stroke="#e8c98f"/>
+  <text x="650" y="418" font-size="12.5" font-weight="700" fill="#7a5210">Audit trail</text>
+  <text x="650" y="436" font-size="10.5" fill="#6b4a15">ana.ops SearchWorkOrders</text>
+  <text x="650" y="450" font-size="10.5" fill="#6b4a15">→ failed</text>
+  <text x="650" y="464" font-size="10.5" font-family="Consolas, monospace" fill="#6b4a15">· correlation 5e8a13f7</text>
+
+  <path d="M520 476 L520 500" stroke="#8fa8c0" stroke-width="2" marker-end="url(#a)"/>
+
+  <!-- 5. user message -->
+  <rect x="210" y="504" width="620" height="82" rx="10" fill="#f7f9fc" stroke="#c6d2de"/>
+  <rect x="210" y="504" width="5" height="82" rx="2.5" fill="#e05a5a"/>
+  <text x="232" y="528" font-size="13.5" font-weight="700" fill="#0d1b2a">5 · The user  —  SafeErrorMessage.For(ctx.CorrelationId)</text>
+  <text x="232" y="548" font-size="11.5" fill="#3a4d63">“The operation could not be completed. Reference <tspan font-family="Consolas, monospace" font-weight="700" fill="#0d1b2a">5e8a13f7</tspan> — try again,</text>
+  <text x="232" y="564" font-size="11.5" fill="#3a4d63">or contact support and quote the reference.”</text>
+  <text x="232" y="580" font-size="11.5" fill="#5a6b7d">no exception text · no SQL · no server path — but the ticket now names the log line</text>
+
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8fa8c0"/>
+    </marker>
+  </defs>
+</svg>

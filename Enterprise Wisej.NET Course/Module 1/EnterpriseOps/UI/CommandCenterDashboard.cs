@@ -98,6 +98,8 @@ namespace EnterpriseOps.UI
             var adr = DecisionLog.Adr001SolutionStructure;
             _trace.Architecture($"{adr.Id} {adr.Title} — accepted {adr.Date:yyyy-MM-dd} · owner {adr.Owner} · review {adr.ReviewDate:yyyy-MM-dd}");
             _trace.Ui($"{ScreenName}_Load → LoadScreen()  session={_session.Tenant.Id}/{_session.User.UserName}");
+            lblTenant.Text = "tenant: " + _session.Tenant.Id;
+            ShowSignedIn();
             LoadScreen();
         }
 
@@ -242,6 +244,7 @@ namespace EnterpriseOps.UI
             {
                 ShowBanner(report.Errors[0], BannerKind.Warning);
                 SetStatus("review gate: source not found", StatusKind.Warn);
+                lblStatusBar.Text = "Review gate — source file not found";
                 return;
             }
 
@@ -249,12 +252,14 @@ namespace EnterpriseOps.UI
             {
                 ShowBanner($"Review gate — {report.FileName} · {report.Handlers.Count} handlers · 0 issues · may merge", BannerKind.Success);
                 SetStatus("review gate passed", StatusKind.Ok);
+                lblStatusBar.Text = $"Review gate — {report.FileName} · {report.Handlers.Count} handlers · 0 issues · may merge";
                 return;
             }
 
             var failing = report.Handlers.Find(h => h.Issues.Count > 0);
             ShowBanner($"Review gate — {failing.Name} · {report.TotalIssues} issues · {failing.Lines} lines · callsService: {failing.CallsService.ToString().ToLowerInvariant()} — caught before merge, not in production", BannerKind.Error);
             SetStatus($"review gate: {report.TotalIssues} issues on {failing.Name}", StatusKind.Error);
+            lblStatusBar.Text = $"Review gate — {report.FileName} · {report.TotalIssues} issues · blocked before merge";
         }
 
         /// <summary>Unexpected failure: log with the correlation id, tell the user something generic, keep the screen usable.</summary>

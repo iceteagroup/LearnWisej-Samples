@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="430" viewBox="0 0 1000 430" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect width="1000" height="430" fill="#ffffff"/>
+
+  <!-- the OIDC / SSO boundary -->
+  <line x1="238" y1="24" x2="238" y2="406" stroke="#c0392b" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="246" y="40" font-size="12" font-weight="700" fill="#c0392b">OIDC / SSO boundary — everything to the right is the application's responsibility</text>
+
+  <!-- provider -->
+  <rect x="24" y="66" width="190" height="96" rx="8" fill="#f4f7fb" stroke="#9fb6cf" stroke-width="1.5"/>
+  <text x="40" y="92" font-size="13" font-weight="700" fill="#0d1b2a">Identity provider</text>
+  <text x="40" y="112" font-size="11.5" fill="#46586a">simulated in this lab</text>
+  <text x="40" y="132" font-size="11.5" fill="#46586a">no password is ever</text>
+  <text x="40" y="148" font-size="11.5" fill="#46586a">entered in the app</text>
+
+  <!-- claims -->
+  <rect x="264" y="56" width="176" height="118" rx="8" fill="#fff8ec" stroke="#e8a13c" stroke-width="1.5"/>
+  <text x="280" y="80" font-size="13" font-weight="700" fill="#8a5a12">Claims</text>
+  <text x="280" y="101" font-size="11" font-family="monospace" fill="#46586a">sub   l.romero</text>
+  <text x="280" y="117" font-size="11" font-family="monospace" fill="#46586a">tid   fabrikam</text>
+  <text x="280" y="133" font-size="11" font-family="monospace" fill="#46586a">groups EnterpriseOps-</text>
+  <text x="280" y="147" font-size="11" font-family="monospace" fill="#46586a">       Technicians</text>
+  <text x="280" y="164" font-size="11" font-family="monospace" fill="#46586a">amr   pwd+mfa</text>
+
+  <!-- claims mapper -->
+  <rect x="482" y="56" width="196" height="118" rx="8" fill="#eaf3ff" stroke="#1a86ff" stroke-width="1.8"/>
+  <text x="498" y="80" font-size="13" font-weight="700" fill="#0b4a8f">ClaimsMapper</text>
+  <text x="498" y="102" font-size="11.5" fill="#46586a">group → Role</text>
+  <text x="498" y="120" font-size="11.5" fill="#46586a">tid → TenantId</text>
+  <text x="498" y="138" font-size="11.5" fill="#46586a">unknown group →</text>
+  <text x="498" y="154" font-size="11.5" fill="#c0392b">nothing (recorded)</text>
+
+  <!-- session context -->
+  <rect x="722" y="56" width="248" height="118" rx="8" fill="#eaf3ff" stroke="#1a86ff" stroke-width="1.8"/>
+  <text x="738" y="80" font-size="13" font-weight="700" fill="#0b4a8f">SessionContext</text>
+  <text x="738" y="102" font-size="11.5" fill="#46586a">per browser session · never static</text>
+  <text x="738" y="120" font-size="11.5" fill="#46586a">identity · tenant · roles</text>
+  <text x="738" y="140" font-size="11.5" fill="#46586a">BeginCommand() is the only way</text>
+  <text x="738" y="156" font-size="11.5" fill="#46586a">to obtain a CommandContext</text>
+
+  <!-- arrows top row -->
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#5a6b7d"/>
+    </marker>
+  </defs>
+  <line x1="214" y1="114" x2="258" y2="114" stroke="#5a6b7d" stroke-width="1.8" marker-end="url(#a)"/>
+  <line x1="440" y1="114" x2="476" y2="114" stroke="#5a6b7d" stroke-width="1.8" marker-end="url(#a)"/>
+  <line x1="678" y1="114" x2="716" y2="114" stroke="#5a6b7d" stroke-width="1.8" marker-end="url(#a)"/>
+
+  <!-- down arrow -->
+  <line x1="846" y1="174" x2="846" y2="212" stroke="#5a6b7d" stroke-width="1.8" marker-end="url(#a)"/>
+  <text x="856" y="198" font-size="11.5" fill="#46586a">CommandContext (one correlation id per click)</text>
+
+  <!-- services -->
+  <rect x="600" y="218" width="370" height="80" rx="8" fill="#f4f7fb" stroke="#9fb6cf" stroke-width="1.5"/>
+  <text x="616" y="242" font-size="13" font-weight="700" fill="#0d1b2a">Application services</text>
+  <text x="616" y="262" font-size="11.5" fill="#46586a">WorkOrderService · ExportService · AuditQueryService</text>
+  <text x="616" y="281" font-size="11.5" fill="#46586a">each one calls Demand before it executes</text>
+
+  <line x1="600" y1="258" x2="562" y2="258" stroke="#5a6b7d" stroke-width="1.8" marker-end="url(#a)"/>
+
+  <!-- permission service -->
+  <rect x="264" y="218" width="292" height="118" rx="8" fill="#ecf8f0" stroke="#1fae5a" stroke-width="1.8"/>
+  <text x="280" y="242" font-size="13" font-weight="700" fill="#14663a">PermissionService.Demand</text>
+  <text x="280" y="264" font-size="11.5" fill="#46586a">1 · TenantGuard — record's tenant first</text>
+  <text x="280" y="283" font-size="11.5" fill="#46586a">2 · RolePermissionStore — the matrix</text>
+  <text x="280" y="302" font-size="11.5" fill="#c0392b">throws "Missing permission: ExportData"</text>
+  <text x="280" y="323" font-size="11.5" fill="#46586a">Has() = the same check, no audit entry</text>
+
+  <!-- audit -->
+  <rect x="24" y="218" width="200" height="118" rx="8" fill="#fdf3f3" stroke="#c0392b" stroke-width="1.8"/>
+  <text x="40" y="242" font-size="13" font-weight="700" fill="#8c2c22">AuditLog</text>
+  <text x="40" y="264" font-size="11.5" fill="#46586a">append-only · shared</text>
+  <text x="40" y="283" font-size="11.5" fill="#46586a">granted AND denied</text>
+  <text x="40" y="302" font-size="11.5" fill="#46586a">who · tenant · action</text>
+  <text x="40" y="321" font-size="11.5" fill="#46586a">result · correlation id</text>
+
+  <line x1="264" y1="277" x2="230" y2="277" stroke="#5a6b7d" stroke-width="1.8" marker-end="url(#a)"/>
+
+  <!-- footnote -->
+  <text x="24" y="378" font-size="12" font-weight="700" fill="#0d1b2a">The screen adapts with Has(); the service enforces with Demand().</text>
+  <text x="24" y="398" font-size="12" fill="#46586a">A button that is visible when it should not be changes nothing: the check runs where the action executes.</text>
+</svg>

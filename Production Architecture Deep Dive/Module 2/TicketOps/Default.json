@@ -1,0 +1,7 @@
+{
+	"url": "Default.html",
+	"startup": "TicketOps.Program.Main, TicketOps",
+	"theme": "Bootstrap-4",
+	"sessionTimeout": 1200,
+	"debug": true
+}

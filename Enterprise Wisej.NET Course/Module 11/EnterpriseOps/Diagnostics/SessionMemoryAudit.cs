@@ -48,12 +48,31 @@ namespace EnterpriseOps.Diagnostics
         public long ManagedHeapBytes { get; init; }
         public string CorrelationId { get; init; }
 
+        /// <summary>Everything that is not plainly ok: the items a reviewer has to look at.</summary>
         public int Flagged => Items.Count(i => i.Verdict != AuditVerdict.Ok);
-        public bool Passed => Flagged == 0 && TotalRetainedBytes <= SessionMemoryAudit.PerSessionBudgetBytes;
 
-        public string Summary => Passed
-            ? $"{Items.Count} holders, ≈{SessionMemoryAudit.Mb(TotalRetainedBytes)} retained (budget {SessionMemoryAudit.Mb(SessionMemoryAudit.PerSessionBudgetBytes)})"
-            : $"{Flagged} flagged: " + string.Join(", ", Items.Where(i => i.Verdict != AuditVerdict.Ok).Select(i => $"{i.Name} ≈{SessionMemoryAudit.Mb(i.Bytes)}"));
+        /// <summary>The items that actually fail the audit — over the per-item budget right now.</summary>
+        public int Failing => Items.Count(i => i.Verdict == AuditVerdict.OverBudget);
+
+        /// <summary>
+        /// The audit fails on measurements, not on opinions: an item over the per-item budget, or a session
+        /// over the per-session budget. A "REVIEW" item (unbounded but currently small) is a design debt to
+        /// argue about at the next review, not a red build.
+        /// </summary>
+        public bool Passed => Failing == 0 && TotalRetainedBytes <= SessionMemoryAudit.PerSessionBudgetBytes;
+
+        public string Summary
+        {
+            get
+            {
+                string review = string.Join(", ", Items.Where(i => i.Verdict == AuditVerdict.Review).Select(i => i.Name));
+                string tail = review.Length == 0 ? "" : $" · {Items.Count(i => i.Verdict == AuditVerdict.Review)} to review: {review}";
+
+                return Passed
+                    ? $"{Items.Count} holders, ≈{SessionMemoryAudit.Mb(TotalRetainedBytes)} retained (budget {SessionMemoryAudit.Mb(SessionMemoryAudit.PerSessionBudgetBytes)}){tail}"
+                    : $"{Failing} over budget: " + string.Join(", ", Items.Where(i => i.Verdict == AuditVerdict.OverBudget).Select(i => $"{i.Name} ≈{SessionMemoryAudit.Mb(i.Bytes)}")) + tail;
+            }
+        }
     }
 
     /// <summary>
@@ -143,9 +162,10 @@ namespace EnterpriseOps.Diagnostics
                     holders = items.Count,
                     retainedBytes = report.TotalRetainedBytes,
                     managedHeapBytes = report.ManagedHeapBytes,
-                    flagged = string.Join(",", items.Where(i => i.Verdict != AuditVerdict.Ok).Select(i => i.Name)),
+                    overBudget = string.Join(",", items.Where(i => i.Verdict == AuditVerdict.OverBudget).Select(i => i.Name)),
+                    toReview = string.Join(",", items.Where(i => i.Verdict == AuditVerdict.Review).Select(i => i.Name)),
                     timersRunning = string.Join(",", report.Timers.Where(t => t.Running).Select(t => t.Name)),
-                    verdict = report.Passed ? "passed" : "flagged",
+                    verdict = report.Passed ? "passed" : "failed",
                 });
             }
 

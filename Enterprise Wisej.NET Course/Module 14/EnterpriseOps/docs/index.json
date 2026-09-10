@@ -1,0 +1,153 @@
+{
+  "name": "enterpriseops-docs",
+  "version": "1.0.0",
+  "generated": "2026-09-10",
+  "description": "The EnterpriseOps Command Center documentation index. Shaped like an MCP resources/list answer so a documentation endpoint can serve the team's own notes to an assistant, with the extra fields a reviewer needs: purpose, module, lastVerified and the decisions each document records.",
+  "notes": [
+    "Paths are relative to the project folder. The application reads this file back (DocumentationIndexService) and verifies that every path resolves on disk; a listed path that does not resolve is a 404 the endpoint would return.",
+    "No network call is made anywhere in this application. 'MCP-ready' describes the shape of this file, not a running server."
+  ],
+  "resources": [
+    {
+      "id": "prompt-library",
+      "title": "AI prompt library",
+      "purpose": "The project-rules header every AI session starts with, and the task prompts that build on it.",
+      "path": "docs/PromptLibrary.md",
+      "uri": "file://docs/PromptLibrary.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "Every session starts from the six project rules.",
+        "Rule 5 makes the official documentation the boundary: no undocumented APIs."
+      ]
+    },
+    {
+      "id": "generated-code-review-checklist",
+      "title": "Generated-code review checklist",
+      "purpose": "The ten questions asked of every change, generated or not, and what stops a merge.",
+      "path": "docs/GeneratedCodeReviewChecklist.md",
+      "uri": "file://docs/GeneratedCodeReviewChecklist.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "One Reject finding stops the change; a warning is a conversation.",
+        "A platform member that is not in the documented-API catalog blocks the merge.",
+        "A review is signed by a reviewer, never by the author."
+      ]
+    },
+    {
+      "id": "ai-assisted-review-patterns",
+      "title": "AI-assisted review patterns",
+      "purpose": "What goes into an AI session on this project, and what every answer is asked on the way out.",
+      "path": "docs/AIAssistedReviewPatterns.md",
+      "uri": "file://docs/AIAssistedReviewPatterns.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "Generated code is reviewed like junior code.",
+        "Accept a suggestion only when someone can explain it without the tool present."
+      ]
+    },
+    {
+      "id": "ai-usage-notes",
+      "title": "AI usage notes",
+      "purpose": "Which generated code was accepted, by whom and why — including what was rejected.",
+      "path": "docs/AIUsageNotes.md",
+      "uri": "file://docs/AIUsageNotes.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "PR #214 rev 1 rejected: static session state and two invented APIs.",
+        "PR #214 rev 2 accepted: instance service, documented APIs, visible failure path.",
+        "Authorization and concurrency code is not drafted by an assistant."
+      ]
+    },
+    {
+      "id": "documentation-index",
+      "title": "Project documentation index (Markdown)",
+      "purpose": "The human-readable index: every document with its purpose, the decisions it records and the date it was last verified.",
+      "path": "docs/DocumentationIndex.md",
+      "uri": "file://docs/DocumentationIndex.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "A person browses the Markdown index; a tool retrieves the JSON one.",
+        "Every entry carries a purpose written for someone who has never met the team."
+      ]
+    },
+    {
+      "id": "documentation-index-resources",
+      "title": "Project documentation index (MCP resources)",
+      "purpose": "The machine-readable index a documentation MCP endpoint would serve as resources/list.",
+      "path": "docs/index.json",
+      "uri": "file://docs/index.json",
+      "mimeType": "application/json",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "The index lists itself, so a retrieved answer explains where it came from.",
+        "Every listed path is verified against disk before the package is called ready."
+      ]
+    },
+    {
+      "id": "capstone-demo-script",
+      "title": "Capstone demo script",
+      "purpose": "The seven-stop production architecture review, each stop pairing a working screen with a failure path.",
+      "path": "docs/CapstoneDemoScript.md",
+      "uri": "file://docs/CapstoneDemoScript.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "The capstone is delivered as an architecture review, not a feature demo.",
+        "Every stop shows a failure path, because the review is about what happens when things go wrong."
+      ]
+    },
+    {
+      "id": "defense-deck-outline",
+      "title": "Architecture defense deck outline",
+      "purpose": "Twelve slides: one claim, one piece of evidence and one risk each, ending with what is not done.",
+      "path": "docs/DefenseDeckOutline.md",
+      "uri": "file://docs/DefenseDeckOutline.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "A slide without evidence is an opinion.",
+        "The last slide is the open items, read out with their owners."
+      ]
+    },
+    {
+      "id": "production-readiness",
+      "title": "Production readiness statement",
+      "purpose": "What is ready, the four questions answered in writing, the open items with owners and dates, and the sign-off.",
+      "path": "docs/ProductionReadiness.md",
+      "uri": "file://docs/ProductionReadiness.md",
+      "mimeType": "text/markdown",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "State ownership, security implications, failure paths and production behaviour are explained, not assumed.",
+        "Six open items are named with an owner and a date."
+      ]
+    },
+    {
+      "id": "capstone-architecture-diagram",
+      "title": "Capstone architecture diagram",
+      "purpose": "One picture of the capstone: the session, the layers a command crosses, and the package that ships with it.",
+      "path": "docs/capstone-package.svg",
+      "uri": "file://docs/capstone-package.svg",
+      "mimeType": "image/svg+xml",
+      "module": "14",
+      "lastVerified": "2026-09-10",
+      "decisions": [
+        "The diagram is the slide-1 evidence of the defense deck."
+      ]
+    }
+  ]
+}

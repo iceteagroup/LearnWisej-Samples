@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="470" viewBox="0 0 980 470" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="980" height="470" fill="#f4f7fb"/>
+  <text x="24" y="34" font-size="17" font-weight="700" fill="#0d1b2a">Every piece of state needs an owner — EnterpriseOps Module 3</text>
+  <text x="24" y="56" font-size="12.5" fill="#5a6b7d">A value stored one scope too wide becomes visible to the wrong people; one scope too narrow, and it is lost when the user opens a second tab.</text>
+
+  <!-- row 1 -->
+  <g>
+    <rect x="24" y="78" width="222" height="128" rx="10" fill="#ffffff" stroke="#c9d7e6"/>
+    <rect x="24" y="78" width="222" height="4" rx="2" fill="#3b82f6"/>
+    <text x="40" y="106" font-size="14" font-weight="700" fill="#0d1b2a">Application</text>
+    <text x="40" y="128" font-size="11.5" fill="#5a6b7d">shared by everyone — must be</text>
+    <text x="40" y="144" font-size="11.5" fill="#5a6b7d">immutable or synchronized</text>
+    <text x="40" y="170" font-size="11.5" font-weight="600" fill="#1f2d3a">WorkOrderStore.Shared</text>
+    <text x="40" y="186" font-size="11.5" font-weight="600" fill="#1f2d3a">AuditTrail.Shared · UiText</text>
+  </g>
+  <g>
+    <rect x="262" y="78" width="222" height="128" rx="10" fill="#ffffff" stroke="#c9d7e6"/>
+    <rect x="262" y="78" width="222" height="4" rx="2" fill="#a78bfa"/>
+    <text x="278" y="106" font-size="14" font-weight="700" fill="#0d1b2a">Tenant</text>
+    <text x="278" y="128" font-size="11.5" fill="#5a6b7d">one customer — reached only</text>
+    <text x="278" y="144" font-size="11.5" fill="#5a6b7d">through the tenant context</text>
+    <text x="278" y="170" font-size="11.5" font-weight="600" fill="#1f2d3a">TenantDirectory (reference)</text>
+    <text x="278" y="186" font-size="11.5" font-weight="600" fill="#1f2d3a">rows keyed by TenantId</text>
+  </g>
+  <g>
+    <rect x="500" y="78" width="222" height="128" rx="10" fill="#ffffff" stroke="#c9d7e6"/>
+    <rect x="500" y="78" width="222" height="4" rx="2" fill="#1fae5a"/>
+    <text x="516" y="106" font-size="14" font-weight="700" fill="#0d1b2a">User</text>
+    <text x="516" y="128" font-size="11.5" fill="#5a6b7d">follows a person across</text>
+    <text x="516" y="144" font-size="11.5" fill="#5a6b7d">sessions — verified claims</text>
+    <text x="516" y="170" font-size="11.5" font-weight="600" fill="#1f2d3a">VerifiedIdentity: roles,</text>
+    <text x="516" y="186" font-size="11.5" font-weight="600" fill="#1f2d3a">permissions, EntitledTenants</text>
+  </g>
+  <g>
+    <rect x="738" y="78" width="222" height="128" rx="10" fill="#ffffff" stroke="#1a86ff" stroke-width="1.6"/>
+    <rect x="738" y="78" width="222" height="4" rx="2" fill="#1a86ff"/>
+    <text x="754" y="106" font-size="14" font-weight="700" fill="#0d1b2a">Session</text>
+    <text x="754" y="128" font-size="11.5" fill="#5a6b7d">one browser session, in</text>
+    <text x="754" y="144" font-size="11.5" fill="#5a6b7d">Application.Session</text>
+    <text x="754" y="170" font-size="11.5" font-weight="600" fill="#1f2d3a">SessionContext: user, roles,</text>
+    <text x="754" y="186" font-size="11.5" font-weight="600" fill="#1f2d3a">TenantId, culture, theme</text>
+  </g>
+
+  <!-- row 2 -->
+  <g>
+    <rect x="24" y="222" width="222" height="128" rx="10" fill="#ffffff" stroke="#c9d7e6"/>
+    <rect x="24" y="222" width="222" height="4" rx="2" fill="#e8a13c"/>
+    <text x="40" y="250" font-size="14" font-weight="700" fill="#0d1b2a">Browser tab</text>
+    <text x="40" y="272" font-size="11.5" fill="#5a6b7d">two tabs are two workspaces,</text>
+    <text x="40" y="288" font-size="11.5" fill="#5a6b7d">not one</text>
+    <text x="40" y="314" font-size="11.5" font-weight="600" fill="#1f2d3a">WorkOrderEditorPage._open</text>
+    <text x="40" y="330" font-size="11.5" font-weight="600" fill="#1f2d3a">+ its ConcurrencyToken</text>
+  </g>
+  <g>
+    <rect x="262" y="222" width="222" height="128" rx="10" fill="#ffffff" stroke="#c9d7e6"/>
+    <rect x="262" y="222" width="222" height="4" rx="2" fill="#14b8a6"/>
+    <text x="278" y="250" font-size="14" font-weight="700" fill="#0d1b2a">Workflow</text>
+    <text x="278" y="272" font-size="11.5" fill="#5a6b7d">a multi-step operation in</text>
+    <text x="278" y="288" font-size="11.5" fill="#5a6b7d">progress</text>
+    <text x="278" y="314" font-size="11.5" font-weight="600" fill="#1f2d3a">draft state, checkpoints</text>
+    <text x="278" y="330" font-size="11.5" fill="#8a97a4">(Module 5's wizard)</text>
+  </g>
+  <g>
+    <rect x="500" y="222" width="222" height="128" rx="10" fill="#ffffff" stroke="#c9d7e6"/>
+    <rect x="500" y="222" width="222" height="4" rx="2" fill="#f472b6"/>
+    <text x="516" y="250" font-size="14" font-weight="700" fill="#0d1b2a">Background job</text>
+    <text x="516" y="272" font-size="11.5" fill="#5a6b7d">outlives the session that</text>
+    <text x="516" y="288" font-size="11.5" fill="#5a6b7d">started it</text>
+    <text x="516" y="314" font-size="11.5" font-weight="600" fill="#1f2d3a">progress, cancellation —</text>
+    <text x="516" y="330" font-size="11.5" font-weight="600" fill="#1f2d3a">carries its own CommandContext</text>
+  </g>
+  <g>
+    <rect x="738" y="222" width="222" height="128" rx="10" fill="#ffffff" stroke="#1a86ff" stroke-width="1.6"/>
+    <rect x="738" y="222" width="222" height="4" rx="2" fill="#9ca3af"/>
+    <text x="754" y="250" font-size="14" font-weight="700" fill="#0d1b2a">Request</text>
+    <text x="754" y="272" font-size="11.5" fill="#5a6b7d">one command, from click to</text>
+    <text x="754" y="288" font-size="11.5" fill="#5a6b7d">last log line</text>
+    <text x="754" y="314" font-size="11.5" font-weight="600" fill="#1f2d3a">CommandContext: user, tenant,</text>
+    <text x="754" y="330" font-size="11.5" font-weight="600" fill="#1f2d3a">correlation id, timestamp</text>
+  </g>
+
+  <!-- the rule -->
+  <g>
+    <rect x="24" y="370" width="936" height="76" rx="10" fill="#fff4e5" stroke="#e8a13c"/>
+    <text x="44" y="398" font-size="13.5" font-weight="700" fill="#92400e">The static-state rule</text>
+    <text x="44" y="420" font-size="12.5" fill="#7c4a12">A static can only ever own the first two scopes. Anything from User rightwards is per-person state: put it in a static and the</text>
+    <text x="44" y="438" font-size="12.5" fill="#7c4a12">last session to sign in owns it for everybody — see Security/LegacyCurrentUser.cs and the "Fail: static-state leak" button.</text>
+  </g>
+</svg>

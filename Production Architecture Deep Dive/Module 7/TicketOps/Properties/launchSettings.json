@@ -1,0 +1,12 @@
+{
+	"profiles": {
+		"TicketOps": {
+			"commandName": "Project",
+			"launchBrowser": true,
+			"applicationUrl": "http://localhost:5107",
+			"environmentVariables": {
+				"WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+			}
+		}
+	}
+}

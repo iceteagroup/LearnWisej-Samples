@@ -1,0 +1,10 @@
+{
+  "profiles": [
+    { "name": "Phone",              "device": "Mobile",  "landscape": false },
+    { "name": "Phone (Landscape)",  "device": "Mobile",  "landscape": true },
+    { "name": "Tablet",             "device": "Tablet",  "landscape": false },
+    { "name": "Tablet (Landscape)", "device": "Tablet",  "landscape": true },
+    { "name": "Small Desktop",      "device": "Desktop", "maxWidth": 1024 },
+    { "name": "Desktop",            "device": "Desktop", "minWidth": 1025 }
+  ]
+}

@@ -14,15 +14,18 @@ namespace EnterpriseOps.Services
         public string TenantId = "contoso";
         public string User = "ana.ops";
         public string Role = "Manager";
-        public string CorrelationId = Guid.NewGuid().ToString("N").Substring(0, 8);
-        public string SessionId;             // Application.SessionId — the thing sticky sessions pin
+        public string CorrelationId = NewId();    // the session's own id, shown in the header until a command runs
+        public string SessionId;                  // Application.SessionId — the thing sticky sessions pin
 
+        /// <summary>One command = one correlation id, so a release and its rollback are separable in the log.</summary>
         public CommandContext NewCommand() => new CommandContext
         {
             TenantId = TenantId,
             User = User,
-            CorrelationId = CorrelationId,
+            CorrelationId = NewId(),
         };
+
+        private static string NewId() => Guid.NewGuid().ToString("N").Substring(0, 8);
     }
 
     /// <summary>What every service command carries: tenant + user + correlation id.</summary>

@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using Wisej.Web;
 
 namespace EnterpriseOps
 {
@@ -6,10 +7,11 @@ namespace EnterpriseOps
     {
         /// <summary>
         /// Wisej.NET session entry point (configured in Default.json "startup").
+        /// Module 13 opens straight into Field Technician mode.
         /// </summary>
         static void Main(NameValueCollection args)
         {
-            new Window1().Show();
+            Application.MainPage = new UI.FieldTechnicianPage();
         }
     }
 }

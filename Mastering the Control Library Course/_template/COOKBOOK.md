@@ -24,7 +24,7 @@ Mastering the Control Library Course/
     OperationsConsole/
       OperationsConsole.csproj       (from _template; TargetFrameworks = net10.0-windows;net10.0 — keep it)
       Program.cs  Startup.cs  Default.html  Default.json  Web.config  ClientProfiles.json
-      Properties/launchSettings.json (port: Module N → http://localhost:509N, i.e. 5091 … 5097)
+      Properties/launchSettings.json (port: Module N → http://localhost:570N, i.e. 5701 … 5707)
       MainPage.cs + MainPage.Designer.cs      the Operations Console shell (a Wisej.Web.Page)
       Shell/                          IConsoleShell + ConsoleLog + ISection (Module 1), RecordHeader / StatusStrip UserControls (Module 3+)
       Sections/                       one UserControl per section: EditorsPage, LayoutsPage, ListsTreesPage,
@@ -38,7 +38,7 @@ Mastering the Control Library Course/
 - Namespace is always `OperationsConsole` (the lab tells the learner to name the solution that way).
 - `Program.Main(NameValueCollection args)` is the session entry point (`Default.json` → `"startup"`) and does
   `Application.MainPage = new MainPage();`.
-- Run: `dotnet run -f net10.0 --urls http://localhost:509N` from the project folder. The static file server serves the
+- Run: `dotnet run -f net10.0 --urls http://localhost:570N` from the project folder (5701 … 5707; 5091-5097 and 5601-5607 belong to other courses). The static file server serves the
   **project folder**, so a Widget package `Source = "wwwroot/rating.js"` is fetched as `/wwwroot/rating.js`.
   `Default.json` / `Web.config` / `ClientProfiles.json` are never served (`Startup.cs` skips `.json`).
 - Build with `dotnet build -nologo -v q` and fix every error. Warning CS7022 is already silenced in the csproj.
@@ -48,6 +48,16 @@ Mastering the Control Library Course/
 
 ## Verified runtime facts
 
+- **Dock order (verified in Module 1):** docking is applied from the LAST `Controls.Add` to the FIRST. The designer serialises the reverse z-order, so the
+  `Fill` control must be the **first** `Controls.Add(...)` and the edge bars (Top / Bottom) the **last** ones: `Controls.Add(contentPanel); Controls.Add(pnlEventLog); Controls.Add(navigationPanel); Controls.Add(statusPanel); Controls.Add(commandPanel);`
+  gives Top / Bottom bars spanning the full width, Left / Right cards between them, content in the middle. Inside a panel the same rule holds
+  (`Controls.Add(statusLabel /*Fill*/); Controls.Add(diagnosticPanel /*Right*/);`). Adding the bars first makes the Left/Right panels claim the full height and a Right-docked child overlaps a Fill sibling.
+- **`Button.AccessibleRole` does not exist** in Wisej.NET 4.1 (`AccessibleName` and `AccessibleDescription` do) — use `AccessibleName` only.
+- **Testing a CheckBox from the browser pane:** `widget.setValue(true)` changes the client only (no `CheckedChanged` on the server); use `widget.execute()` (toggles and posts) or a real click.
+  Buttons: `qx.core.ObjectRegistry` → `wisej.web.Button` by `getName()` → `.execute()`. A hidden/scaled pane may need `qx.ui.core.queue.Manager.flush()` before the first screenshot.
+- **Page lifecycle:** the browser keeps the Wisej session across a reload (F5 shows the same Event log); restart the server to start clean.
+- `Navigate()` disposes the page it removes (`previous?.Dispose()` after `contentPanel.Controls.Clear()`): removed pages are server objects and would otherwise stay alive for the session.
+
 - **Responsive profiles (verified in this template):** `ClientProfiles.json` in the project root (csproj:
   `<Content Update="ClientProfiles.json"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></Content>`) defines
   `Phone` (≤ 600 px), `Tablet` (601–1024 px), `Desktop` (≥ 1025 px). `Application.ActiveProfile.Name` returns the
@@ -55,7 +65,7 @@ Mastering the Control Library Course/
   boundary (`ResponsiveProfileChangedEventArgs`), `Application.Browser.Size` is the current browser size and
   `Application.BrowserSizeChanged` fires on every resize. Profiles must be defined in the JSON file, not in `Default.json`.
 - **Toast (verified):** `new Toast("Saved.", "icon-info") { AutoCloseDelay = 3000, Alignment = ContentAlignment.TopRight }.Show();`
-  Icons: `icon-info`, `icon-warning`, `icon-error`, `icon-ok` (theme icon names) or an image URL.
+  Icons (verified: `icon-ok` does NOT exist → 404): `icon-info`, `icon-warning`, `icon-error`, `icon-check`, `icon-question`, `icon-alert`, `icon-save`, `icon-refresh`, `icon-new`, `icon-upload`, `icon-search`, `icon-settings`, `icon-help`, `icon-file`, `icon-folder`, `icon-*-outlined` — or an image URL.
 - **AlertBox (verified):** `AlertBox.Show(text, MessageBoxIcon.Warning, alignment: ContentAlignment.TopRight, autoCloseDelay: 4000)`.
   Always TopRight so it never covers buttons.
 - **MessageBox (verified in Foundations):** `await MessageBox.ShowAsync("Discard changes?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question)`
@@ -88,9 +98,9 @@ Mastering the Control Library Course/
 ```csharp
 // ---- Module 1: Page + docked areas -------------------------------------------------------------
 navigationPanel.Dock = DockStyle.Left; commandPanel.Dock = DockStyle.Top; statusPanel.Dock = DockStyle.Bottom;
-contentPanel.Dock = DockStyle.Fill;                 // add contentPanel LAST → dock order is right
+contentPanel.Dock = DockStyle.Fill;                 // contentPanel is the FIRST Controls.Add (see Verified runtime facts: dock order)
 contentPanel.Controls.Clear(); content.Dock = DockStyle.Fill; contentPanel.Controls.Add(content);
-button.TabIndex = 1; button.AccessibleName = "Open the Editors section"; button.AccessibleRole = AccessibleRole.PushButton;
+button.TabIndex = 1; button.AccessibleName = "Open the Editors section";   // (no AccessibleRole in Wisej 4.1)
 
 // ---- Module 2: editors and validation ----------------------------------------------------------
 numCreditLimit.Minimum = 0; numCreditLimit.Maximum = 250000; numCreditLimit.DecimalPlaces = 0; numCreditLimit.Increment = 1000;
@@ -190,6 +200,8 @@ public interface IConsoleShell
 {
     void AddLog(string message);                          // appends "HH:mm:ss  message" to lstEventLog, selects the last item
     void SetStatus(string text, StatusLevel level);       // statusLabel (Module 1–2) / StatusBar panel (Module 3+), coloured by level
+    void SetSelectedControl(string controlName);          // diagnostic panel (stretch goal): the control used last
+    void SetSelectedRecord(string recordId);              // diagnostic panel: stable ID of the selected record (null/"" → "—")
 }
 
 // Shell/ConsoleLog.cs — what every section, editor and service calls
@@ -198,6 +210,8 @@ public static class ConsoleLog
     static IConsoleShell Shell => Application.MainPage as IConsoleShell;
     public static void Add(string message) => Shell?.AddLog(message);
     public static void Status(string text, StatusLevel level = StatusLevel.Ok) => Shell?.SetStatus(text, level);
+    public static void Control(string controlName) => Shell?.SetSelectedControl(controlName);   // e.g. ConsoleLog.Control(btnSave.Name)
+    public static void Record(string recordId) => Shell?.SetSelectedRecord(recordId);           // e.g. ConsoleLog.Record("DOC-000312")
 }
 
 // Shell/ISection.cs — implemented by every Sections/*Page UserControl
@@ -243,3 +257,26 @@ Write each lab deliverable as its own Markdown file named after what the lab ask
 `WidgetContract.md`, `CapstoneNotes.md`, `DemoScript.md`, …). Include a short **Evidence** section describing what
 the running app shows for each path. The README carries a **Lab steps → where in the code** table mapping every
 lab-guide step to a file/method, plus a **Self-check** section answering the questions the lab / exam guide asks.
+
+## Verified while reviewing the finished modules (2026-09-10)
+
+- **`Application.StartTask` exceptions (verified in Module 6):** an exception that escapes the task lambda is shown by
+  Wisej.NET in its red "Application Error" dialog with the stack trace, even when the awaiting handler catches the
+  Task's exception. Catch inside the lambda, return a `(Result, Error)` tuple, and re-throw on the request thread.
+- **`Toast` icon names:** `icon-ok` does not exist (404). Valid theme icons include `icon-check`, `icon-info`, `icon-warning`,
+  `icon-error`, `icon-question`, `icon-alert`, `icon-save`, `icon-refresh`, `icon-new`, `icon-upload`, `icon-search`,
+  `icon-settings`, `icon-help`, `icon-file`, `icon-folder`, `icon-*-outlined`.
+- **`Widget.GetResourceString` is `protected`** — from a page holding a plain `Widget`, read the embedded resource with
+  `Assembly.GetManifestResourceStream` (Module 7 `Widgets/RatingInitScript.cs`).
+- **`DataGridView.CellContentClick` does not exist** in Wisej.NET 4.1; use `CellClick` (`e.RowIndex` / `e.ColumnIndex`).
+  `DataGridView.UpdateCellValue` and `CurrentVirtualRow` are not public either.
+- **`StatusBarPanel` has no `ForeColor`**: colour a panel with `AllowHtml = true` and an HTML-encoded `<span style='color:…'>`.
+- **`Wisej.Core.HttpFileCollection`** (`UploadedEventArgs.Files`) is not enumerable: use `e.Files.Count` / `e.Files.Get(i)`.
+- **ChartJS**: `Wisej-4-ChartJS` 4.1.2 requires `Wisej-4 ≥ 4.1.2` (NU1605 downgrade error with 4.1.0); 4.1.0 has the same public API.
+  `Options`, `Scales`, `Ticks`, `GridLines`, `ScaleLabel`, `Title`, `Legend` are auto-created, but `Scales.xAxes` / `yAxes`
+  are null until you assign arrays. The client widget class is `wisej.web.Widget`.
+- **Driving the app from the browser pane:** two widgets can share a label (every section page has a "Simulate service
+  failure" CheckBox), so look controls up by `getName()` inside the right page or click them by coordinates; after a
+  responsive-profile change the layout shifts (navigation expands), so take a fresh screenshot before clicking.
+- **Placeholder detection in the cumulative folders:** `MainPage` carries `BuiltThroughModule = N`; sections whose
+  catalog module number is ≤ N are real, the rest still show "still a placeholder".

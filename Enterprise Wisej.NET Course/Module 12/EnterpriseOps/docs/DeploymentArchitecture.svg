@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 620" width="980" height="620" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <title>EnterpriseOps deployment architecture — reverse proxy, two session-pinned nodes, shared services, release pipeline</title>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#46586a"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1f8a4c"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#1565d8"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="980" height="620" fill="#eef2f7"/>
+
+  <text x="28" y="36" font-size="19" font-weight="700" fill="#0d1b2a">EnterpriseOps — deployment architecture</text>
+  <text x="28" y="57" font-size="12.5" fill="#46586a">One artifact (enterpriseops-2.4.2), two session-pinned nodes, one probe contract. Everything environment-specific arrives as configuration.</text>
+
+  <!-- browsers -->
+  <rect x="24" y="96" width="150" height="104" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="99" y="122" font-size="13" font-weight="700" fill="#1f2d3a" text-anchor="middle">Browsers</text>
+  <text x="99" y="144" font-size="11" fill="#46586a" text-anchor="middle">ana.ops · ben.tech</text>
+  <text x="99" y="162" font-size="11" fill="#46586a" text-anchor="middle">cara.admin</text>
+  <text x="99" y="184" font-size="10.5" font-family="Consolas, monospace" fill="#1565d8" text-anchor="middle">HTTPS + WebSocket</text>
+
+  <!-- reverse proxy / load balancer -->
+  <rect x="216" y="76" width="212" height="144" rx="8" fill="#ffffff" stroke="#1565d8" stroke-width="1.6"/>
+  <rect x="216" y="76" width="212" height="5" rx="2.5" fill="#1565d8"/>
+  <text x="322" y="104" font-size="13.5" font-weight="700" fill="#1f2d3a" text-anchor="middle">Reverse proxy / balancer</text>
+  <text x="322" y="124" font-size="11" fill="#46586a" text-anchor="middle">NGINX · Apache · cloud ingress</text>
+  <text x="322" y="146" font-size="10.5" fill="#46586a" text-anchor="middle">TLS termination</text>
+  <text x="322" y="164" font-size="10.5" fill="#46586a" text-anchor="middle">X-Forwarded-For / -Proto</text>
+  <text x="322" y="182" font-size="10.5" fill="#46586a" text-anchor="middle">Upgrade / Connection passthrough</text>
+  <text x="322" y="204" font-size="10.5" font-family="Consolas, monospace" font-weight="700" fill="#7a5210" text-anchor="middle">sticky cookie EnterpriseOpsNode</text>
+
+  <path d="M 176 148 L 212 148" stroke="#46586a" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- node A -->
+  <rect x="480" y="70" width="248" height="122" rx="8" fill="#ffffff" stroke="#1f8a4c" stroke-width="1.6"/>
+  <rect x="480" y="70" width="248" height="5" rx="2.5" fill="#1f8a4c"/>
+  <text x="500" y="98" font-size="13" font-weight="700" fill="#1f2d3a">app-node-A</text>
+  <text x="712" y="98" font-size="11" font-weight="700" fill="#1f8a4c" text-anchor="end">Healthy · 2.4.2</text>
+  <text x="500" y="119" font-size="11" fill="#46586a">Kestrel + Wisej.NET (container or IIS)</text>
+  <text x="500" y="139" font-size="11" fill="#46586a">in-memory sessions — state lives here</text>
+  <text x="500" y="161" font-size="10.5" font-family="Consolas, monospace" fill="#1565d8">GET /healthz · /healthz/live</text>
+  <text x="500" y="180" font-size="10.5" font-family="Consolas, monospace" fill="#7a5210">142 pinned sessions</text>
+
+  <!-- node B -->
+  <rect x="480" y="212" width="248" height="122" rx="8" fill="#ffffff" stroke="#c0392b" stroke-width="1.6"/>
+  <rect x="480" y="212" width="248" height="5" rx="2.5" fill="#c0392b"/>
+  <text x="500" y="240" font-size="13" font-weight="700" fill="#1f2d3a">app-node-B</text>
+  <text x="712" y="240" font-size="11" font-weight="700" fill="#c0392b" text-anchor="end">Unhealthy · 2.4.2</text>
+  <text x="500" y="261" font-size="11" fill="#46586a">same image, same configuration keys</text>
+  <text x="500" y="281" font-size="11" fill="#9c2f2f">database check FAIL — migration incomplete</text>
+  <text x="500" y="303" font-size="10.5" font-family="Consolas, monospace" fill="#9c2f2f">503 → routed away, no NEW sessions</text>
+  <text x="500" y="322" font-size="10.5" font-family="Consolas, monospace" fill="#7a5210">pinned sessions drain, then rollback</text>
+
+  <path d="M 432 128 L 476 128" stroke="#1f8a4c" stroke-width="1.8" fill="none" marker-end="url(#arrowGreen)"/>
+  <path d="M 432 176 L 456 176 L 456 268 L 476 268" stroke="#c0392b" stroke-width="1.8" fill="none" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+  <text x="440" y="118" font-size="10" font-weight="700" fill="#1f8a4c">traffic</text>
+  <text x="437" y="258" font-size="10" font-weight="700" fill="#c0392b">probe only</text>
+
+  <!-- shared services -->
+  <rect x="784" y="70" width="170" height="74" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="869" y="96" font-size="12" font-weight="700" fill="#1f2d3a" text-anchor="middle">SQL database</text>
+  <text x="869" y="116" font-size="10.5" fill="#46586a" text-anchor="middle">shared, migrated per release</text>
+  <text x="869" y="134" font-size="10.5" fill="#46586a" text-anchor="middle">connection string = secret</text>
+
+  <rect x="784" y="160" width="170" height="74" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="869" y="186" font-size="12" font-weight="700" fill="#1f2d3a" text-anchor="middle">Object storage</text>
+  <text x="869" y="206" font-size="10.5" fill="#46586a" text-anchor="middle">uploads — never node-local</text>
+  <text x="869" y="224" font-size="10.5" fill="#46586a" text-anchor="middle">storage check writes a probe file</text>
+
+  <rect x="784" y="250" width="170" height="84" rx="8" fill="#fffaf0" stroke="#e8a13c"/>
+  <text x="869" y="276" font-size="12" font-weight="700" fill="#7a5210" text-anchor="middle">Secret store / vault</text>
+  <text x="869" y="296" font-size="10.5" fill="#7a5210" text-anchor="middle">injected as environment</text>
+  <text x="869" y="313" font-size="10.5" fill="#7a5210" text-anchor="middle">variables at deploy time</text>
+  <text x="869" y="330" font-size="10" font-family="Consolas, monospace" fill="#7a5210" text-anchor="middle">never in the image</text>
+
+  <path d="M 732 110 L 780 104" stroke="#46586a" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 732 150 L 780 190" stroke="#46586a" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 732 286 L 780 290" stroke="#e8a13c" stroke-width="1.4" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- probe legend -->
+  <rect x="24" y="242" width="404" height="96" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="44" y="266" font-size="12" font-weight="700" fill="#1f2d3a">HealthCheck.json — the probe contract</text>
+  <text x="44" y="288" font-size="10.5" font-family="Consolas, monospace" fill="#46586a">readiness /healthz    every 10 s, 3 fails → out of rotation</text>
+  <text x="44" y="306" font-size="10.5" font-family="Consolas, monospace" fill="#46586a">liveness  /healthz/live  never inspects dependencies</text>
+  <text x="44" y="326" font-size="10.5" fill="#46586a">critical: configuration · database · storage — a failure means 503</text>
+
+  <!-- pipeline -->
+  <rect x="24" y="368" width="930" height="128" rx="10" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="44" y="394" font-size="12.5" font-weight="700" fill="#1f2d3a">Release pipeline — one artifact promoted, never rebuilt per environment</text>
+
+  <g font-size="10.5" font-family="Consolas, monospace">
+    <rect x="44" y="410" width="96" height="34" rx="17" fill="#f0f9f3" stroke="#1f8a4c"/>
+    <text x="92" y="432" fill="#155f33" text-anchor="middle">1 build</text>
+    <rect x="152" y="410" width="126" height="34" rx="17" fill="#f0f9f3" stroke="#1f8a4c"/>
+    <text x="215" y="432" fill="#155f33" text-anchor="middle">2 config+secrets</text>
+    <rect x="290" y="410" width="96" height="34" rx="17" fill="#f0f9f3" stroke="#1f8a4c"/>
+    <text x="338" y="432" fill="#155f33" text-anchor="middle">3 staging</text>
+    <rect x="398" y="410" width="112" height="34" rx="17" fill="#f0f9f3" stroke="#1f8a4c"/>
+    <text x="454" y="432" fill="#155f33" text-anchor="middle">4 smoke tests</text>
+    <rect x="522" y="410" width="120" height="34" rx="17" fill="#fdecec" stroke="#c0392b"/>
+    <text x="582" y="432" fill="#9c2f2f" text-anchor="middle">5 health FAIL</text>
+    <rect x="654" y="410" width="106" height="34" rx="17" fill="#f4f7fa" stroke="#d9e1ea"/>
+    <text x="707" y="432" fill="#8a97a4" text-anchor="middle">6 production</text>
+    <rect x="772" y="410" width="82" height="34" rx="17" fill="#f4f7fa" stroke="#d9e1ea"/>
+    <text x="813" y="432" fill="#8a97a4" text-anchor="middle">7 monitor</text>
+    <rect x="866" y="410" width="70" height="34" rx="17" fill="#fff8ec" stroke="#e8a13c"/>
+    <text x="901" y="432" fill="#7a5210" text-anchor="middle">8 ↩ back</text>
+  </g>
+
+  <path d="M 936 448 L 936 468 L 582 468 L 582 448" stroke="#e8a13c" stroke-width="1.6" fill="none" stroke-dasharray="5 4" marker-end="url(#arrowBlue)"/>
+  <text x="760" y="484" font-size="10.5" font-weight="700" fill="#7a5210" text-anchor="middle">rollback redeploys 2.4.1 on the failed node — a runbook step, not a panic</text>
+
+  <!-- footer rule -->
+  <text x="28" y="530" font-size="11.5" font-weight="700" fill="#0d1b2a">Why affinity is mandatory</text>
+  <text x="28" y="550" font-size="11" fill="#46586a">A Wisej.NET session lives in one node's memory. Without a sticky cookie the second request of a session lands on the other node,</text>
+  <text x="28" y="568" font-size="11" fill="#46586a">which has never heard of it: a new session starts and the user loses the grid, the wizard step and every unsaved edit.</text>
+  <text x="28" y="592" font-size="11" fill="#46586a">Scale out = more nodes each holding a share of the sessions. Scale in = drain a node, never cut it.</text>
+</svg>

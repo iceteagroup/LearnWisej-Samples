@@ -123,6 +123,26 @@ button (validation rejected, stale version, permission denied, simulated excepti
   **(unverified)**. Read environment config from `Default.json` (`Application.Configuration`) and from
   `appsettings.{Environment}.json` via `builder.Configuration`.
 
+## Verified while reviewing these samples in the browser (2026-09-10)
+
+- **`ComboBox.DisplayMember` binds through property descriptors.** A class with public *fields* throws
+  `ArgumentException: Cannot bind to the new display member` when `DataSource` is assigned (Module 7's approver
+  list). Use auto-properties on anything bound with `DataSource` + `DisplayMember`; `Items.Add(obj)` + `ToString()`
+  is the field-safe alternative.
+- **Camel-casing stops at the first level of `Options`.** `options.segments = new[] { new { Key, Label, Value } }`
+  reached the browser as `Key/Label/Value` and the vendor chart threw (Module 8). Spell nested wire names
+  explicitly in the vendor's casing (`new { key = …, label = …, value = … }`) and make the adapter tolerant.
+- **`Application.Update(this)`** (single argument) exists and works from `Application.StartTask` (Modules 6, 11).
+  `Application.Browser` is a real `ClientBrowser` (`Device`, `Type`, `OS`, `Version`, `Size`, `ScreenSize`,
+  `PixelRatio`, `IsDarkMode`, `UserAgent`) — Module 13 uses it.
+- **Static initializer order bites twice** (Modules 5 and 12): a static `Instance`/`Seed` declared *above* the
+  static arrays it reads throws `TypeInitializationException` on the first request. Use `Lazy<T>` or declare data
+  first.
+- **Reviewer tip:** the bottom-bar buttons sit under a tooltip band in the Browser pane, so a coordinate click
+  can be swallowed. Drive them through the qooxdoo registry instead:
+  `for (k in qx.core.ObjectRegistry.getRegistry()) { o = reg[k]; if (o.getLabel && o.getLabel() === "Save") o.execute(); }`
+  (`MessageBox` Yes/No and `ShowDialogAsync` dialogs answer to the same trick).
+
 ## UI conventions used by every sample (so the samples feel like one course)
 
 - The main screen is a `Page` (course screens are Pages) sized for 1348×680, light grey background

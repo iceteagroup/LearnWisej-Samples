@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="640" viewBox="0 0 1040 640" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <rect width="1040" height="640" fill="#ffffff"/>
+
+  <text x="32" y="40" font-size="21" font-weight="700" fill="#0d1b2a">EnterpriseOps Field Technician mode — offline shape</text>
+  <text x="32" y="64" font-size="13.5" fill="#46586a">One application model. The device holds a scoped copy and a queue; the server stays the system of record.</text>
+
+  <!-- ── device column ─────────────────────────────────────────────────────── -->
+  <rect x="32" y="92" width="392" height="404" rx="12" fill="#f6f9fc" stroke="#c6d2de" stroke-width="1.5"/>
+  <text x="52" y="120" font-size="12" font-weight="700" fill="#0b5cc4" letter-spacing="1">DEVICE · HYBRID SHELL (LOCAL MODE)</text>
+
+  <rect x="52" y="136" width="352" height="62" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="68" y="160" font-size="14.5" font-weight="700" fill="#1f2d3a">UI.FieldTechnicianPage</text>
+  <text x="68" y="182" font-size="12.5" fill="#46586a">thin handlers · device-aware layout · no rules</text>
+
+  <rect x="52" y="212" width="168" height="76" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="68" y="236" font-size="13" font-weight="700" fill="#1f2d3a">IDeviceServices</text>
+  <text x="68" y="256" font-size="11.5" fill="#46586a">IsOnline · Scan</text>
+  <text x="68" y="274" font-size="11.5" fill="#46586a">Vibrate</text>
+
+  <rect x="236" y="212" width="168" height="76" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="252" y="236" font-size="13" font-weight="700" fill="#1f2d3a">IOfflineCommandQueue</text>
+  <text x="252" y="256" font-size="11.5" fill="#46586a">Enqueue · GetPending</text>
+  <text x="252" y="274" font-size="11.5" fill="#46586a">Mark</text>
+
+  <rect x="52" y="304" width="352" height="120" rx="8" fill="#eef4fb" stroke="#9dbde3"/>
+  <text x="68" y="328" font-size="13" font-weight="700" fill="#0b5cc4">LocalStore — SQLite, encrypted at rest</text>
+  <text x="68" y="352" font-size="12" fill="#1f2d3a">• 12 work orders — this technician's own open assignments</text>
+  <text x="68" y="374" font-size="12" fill="#1f2d3a">• OfflineCommand queue (LocalOnly → PendingSync → …)</text>
+  <text x="68" y="396" font-size="12" fill="#1f2d3a">• permission snapshot + issue time</text>
+  <text x="68" y="416" font-size="11.5" fill="#9c2f2f">wiped on logout / lock-out — never repaired in place</text>
+
+  <text x="52" y="452" font-size="12" fill="#46586a">The device never opens a connection to the database.</text>
+  <text x="52" y="472" font-size="12" fill="#46586a">Everything it changes leaves as a command.</text>
+
+  <!-- ── the boundary ───────────────────────────────────────────────────────── -->
+  <line x1="520" y1="92" x2="520" y2="496" stroke="#b9770e" stroke-width="2" stroke-dasharray="7 6"/>
+  <rect x="446" y="270" width="148" height="34" rx="17" fill="#fff8ec" stroke="#e8a13c" stroke-width="1.5"/>
+  <text x="520" y="292" font-size="12.5" font-weight="700" fill="#b9770e" text-anchor="middle">SYNC BOUNDARY</text>
+
+  <!-- replay arrow -->
+  <path d="M424 200 H616" stroke="#1f8a4c" stroke-width="2.5" fill="none" marker-end="url(#green)"/>
+  <text x="440" y="190" font-size="12" font-weight="700" fill="#1f8a4c">2 · replay queued commands, oldest first</text>
+  <!-- download arrow -->
+  <path d="M616 388 H424" stroke="#0b5cc4" stroke-width="2.5" fill="none" marker-end="url(#blue)"/>
+  <text x="440" y="378" font-size="12" font-weight="700" fill="#0b5cc4">1 · permissions, then the cache scope</text>
+
+  <defs>
+    <marker id="green" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#1f8a4c"/>
+    </marker>
+    <marker id="blue" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0 L9 4.5 L0 9 z" fill="#0b5cc4"/>
+    </marker>
+  </defs>
+
+  <!-- ── server column ─────────────────────────────────────────────────────── -->
+  <rect x="616" y="92" width="392" height="404" rx="12" fill="#f4f7fa" stroke="#c6d2de" stroke-width="1.5"/>
+  <text x="636" y="120" font-size="12" font-weight="700" fill="#155f33" letter-spacing="1">SERVER · SYSTEM OF RECORD</text>
+
+  <rect x="636" y="136" width="352" height="86" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="652" y="160" font-size="14.5" font-weight="700" fill="#1f2d3a">Services.WorkOrderService</text>
+  <text x="652" y="182" font-size="12.5" fill="#46586a">the ONLY code that changes a work order —</text>
+  <text x="652" y="202" font-size="12.5" fill="#46586a">online screen and queue replay call the same method</text>
+
+  <rect x="636" y="236" width="168" height="72" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="652" y="260" font-size="13" font-weight="700" fill="#1f2d3a">PermissionService</text>
+  <text x="652" y="280" font-size="11.5" fill="#46586a">current answer, per</text>
+  <text x="652" y="298" font-size="11.5" fill="#46586a">queued command</text>
+
+  <rect x="820" y="236" width="168" height="72" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="836" y="260" font-size="13" font-weight="700" fill="#1f2d3a">AuditLog</text>
+  <text x="836" y="280" font-size="11.5" fill="#46586a">device time +</text>
+  <text x="836" y="298" font-size="11.5" fill="#46586a">server time</text>
+
+  <rect x="636" y="322" width="352" height="72" rx="8" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="652" y="346" font-size="13" font-weight="700" fill="#1f2d3a">Data.FakeWorkOrderRepository</text>
+  <text x="652" y="368" font-size="12" fill="#46586a">optimistic concurrency: Version must match, or Conflict</text>
+
+  <rect x="636" y="408" width="352" height="64" rx="8" fill="#fdf6f6" stroke="#e0a6a6"/>
+  <text x="652" y="430" font-size="12.5" font-weight="700" fill="#9c2f2f">A conflict is a workflow</text>
+  <text x="652" y="452" font-size="12" fill="#46586a">both versions returned to the device — a person decides</text>
+
+  <!-- ── the four shapes ────────────────────────────────────────────────────── -->
+  <text x="32" y="540" font-size="12" font-weight="700" fill="#46586a" letter-spacing="1">ONE APPLICATION MODEL, FOUR SHAPES — LEAST INDEPENDENT THAT WORKS</text>
+  <line x1="40" y1="576" x2="1000" y2="576" stroke="#c6d2de" stroke-width="2"/>
+
+  <circle cx="140" cy="576" r="9" fill="#ffffff" stroke="#9aa8b6" stroke-width="2"/>
+  <text x="140" y="606" font-size="12.5" fill="#46586a" text-anchor="middle">connected</text>
+  <text x="140" y="624" font-size="11" fill="#8091a2" text-anchor="middle">dispatcher at a desk</text>
+
+  <circle cx="380" cy="576" r="9" fill="#ffffff" stroke="#9aa8b6" stroke-width="2"/>
+  <text x="380" y="606" font-size="12.5" fill="#46586a" text-anchor="middle">remote</text>
+  <text x="380" y="624" font-size="11" fill="#8091a2" text-anchor="middle">shell + server, device APIs</text>
+
+  <circle cx="620" cy="576" r="9" fill="#ffffff" stroke="#9aa8b6" stroke-width="2"/>
+  <text x="620" y="606" font-size="12.5" fill="#46586a" text-anchor="middle">local</text>
+  <text x="620" y="624" font-size="11" fill="#8091a2" text-anchor="middle">app runs on the device</text>
+
+  <circle cx="860" cy="576" r="11" fill="#1a86ff" stroke="#0b5cc4" stroke-width="2"/>
+  <text x="860" y="606" font-size="12.5" font-weight="700" fill="#0b5cc4" text-anchor="middle">offline  ← this lab</text>
+  <text x="860" y="624" font-size="11" fill="#8091a2" text-anchor="middle">local data + sync boundary</text>
+</svg>

@@ -1,0 +1,7 @@
+Order,Customer,Owner,PO,Status,Total
+1043,"Litware Inc","","LW-094620",Open,1280.00
+1042,"Northwind Traders","dana","NW-88231",Open,4820.00
+1041,"Contoso Ltd","priya","CT-10077",Shipped,1290.50
+1040,"Fabrikam Inc","","FB-2210",Open,760.00
+1039,"Adventure Works","sam","AW-5501",Invoiced,12400.00
+1038,"Globex Corp","kelly","GX-0042",Hold,3090.00

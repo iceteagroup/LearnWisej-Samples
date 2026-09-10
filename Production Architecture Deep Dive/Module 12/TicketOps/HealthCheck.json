@@ -1,0 +1,12 @@
+{
+  "app": "TicketOps Console",
+  "version": "1.0.0",
+  "build": "2026.09.10.1",
+  "environment": "Development",
+  "status": "Healthy",
+  "checks": [
+    { "name": "database",  "status": "OK", "probe": "ITicketRepository.GetAllAsync()" },
+    { "name": "storage",   "status": "OK", "probe": "temp folder write/delete" },
+    { "name": "websocket", "status": "OK", "probe": "Application.IsWebSocket" }
+  ]
+}

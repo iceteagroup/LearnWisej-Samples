@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using EnterpriseOps.Domain;
 
 namespace EnterpriseOps.Data
@@ -17,7 +18,13 @@ namespace EnterpriseOps.Data
     /// </summary>
     public sealed class WorkOrderStore
     {
-        public static WorkOrderStore Instance { get; } = new WorkOrderStore();
+        // Lazy, not a plain static initializer: static fields are initialized in declaration order, and Seed()
+        // reads the Templates / Sites / Customers arrays declared further down. Creating the instance eagerly
+        // here would run the constructor while those arrays are still null.
+        private static readonly Lazy<WorkOrderStore> Singleton =
+            new Lazy<WorkOrderStore>(() => new WorkOrderStore(), LazyThreadSafetyMode.ExecutionAndPublication);
+
+        public static WorkOrderStore Instance => Singleton.Value;
 
         private readonly object _gate = new object();
         private readonly Dictionary<int, WorkOrder> _orders = new Dictionary<int, WorkOrder>();

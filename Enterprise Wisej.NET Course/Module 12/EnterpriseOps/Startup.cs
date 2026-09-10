@@ -20,10 +20,19 @@ using Wisej.Core;
 //      NGINX / Apache / a cloud ingress (see deployment/nginx.conf).
 // ---------------------------------------------------------------------------------------------
 
+// The lab default is Development (every value lives in the files). A platform sets
+// ASPNETCORE_ENVIRONMENT explicitly — Staging/Production then demand their secrets from the
+// environment and the host refuses to boot without them (verified: with the variable set to
+// Production and no secrets, the process exits with the two configuration errors below).
+var environmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+if (string.IsNullOrWhiteSpace(environmentName))
+    environmentName = "Development";
+
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,
-    WebRootPath = "./"
+    WebRootPath = "./",
+    EnvironmentName = environmentName
 });
 
 // (1) The configuration contract. builder.Configuration already contains appsettings.json,
@@ -50,13 +59,14 @@ HealthProbeService.LoadHealthCheckFile(builder.Environment.ContentRootPath);
 var app = builder.Build();
 
 // (4) Behind a reverse proxy: trust X-Forwarded-For / X-Forwarded-Proto so redirects, cookies
-//     and the audit log see https:// and the real client address. KnownProxies/KnownNetworks are
-//     cleared on purpose for the lab (docker-compose network); restrict them in production.
+//     and the audit log see https:// and the real client address. KnownProxies/KnownIPNetworks are
+//     cleared on purpose for the lab (the docker-compose network is not known in advance); in
+//     production name the proxy or the ingress subnet instead — see deployment/nginx.proxy.notes.md.
 var forwarded = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 };
-forwarded.KnownNetworks.Clear();
+forwarded.KnownIPNetworks.Clear();
 forwarded.KnownProxies.Clear();
 app.UseForwardedHeaders(forwarded);
 

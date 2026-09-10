@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    AdaptiveOps — Theming & Responsive Layouts course lab (Adaptive Operations Console), Module 3.
+    Multi-targets net10.0-windows and net10.0 (Kestrel). Run with:
+      dotnet run -f net10.0 [urls option] http://localhost:5503   (from this folder; see README.md for the exact command)
+    Themes/AdaptiveOps.theme and Styles/AdaptiveOps.css are read from the project folder at runtime
+    (WEBSITE_PATH in launchSettings.json / the static file server in Startup.cs); they are also copied to the
+    output so a published build carries them.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <RootNamespace>AdaptiveOps</RootNamespace>
+    <NoWarn>CA1416;WFO1000;CS7022</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="Default.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Web.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+    <None Remove="favicon.ico" />
+    <None Remove="Themes\**" />
+    <None Remove="Styles\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Default.html">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Themes\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Styles\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.0" />
+  </ItemGroup>
+
+</Project>

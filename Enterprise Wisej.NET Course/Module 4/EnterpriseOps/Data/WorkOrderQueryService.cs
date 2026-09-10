@@ -3,7 +3,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseOps.Domain;
+using EnterpriseOps.Security;
 using EnterpriseOps.Services;
+using EnterpriseOps.Services.Commands;
 using EnterpriseOps.Services.Queries;
 using Microsoft.EntityFrameworkCore;
 
@@ -109,13 +111,21 @@ namespace EnterpriseOps.Data
             }
         }
 
-        public async Task<List<AuditLogRow>> GetAuditAsync(string tenantId, int? workOrderId, int take, CancellationToken cancellationToken)
+        public async Task<AuditQueryResult> GetAuditAsync(CommandContext context, int? workOrderId, int take, CancellationToken cancellationToken)
         {
+            // Server-side, in the service: a screen that forgot to hide the button still cannot read the log.
+            if (!Permissions.IsAllowed(context.Role, Operation.ReadAudit, out string denied))
+            {
+                _trace.Trace(TraceLayer.Security, $"authorize {context.UserId} ({context.Role}) → ReadAudit DENIED (no query was run)");
+                return AuditQueryResult.Denied(denied);
+            }
+
+            string tenantId = context.TenantId;
             await _database.Gate.WaitAsync(cancellationToken);
-            var context = _database.CreateContext("Audit query");
+            var dbContext = _database.CreateContext("Audit query");
             try
             {
-                IQueryable<AuditEntry> rows = context.AuditEntries.AsNoTracking().Where(x => x.TenantId == tenantId);
+                IQueryable<AuditEntry> rows = dbContext.AuditEntries.AsNoTracking().Where(x => x.TenantId == tenantId);
                 if (workOrderId.HasValue)
                     rows = rows.Where(x => x.WorkOrderId == workOrderId.Value);
 
@@ -136,11 +146,11 @@ namespace EnterpriseOps.Data
                     .ToListAsync(cancellationToken);
 
                 _trace.Trace(TraceLayer.Data, $"SELECT AuditEntries WHERE TenantId='{tenantId}'{(workOrderId.HasValue ? $" AND WorkOrderId={workOrderId}" : "")} ORDER BY Id DESC → {list.Count} rows");
-                return list;
+                return AuditQueryResult.Ok(list);
             }
             finally
             {
-                _database.Release(context);
+                _database.Release(dbContext);
                 _database.Gate.Release();
             }
         }

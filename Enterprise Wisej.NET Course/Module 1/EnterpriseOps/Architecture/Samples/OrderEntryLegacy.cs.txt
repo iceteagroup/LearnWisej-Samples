@@ -48,6 +48,7 @@ namespace EnterpriseOps.UI.Legacy
             if (cboPriority.Text == "Critical") unitPrice *= 1.6m;
             if (quantity >= 10) unitPrice *= 0.9m;
             if (txtCustomer.Text.StartsWith("Contoso")) unitPrice *= 0.95m;
+            if (chkRushOrder.Checked) unitPrice *= 1.15m;
             decimal total = Math.Round(unitPrice * quantity, 2);
             if (total > 5000m && Application.Session.Role != "Manager")
             {

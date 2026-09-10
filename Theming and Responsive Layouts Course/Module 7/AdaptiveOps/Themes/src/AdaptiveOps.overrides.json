@@ -1,0 +1,263 @@
+{
+  "name": "AdaptiveOps",
+  "inherit": "Bootstrap-4",
+
+  "settings": {
+    "borderRadius": 6,
+    "focusBlurRadius": 0,
+    "focusBorderSize": 3
+  },
+
+  "colors": {
+    "brandPrimary": "#2454A6",
+    "brandPrimaryHover": "#1F4A92",
+    "brandPrimaryPressed": "#183B75",
+    "brandAccent": "#F59E0B",
+    "surface": "#FFFFFF",
+    "surfaceAlt": "#F6F7FB",
+    "surfaceRail": "#EEF2F7",
+    "surfaceHover": "#E3EBF7",
+    "borderSoft": "#D7DCE5",
+    "textMain": "#222222",
+    "textMuted": "#5B647A",
+    "danger": "#B42318",
+    "dangerHover": "#9A1F15",
+    "dangerSurface": "#FDECEA",
+    "warning": "#B54708",
+    "success": "#027A48",
+    "focusFrame": "#2454A6",
+    "focusShadow": "#9DB8EA",
+    "invalid": "#B42318",
+
+    "primary": "#2454A6",
+    "window": "#FFFFFF",
+    "windowText": "#222222",
+    "windowFrame": "#D7DCE5",
+    "buttonFace": "#F6F7FB",
+    "buttonText": "#222222",
+    "buttonHighlight": "#E3EBF7",
+    "highlight": "#2454A6",
+    "highlightText": "#FFFFFF",
+    "hotTrack": "#E3EBF7",
+    "table-row-background-selected": "#E3EBF7",
+    "table-row-background-focused-selected": "#D6E2F5",
+    "table-row-background-focused": "#EEF3FA",
+    "text-placeholder": "#5B647A",
+    "grayText": "#5B647A"
+  },
+
+  "fonts": {
+    "default":     { "size": 13, "family": ["Segoe UI", "Roboto", "Helvetica Neue", "Arial"], "bold": false },
+    "defaultBold": { "size": 13, "family": ["Segoe UI", "Roboto", "Helvetica Neue", "Arial"], "bold": true },
+    "heading":     { "size": 18, "family": ["Segoe UI", "Roboto", "Helvetica Neue", "Arial"], "bold": true },
+    "subheading":  { "size": 14, "family": ["Segoe UI", "Roboto", "Helvetica Neue", "Arial"], "bold": true },
+    "cardTitle":   { "size": 11, "family": ["Segoe UI", "Roboto", "Helvetica Neue", "Arial"], "bold": true },
+    "cardValue":   { "size": 26, "family": ["Segoe UI", "Roboto", "Helvetica Neue", "Arial"], "bold": true },
+    "mono":        { "size": 12, "family": ["Consolas", "Menlo", "monospace"], "bold": false }
+  },
+
+  "appearances": {
+
+    "page": {
+      "states": {
+        "default": { "properties": { "backgroundColor": "surfaceAlt", "textColor": "textMain" } }
+      }
+    },
+
+    "button": {
+      "states": {
+        "default": {
+          "styles": { "backgroundColor": "buttonFace", "radius": "$borderRadius", "width": 1, "style": "solid", "color": "borderSoft", "transition": "background-color 250ms" },
+          "properties": { "textColor": "textMain", "height": 36 }
+        },
+        "hovered": { "styles": { "backgroundColor": "surfaceHover" }, "properties": { "cursor": "pointer" } },
+        "focused": {
+          "styles": { "shadowLength": 0, "shadowSpreadRadius": "$focusBorderSize", "shadowColor": "focusShadow", "shadowBlurRadius": "$focusBlurRadius", "color": "focusFrame" }
+        },
+        "disabled": { "properties": { "opacity": 0.55, "cursor": "default" } }
+      }
+    },
+
+    "action-button": {
+      "inherit": "button",
+      "states": {
+        "default": {
+          "styles": { "backgroundColor": "brandPrimary", "color": "brandPrimary" },
+          "properties": { "textColor": "white" }
+        },
+        "hovered": { "styles": { "backgroundColor": "brandPrimaryHover" } },
+        "pressed": { "styles": { "backgroundColor": "brandPrimaryPressed" } },
+        "focused": {
+          "styles": { "shadowLength": 0, "shadowSpreadRadius": "$focusBorderSize", "shadowColor": "focusShadow", "shadowBlurRadius": "$focusBlurRadius", "color": "white" }
+        },
+        "disabled": { "properties": { "opacity": 0.55, "cursor": "default" } }
+      }
+    },
+
+    "destructive-button": {
+      "inherit": "action-button",
+      "states": {
+        "default": { "styles": { "backgroundColor": "danger", "color": "danger" } },
+        "hovered": { "styles": { "backgroundColor": "dangerHover" } },
+        "pressed": { "styles": { "backgroundColor": "dangerHover" } }
+      }
+    },
+
+    "nav-item": {
+      "inherit": "button",
+      "states": {
+        "default": {
+          "styles": { "backgroundColor": "transparent", "width": 0, "radius": "$borderRadius" },
+          "properties": { "textColor": "textMain", "height": 40, "center": false, "padding": [0, 12, 0, 12] }
+        },
+        "hovered": { "styles": { "backgroundColor": "surfaceHover" } },
+        "selected": {
+          "styles": { "backgroundColor": "brandPrimary" },
+          "properties": { "textColor": "white" }
+        },
+        "focused": {
+          "styles": { "shadowLength": 0, "shadowSpreadRadius": "$focusBorderSize", "shadowColor": "focusShadow", "shadowBlurRadius": "$focusBlurRadius" }
+        }
+      }
+    },
+
+    "surface-card": {
+      "inherit": "panel",
+      "states": {
+        "default": {
+          "styles": { "backgroundColor": "surface", "width": 1, "style": "solid", "color": "borderSoft", "radius": "$borderRadius" }
+        }
+      }
+    },
+
+    "metric-card": {
+      "inherit": "surface-card",
+      "states": {
+        "default": {
+          "styles": { "backgroundColor": "surface", "width": 1, "style": "solid", "color": "borderSoft", "radius": "$borderRadius", "shadowLength": 1, "shadowBlurRadius": 3, "shadowColor": "rgba(20, 40, 80, 0.10)" }
+        },
+        "stale": { "styles": { "color": "warning", "style": "dashed" } }
+      }
+    },
+
+    "rail-surface": {
+      "inherit": "panel",
+      "states": {
+        "default": {
+          "styles": { "backgroundColor": "surfaceRail", "width": 1, "style": "solid", "color": "borderSoft", "radius": "$borderRadius" }
+        }
+      }
+    },
+
+    "banner-danger": {
+      "inherit": "panel",
+      "states": {
+        "default": {
+          "styles": { "backgroundColor": "dangerSurface", "width": 1, "style": "solid", "color": "danger", "radius": "$borderRadius" },
+          "properties": { "textColor": "danger" }
+        }
+      }
+    },
+
+    "cost-bar-fill": {
+      "inherit": "panel",
+      "states": { "default": { "styles": { "backgroundColor": "brandPrimary", "width": 0, "radius": 3 } } }
+    },
+    "cost-bar-track": {
+      "inherit": "panel",
+      "states": { "default": { "styles": { "backgroundColor": "surfaceRail", "width": 0, "radius": 3 } } }
+    },
+
+    "heading-label": {
+      "inherit": "textlabel",
+      "states": { "default": { "properties": { "font": "heading", "textColor": "textMain" } } }
+    },
+    "subheading-label": {
+      "inherit": "textlabel",
+      "states": { "default": { "properties": { "font": "subheading", "textColor": "textMain" } } }
+    },
+    "muted-label": {
+      "inherit": "textlabel",
+      "states": { "default": { "properties": { "textColor": "textMuted" } } }
+    },
+    "metric-title": {
+      "inherit": "textlabel",
+      "states": { "default": { "properties": { "font": "cardTitle", "textColor": "textMuted" } } }
+    },
+    "metric-value": {
+      "inherit": "textlabel",
+      "states": { "default": { "properties": { "font": "cardValue", "textColor": "textMain" } } }
+    },
+    "mono-label": {
+      "inherit": "textlabel",
+      "states": { "default": { "properties": { "font": "mono", "textColor": "textMuted" } } }
+    },
+    "status-label": {
+      "inherit": "textlabel",
+      "states": {
+        "default": { "properties": { "font": "defaultBold", "textColor": "textMuted" } },
+        "ok":      { "properties": { "textColor": "success" } },
+        "warn":    { "properties": { "textColor": "warning" } },
+        "error":   { "properties": { "textColor": "danger" } }
+      }
+    },
+    "validation-label": {
+      "inherit": "textlabel",
+      "states": {
+        "default": { "properties": { "textColor": "textMuted" } },
+        "error":   { "properties": { "textColor": "danger", "font": "defaultBold" } }
+      }
+    },
+
+    "trace-list": {
+      "inherit": "list",
+      "states": { "default": { "properties": { "font": "mono", "textColor": "textMain", "itemHeight": 22 } } }
+    },
+
+    "textbox": {
+      "states": {
+        "default": {
+          "styles": { "width": 1, "style": "solid", "color": "borderSoft", "radius": "$borderRadius" },
+          "properties": { "height": 32, "padding": [0, 4, 0, 6], "backgroundColor": "surface", "textColor": "textMain" }
+        },
+        "focused": {
+          "styles": { "color": "focusFrame", "shadowColor": "focusShadow", "shadowSpreadRadius": "$focusBorderSize", "shadowLength": 0, "shadowBlurRadius": "$focusBlurRadius" }
+        },
+        "invalid": {
+          "styles": { "color": "danger", "width": 2, "style": "solid" },
+          "properties": { "backgroundColor": "dangerSurface" }
+        }
+      }
+    },
+
+    "compact-editor": {
+      "inherit": "textbox",
+      "states": {
+        "default": { "properties": { "height": 28, "padding": [0, 2, 0, 4] } }
+      }
+    },
+
+    "table-header-cell": {
+      "states": {
+        "default": {
+          "styles": { "width": [0, 1, 1, 0], "color": "borderSoft", "backgroundColor": "surfaceAlt", "transition": "background-color 250ms" },
+          "properties": { "padding": [0, 8, 0, 8], "textColor": "textMuted", "font": "cardTitle", "cursor": "default" }
+        },
+        "hovered": { "styles": { "backgroundColor": "surfaceHover" }, "properties": { "cursor": "pointer" } }
+      }
+    },
+
+    "tooltip": {
+      "components": {
+        "atom": {
+          "states": {
+            "default": {
+              "styles": { "backgroundColor": "textMain", "radius": "$borderRadius" },
+              "properties": { "padding": [6, 10, 6, 10], "textColor": "white", "icon": "icon-info", "show": "both" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

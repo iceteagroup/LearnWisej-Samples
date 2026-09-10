@@ -3,6 +3,7 @@
 // cancellation honoured between batches.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseOps.Domain;
@@ -179,12 +180,17 @@ namespace EnterpriseOps.Services.Jobs
                 return;
             }
 
-            // 3. Final state: Completed, or CompletedWithErrors with every bad row named.
+            // 3. Final state: Completed, or CompletedWithErrors with every bad row named. Rows that failed
+            //    transiently and were then retried into success are NOT errors; rows that gave up after the
+            //    last attempt are counted apart from the rows that were terminal from the start.
             bool hasErrors = summary.RowErrors.Count > 0;
+            int terminalRows = summary.RowErrors.Count(e => !e.Retryable);
+            int exhaustedRows = summary.RowErrors.Count - terminalRows;
             await progress.PublishAsync(
                 new(JobId, hasErrors ? JobStatus.CompletedWithErrors : JobStatus.Completed, 100,
                     hasErrors
-                        ? $"Completed with errors: {summary.Imported:n0} imported · {summary.Retried} retried ✓ · {summary.RowErrors.Count} terminal."
+                        ? $"Completed with errors: {summary.Imported:n0} imported · {summary.Retried} retried ✓ · {terminalRows} terminal" +
+                          (exhaustedRows > 0 ? $" · {exhaustedRows} gave up after {_retry.MaxAttempts} attempts" : "") + "."
                         : $"Import completed: {summary.Imported:n0} rows imported ({summary.Created:n0} created, {summary.Updated:n0} updated).")
                 { Result = summary },
                 CancellationToken.None);

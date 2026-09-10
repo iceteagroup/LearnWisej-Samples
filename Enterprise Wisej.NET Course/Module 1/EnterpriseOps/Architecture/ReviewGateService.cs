@@ -33,6 +33,28 @@ namespace EnterpriseOps.Architecture
             report.Errors.Add($"Source file not found: {fileName}. Run the app from the project folder.");
             return report;
         }
+
+        /// <summary>
+        /// Starts a report for a file the gate could open. Only the result type may set Succeeded and
+        /// CorrelationId (they are `protected set` on CommandResult) — the service fills the report through
+        /// this factory and <see cref="Complete"/>, never by assigning the base properties from outside.
+        /// </summary>
+        public static ReviewGateReport For(string correlationId, string fileName, string resolvedPath)
+        {
+            return new ReviewGateReport
+            {
+                CorrelationId = correlationId,
+                FileName = fileName,
+                ResolvedPath = resolvedPath,
+                FileFound = true,
+            };
+        }
+
+        /// <summary>Seals the report once every handler has been checked: no issue means the change may merge.</summary>
+        public void Complete()
+        {
+            Succeeded = TotalIssues == 0;
+        }
     }
 
     /// <summary>
@@ -70,7 +92,7 @@ namespace EnterpriseOps.Architecture
             }
 
             string[] lines = await File.ReadAllLinesAsync(fullPath);
-            var report = new ReviewGateReport { FileName = Path.GetFileName(relativePath), ResolvedPath = fullPath, FileFound = true, CorrelationId = ctx.CorrelationId };
+            var report = ReviewGateReport.For(ctx.CorrelationId, Path.GetFileName(relativePath), fullPath);
 
             for (int i = 0; i < lines.Length; i++)
             {
@@ -96,7 +118,7 @@ namespace EnterpriseOps.Architecture
                     _trace.Architecture("  ✕ " + issue);
             }
 
-            report.Succeeded = report.TotalIssues == 0;
+            report.Complete();
             _trace.Architecture($"{report.FileName}: {report.Handlers.Count} handler(s), {report.TotalIssues} issue(s) → {(report.Succeeded ? "PASS — may merge" : "FAIL — blocked before merge")}");
             return report;
         }

@@ -17,6 +17,22 @@
     <ImplicitUsings>disable</ImplicitUsings>
   </PropertyGroup>
 
+  <!--
+    The embedded resource package of the component library (Widgets/ComponentResourcePackage.cs).
+    The assembly is the source of truth: referencing it brings the vendor library, the component
+    stylesheet and the client adapter with it. The first two are ALSO served from Widgets/ because a
+    Widget package is fetched over HTTP; ComponentResourcePackage.Verify() compares the two copies so
+    a hand-edited served file is reported instead of silently shipping.
+  -->
+  <ItemGroup>
+    <None Remove="Widgets\vendor-opschart.js" />
+    <None Remove="Widgets\opschart.css" />
+    <None Remove="Widgets\opschart-init.js" />
+    <EmbeddedResource Include="Widgets\vendor-opschart.js" LogicalName="EnterpriseOps.Widgets.vendor-opschart.js" />
+    <EmbeddedResource Include="Widgets\opschart.css" LogicalName="EnterpriseOps.Widgets.opschart.css" />
+    <EmbeddedResource Include="Widgets\opschart-init.js" LogicalName="EnterpriseOps.Widgets.opschart-init.js" />
+  </ItemGroup>
+
   <ItemGroup>
     <Content Update="Default.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>

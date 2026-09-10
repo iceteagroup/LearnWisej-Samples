@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="670" viewBox="0 0 1200 670" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="14">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#3a4d63"/>
+    </marker>
+    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1a86ff"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#1f8a4c"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#d67a00"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="670" fill="#ffffff"/>
+  <text x="24" y="34" font-size="20" font-weight="700" fill="#0d1b2a">Work Orders — data workflow: load → filter → edit → save / discard</text>
+  <text x="24" y="56" fill="#5a6b7d">TicketOps Console · Module 4 · one BindingSource shared by the grid (master) and the editor (detail)</text>
+
+  <!-- ===== bands ===== -->
+  <rect x="24" y="80" width="1096" height="150" rx="10" fill="#f4f8ff" stroke="#d8e7fb"/>
+  <text x="40" y="102" font-size="12" font-weight="700" fill="#1a86ff" letter-spacing="1">VIEW  ·  Views/WorkOrdersPage  (display + input only)</text>
+
+  <rect x="24" y="250" width="1096" height="120" rx="10" fill="#f6f9fc" stroke="#dde5ee"/>
+  <text x="40" y="272" font-size="12" font-weight="700" fill="#6a7d92" letter-spacing="1">BINDING  ·  list → BindingSource</text>
+
+  <rect x="24" y="390" width="1096" height="110" rx="10" fill="#f2fbf5" stroke="#cfe9d8"/>
+  <text x="40" y="412" font-size="12" font-weight="700" fill="#1f8a4c" letter-spacing="1">SERVICE  ·  IWorkOrderService</text>
+
+  <rect x="24" y="520" width="546" height="130" rx="10" fill="#f7f7f9" stroke="#e1e3e8"/>
+  <text x="554" y="542" font-size="12" font-weight="700" fill="#5a6b7d" letter-spacing="1" text-anchor="end">DATA  ·  IWorkOrderRepository  (copies; outage throws)</text>
+
+  <rect x="600" y="520" width="520" height="130" rx="10" fill="#fff7ec" stroke="#f3dfbf"/>
+  <text x="696" y="542" font-size="11" font-weight="700" fill="#b9770e" letter-spacing="1">DOMAIN  ·  WorkOrder</text>
+
+  <!-- ===== VIEW boxes ===== -->
+  <rect x="40" y="118" width="230" height="92" rx="8" fill="#fff" stroke="#c6d2de"/>
+  <text x="56" y="142" font-weight="700" fill="#1f2d3a">Toolbar</text>
+  <text x="56" y="162" fill="#3a4d63">textSearch · comboStatusFilter</text>
+  <text x="56" y="182" fill="#3a4d63" font-size="12">on change → ReadQueryFromForm()</text>
+  <text x="56" y="200" fill="#6a7d92" font-size="12">→ IWorkOrderService.Filter</text>
+
+  <rect x="290" y="118" width="370" height="92" rx="8" fill="#fff" stroke="#c6d2de"/>
+  <text x="306" y="142" font-weight="700" fill="#1f2d3a">dgvWorkOrders  (master)</text>
+  <text x="306" y="162" fill="#3a4d63">DataSource = workOrderSource</text>
+  <text x="306" y="182" fill="#3a4d63" font-size="11.5">7 columns by DataPropertyName · Cost "C2" · Due "MMM d"</text>
+  <text x="306" y="200" fill="#6a7d92" font-size="11.5">CellFormatting: colours · Unassigned · overdue · dirty</text>
+
+  <rect x="680" y="118" width="424" height="92" rx="8" fill="#fff" stroke="#c6d2de"/>
+  <text x="696" y="142" font-weight="700" fill="#1f2d3a">Detail editor  (detail)</text>
+  <text x="696" y="162" fill="#3a4d63">textTitle · textAssignedTo · dateDue · numericCost</text>
+  <text x="696" y="182" fill="#3a4d63" font-size="11.5">bound two-way to Current · comboStatus / comboPriority manual</text>
+  <text x="696" y="200" fill="#6a7d92" font-size="11.5">labelDirty "● Unsaved changes" · Save / Discard enabled = IsDirty</text>
+
+  <!-- ===== BINDING boxes ===== -->
+  <rect x="40" y="288" width="290" height="66" rx="8" fill="#fff" stroke="#c6d2de"/>
+  <text x="56" y="312" font-weight="700" fill="#1f2d3a">List&lt;WorkOrder&gt; _allOrders</text>
+  <text x="56" y="332" fill="#3a4d63">every object · never filtered away</text>
+  <text x="56" y="348" fill="#6a7d92" font-size="12">same instances → edits survive a filter</text>
+
+  <rect x="360" y="288" width="340" height="66" rx="8" fill="#fff" stroke="#1a86ff"/>
+  <text x="376" y="312" font-weight="700" fill="#1f2d3a">BindingList&lt;WorkOrder&gt; _visibleOrders</text>
+  <text x="376" y="332" fill="#3a4d63">ItemAdded · ItemChanged · Reset</text>
+  <text x="376" y="348" fill="#6a7d92" font-size="12">rebuilt with events off → one ResetBindings()</text>
+
+  <rect x="740" y="288" width="364" height="66" rx="8" fill="#fff" stroke="#1a86ff" stroke-width="2"/>
+  <text x="756" y="312" font-weight="700" fill="#1f2d3a">BindingSource workOrderSource</text>
+  <text x="756" y="332" fill="#3a4d63">Current · CurrentChanged → RefreshDetail()</text>
+  <text x="756" y="348" fill="#6a7d92" font-size="12">EndEdit() before Save flushes the last bound value</text>
+
+  <!-- ===== SERVICE boxes ===== -->
+  <rect x="40" y="424" width="150" height="62" rx="8" fill="#fff" stroke="#9fd3b4"/>
+  <text x="56" y="448" font-weight="700" fill="#1f2d3a">LoadAsync()</text>
+  <text x="56" y="468" fill="#3a4d63" font-size="12">→ GetAllAsync · Accept</text>
+
+  <rect x="206" y="424" width="180" height="62" rx="8" fill="#fff" stroke="#9fd3b4"/>
+  <text x="222" y="448" font-weight="700" fill="#1f2d3a">Filter(all, query)</text>
+  <text x="222" y="468" fill="#3a4d63" font-size="12">Matches · 0 rows = OK</text>
+
+  <rect x="760" y="424" width="180" height="62" rx="8" fill="#fff" stroke="#9fd3b4"/>
+  <text x="776" y="448" font-weight="700" fill="#1f2d3a">SaveAsync(current)</text>
+  <text x="776" y="468" fill="#3a4d63" font-size="12">validate → Upsert → Accept</text>
+
+  <rect x="960" y="424" width="144" height="62" rx="8" fill="#fff" stroke="#9fd3b4"/>
+  <text x="976" y="448" font-weight="700" fill="#1f2d3a">Discard(current)</text>
+  <text x="976" y="468" fill="#3a4d63" font-size="12">RejectChanges · no I/O</text>
+
+  <!-- ===== DATA boxes ===== -->
+  <rect x="40" y="556" width="514" height="36" rx="8" fill="#fff" stroke="#cfd5de"/>
+  <text x="56" y="580" fill="#1f2d3a">GetAllAsync() → 6 seeded copies (#2001–#2006)</text>
+  <rect x="40" y="600" width="514" height="36" rx="8" fill="#fff" stroke="#cfd5de"/>
+  <text x="56" y="624" fill="#1f2d3a">UpsertAsync(copy) → "#2002 written" · outage → DataOutageException</text>
+
+  <!-- ===== DOMAIN box ===== -->
+  <rect x="616" y="556" width="488" height="80" rx="8" fill="#fff" stroke="#e8c88a"/>
+  <text x="632" y="580" fill="#1f2d3a"><tspan font-weight="700">SetField</tspan> → PropertyChanged(prop) + PropertyChanged(IsDirty)</text>
+  <text x="632" y="602" fill="#1f2d3a"><tspan font-weight="700">AcceptChanges</tspan>: snapshot ← values  ·  <tspan font-weight="700">RejectChanges</tspan>: values ← snapshot</text>
+  <text x="632" y="622" fill="#6a7d92" font-size="12">IsDirty = values ≠ snapshot · IsOverdue announced from DueDate / Status</text>
+
+  <!-- ===== arrows ===== -->
+  <!-- grid → BindingSource (DataSource) -->
+  <path d="M600 210 L600 240 L760 240 L760 286" fill="none" stroke="#1a86ff" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <text x="608" y="236" fill="#1a86ff" font-size="12">DataSource</text>
+
+  <!-- detail → BindingSource (DataBindings, two-way) -->
+  <line x1="960" y1="210" x2="960" y2="286" stroke="#1a86ff" stroke-width="2" marker-end="url(#arrowBlue)" marker-start="url(#arrowBlue)"/>
+  <text x="968" y="252" fill="#1a86ff" font-size="12">DataBindings ⇄ Current</text>
+
+  <!-- master list → BindingList (filter result) -->
+  <line x1="330" y1="321" x2="358" y2="321" stroke="#3a4d63" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="330" y="284" fill="#3a4d63" font-size="11">filter</text>
+
+  <!-- BindingList → BindingSource (.DataSource) -->
+  <line x1="700" y1="321" x2="738" y2="321" stroke="#1a86ff" stroke-width="2" marker-end="url(#arrowBlue)"/>
+
+  <!-- toolbar → Filter service (through the 330–360 gap and the gutters) -->
+  <path d="M165 210 L165 240 L345 240 L345 380 L296 380 L296 422" fill="none" stroke="#1f8a4c" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="172" y="236" fill="#1f8a4c" font-size="12">WorkOrderQuery</text>
+
+  <!-- LoadAsync → master list (objects) -->
+  <line x1="115" y1="424" x2="115" y2="356" stroke="#1f8a4c" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="122" y="386" fill="#1f8a4c" font-size="12">objects</text>
+
+  <!-- Save / Discard: detail → service, along the right-hand channel -->
+  <path d="M1104 150 L1160 150 L1160 400 L850 400 L850 422" fill="none" stroke="#d67a00" stroke-width="2" marker-end="url(#arrowAmber)"/>
+  <text x="1108" y="146" fill="#d67a00" font-size="12" font-weight="700">Save</text>
+  <path d="M1104 190 L1180 190 L1180 455 L1106 455" fill="none" stroke="#d67a00" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrowAmber)"/>
+  <text x="1108" y="186" fill="#d67a00" font-size="12" font-weight="700">Discard</text>
+
+  <!-- service → domain (commit / rollback) -->
+  <line x1="850" y1="486" x2="850" y2="554" stroke="#d67a00" stroke-width="2" marker-end="url(#arrowAmber)"/>
+  <text x="858" y="514" fill="#d67a00" font-size="12">AcceptChanges</text>
+  <line x1="1032" y1="486" x2="1032" y2="554" stroke="#d67a00" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrowAmber)"/>
+  <text x="1040" y="514" fill="#d67a00" font-size="12">RejectChanges</text>
+
+  <!-- LoadAsync → data -->
+  <line x1="115" y1="486" x2="115" y2="554" stroke="#3a4d63" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- notification back up: domain → BindingList → grid / fields -->
+  <path d="M680 554 L680 356" fill="none" stroke="#1a86ff" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrowBlue)"/>
+  <text x="670" y="514" fill="#1a86ff" font-size="12" text-anchor="end">PropertyChanged → ListChanged(ItemChanged) → grid cell repaints · dirty indicator</text>
+</svg>

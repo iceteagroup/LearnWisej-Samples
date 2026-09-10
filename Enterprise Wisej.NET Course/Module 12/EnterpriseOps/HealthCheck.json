@@ -12,6 +12,9 @@
     "expectedStatusCode": 200,
     "unhealthyStatusCode": 503
   },
+  "limits": {
+    "maxSessionsPerNode": 500
+  },
   "checks": [
     { "name": "configuration", "critical": true,  "description": "startup validation passed for the active environment" },
     { "name": "database",      "critical": true,  "description": "a known query returns rows (work orders for the probe tenant)" },

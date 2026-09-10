@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="430" viewBox="0 0 960 430" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#46586a"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 z" fill="#1a86ff"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="430" fill="#eef2f7"/>
+
+  <!-- lanes -->
+  <rect x="16" y="16" width="928" height="176" rx="10" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="34" y="42" font-size="13" font-weight="700" fill="#1a86ff">SESSION — the observing half (a page; it may be closed at any moment)</text>
+
+  <rect x="16" y="212" width="928" height="200" rx="10" fill="#ffffff" stroke="#c6d2de"/>
+  <text x="34" y="238" font-size="13" font-weight="700" fill="#1f8a4c">PROCESS — the executing half (outlives every page and every session)</text>
+
+  <!-- session boxes -->
+  <rect x="40" y="60" width="220" height="104" rx="8" fill="#eaf3ff" stroke="#1a86ff"/>
+  <text x="150" y="88" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">ImportCenterPage</text>
+  <text x="150" y="110" font-size="12" text-anchor="middle" fill="#46586a">dgvJobs · prgJob · bell</text>
+  <text x="150" y="128" font-size="12" text-anchor="middle" fill="#46586a">JobDetailPanel</text>
+  <text x="150" y="150" font-size="11" text-anchor="middle" fill="#7a8a99">thin handlers only</text>
+
+  <rect x="330" y="60" width="200" height="104" rx="8" fill="#f7fbff" stroke="#8fbdf0"/>
+  <text x="430" y="88" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">ImportService</text>
+  <text x="430" y="110" font-size="12" text-anchor="middle" fill="#46586a">permission · tenant</text>
+  <text x="430" y="128" font-size="12" text-anchor="middle" fill="#46586a">builds the JobRecord</text>
+  <text x="430" y="150" font-size="11" text-anchor="middle" fill="#7a8a99">per session</text>
+
+  <rect x="620" y="60" width="300" height="104" rx="8" fill="#eaf3ff" stroke="#1a86ff"/>
+  <text x="770" y="88" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">JobProgressObserver</text>
+  <text x="770" y="110" font-size="12" text-anchor="middle" fill="#46586a">Application.StartTask — keeps the session</text>
+  <text x="770" y="128" font-size="12" text-anchor="middle" fill="#46586a">Application.Update every 400 ms, if dirty</text>
+  <text x="770" y="150" font-size="11" text-anchor="middle" fill="#7a8a99">the only pusher in the app</text>
+
+  <!-- process boxes -->
+  <rect x="40" y="262" width="220" height="120" rx="8" fill="#eefaf2" stroke="#1f8a4c"/>
+  <text x="150" y="290" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">IJobQueue</text>
+  <text x="150" y="312" font-size="12" text-anchor="middle" fill="#46586a">one worker thread</text>
+  <text x="150" y="330" font-size="12" text-anchor="middle" fill="#46586a">CancellationTokenSource</text>
+  <text x="150" y="348" font-size="12" text-anchor="middle" fill="#46586a">per job</text>
+  <text x="150" y="368" font-size="11" text-anchor="middle" fill="#7a8a99">no Wisej session</text>
+
+  <rect x="330" y="262" width="200" height="120" rx="8" fill="#eefaf2" stroke="#1f8a4c"/>
+  <text x="430" y="290" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">ImportWorkOrdersJob</text>
+  <text x="430" y="312" font-size="12" text-anchor="middle" fill="#46586a">validate → batches</text>
+  <text x="430" y="330" font-size="12" text-anchor="middle" fill="#46586a">retry rows · upsert</text>
+  <text x="430" y="348" font-size="12" text-anchor="middle" fill="#46586a">cancel between batches</text>
+  <text x="430" y="368" font-size="11" text-anchor="middle" fill="#7a8a99">IBackgroundJob</text>
+
+  <rect x="600" y="262" width="150" height="120" rx="8" fill="#eefaf2" stroke="#1f8a4c"/>
+  <text x="675" y="290" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">Job status</text>
+  <text x="675" y="308" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">store</text>
+  <text x="675" y="332" font-size="12" text-anchor="middle" fill="#46586a">record + history</text>
+  <text x="675" y="350" font-size="12" text-anchor="middle" fill="#46586a">tenant-scoped</text>
+  <text x="675" y="370" font-size="11" text-anchor="middle" fill="#7a8a99">Changed event</text>
+
+  <rect x="780" y="262" width="140" height="120" rx="8" fill="#eefaf2" stroke="#1f8a4c"/>
+  <text x="850" y="290" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">Notification</text>
+  <text x="850" y="308" font-size="14" font-weight="700" text-anchor="middle" fill="#0d1b2a">service</text>
+  <text x="850" y="332" font-size="12" text-anchor="middle" fill="#46586a">per user / role</text>
+  <text x="850" y="350" font-size="12" text-anchor="middle" fill="#46586a">read · unread</text>
+  <text x="850" y="370" font-size="11" text-anchor="middle" fill="#7a8a99">waits for a session</text>
+
+  <!-- arrows -->
+  <path d="M260,112 L326,112" stroke="#46586a" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <text x="293" y="104" font-size="11" text-anchor="middle" fill="#46586a">command</text>
+
+  <path d="M430,164 L430,258" stroke="#46586a" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <text x="437" y="200" font-size="11" fill="#46586a">Enqueue(job, record) — returns at once</text>
+
+  <path d="M260,322 L326,322" stroke="#46586a" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <text x="293" y="314" font-size="11" text-anchor="middle" fill="#46586a">RunAsync</text>
+
+  <path d="M530,312 L596,312" stroke="#46586a" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <text x="563" y="304" font-size="11" text-anchor="middle" fill="#46586a">sink</text>
+
+  <path d="M750,340 L776,340" stroke="#46586a" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+
+  <path d="M700,258 L740,168" stroke="#1a86ff" stroke-width="1.6" fill="none" marker-end="url(#arrowBlue)" stroke-dasharray="5 4"/>
+  <text x="712" y="220" font-size="11" fill="#1a86ff">Changed → sets a flag (no UI on that thread)</text>
+
+  <path d="M620,112 L264,112" stroke="#1a86ff" stroke-width="1.6" fill="none" marker-end="url(#arrowBlue)"/>
+  <text x="440" y="46" font-size="11" text-anchor="middle" fill="#1a86ff">refresh controls, then Application.Update(page) — at most 2.5 pushes/second</text>
+</svg>

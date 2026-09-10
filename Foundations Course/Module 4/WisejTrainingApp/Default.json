@@ -2,5 +2,6 @@
 	"url": "Default.html",
 	"startup": "WisejTrainingApp.Program.Main, WisejTrainingApp",
 	"theme": "Bootstrap-4",
-	"debug": true
+	"debug": true,
+	"sessionTimeout": 1800
 }

@@ -1,0 +1,7 @@
+{
+  "profiles": [
+    { "name": "Phone",   "maxWidth": 600 },
+    { "name": "Tablet",  "minWidth": 601, "maxWidth": 1024 },
+    { "name": "Desktop", "minWidth": 1025 }
+  ]
+}

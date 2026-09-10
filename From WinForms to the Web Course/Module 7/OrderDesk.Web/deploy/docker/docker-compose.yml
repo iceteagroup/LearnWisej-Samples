@@ -1,0 +1,33 @@
+# OrderDesk.Web · one-service compose file (Module 7).
+#   cd OrderDesk.Web/deploy/docker && docker compose up --build
+# then open http://localhost:5607 — the same port the dotnet run sample uses.
+#
+# One instance only. Wisej.NET keeps the session in the process, so scaling this service to N replicas needs a
+# reverse proxy with session affinity (sticky cookie) in front — see docs/DeploymentChecklist.md.
+
+services:
+  orderdesk:
+    build:
+      context: ../..                     # the OrderDesk.Web project folder
+      dockerfile: deploy/docker/Dockerfile
+    image: orderdesk-web:7.0.0-capstone
+    container_name: orderdesk-web
+    ports:
+      - "5607:8080"                      # host:container — Kestrel listens on 8080 inside
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_ENVIRONMENT: Production
+      # Secrets and per-environment values come from the environment / a secret store, not from Web.config:
+      # WISEJ_LICENSEKEY: ${WISEJ_LICENSEKEY}
+    volumes:
+      - orderdesk-data:/app/App_Data     # storage root: uploads/ exports/ reports/ logs/ survive a redeploy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  orderdesk-data:

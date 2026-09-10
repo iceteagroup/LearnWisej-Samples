@@ -1,0 +1,8 @@
+{
+  "//": "Module 7 — the client profiles OrderDesk supports. The framework merges this file with its embedded defaults (Phone, Phone (Landscape), Tablet, Tablet (Landscape), Small Desktop): a profile with the same name REPLACES the default one, unknown names are added, and the first match top-to-bottom becomes Application.ActiveProfile. The defaults match on device type only; ours match on browser width so a desktop browser that is resized also crosses the boundaries (the reviewer drags the pane). Small Desktop (device Desktop, maxWidth 1024) stays in the merged list and is treated like Tablet by MainPage.ModeFor.",
+  "profiles": [
+    { "name": "Phone",   "maxWidth": 600 },
+    { "name": "Tablet",  "minWidth": 601, "maxWidth": 1024 },
+    { "name": "Desktop", "minWidth": 1025 }
+  ]
+}

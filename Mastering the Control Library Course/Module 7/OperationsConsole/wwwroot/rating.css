@@ -1,0 +1,206 @@
+/* ============================================================================================
+   rating.css — the ONLY place the rating widget's colours and sizes are defined.
+   OperationsConsole · Mastering the Control Library · Module 7
+
+   Loaded as the FIRST package of ratingWidget (a stylesheet is a Widget.Package like any other
+   script), so the first paint is already styled and the stars never flash unthemed.
+
+       ratingWidget.Packages.Add(new Widget.Package { Name = "rating-css", Source = "wwwroot/rating.css" });
+       ratingWidget.Packages.Add(new Widget.Package { Name = "rating-js",  Source = "wwwroot/rating.js"  });
+
+   Why a stylesheet and not colours in rating.js (module reading, "Theming and responsive
+   behaviour are part of the final polish"): a colour written in JavaScript cannot be changed by
+   Application.LoadTheme, cannot be overridden by the StyleSheet extender, and cannot be found by
+   the next developer. Everything below is a CSS custom property; rating.js only ever adds and
+   removes CLASS NAMES.
+
+   Class contract (rating.js and rating-init.js may use these names and nothing else):
+     .opc-rating                root element created by rating.js inside this.container
+     .opc-rating--bootstrap     theme variant, set from the server (Options.theme)
+     .opc-rating--material      theme variant, set from the server (Options.theme)
+     .opc-rating.is-narrow      narrow client profile (Phone), set from the server (Options.profile)
+     .opc-rating.saved          the server confirmed the value with Call("setSaved", value)
+     .opc-rating.is-busy        a save is in flight (the widget stays clickable on purpose)
+   ============================================================================================ */
+
+.opc-rating {
+    /* ---- theme-like variables (the default = the console's Bootstrap-4 look) ---- */
+    --opc-rating-star: #c9d4e0;
+    --opc-rating-star-on: #efa82c;
+    --opc-rating-star-hover: #ffc355;
+    --opc-rating-label: #5a6b7d;
+    --opc-rating-value: #0d1b2a;
+    --opc-rating-focus: #1565d8;
+    --opc-rating-badge-bg: rgba(31, 157, 87, .12);
+    --opc-rating-badge-fg: #1f9d57;
+    --opc-rating-badge-border: rgba(31, 157, 87, .40);
+    --opc-rating-surface: transparent;
+    --opc-rating-border: transparent;
+
+    /* ---- metrics ---- */
+    --opc-rating-size: 38px;
+    --opc-rating-gap: 10px;
+    --opc-rating-radius: 10px;
+    --opc-rating-font: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 6px 0 0 0;
+    font-family: var(--opc-rating-font);
+    color: var(--opc-rating-value);
+    background: var(--opc-rating-surface);
+    border: 1px solid var(--opc-rating-border);
+    border-radius: var(--opc-rating-radius);
+    user-select: none;
+}
+
+.opc-rating *,
+.opc-rating *::before,
+.opc-rating *::after {
+    box-sizing: inherit;
+}
+
+/* ---- the row of stars ------------------------------------------------------------------- */
+
+.opc-rating__stars {
+    display: flex;
+    align-items: center;
+    gap: var(--opc-rating-gap);
+}
+
+.opc-rating__star {
+    width: var(--opc-rating-size);
+    height: var(--opc-rating-size);
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: var(--opc-rating-star);
+    line-height: 0;
+    border-radius: 6px;
+    transition: color .12s ease-out, transform .12s ease-out;
+}
+
+.opc-rating__star svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    fill: currentColor;
+}
+
+.opc-rating__star.is-on {
+    color: var(--opc-rating-star-on);
+}
+
+.opc-rating__star:hover,
+.opc-rating__star.is-preview {
+    color: var(--opc-rating-star-hover);
+    transform: translateY(-1px);
+}
+
+.opc-rating__star:focus-visible {
+    outline: 2px solid var(--opc-rating-focus);
+    outline-offset: 2px;
+}
+
+/* ---- caption line: label + current value + the saved badge -------------------------------- */
+
+.opc-rating__caption {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--opc-rating-label);
+    min-height: 22px;
+}
+
+.opc-rating__label {
+    font-weight: 600;
+}
+
+.opc-rating__value {
+    color: var(--opc-rating-value);
+    font-weight: 700;
+}
+
+.opc-rating__badge {
+    display: none;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--opc-rating-badge-fg);
+    background: var(--opc-rating-badge-bg);
+    border: 1px solid var(--opc-rating-badge-border);
+}
+
+/* ---- the "saved" state, switched on by setSaved(value) from the server -------------------- */
+
+.opc-rating.saved .opc-rating__badge {
+    display: inline-block;
+}
+
+.opc-rating.saved .opc-rating__star.is-on {
+    color: var(--opc-rating-star-on);
+    filter: saturate(1.15);
+}
+
+/* A rejected or failed save leaves the widget editable: no pointer-events are removed here on
+   purpose — .is-busy only dims the caption while the round trip is running. */
+.opc-rating.is-busy .opc-rating__caption {
+    opacity: .55;
+}
+
+/* ---- theme variants, chosen by the server (Options.theme → rating-init.js) ---------------- */
+
+.opc-rating--bootstrap {
+    --opc-rating-star-on: #efa82c;
+    --opc-rating-star-hover: #ffc355;
+    --opc-rating-focus: #1565d8;
+    --opc-rating-label: #5a6b7d;
+    --opc-rating-value: #0d1b2a;
+}
+
+.opc-rating--material {
+    --opc-rating-star: #d7d2e0;
+    --opc-rating-star-on: #6750a4;
+    --opc-rating-star-hover: #8b74d0;
+    --opc-rating-focus: #6750a4;
+    --opc-rating-label: #4a4459;
+    --opc-rating-value: #1d1b20;
+    --opc-rating-badge-bg: rgba(103, 80, 164, .12);
+    --opc-rating-badge-fg: #6750a4;
+    --opc-rating-badge-border: rgba(103, 80, 164, .40);
+    --opc-rating-radius: 16px;
+}
+
+/* ---- narrow profile ---------------------------------------------------------------------- */
+/* Two ways in, on purpose:
+   1. the server sets Options.profile from Application.ActiveProfile.Name (ClientProfiles.json:
+      Phone ≤ 600 px, Tablet ≤ 1024 px, Desktop) and rating-init.js toggles .is-narrow;
+   2. a plain media query, so the widget still shrinks if it is ever used outside this console. */
+
+.opc-rating.is-narrow {
+    --opc-rating-size: 26px;
+    --opc-rating-gap: 6px;
+}
+
+.opc-rating.is-narrow .opc-rating__caption {
+    flex-wrap: wrap;
+    font-size: 11.5px;
+}
+
+@media (max-width: 600px) {
+    .opc-rating {
+        --opc-rating-size: 26px;
+        --opc-rating-gap: 6px;
+    }
+
+    .opc-rating__caption {
+        flex-wrap: wrap;
+        font-size: 11.5px;
+    }
+}

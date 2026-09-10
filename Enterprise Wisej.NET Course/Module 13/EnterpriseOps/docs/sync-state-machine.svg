@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="360" viewBox="0 0 1000 360" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <rect width="1000" height="360" fill="#ffffff"/>
+  <text x="28" y="36" font-size="19" font-weight="700" fill="#0d1b2a">OfflineCommand · SyncState</text>
+  <text x="28" y="58" font-size="13" fill="#46586a">Every transition is written by the sync boundary after the server answered. There is no path that discards work.</text>
+
+  <defs>
+    <marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#46586a"/></marker>
+    <marker id="g" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#1f8a4c"/></marker>
+    <marker id="r" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#c0392b"/></marker>
+  </defs>
+
+  <!-- LocalOnly -->
+  <rect x="28" y="140" width="150" height="56" rx="10" fill="#f4f7fa" stroke="#c6d2de" stroke-width="1.5"/>
+  <text x="103" y="166" font-size="14" font-weight="700" fill="#46586a" text-anchor="middle">LocalOnly</text>
+  <text x="103" y="185" font-size="11" fill="#8091a2" text-anchor="middle">written, not queued</text>
+
+  <path d="M178 168 H262" stroke="#46586a" stroke-width="2" marker-end="url(#a)"/>
+  <text x="220" y="158" font-size="11" fill="#46586a" text-anchor="middle">Enqueue</text>
+
+  <!-- PendingSync -->
+  <rect x="262" y="140" width="160" height="56" rx="10" fill="#fff8ec" stroke="#e8a13c" stroke-width="1.5"/>
+  <text x="342" y="166" font-size="14" font-weight="700" fill="#b9770e" text-anchor="middle">PendingSync</text>
+  <text x="342" y="185" font-size="11" fill="#b9770e" text-anchor="middle">durable, waiting</text>
+
+  <!-- to Synced -->
+  <path d="M422 156 C500 120, 560 96, 640 96" stroke="#1f8a4c" stroke-width="2" fill="none" marker-end="url(#g)"/>
+  <text x="530" y="98" font-size="11" font-weight="700" fill="#1f8a4c" text-anchor="middle">server applied it</text>
+
+  <!-- to Conflict -->
+  <path d="M422 168 H640" stroke="#c0392b" stroke-width="2" marker-end="url(#r)"/>
+  <text x="530" y="160" font-size="11" font-weight="700" fill="#c0392b" text-anchor="middle">version mismatch</text>
+
+  <!-- to Rejected -->
+  <path d="M422 180 C500 216, 560 244, 640 244" stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#r)"/>
+  <text x="530" y="252" font-size="11" font-weight="700" fill="#c0392b" text-anchor="middle">permission revoked while offline</text>
+
+  <!-- Synced -->
+  <rect x="640" y="68" width="150" height="56" rx="10" fill="#f0f9f3" stroke="#1f8a4c" stroke-width="1.5"/>
+  <text x="715" y="94" font-size="14" font-weight="700" fill="#155f33" text-anchor="middle">Synced</text>
+  <text x="715" y="113" font-size="11" fill="#155f33" text-anchor="middle">applied + audited</text>
+
+  <!-- Conflict -->
+  <rect x="640" y="140" width="150" height="56" rx="10" fill="#fdecec" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="715" y="166" font-size="14" font-weight="700" fill="#9c2f2f" text-anchor="middle">Conflict</text>
+  <text x="715" y="185" font-size="11" fill="#9c2f2f" text-anchor="middle">a person decides</text>
+
+  <!-- Rejected -->
+  <rect x="640" y="216" width="150" height="56" rx="10" fill="#f4f7fa" stroke="#9aa8b6" stroke-width="1.5"/>
+  <text x="715" y="242" font-size="14" font-weight="700" fill="#46586a" text-anchor="middle">Rejected</text>
+  <text x="715" y="261" font-size="11" fill="#8091a2" text-anchor="middle">refused + audited</text>
+
+  <!-- conflict resolutions -->
+  <path d="M790 156 C860 156, 880 120, 880 104" stroke="#1f8a4c" stroke-width="2" fill="none" marker-end="url(#g)"/>
+  <text x="906" y="140" font-size="11" font-weight="700" fill="#1f8a4c">apply mine</text>
+  <text x="906" y="156" font-size="10.5" fill="#8091a2">(needs workorder.override)</text>
+
+  <path d="M790 182 C860 182, 880 216, 880 232" stroke="#46586a" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <text x="906" y="264" font-size="11" font-weight="700" fill="#46586a">keep server</text>
+  <text x="906" y="280" font-size="10.5" fill="#8091a2">notes attached, nothing lost</text>
+
+  <text x="28" y="320" font-size="12" fill="#46586a">A command behind a Conflict stays PendingSync: order is preserved and nothing is applied out of sequence.</text>
+  <text x="28" y="342" font-size="12" fill="#46586a">Rejected is not deletion — the command stays on the device with the server's reason on it, so the technician can see why.</text>
+</svg>

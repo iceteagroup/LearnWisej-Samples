@@ -3,7 +3,7 @@
 		"OperationsConsole": {
 			"commandName": "Project",
 			"launchBrowser": true,
-			"applicationUrl": "http://localhost:5091",
+			"applicationUrl": "http://localhost:5701",
 			"environmentVariables": {
 				"WEBSITE_PATH": "$(MSBuildProjectDirectory)"
 			}
