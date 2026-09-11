@@ -12,7 +12,7 @@ Requirements already on this machine: .NET 10 SDK and the `Wisej-4` 4.1.0 NuGet 
 
 | Module | Folder | What it builds | Run |
 |---|---|---|---|
-| 1 · How Wisej.NET works | `Module 1` | `Window1`: the readings' two worked handlers — `txtName` / `btnSayHello` / `lblStatus`, and `btnSaveTicket_Click` calling `Services/TicketService` over `Models/Ticket` — plus the solution-structure card | `dotnet run -f net10.0 --urls http://localhost:5081` |
+| 1 · How Wisej.NET works | `Module 1` | `Window1`: the first app from the walkthrough — `lblTitle` "What's your name?", `txtName`, `btnSayHello`, `lblStatus` greeting | `dotnet run -f net10.0 --urls http://localhost:5081` |
 | 2 · Designer, properties & events | `Module 2` | `DashboardWindow`: title/status labels, three service indicators, Start / Stop / Reset / Refresh, `lstEventLog` + `AddLog` | `http://localhost:5082` |
 | 3 · Application shell & navigation | `Module 3` | `MainPage : Page` shell: docked header / nav / content / status, four `UserControl` views, one `NavigateTo`, view-only Settings for a Support Agent | `http://localhost:5083` |
 | 4 · Data binding & layout | `Module 4` | `TicketsWindow`: `Ticket` + `TicketService`, `SplitContainer`, `dgvTickets` bound through a `BindingSource`, detail controls, `btnSaveTicket` | `http://localhost:5084` |
