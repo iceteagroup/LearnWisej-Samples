@@ -157,7 +157,7 @@ namespace AdaptiveOps.Shell
             this.btnSave.Size = new System.Drawing.Size(96, 36);
             this.btnSave.TabIndex = 7;
             this.btnSave.Text = "Save";
-            this.btnSave.ToolTipText = "Validate on the server and store the ticket";
+            this.btnSave.ToolTipText = "Save ticket";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             //
             // lblValidation  (announces the validation message as text + icon; theme state "error")
@@ -170,7 +170,7 @@ namespace AdaptiveOps.Shell
             this.lblValidation.Name = "lblValidation";
             this.lblValidation.Padding = new Wisej.Web.Padding(8, 0, 0, 0);
             this.lblValidation.TabStop = false;
-            this.lblValidation.Text = "Validation runs on the server.";
+            this.lblValidation.Text = "";
             this.lblValidation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // DetailsEditor  (theme appearance surface-card)

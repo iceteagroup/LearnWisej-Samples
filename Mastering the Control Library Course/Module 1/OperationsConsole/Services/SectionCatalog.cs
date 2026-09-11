@@ -8,22 +8,20 @@ namespace OperationsConsole.Services
 {
     /// <summary>
     /// The page factory of the shell: knows the six sections and creates their pages.
-    /// <see cref="SimulateFailure"/> makes <see cref="CreatePage"/> throw, so the "page that cannot be created"
-    /// path of the lab is reproducible from the UI (the <c>Simulate page failure</c> CheckBox in the command area).
     /// </summary>
     public sealed class SectionCatalog
     {
         private readonly List<SectionInfo> _sections = new List<SectionInfo>
         {
-            new SectionInfo(SectionKey.Editors,      "Editors",         "editorsButton",    nameof(EditorsPage),      2),
-            new SectionInfo(SectionKey.Layouts,      "Layouts",         "layoutsButton",    nameof(LayoutsPage),      3),
-            new SectionInfo(SectionKey.ListsTrees,   "Lists and Trees", "listsTreesButton", nameof(ListsTreesPage),   4),
-            new SectionInfo(SectionKey.DataGridView, "DataGridView",    "gridButton",       nameof(DataGridViewPage), 5),
-            new SectionInfo(SectionKey.Dashboard,    "Dashboard",       "dashboardButton",  nameof(DashboardPage),    6),
-            new SectionInfo(SectionKey.Widgets,      "Widgets",         "widgetsButton",    nameof(WidgetsPage),      7),
+            new SectionInfo(SectionKey.Editors,      "Editors"),
+            new SectionInfo(SectionKey.Layouts,      "Layouts"),
+            new SectionInfo(SectionKey.ListsTrees,   "Lists and Trees"),
+            new SectionInfo(SectionKey.DataGridView, "DataGridView"),
+            new SectionInfo(SectionKey.Dashboard,    "Dashboard"),
+            new SectionInfo(SectionKey.Widgets,      "Widgets"),
         };
 
-        /// <summary>When true every page factory throws — the failure path of the lab.</summary>
+        /// <summary>When true, <see cref="CreatePage"/> throws: the "page that cannot be created" path.</summary>
         public bool SimulateFailure { get; set; }
 
         /// <summary>The six sections in navigation order.</summary>
@@ -38,18 +36,13 @@ namespace OperationsConsole.Services
             throw new ArgumentOutOfRangeException(nameof(key), key, "Unknown section.");
         }
 
-        /// <summary>
-        /// Creates the page for a section. Throws when <see cref="SimulateFailure"/> is set —
-        /// the exception message is written to the Event log only, never shown to the user as-is.
-        /// </summary>
+        /// <summary>Creates the page for a section.</summary>
         public UserControl CreatePage(SectionKey key)
         {
             var info = Get(key);
 
             if (SimulateFailure)
-                throw new InvalidOperationException(
-                    info.PageTypeName + " could not be created: simulated failure (\"Simulate page failure\" is checked). " +
-                    "In a real application this is the exception a page constructor throws when a service or a package is missing.");
+                throw new InvalidOperationException("The " + info.Title + " page could not be created.");
 
             switch (key)
             {

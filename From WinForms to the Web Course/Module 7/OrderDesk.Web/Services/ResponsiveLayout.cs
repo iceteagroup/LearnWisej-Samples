@@ -22,8 +22,7 @@ namespace OrderDesk.Services
     ///   Tablet   detail moves BELOW the grid · toolbar buttons icon + short text
     ///   Phone    detail hidden · toolbar hidden · the actions collapse into one ComboBox
     ///
-    /// Both the real event (Application.ResponsiveProfileChanged) and the "Simulate" buttons call Apply, so
-    /// what the buttons show is exactly what a resized browser gets.
+    /// The page calls Apply on load (Application.ActiveProfile) and on Application.ResponsiveProfileChanged.
     /// </summary>
     public sealed class ResponsiveLayout
     {
@@ -82,7 +81,7 @@ namespace OrderDesk.Services
             return width > 0 ? $"{name} · browser {width}×{height}" : name;
         }
 
-        /// <summary>Applies one of the three layouts. Returns a one-line description for the trace.</summary>
+        /// <summary>Applies one of the three layouts. Returns a one-line description of the layout.</summary>
         public string Apply(LayoutKind kind)
         {
             Current = kind;

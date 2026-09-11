@@ -30,8 +30,7 @@ A double underscore is the separator for nested keys: `EnterpriseOps:IdentityPro
 | Node name | `EnterpriseOps:Release:NodeName` | `dev-box` | per instance | per instance | no | environment variable set by the host | platform |
 | Storage root | `EnterpriseOps:Storage:Root` | `./_storage` | mounted volume | object-storage mount | no | deployment manifest | platform |
 
-The dashboard renders the first nine rows live: `ConfigurationService.BuildTable()` reads the **real**
-`appsettings*.json` files, so the table in the app cannot drift from the files in the repository.
+The values above are the ones committed in `appsettings*.json`; `StartupValidation` enforces the contract at boot.
 
 ## The rules the table encodes
 
@@ -47,8 +46,6 @@ The dashboard renders the first nine rows live: `ConfigurationService.BuildTable
 
 | Action | What you see |
 |---|---|
-| The page loads | The configuration card lists every setting for all three environments; secrets show `●●●●●●●●` or `→ environment variable`, never a value. |
-| Pick **Production** in the environment combo | Red banner: `missing EnterpriseOps:ConnectionString — expected from environment variable EnterpriseOps__ConnectionString (vault / platform secret store)`. The trace shows `StartupValidation REJECTED:` once per broken rule. This is the failure a clean checkout would hit on a real production host. |
-| Press **Recover: inject platform secrets** | The same preview with the two environment variables supplied: `startup validation passed (… rules)` — the node would boot and join the balancer. |
-| Pick **Staging** | One error, not four: the test database uses integrated security so its connection string is not a secret, but `IdentityProvider:ClientSecret` is still expected from the environment. |
-| Pick **Development** | Green: a developer machine has every value locally, and none of them is real. |
+| `dotnet run` (Development) | The host boots: a developer machine has every value locally, and none of them is real. |
+| `ASPNETCORE_ENVIRONMENT=Production` without the `EnterpriseOps__*` variables | The process exits at startup with `[startup] configuration error: missing EnterpriseOps:ConnectionString — expected from environment variable EnterpriseOps__ConnectionString (vault / platform secret store)`. This is the failure a clean checkout would hit on a real production host. |
+| The same, with both environment variables set | Startup validation passes; the node boots and would join the balancer. |

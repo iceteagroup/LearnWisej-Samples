@@ -15,11 +15,11 @@ the saved state so Cancel has something to go back to. In this sample that somet
 
 | Moment | Who | What |
 |---|---|---|
-| Row loaded (or imported) | `WorkOrderService.LoadAsync` / `ImportBatchAsync` | `order.AcceptChanges()` — snapshot of the six editable values; `IsDirty = false` |
+| Row loaded | `WorkOrderService.LoadAsync` | `order.AcceptChanges()` — snapshot of the six editable values; `IsDirty = false` |
 | User edits a field | binding → `WorkOrder.SetField` | value stored; `PropertyChanged(prop)` and `PropertyChanged(IsDirty)`; `IsDirty` is now `values ≠ snapshot` |
 | **Save** | `WorkOrdersPage.buttonSave_Click` → `WorkOrderService.SaveAsync` | `workOrderSource.EndEdit()` (flush a pending bound value) → validate → `IWorkOrderRepository.UpsertAsync(order)` (the store keeps a **copy**) → `order.AcceptChanges()` → `Ok("Work order #2002 saved.")` |
 | Save rejected (validation) | `WorkOrderService.SaveAsync` | returns `Fail("Title is required.")`; the object is **not** touched, `IsDirty` stays true, the edits stay on screen, the orange banner explains |
-| Save fails (store down) | `InMemoryWorkOrderRepository` throws `DataOutageException` | the handler's `catch` logs the details and shows *Your changes could not be saved and are still on screen*; `AcceptChanges` never ran, so the row is still dirty and nothing was lost |
+| Save fails (store down) | the repository throws | the handler's `catch` logs the details and shows *Your changes could not be saved and are still on screen*; `AcceptChanges` never ran, so the row is still dirty and nothing was lost |
 | **Discard** | `WorkOrdersPage.buttonDiscard_Click` → `WorkOrderService.Discard` | `order.RejectChanges()` writes the snapshot back through the normal setters; each raises `PropertyChanged`, so the grid row and the bound fields revert without any copying code; `Ok("Changes to work order #2002 discarded.")`. Nothing is persisted |
 | Discard with nothing dirty | `WorkOrderService.Discard` | `Fail("There are no unsaved changes to discard.")` — the button is disabled anyway; the service still decides |
 | Selecting another row | binding | edits stay on the object in the master list; the header shows **● 1 unsaved elsewhere**; **↻ Reload** refuses to replace the objects while any row is dirty |
@@ -40,7 +40,7 @@ Two ways to make Cancel real:
    The live row follows the editor, and Cancel is still a genuine rollback because the object remembers
    its saved state. `IEditableObject` could be layered on top (`CancelEdit → RejectChanges`) so that the
    BindingSource's own `CancelEdit()` works too; the sample keeps the decision in the service instead, so
-   that Save and Discard are the same kind of call with the same kind of trace.
+   that Save and Discard are the same kind of call with the same kind of result.
 
 Either way the **decision** (when the edit becomes the saved state, when it is thrown away) is not in a
 binding or a handler: it is one method on the service, callable from a test with no browser.
@@ -60,6 +60,5 @@ binding or a handler: it is one method on the service, callable from a test with
 ## Evidence
 
 In the running app: edit #2002's Title and Cost → Discard → the row reads *Repair loading dock pump /
-$1,850.00* again and the trace shows `WorkOrder.RejectChanges` followed by one `ListChanged` line per
-property. Edit again → **Simulate data outage** → Save → red banner, edits still visible, `IsDirty = True`
-in the trace → **Recover the data store** → Save → `[DATA] #2002 written`, indicator clears.
+$1,850.00* again and the indicator clears. Edit again, clear the Title → Save → orange **Title is
+required.**, the edit is still visible and the row still amber → type a title → Save → indicator clears.

@@ -61,8 +61,7 @@ checked the same way.
 
 The server process hosts every session in the same memory. A `static SessionContext Current` would be one object
 for the whole machine: the last user to sign in would own it, and the next request from anybody else would run as
-that person. `Security/LegacyCurrentUser.cs` is that anti-pattern, kept only so the **Fail: static-state leak**
-button can show it happening. See [`StaticStateAuditReport.md`](StaticStateAuditReport.md).
+that person. See [`StaticStateAuditReport.md`](StaticStateAuditReport.md).
 
 The context therefore lives in `Application.Session`, the per-user bag Wisej keeps alive for one browser session:
 
@@ -82,7 +81,7 @@ record, and it lives in a field of `WorkOrderEditorPage` (`_open`). Two tabs are
 
 | Action | What you see |
 |---|---|
-| First load | trace: `Session:  signed in ana.ops (Ana Ortiz) · roles Manager · entitled to contoso, fabrikam · default tenant contoso`, then `Application.Session.Context = SessionContext (ana.ops@contoso · session …)` |
-| `cboTenant` → Fabrikam Utilities | `Session:  SwitchTenant: 'contoso' → 'fabrikam' (entitled)`, the editor is dropped, the queue reloads with only fabrikam rows |
-| **Fail: spoofed tenant value** | `Security: SessionContext.SwitchTenant REJECTED — ana.ops is not entitled to tenant 'northwind' (entitled: contoso, fabrikam)`; amber banner; the dropdown snaps back; the queue is unchanged |
-| **Fail: cross-tenant read** | `Security: TenantGuard REJECTED — session tenant 'contoso' ≠ requested 'fabrikam'`; red banner with the correlation id |
+| First load | `cboTenant` offers only Contoso and Fabrikam (the tenants `ana.ops` is entitled to); the queue shows contoso rows |
+| `cboTenant` → Fabrikam Utilities | the editor is dropped, the queue reloads with only fabrikam rows |
+| A tampered request carrying a tenant the list never offered | `SwitchTenant` returns `Rejected`; amber banner; the dropdown snaps back; the queue is unchanged |
+| A command touching another tenant's record | `TenantGuard` throws `CrossTenantAccessException` before the record is read; red banner with the correlation id |

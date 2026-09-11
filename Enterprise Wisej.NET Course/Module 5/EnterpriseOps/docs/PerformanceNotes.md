@@ -36,9 +36,8 @@ Two lessons in one table:
    and that gap widens with every navigation property a real entity drags along. The projection also removes the
    per-row work the screen would otherwise do (status label, age, overdue, permission flags).
 
-The app prints both live: the footer shows `… KB page` after every search, and **Anti-pattern: load everything**
-traces `N entities materialized in … ms, projected in … ms; payload ≈ … KB → browser, memory, session` and binds
-them so the cost is visible, not theoretical.
+The server log prints the page figure after every search (`Data: … page payload ≈ … KB`); the whole-tenant figures
+were taken once, with the same projection and the same serializer, for these notes.
 
 ## Perceived-performance budget
 
@@ -46,8 +45,8 @@ The three moments a user notices, with the target and where the actual is shown.
 
 | Moment | Budget | Where the actual is shown | Notes |
 |---|---|---|---|
-| Open the screen → first rows | ≤ 500 ms | footer: `… ms server`, trace `Data: 50 of 2,319 … in N ms` | one `SearchAsync`, `PageSize` rows. `SearchAsync` adds a deliberate `Task.Delay(15)` to stand in for a database that is not on this machine |
-| Change a filter → grid updates | ≤ 300 ms | same footer line, page reset to 1 | if this is slow, the filter is not reaching the database |
+| Open the screen → first rows | ≤ 500 ms | status bar: `… ms`, log `Data: 50 of 2,319 … in N ms` | one `SearchAsync`, `PageSize` rows. `SearchAsync` adds a deliberate `Task.Delay(15)` to stand in for a database that is not on this machine |
+| Change a filter → grid updates | ≤ 300 ms | same status-bar line, page reset to 1 | if this is slow, the filter is not reaching the database |
 | Click a batch action → first progress | ≤ 1,000 ms | the progress bar and `Reassigning to … — 0 of N…` | shown **before** the first row is processed, so the wait never looks like a freeze |
 | Batch itself | as slow as its writes | `Job: done … in N ms` | `BatchReassignWorkflow.DelayFor` paces the lab: 450 ms per row up to 10 rows (3 rows ≈ 1.4 s, every line readable), 60 ms above that (a 50-row page ≈ 3 s) |
 
@@ -82,7 +81,9 @@ Every list on this screen is designed as if the table has no upper bound:
 * `WorkQueueQueryService.LastElapsedMs` — a `Stopwatch` around filter + sort + skip/take + project.
 * `WorkQueueQueryService.LastPayloadBytes` — the projected page serialized to UTF-8 JSON, i.e. what would actually
   travel.
-* `LoadEverythingAntiPattern` — the same two measurements for the whole tenant, split into materialize and project.
+* The whole-tenant row — the same two measurements over every contoso row, projected with
+  `WorkQueueQueryService.Project`, taken once for these notes.
 * `BatchResult.ElapsedMs` — a `Stopwatch` around the whole workflow, reported with the per-row report.
 
-All four are written to the live activity trace, so a reviewer can read them without a profiler.
+The running figures are written to the server log (`System.Diagnostics.Trace`), so a reviewer can read them without a
+profiler.

@@ -12,9 +12,9 @@ A support engineer opening this page gets, in one glance, the five answers the r
 |---|---|---|
 | What version is running? | **VERSION** card — `2.4.1+sha.9e21b0` | `DiagnosticsService.Version` reads `AssemblyInformationalVersion` from `Properties/AssemblyInfo.cs` — no hand-typed string |
 | Which environment / node? | **ENVIRONMENT** and **NODE** cards | `DeploymentConfig.Environment` (`ASPNETCORE_ENVIRONMENT`), `DeploymentConfig.NodeName` (`ENTERPRISEOPS_NODE`, default `app-node-B`) |
-| Which tenant / user? | header bar — `tenant fabrikam`, the user combo | `SessionContext.Tenant` / `SessionContext.User`, per session |
+| Which tenant / user? | the status bar — `tenant fabrikam`; the **Role** chip | `SessionContext.Tenant` / `SessionContext.User`, per session |
 | Which services are healthy? | **Session & health** card — the `HEALTHY` / `DEGRADED` / `UNHEALTHY` chip, its tooltip lists every check | `Diagnostics/HealthCheck.cs` |
-| What errors occurred, and which id ties them to the report? | **Structured log** card + `correlation …` in the header | `Diagnostics/StructuredLog.cs`, `CommandContext.CorrelationId` |
+| What errors occurred, and which id ties them to the report? | **Structured log** card + the correlation id in the status bar | `Diagnostics/StructuredLog.cs`, `CommandContext.CorrelationId` |
 
 Plus what the lesson adds beyond a bare health page: the active **theme**, the **feature flags**, the live
 **session count / managed heap / working set / uptime**, and the **performance budget table**.
@@ -39,7 +39,7 @@ That is the point: the page cannot leak them, because the type it binds to has n
 `DeploymentConfig` deliberately *does* hold the dangerous values (`ConnectionString`, `ApiKey`,
 `StorageAccountName`), so that `DiagnosticsService.CaptureSnapshot()` has something real to keep out. It
 records what it did in `RedactionNotes`, which the page shows as the amber **`secrets redacted (5)`** chip
-(hover for the list) and writes in full to the trace:
+(hover for the list) and writes in full to the server trace (`System.Diagnostics.Trace`):
 
 ```
 Diagnostics: redacted 5 — ConnectionString — excluded: no snapshot field can carry it ·
@@ -56,7 +56,7 @@ Three redaction techniques appear, and they are not interchangeable:
   enough to impersonate a session.
 
 The structured log card applies the same rule at display time: an **error** entry is rendered as its
-`SafeSummary` plus `← error detail is server-log only`. The exception type and message exist in the
+`SafeSummary` plus `(error detail is in the server log)`. The exception type and message exist in the
 `LogEntry`, are written to the server-side log, and never reach the browser
 (`DiagnosticsPage.ForDisplay`).
 
@@ -69,11 +69,11 @@ Opening the page is a privileged action, decided on the server:
 
 ```csharp
 AccessDecision decision = _accessPolicy.CanViewDiagnostics(_session.User);
-AuditEntry entry = _auditTrail.Record(_session.User.UserName, "OpenDiagnostics",
-                                      decision.Allowed ? "allowed" : "denied", ctx.CorrelationId);
+_auditTrail.Record(_session.User.UserName, "OpenDiagnostics",
+                   decision.Allowed ? "allowed" : "denied", ctx.CorrelationId);
 ```
 
-`DiagnosticsAccessPolicy.OperatorRoles` is `{ Manager, Admin }`. `ben.tech` (Technician) is denied:
+`DiagnosticsAccessPolicy.OperatorRoles` is `{ Manager, Admin }`. A Technician such as `ben.tech` is denied:
 the role chip turns red, the snapshot cards fall back to `—`, and the budgets / log / health cards are
 hidden — **the values are never rendered**, rather than rendered and covered. The denial is written to the
 audit trail *and* to the structured log with the same correlation id, so "who looked at diagnostics, and
@@ -81,16 +81,9 @@ when" is answerable.
 
 ## Evidence — what the running app shows
 
-1. **On load** the header reads `EnterpriseOps — Diagnostics · tenant fabrikam · user ana.ops ·
-   correlation <8 hex>`; the chips read `Role: Manager ✓` and `secrets redacted (5)`; the four cards fill
-   in with the version, environment, node and theme; the status line reads
-   `● Diagnostics — live · app-node-B · 2.4.1+sha.9e21b0 · tenant fabrikam` in green.
+1. **On load** the chips read `Role: Manager ✓` and `secrets redacted (5)`; the four cards fill in with the
+   version, environment, node and theme; the status bar reads
+   `Diagnostics — live · app-node-B · 2.4.1+sha.9e21b0 · tenant fabrikam`.
 2. **Hover `secrets redacted (5)`** → the five redaction notes, including the masked storage account.
-3. **Switch the user combo to `ben.tech`** → red banner *"ben.tech may not open diagnostics: Technician is
-   not an operator role (allowed: Manager, Admin). The attempt is audited (correlation …)"*, the cards go
-   to `—`, the lower cards disappear, and the trace shows
-   `Security: DiagnosticsAccessPolicy → DENIED …` followed by `Security: audited · … OpenDiagnostics → denied · correlation …`.
-4. **Switch back to `ana.ops`** → the snapshot is re-captured (new correlation id) and everything returns.
-5. **Click `Health check`** → the chip and its tooltip list all six checks (work-order store, live refresh
-   job, deployment config, performance budgets, session memory, structured log) with their detail, and one
-   `HealthCheck` entry appears in the structured log.
+3. **Hover the health chip** → all six checks (work-order store, live refresh job, deployment config,
+   performance budgets, session memory, structured log) with their detail.

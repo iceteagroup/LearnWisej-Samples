@@ -67,5 +67,5 @@
   <rect x="44" y="376" width="872" height="86" rx="8" fill="#fdecec" stroke="#e3a9a2"/>
   <text x="60" y="400" font-size="13" font-weight="700" fill="#a03528">What never crosses the wire</text>
   <text x="60" y="422" font-size="12" fill="#7c3a32">WorkOrder · TenantId · AssignedTo · Version · CorrelationId · the signed-in user · the actor of a history entry</text>
-  <text x="60" y="444" font-size="12" fill="#7c3a32">The chart gets four objects of three fields. DescribeWirePayload() prints exactly what would be sent, and the screen traces it on every load.</text>
+  <text x="60" y="444" font-size="12" fill="#7c3a32">The chart gets four objects of three fields: key, label, value. Nothing else is serialized into Options.</text>
 </svg>

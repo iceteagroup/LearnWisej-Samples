@@ -38,7 +38,7 @@ enough to undo it — which is why Q2 is a Reject, not a warning.
 Handler → service → store, with a typed command in and a typed result out. Authorize, validate, write with
 the expected version, audit, return.
 
-*Evidence:* `WorkOrderService.ApproveAsync`, and the trace during the demo. *Risk:* a screen that reaches the
+*Evidence:* `WorkOrderService.ApproveAsync`, and the audit line in the footer during the demo. *Risk:* a screen that reaches the
 store directly; the gate's Q3 and R10 look for exactly that.
 
 ## Slide 5 · Tenancy and authorization
@@ -46,7 +46,7 @@ store directly; the gate's Q3 and R10 look for exactly that.
 The tenant comes from the session, never from the caller. Permissions are checked in the service. Denials are
 audited.
 
-*Evidence:* the cross-tenant guard in `ApproveAsync`; the `ben.tech` refusal in the demo; checklist R9.
+*Evidence:* the cross-tenant guard in `ApproveAsync`; the Technician refusal in `ApproveAsync`; checklist R9.
 *Risk:* a new endpoint that forgets the check — mitigated by the store's tenant-scoped `Query`.
 
 ## Slide 6 · Concurrency
@@ -54,7 +54,7 @@ audited.
 Optimistic versioning. The command carries the version the user saw; the store refuses a stale write and the
 user is told what happened in a sentence they can act on.
 
-*Evidence:* **Fail: stale version** in the demo. *Risk:* last-write-wins creeping back in through a bulk
+*Evidence:* the stale-version refusal in the demo (stop 3). *Risk:* last-write-wins creeping back in through a bulk
 operation.
 
 ## Slide 7 · Failure paths as a deliverable
@@ -93,7 +93,7 @@ a reviewer's assistant, not a compiler; a Q1 finding says nobody has shown the A
 `docs/index.json` in an MCP `resources/list` shape next to a Markdown index for people. Every entry has a
 purpose, a module and a verification date.
 
-*Evidence:* the **Documentation index** tab, and **Fail: missing document**. *Risk:* an index that drifts —
+*Evidence:* the **Documentation index** tab and its **Resolves** column. *Risk:* an index that drifts —
 the package verification fails when a listed path stops resolving.
 
 ## Slide 12 · What is not done

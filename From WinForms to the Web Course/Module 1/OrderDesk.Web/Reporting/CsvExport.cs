@@ -7,9 +7,8 @@ using OrderDesk.Domain;
 namespace OrderDesk.Reporting
 {
     /// <summary>
-    /// The web replacement for "Export to Excel" in the first slice: build the file on the server
-    /// in memory and let Application.Download hand it to the browser. No local path, no Interop.
-    /// (Module 6 upgrades this to a real .xlsx written with a managed library.)
+    /// The web replacement for "Export to Excel": build the file on the server in memory and let
+    /// Application.Download hand it to the browser. No local path, no Interop.
     /// </summary>
     public static class CsvExport
     {

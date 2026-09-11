@@ -2,10 +2,14 @@ namespace OrderDesk.Dialogs
 {
     partial class EditOrderDialog
     {
-        // Designer-owned file: only InitializeComponent, the component container and the field
-        // declarations live here. Dispose(bool) moved to EditOrderDialog.cs because it carries
-        // migration logic (DialogTracker) that the designer must never regenerate away.
         private System.ComponentModel.IContainer components = null;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+                components.Dispose();
+            base.Dispose(disposing);
+        }
 
         #region Wisej.NET Designer generated code
 
@@ -23,7 +27,7 @@ namespace OrderDesk.Dialogs
             this.saveButton = new Wisej.Web.Button();
             this.SuspendLayout();
             //
-            // customerLabel / customerComboBox   (TabIndex 0 — the focus order is set explicitly, as on the desktop)
+            // customerLabel / customerComboBox   (TabIndex 0)
             //
             this.customerLabel.AutoSize = true;
             this.customerLabel.Location = new System.Drawing.Point(20, 22);

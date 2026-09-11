@@ -33,7 +33,7 @@ namespace EnterpriseOps.Services
         }
     }
 
-    /// <summary>The live activity trace every layer writes to (the page renders it in lstTrace).</summary>
+    /// <summary>The server-side log every layer writes to (see <see cref="ActivityTrace"/>).</summary>
     public interface IActivityTrace
     {
         void Write(string line);

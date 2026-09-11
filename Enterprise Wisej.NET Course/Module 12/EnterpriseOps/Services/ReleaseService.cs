@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace EnterpriseOps.Services
 {
-    /// <summary>One runbook step changing state — the page paints one chip and one trace line per report.</summary>
+    /// <summary>One runbook step changing state — the page paints one chip per report.</summary>
     public class ReleaseProgress
     {
         public int StepNumber;
@@ -42,6 +42,11 @@ namespace EnterpriseOps.Services
         private readonly LoadBalancerSimulator _balancer;
         private readonly SmokeTestService _smokeTests;
         private readonly SessionContext _session;
+
+        // The 2.4.2 package carries a database migration that does not complete on app-node-B the first time
+        // it is deployed — the failure runbook step 8 exists for. Once rolled back, the team ships the fix and
+        // the next deploy of the package passes.
+        private bool _migrationFixed;
 
         public ReleaseService(ActivityTrace trace, LoadBalancerSimulator balancer, SmokeTestService smokeTests, SessionContext session)
         {
@@ -123,6 +128,7 @@ namespace EnterpriseOps.Services
             {
                 node.Balancer = BalancerState.Deploying;
                 node.Build = Candidate.Version;
+                node.DatabaseFault = Candidate.IntroducesDbMigration && !_migrationFixed;
                 _trace.Balancer($"{node.Name} out of rotation — draining {node.PinnedSessions} pinned session(s); {_balancer.NodeA.Name} keeps serving");
                 return (true, $"{node.Name} staged on {Candidate.Version}");
             });
@@ -197,6 +203,7 @@ namespace EnterpriseOps.Services
             node.Balancer = BalancerState.Deploying;
             node.Build = Previous.Version;
             node.DatabaseFault = false;              // 2.4.1 predates the migration that broke the database check
+            _migrationFixed = true;                  // 2.4.2 is held for a fix; the next deploy carries it
             _trace.Service($"{node.Name} rolled back to {Previous.Version} — the 2.4.2 migration is no longer on this node");
 
             var smoke = await _smokeTests.RunAsync(context, node, _session.SessionId);
@@ -222,20 +229,7 @@ namespace EnterpriseOps.Services
             return result;
         }
 
-        /// <summary>Arms the module's headline failure: the 2.4.2 migration leaves node B's database check failing.</summary>
-        public void InjectMigrationFault()
-        {
-            _balancer.NodeB.DatabaseFault = true;
-            _trace.Service($"fault injected: release {Candidate.Version} carries a database migration that does not complete on {_balancer.NodeB.Name}");
-        }
-
-        public void ClearMigrationFault()
-        {
-            _balancer.NodeB.DatabaseFault = false;
-            _trace.Service("fault cleared: the migration completes; the database check will pass again");
-        }
-
-        #region Runbook plumbing (state + one trace line per step)
+        #region Runbook plumbing (state + one log line per step)
 
         private void ResetRunbook(CommandContext context, Action<ReleaseProgress> progress)
         {
@@ -280,7 +274,7 @@ namespace EnterpriseOps.Services
             {
                 // The node was already out of the pool while it deployed; now it stays out. The balancer
                 // would have reached the same conclusion on its own after unhealthyThreshold probes —
-                // this just says it out loud, in the trace, at the moment the release gate failed.
+                // this just records it at the moment the release gate failed.
                 var node = _balancer.NodeB;
                 if (!node.IsHealthy)
                 {

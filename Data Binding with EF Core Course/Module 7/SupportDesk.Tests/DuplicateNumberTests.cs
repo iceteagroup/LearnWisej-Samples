@@ -21,7 +21,7 @@ public sealed class DuplicateNumberTests : IDisposable
 
     public DuplicateNumberTests()
     {
-        _commands = new TicketCommandService(_factory, new ConflictResolution(), new TransactionFailureSwitch());
+        _commands = new TicketCommandService(_factory, new ConflictResolution());
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class DuplicateNumberTests : IDisposable
         // satisfied. Only the database can catch this one: forceDuplicateNumber: true reuses an existing
         // ticket's Number instead of the next one, the same lab prop chkDuplicateNumber arms.
         var ex = await Assert.ThrowsAsync<DbUpdateException>(
-            () => _commands.SaveAsync(model, TimeSpan.Zero, forceDuplicateNumber: true));
+            () => _commands.SaveAsync(model, forceDuplicateNumber: true));
 
         var inner = Assert.IsType<SqliteException>(ex.InnerException);
         Assert.Contains("UNIQUE constraint failed: Tickets.Number", inner.Message);
@@ -66,7 +66,7 @@ public sealed class DuplicateNumberTests : IDisposable
         model.CustomerId = customerId;
         model.CategoryId = categoryId;
 
-        var result = await _commands.SaveAsync(model, TimeSpan.Zero, forceDuplicateNumber: false);
+        var result = await _commands.SaveAsync(model, forceDuplicateNumber: false);
 
         Assert.False(string.IsNullOrWhiteSpace(result.Number));
     }

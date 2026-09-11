@@ -6,7 +6,7 @@ namespace EnterpriseOps.Services
 {
     /// <summary>
     /// Per-session identity: who is using this Release dashboard, for which tenant, and the
-    /// correlation id every trace line and command carries. Created once per session in the page
+    /// correlation id every log line and command carries. Created once per session in the page
     /// constructor and parked in Application.Session — never in a static.
     /// </summary>
     public class SessionContext

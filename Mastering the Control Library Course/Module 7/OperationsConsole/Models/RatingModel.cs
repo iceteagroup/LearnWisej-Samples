@@ -9,7 +9,7 @@ namespace OperationsConsole.Models
     /// </summary>
     public class RatingModel
     {
-        /// <summary>Stable ID of the rated record — what <c>ConsoleLog.Record(...)</c> shows in the diagnostic panel.</summary>
+        /// <summary>Stable ID of the rated record — what <c>ShellStatus.Record(...)</c> shows in the diagnostic panel.</summary>
         public string CustomerId { get; set; } = "CUST-1042";
 
         /// <summary>Display name, also used as the widget's caption (<c>Options.label</c>).</summary>
@@ -44,8 +44,7 @@ namespace OperationsConsole.Models
                        ", last saved value is " + this.SavedValue + "/" + this.Max + ".";
 
             return this.CustomerName + " · saved rating " + this.SavedValue + "/" + this.Max +
-                   " at " + (this.SavedAt.HasValue ? this.SavedAt.Value.ToString("HH:mm:ss") : "—") +
-                   " (" + this.SaveCount + " save" + (this.SaveCount == 1 ? "" : "s") + " this session)";
+                   " at " + (this.SavedAt.HasValue ? this.SavedAt.Value.ToString("HH:mm:ss") : "—") + ".";
         }
     }
 }

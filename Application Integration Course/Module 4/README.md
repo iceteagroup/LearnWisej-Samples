@@ -4,8 +4,8 @@ Local lab build for **Module 4 · Reusable Widget Classes**. It follows the walk
 prototype from Module 1 becomes `IntegrationLab.Controls.SimpleGauge`, a class that derives from
 `Wisej.Web.Widget`, owns its packages, InitScript and default options, exposes typed properties
 (`Value`, `Minimum`, `Maximum`, `Caption`, `AnimationEnabled`, `Threshold`) and hides the escape hatches.
-A demo page places two of them from the Toolbox and drives them with normal .NET properties — no
-InitScript, no Packages, no vendor name on the page.
+A demo page places one from the Toolbox and drives it with normal .NET properties — no InitScript, no
+Packages, no vendor name on the page.
 
 Nothing here is deployed anywhere; it is a plain Wisej.NET 4 project on this machine.
 
@@ -23,19 +23,15 @@ Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet pac
 
 ## What to click in the Demo page
 
-| Button | Code-behind (verbatim) | Path | What you should see |
-|---|---|---|---|
-| Value = 72 | `simpleGauge1.Value = 72;` | success | on a fresh page only the `code-behind` trace line: the gauge is already at 72, nothing is rendered |
-| Value = 90 | `simpleGauge1.Value = 90;` | success + event | `→ .NET→JS simpleGauge1.update(options) {"value":90}`, the needle sweeps, `← JS→.NET valueChanged`, `← thresholdExceeded`, **ThresholdExceeded fired in C#** → red banner + toast |
-| Maximum = 120; Value = 45 | `simpleGauge1.Maximum = 120; simpleGauge1.Value = 45;` | success | `{"max":120,"warnAt":67}` and `{"value":45}` go out together; the scale re-lays out; the banner clears |
-| Value = 78 | `simpleGauge1.Value = 78;` | success | ordinary update, warm band, no threshold event |
-| Value = 200 (invalid) | `simpleGauge1.Value = 200;` | failure | `• server rejected  Value must be between Minimum (0) and Maximum (120).`, orange banner + toast, **no** `update(options)` line, needle unchanged |
-| AnimationEnabled = false / true | `simpleGauge1.AnimationEnabled = …; simpleGauge2.AnimationEnabled = …;` | visual property | the next value jumps instead of sweeping (and back) |
-| ▶ Stream both gauges | `simpleGauge1.Value = …; simpleGauge2.Value = …;` from a `Timer` | progress | 12 readings into both gauges; each crosses its own threshold once; status counts; banner clears at the end |
-| Clear trace | — | — | empties the trace |
+| Button | Code-behind (verbatim) | What you should see |
+|---|---|---|
+| Value = 72 | `simpleGauge1.Value = 72;` | on a fresh page the gauge is already at 72: only the statement is listed, nothing is rendered |
+| Value = 90 | `simpleGauge1.Value = 90;` | the needle sweeps; `ThresholdExceeded` → red banner; `✓ gauge updated · Value = 90` |
+| Maximum = 120; Value = 45 | `simpleGauge1.Maximum = 120; simpleGauge1.Value = 45;` | the scale re-lays out and the needle moves in one round trip; the banner clears |
+| Value = 78 | `simpleGauge1.Value = 78;` | ordinary update, warm band, no threshold event |
 
-The right-hand card is the live client/server trace. The `→ .NET→JS` lines are written by the **wrapper**,
-not by the page: the page does not know a single option name.
+The right-hand card, *DemoPage.cs · code-behind*, lists each statement the page runs and the
+`ValueChanged` acknowledgement from the gauge. The page never touches an option name.
 
 ## Deliverables
 
@@ -43,15 +39,15 @@ not by the page: the page does not know a single option name.
 |---|---|---|
 | 1 | Reusable Widget-derived class | [`IntegrationLab/Controls/SimpleGauge.cs`](IntegrationLab/Controls/SimpleGauge.cs), [`IntegrationLab/Controls/GaugeEventArgs.cs`](IntegrationLab/Controls/GaugeEventArgs.cs), adapter [`IntegrationLab/wwwroot/gauge-init.js`](IntegrationLab/wwwroot/gauge-init.js) (embedded) — write-up [`docs/ReusableWidgetClass.md`](IntegrationLab/docs/ReusableWidgetClass.md) |
 | 2 | Typed properties with defaults | same class — table and rationale in [`docs/TypedProperties.md`](IntegrationLab/docs/TypedProperties.md); what is hidden and why in [`docs/HiddenMembers.md`](IntegrationLab/docs/HiddenMembers.md) |
-| 3 | Demo page using the class without custom InitScript | [`IntegrationLab/DemoPage.cs`](IntegrationLab/DemoPage.cs), [`IntegrationLab/DemoPage.Designer.cs`](IntegrationLab/DemoPage.Designer.cs) — evidence and button-by-button proof in [`docs/DemoPage.md`](IntegrationLab/docs/DemoPage.md) |
+| 3 | Demo page using the class without custom InitScript | [`IntegrationLab/DemoPage.cs`](IntegrationLab/DemoPage.cs), [`IntegrationLab/DemoPage.Designer.cs`](IntegrationLab/DemoPage.Designer.cs) — evidence in [`docs/DemoPage.md`](IntegrationLab/docs/DemoPage.md) |
 
-## Where things live (matches the video's solution tree)
+## Where things live
 
 ```
 IntegrationLab/
 ├─ Controls/
 │  ├─ SimpleGauge.cs           the reusable class: packages, InitScript, defaults, typed properties, hidden members
-│  └─ GaugeEventArgs.cs        typed EventArgs for ValueChanged / ThresholdExceeded / WidgetError (+ Trace)
+│  └─ GaugeEventArgs.cs        typed EventArgs for ValueChanged / ThresholdExceeded / WidgetError
 ├─ wwwroot/
 │  ├─ gauge-init.js            client adapter (embedded resource IntegrationLab.wwwroot.gauge-init.js)
 │  └─ vendor-gauge.js          the "third-party" VendorGauge 1.0 library (Package, served as /wwwroot/…)
@@ -60,7 +56,7 @@ IntegrationLab/
 │  ├─ TypedProperties.md       deliverable 2: property table (type, default, validation, client update, read-only)
 │  ├─ HiddenMembers.md         which members are hidden, how, why; the OnConfigureOptions escape hatch
 │  └─ DemoPage.md              deliverable 3: evidence the page has no InitScript; what each button proves
-├─ DemoPage.cs / .Designer.cs  the Demo page: two SimpleGauge instances from the Toolbox, typed properties only
+├─ DemoPage.cs / .Designer.cs  the Demo page: one SimpleGauge from the Toolbox, typed properties only
 ├─ Program.cs                  Application.MainPage = new DemoPage()
 └─ Startup.cs                  Kestrel host (app.UseWisej())
 ```
@@ -83,7 +79,7 @@ IntegrationLab/
 - **What belongs in the wrapper and what belongs in the application?**
   The wrapper owns the vendor: loading its files, creating and disposing the instance in a child element,
   translating typed properties to vendor options, validating ranges, forwarding vendor events as .NET
-  events, sweep-vs-jump rendering. The application owns meaning: which reading each gauge shows, what
-  `Threshold` means for Boiler 3, what happens when it is crossed, when to stream. The NuGet boundary test:
-  if the wrapper shipped as a package to another team, nothing they need is inside it and nothing
-  vendor-specific is in their pages — `DemoPage.cs` passes that test.
+  events, sweep-vs-jump rendering. The application owns meaning: which reading the gauge shows, what
+  `Threshold` means for Boiler 3, what happens when it is crossed, when a new reading is set. The NuGet
+  boundary test: if the wrapper shipped as a package to another team, nothing they need is inside it and
+  nothing vendor-specific is in their pages — `DemoPage.cs` passes that test.

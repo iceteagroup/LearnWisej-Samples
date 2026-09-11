@@ -28,7 +28,7 @@ namespace EnterpriseOps.Services.WorkQueues
         private readonly SessionContext _session;
         private readonly ActivityTrace _trace;
 
-        /// <summary>Server-side time of the last search (the pager shows the UI-measured time next to it).</summary>
+        /// <summary>Server-side time of the last search (shown in the status bar).</summary>
         public long LastElapsedMs { get; private set; }
 
         /// <summary>Approximate JSON size of the last page — what actually travels to the browser.</summary>

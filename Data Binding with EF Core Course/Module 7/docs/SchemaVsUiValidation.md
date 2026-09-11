@@ -1,9 +1,10 @@
 # Schema constraints are not UI validation
 
 The fourth objective of Module 2: keep the layer that tells the *database* what it must guarantee apart
-from the layer that tells the *user* what to fix. The page proves the split with one button — a
-200-character title — and the result is a red banner, not an "Enter a shorter title" hint, because the
-hint does not exist yet. That is the point.
+from the layer that tells the *user* what to fix. Module 2's page proves the split with one button, **Save
+a 200-character title**, and the result is an error `AlertBox`, not an "Enter a shorter title" hint,
+because the hint does not exist yet. That is the point. (From Module 3 on the page is the ticket browser
+and the button is gone; the same path is covered by the `ModelRulesTests` listed at the end.)
 
 ## The two layers
 
@@ -62,29 +63,25 @@ DbUpdateException
   └─ SqliteException: SQLite Error 19: 'CHECK constraint failed: CK_Tickets_Title_Length'.
 ```
 
-**5 · The handler translates it.** `RunAsync` catches `DbUpdateException` and shows the message the
-handler passed in — never the provider text:
+**5 · The handler translates it.** The Module 2 page's `RunAsync` catches `DbUpdateException` and shows
+the message the handler passed in, never the provider text:
 
 ```csharp
 catch (DbUpdateException ex)
 {
-    Fail(dbUpdateMessage, ex);      // "The ticket could not be saved because the database rejected the change."
+    ShowError(dbUpdateMessage, ex);   // "The ticket could not be saved because the database rejected the change."
 }
 ```
 
-`Fail` sets `statusLabel` to *Not completed — nothing was changed*, shows the red banner, turns the state
-chip red, and writes the **real** exception into the trace with its inner type and first sentence — the
-developer's copy of the failure, next to the SQL that produced it. In a production application that line
-is an `ILogger.LogError` and the banner is all the user gets.
-
-Note the ordering of the catch blocks: `DbUpdateConcurrencyException` is caught **before**
-`DbUpdateException` (it derives from it), so the stale-token path gets its own sentence instead of the
-generic one.
+`ShowError` writes the **real** exception to the server console (`Console.Error`, one `[SupportDesk] …`
+line with the inner `SqliteException`), shows the friendly sentence in an `AlertBox` at the top right, and
+sets `statusLabel` to *Nothing was changed*. In a production application the console line is an
+`ILogger.LogError` and the `AlertBox` is all the user gets.
 
 **6 · Nothing was changed.** The failed `INSERT` leaves the ticket in the change tracker as `Added`, the
-`await using` disposes the context anyway, and the entity goes with it. The row count on the **Model &
-migration card** is identical before and after — which is why the card refreshes in `finally`, on the
-failure path too.
+`await using` disposes the context anyway, and the entity goes with it. The ticket count on the page's
+counts line is identical before and after, which is why the counts refresh in `finally`, on the failure
+path too.
 
 ## What Module 5 adds on top
 
@@ -106,32 +103,15 @@ exists" before the save is sent.
 
 ## Evidence
 
-**Save a 200-char title (fails)** — `buttonOverlongTitle`:
+**Save a 200-character title (fails)**, `buttonOverlongTitle` on the Module 2 page: the `AlertBox` reads
+*The ticket could not be saved because the database rejected the change.*, `statusLabel` reads *Nothing
+was changed*, and the ticket count on the counts line is unchanged. The provider message appears exactly
+once, on the server console, where a developer is meant to read it:
+`DbUpdateException` wrapping *SQLite Error 19: 'CHECK constraint failed: CK_Tickets_Title_Length'*.
 
-```
-• buttonOverlongTitle_Click ModelDemoService.SaveOverlongTitleAsync() — a 200-character title against HasMaxLength(180) + CK_Tickets_Title_Length
-◦ context      #5 created (SupportDeskContext from the factory)
-→ SQL          SELECT "c"."Id", "c"."Email", "c"."Name" FROM "Customers" AS "c" ORDER BY "c"."Id" LIMIT 1   (0.3 ms)
-→ SQL          SELECT "c"."Id", "c"."Name" FROM "Categories" AS "c" ORDER BY "c"."Id" LIMIT 1   (0.1 ms)
-• service      INSERT a ticket with a 200-character title (limit 180) — SQLite ignores HasMaxLength, the CHECK constraint decides
-→ SQL failed   SqliteException: SQLite Error 19: 'CHECK constraint failed: CK_Tickets_Title_Length'. — INSERT INTO "Tickets" ("AgentId", "CategoryId", "CreatedAt", "CustomerId", "Description", "DueDate", "IsUrgent", "Number…
-◦ context      #5 disposed (3 tracked entities released)
-• caught       DbUpdateException → SqliteException: SQLite Error 19: 'CHECK constraint failed: CK_Tickets_Title_Length'. → friendly message shown, full exception logged server-side
-```
-
-On screen: the red banner *The ticket could not be saved because the database rejected the change.*,
-`statusLabel` → *Not completed — nothing was changed*, the state chip red (`● fault`), and the ticket
-count on the card unchanged. The provider message appears exactly once, in the trace, where a developer
-is meant to read it.
-
-The card shows the constraint itself, read from the design-time model rather than hard-coded:
-
-```
-checks      Tickets: CK_Tickets_Title_Length = length("Title") <= 180
-```
-
-(`SchemaInfoService` asks `IDesignTimeModel` for this — the read-optimised runtime model drops check
-constraints, so the runtime `db.Model` would report none.)
+`SchemaInfoService.DescribeAsync()` reads the constraint itself from the design-time model rather than
+hard-coding it: it asks `IDesignTimeModel`, because the read-optimised runtime model drops check
+constraints, so the runtime `db.Model` would report none.
 
 Tests (`SupportDesk.Tests`):
 

@@ -6,15 +6,16 @@ check, run the naive search once and record the statement count, milliseconds an
 
 ## Two logging channels, on purpose
 
-This solution already had a teaching instrument for SQL: `QueryTrace` + `QueryTraceInterceptor` (Module 1),
-an `AsyncLocal` scope the UI reads per click to show "◦ context created", "→ SQL … (ms)", "◦ context
-disposed" in the trace card. That instrument stays — it is how the reviewer sees statement counts on the
-page, including the Module 6 Before / after card.
+The solution has two ways of seeing SQL, and they serve different readers:
 
-Module 6 adds a **second, independent** channel: the "real" EF Core log a production app would actually turn
-on, next to (not instead of) `QueryTrace`. `SupportDesk.Data/DependencyInjection/SupportDeskDataServiceCollectionExtensions.cs`,
-inside the existing `if (isDevelopment)` block that already guards `EnableDetailedErrors()` and
-`EnableSensitiveDataLogging()`:
+- **`QueryTrace` + `QueryTraceInterceptor`** (`SupportDesk.Data/Diagnostics`) are test instrumentation. An
+  `AsyncLocal` scope counts the commands, contexts created and contexts disposed of one operation, and the
+  tests assert on those counts (`scope.Commands == 2`, and so on). Only `SqliteTestFactory` in
+  `SupportDesk.Tests` adds the interceptor; the running application does not register it.
+- **The EF Core log** is the channel a production app would actually turn on, and the one a developer
+  watches while the app runs. `SupportDesk.Data/DependencyInjection/SupportDeskDataServiceCollectionExtensions.cs`
+  adds it inside the existing `if (isDevelopment)` block that already guards `EnableDetailedErrors()` and
+  `EnableSensitiveDataLogging()`:
 
 ```csharp
 if (isDevelopment)
@@ -23,7 +24,8 @@ if (isDevelopment)
     // Parameter values in logs: local development only, never in production logs.
     options.EnableSensitiveDataLogging();
 
-    // Module 6: the "real" EF Core log, next to (not instead of) the lab's own QueryTrace card.
+    // EF Core logging in development: every Database.Command event (the SQL and its elapsed
+    // time) on the server console with an [EF] prefix.
     options.LogTo(
         message => Console.Error.WriteLine($"[EF] {message}"),
         new[] { DbLoggerCategory.Database.Command.Name },
@@ -61,9 +63,10 @@ correct, forward-compatible configuration, not because it currently changes anyt
 
 Captured with a throwaway console project (`SupportDesk.Data` + `SupportDesk.Services`, no Wisej.NET,
 SQLite in memory seeded with `DevelopmentSeeder`) calling the exact shipped
-`TicketQueryService.SearchTicketsNaiveAsync` — the naive branch this lab measures before fixing it. This is
-the same code path `QueryTrace` reports to the trace card; the numbers below are what both the `QueryTrace`
-scope and (in the running app) the `[EF]`-prefixed console log show for the identical call.
+`TicketQueryService.SearchTicketsNaiveAsync` — the naive branch this lab measures before fixing it. The
+statement counts come from a `QueryTrace` scope around the call; in the running app the same statements
+would appear as `[EF]`-prefixed lines on the console. The page has no button for the naive branch: it
+exists as the measured baseline `TicketPerformanceTests` runs.
 
 **Naive search, no filters, 50-row cap** — 15 statements (see `docs/BeforeAfterMeasurements.md` for why this
 is not the lesson's illustrative "1 + 3 × rows"):

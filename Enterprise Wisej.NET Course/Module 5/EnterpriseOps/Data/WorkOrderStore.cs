@@ -83,40 +83,6 @@ namespace EnterpriseOps.Data
             }
         }
 
-        /// <summary>Simulates another user opening an approval on the order (locks it for reassignment).</summary>
-        public void OpenApproval(int id, string approvalId)
-        {
-            lock (_gate)
-            {
-                if (_orders.TryGetValue(id, out var order))
-                    order.OpenApprovalId = approvalId;
-            }
-        }
-
-        /// <summary>Simulates the approval being completed — the lock is released, the version bumps.</summary>
-        public void CompleteApproval(int id)
-        {
-            lock (_gate)
-            {
-                if (_orders.TryGetValue(id, out var order) && order.OpenApprovalId != null)
-                {
-                    order.OpenApprovalId = null;
-                    // Completing an approval is a write too, but it does not invalidate a pending reassignment:
-                    // the batch retry re-reads the version before it commits.
-                }
-            }
-        }
-
-        /// <summary>Simulates a concurrent edit by another session (stale-version failure path).</summary>
-        public void TouchByAnotherUser(int id)
-        {
-            lock (_gate)
-            {
-                if (_orders.TryGetValue(id, out var order))
-                    order.Version++;
-            }
-        }
-
         #region Seed data
 
         private static readonly string[] Customers =
@@ -164,7 +130,7 @@ namespace EnterpriseOps.Data
 
             AddTechnician("r.alvarez", "Rosa Alvarez", "hvac", "elevator", "boiler");
             AddTechnician("t.nguyen", "Tam Nguyen", "hvac", "boiler", "electrical");
-            AddTechnician("s.patel", "Sana Patel", "hvac", "elevator", "fire-safety");
+            AddTechnician("s.patel", "Sana Patel", "hvac", "elevator", "fire-safety", "electrical");
             AddTechnician("j.kim", "Jae Kim", "hvac");
             AddTechnician("ben.tech", "Ben Tech", "hvac", "electrical");
 
@@ -219,15 +185,18 @@ namespace EnterpriseOps.Data
             }
 
             // The six rows the walkthrough video shows on its first page, so "pump" finds the same order.
+            // WO-100236 has an approval in flight (APR-1042), so reassigning WO-100234..236 to s.patel gives the
+            // video's "2 succeeded, 1 failed — locked by an open approval".
             Anchor(100231, "Replace HVAC filter — Building A", Priority.High, "r.alvarez", "hvac", today.AddDays(2));
             Anchor(100232, "Loading dock pump inspection", Priority.High, "t.nguyen", null, today.AddDays(2));
             Anchor(100233, "Elevator quarterly certification", Priority.Normal, "s.patel", "elevator", today.AddDays(3));
             Anchor(100234, "Calibrate pressure sensors", Priority.Normal, "t.nguyen", null, today.AddDays(4));
             Anchor(100235, "Replace lobby lighting", Priority.Low, "j.kim", "electrical", today.AddDays(5));
-            Anchor(100236, "Stale cache on node B", Priority.Low, "j.kim", null, today.AddDays(6));
+            Anchor(100236, "Stale cache on node B", Priority.Low, "j.kim", null, today.AddDays(6), approvalId: "APR-1042");
         }
 
-        private void Anchor(int id, string title, Priority priority, string assignedTo, string certification, DateTime due)
+        private void Anchor(int id, string title, Priority priority, string assignedTo, string certification, DateTime due,
+                            string approvalId = null)
         {
             var order = _orders[id];
             order.TenantId = "contoso";
@@ -238,7 +207,7 @@ namespace EnterpriseOps.Data
             order.Priority = priority;
             order.AssignedTo = assignedTo;
             order.RequiredCertification = certification;
-            order.OpenApprovalId = null;
+            order.OpenApprovalId = approvalId;
             order.DueUtc = due;
             order.Version = 2;
         }

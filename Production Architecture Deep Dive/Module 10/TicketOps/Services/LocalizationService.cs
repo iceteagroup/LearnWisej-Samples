@@ -14,9 +14,9 @@ namespace TicketOps.Services
     ///
     /// Text:        Resources/Strings.resx (neutral, English) + Strings.de.resx (German) through the
     ///              ResourceManager in <see cref="Strings"/>. The .NET fallback chain is de-DE → de → neutral,
-    ///              so a key that is missing in German shows English (traced as ⚠ untranslated) and a key that
-    ///              is missing everywhere shows "[key]" (traced as ⚠ missing). The user always sees SOMETHING
-    ///              readable; the trace tells the team what to fix.
+    ///              so a key that is missing in German shows English (logged as untranslated) and a key that
+    ///              is missing everywhere shows "[key]" (logged as missing). The user always sees SOMETHING
+    ///              readable; the log tells the team what to fix.
     /// Formatting:  every date/number/currency goes through the session's CultureInfo explicitly —
     ///              6/14/2026 · $1,850.00 for en-US, 14.06.2026 · 1.850,00 € for de-DE — from the same value.
     ///
@@ -39,7 +39,6 @@ namespace TicketOps.Services
             SupportedCultures = SupportedCultureNames.Select(CultureInfo.GetCultureInfo).ToList();
             _culture = CultureInfo.GetCultureInfo(_session.Culture ?? SupportedCultureNames[0]);
             ApplyToThread();
-            _log.Info(LogLayer.Service, "LocalizationService", $"culture {_culture.Name} · shipped: {string.Join(", ", SupportedCultureNames)}");
         }
 
         public IReadOnlyList<CultureInfo> SupportedCultures { get; }
@@ -53,14 +52,12 @@ namespace TicketOps.Services
             {
                 // Expected outcome: the operator picked a language we do not ship. Stay where we are and say so
                 // (in the CURRENT culture — the requested one has no strings).
-                _log.Warn(LogLayer.Service, "LocalizationService.SetCulture", $"rejected: '{cultureName}' is not shipped (supported: {string.Join(", ", SupportedCultureNames)}) → staying on {_culture.Name}");
                 return OperationResult<CultureInfo>.Fail(Format("Rule.CultureNotShipped", cultureName, _culture.Name));
             }
 
             _culture = requested;
             _session.Culture = requested.Name;
             ApplyToThread();
-            _log.Info(LogLayer.Service, "LocalizationService.SetCulture", $"{requested.Name} accepted · SessionContext.Culture = {requested.Name} · thread CurrentCulture/CurrentUICulture set");
             return OperationResult<CultureInfo>.Ok(requested, Format("Message.CultureApplied", requested.NativeName));
         }
 
@@ -72,14 +69,14 @@ namespace TicketOps.Services
             string text = Strings.ResourceManager.GetString(key, _culture);     // de-DE → de → neutral (English)
             if (text == null)
             {
-                // Failure path, handled: nothing to show for this key in any culture. Fall back to the key itself so
-                // the screen stays readable and the gap is visible to the team, never an exception to the operator.
-                _log.Warn(LogLayer.Service, "LocalizationService.Text", $"⚠ missing: key '{key}' has no value in {_culture.Name} nor in the neutral resources → fallback \"[{key}]\"");
+                // Nothing to show for this key in any culture. Fall back to the key itself so the screen stays
+                // readable and the gap is visible to the team, never an exception to the operator.
+                _log.Warn(LogLayer.Service, "LocalizationService.Text", $"missing: key '{key}' has no value in {_culture.Name} nor in the neutral resources → fallback \"[{key}]\"");
                 return "[" + key + "]";
             }
 
             if (!IsNeutral(_culture) && !HasOwnValue(key, _culture))
-                _log.Warn(LogLayer.Service, "LocalizationService.Text", $"⚠ untranslated: key '{key}' missing in {_culture.Name} → neutral (English) value \"{text}\"");
+                _log.Warn(LogLayer.Service, "LocalizationService.Text", $"untranslated: key '{key}' missing in {_culture.Name} → neutral (English) value \"{text}\"");
 
             return text;
         }

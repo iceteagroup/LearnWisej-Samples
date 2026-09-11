@@ -73,7 +73,7 @@ machine.** The record only changes on the server.
 | Stolen device | Local store is encrypted at rest and **wiped** on logout / lock-out; cached credentials expire, so a stolen device cannot replay commands after that. |
 | Untrusted device input | A scanned barcode is validated server-side (`ValidateScannedAssetAsync`); a GPS reading would be a hint for the user, never proof. |
 | Backdated work | Both timestamps are audited: the device clock (`DeviceTimestamp`) *and* the server clock (`ServerTimestamp`). The device clock is evidence of intent, not of time. |
-| A screen "just writing" the record | Structurally impossible from the device: the only server entry point is `WorkOrderService`. The **Anti-pattern** button shows what is lost when that rule is broken. |
+| A screen "just writing" the record | Structurally impossible from the device: the only server entry point is `WorkOrderService`. |
 
 ## 6. PWA shell
 
@@ -86,9 +86,8 @@ runbook, not with a lab. See [`PwaShellNote.md`](PwaShellNote.md).
 
 | Claim | Where you see it |
 |---|---|
-| Cache scope is server-enforced and small | Trace: `Data: repository.FindAssigned(contoso, ben.tech) → 12 rows (of 48 in the store)` and `Device: cache scope: ben.tech's own open assignments…` |
+| Cache scope is server-enforced and small | Server log: `Data: repository.FindAssigned(contoso, ben.tech) → 12 rows (of 48 in the store)`; the cache grid shows those 12 rows |
 | The record is not changed offline | Complete a work order while offline: the **Server status** column still reads `Assigned`; only **On this device** says `Completed · pending sync`. |
-| Permissions are refreshed before replay | Trace on reconnect: `Job: reconnect 1/2 — permission snapshot refreshed BEFORE replay: …` |
-| Offline work replays through the same service | Trace: `Job: replay 1/3: WO-1041 → WorkOrderService.Complete (corr …) — the same service the online screen calls` |
+| Permissions are refreshed before replay | Server log on reconnect: `Job: reconnect 1/2 — permission snapshot refreshed BEFORE replay: …` |
+| Offline work replays through the same service | Server log: `Job: replay 1/3: WO-1041 → WorkOrderService.Complete (corr …)` |
 | Both timestamps are audited | `Security/AuditLog.AuditEntry.ToString()` renders `device 14:32 · server 15:07`. |
-| Bypassing the boundary loses information | **Anti-pattern** button: four red trace lines, and `audit log still has N entries` — unchanged. |

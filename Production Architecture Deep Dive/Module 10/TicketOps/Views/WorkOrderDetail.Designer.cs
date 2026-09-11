@@ -33,7 +33,6 @@ namespace TicketOps.Views
             this.labelCostValue = new Wisej.Web.Label();
             this.labelHoursCaption = new Wisej.Web.Label();
             this.labelHoursValue = new Wisej.Web.Label();
-            this.labelHint = new Wisej.Web.Label();
             this.buttonNextStatus = new Wisej.Web.Button();
             this.buttonClose = new Wisej.Web.Button();
             this.SuspendLayout();
@@ -97,25 +96,15 @@ namespace TicketOps.Views
             this.labelHoursValue.Size = new System.Drawing.Size(300, 22);
             this.labelHoursValue.Text = "";
             //
-            // labelHint
-            //
-            this.labelHint.AutoSize = false;
-            this.labelHint.Font = new System.Drawing.Font("default", 9F);
-            this.labelHint.Location = new System.Drawing.Point(24, 200);
-            this.labelHint.Name = "labelHint";
-            this.labelHint.Size = new System.Drawing.Size(486, 44);
-            this.labelHint.Text = "";
-            //
             // buttons
             //
-            this.buttonNextStatus.Location = new System.Drawing.Point(24, 262);
+            this.buttonNextStatus.Location = new System.Drawing.Point(24, 204);
             this.buttonNextStatus.Name = "buttonNextStatus";
             this.buttonNextStatus.Size = new System.Drawing.Size(170, 36);
             this.buttonNextStatus.Text = "Next status";
-            this.buttonNextStatus.ToolTipText = "await _workOrders.AdvanceStatusAsync(id) — the same service and rule the dashboard uses";
             this.buttonNextStatus.Click += new System.EventHandler(this.buttonNextStatus_Click);
             this.buttonClose.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.buttonClose.Location = new System.Drawing.Point(370, 262);
+            this.buttonClose.Location = new System.Drawing.Point(370, 204);
             this.buttonClose.Name = "buttonClose";
             this.buttonClose.Size = new System.Drawing.Size(140, 36);
             this.buttonClose.Text = "Close";
@@ -123,7 +112,7 @@ namespace TicketOps.Views
             //
             // WorkOrderDetail  (NO BackColor: the theme paints the dialog)
             //
-            this.ClientSize = new System.Drawing.Size(534, 320);
+            this.ClientSize = new System.Drawing.Size(534, 264);
             this.Controls.Add(this.labelTitle);
             this.Controls.Add(this.chipStatus);
             this.Controls.Add(this.labelCreatedCaption);
@@ -134,7 +123,6 @@ namespace TicketOps.Views
             this.Controls.Add(this.labelCostValue);
             this.Controls.Add(this.labelHoursCaption);
             this.Controls.Add(this.labelHoursValue);
-            this.Controls.Add(this.labelHint);
             this.Controls.Add(this.buttonNextStatus);
             this.Controls.Add(this.buttonClose);
             this.MaximizeBox = false;
@@ -158,7 +146,6 @@ namespace TicketOps.Views
         private Wisej.Web.Label labelCostValue;
         private Wisej.Web.Label labelHoursCaption;
         private Wisej.Web.Label labelHoursValue;
-        private Wisej.Web.Label labelHint;
         private Wisej.Web.Button buttonNextStatus;
         private Wisej.Web.Button buttonClose;
     }

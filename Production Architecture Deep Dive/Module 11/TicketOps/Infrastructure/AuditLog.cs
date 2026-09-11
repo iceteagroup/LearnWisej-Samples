@@ -7,11 +7,10 @@ namespace TicketOps.Infrastructure
 {
     /// <summary>
     /// In-memory, append-only implementation of <see cref="IAuditService"/>. Every entry is also written to
-    /// the session <see cref="ILog"/> as an "[AUDIT]" line, so the activity trace shows the paper trail next
-    /// to the boundary crossings that produced it. Production forwards the same entries to a durable,
+    /// the session <see cref="ILog"/> as an "[AUDIT]" line. Production forwards the same entries to a durable,
     /// tamper-evident sink (database table, SIEM); the writers do not change.
     ///
-    /// Thread-safe, because Module 7-style background work may audit from a worker thread.
+    /// Thread-safe, because background work may audit from a worker thread.
     /// </summary>
     public sealed class AuditLog : IAuditService
     {

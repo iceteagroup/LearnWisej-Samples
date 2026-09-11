@@ -49,7 +49,7 @@ synchronous `IProgress` so the callback runs where the step happened) and lands 
 
 ## Testable without any UI
 
-`WorkQueuePage.btnRunHeadless_Click` is the proof, and it is deliberately written the way a test would be:
+A test needs nothing but a hand-built command:
 
 ```csharp
 var command = new EscalationCommand(
@@ -67,8 +67,8 @@ project would substitute its own `INotificationGateway` / `IApproverDirectory` w
 
 ## Evidence in the running app
 
-- Click **Run workflow without the wizard**: the trace prints the same
-  `Service: EscalateAsync […] → Service: ValidateStep… → Security: … → Data: persisted ESC-… → Integrations: sent …`
-  sequence as a wizard run, and the dark strip shows the same `WorkflowResult` line.
-- Every trace line is tagged with its layer (`UI →`, `Service:`, `Security:`, `Data:`, `Integrations:`) — the
-  handler lines are always two or three, the decisions are always `Service:` or `Security:`.
+- `EscalationWorkflow` and `IEscalationWorkflow` have no `Wisej.Web` reference. The wizard calls only
+  `ValidateStep`, `LookupApproversAsync`, `BuildCommand` and `EscalateAsync`; the page calls only
+  `RetryNotificationAsync`.
+- The server log (`ActivityTrace` → `System.Diagnostics.Trace`) tags every line with its layer (`Service:`,
+  `Security:`, `Data:`, `Integrations:`) — the decisions are always `Service:` or `Security:`.

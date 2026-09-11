@@ -52,20 +52,20 @@ user asks for it.
 
 `UI/ImportCenterPage` — `pnlNotifications` (`lstNotifications` + `btnMarkRead`) and the header's `btnBell`.
 
-- `btnBell` shows the unread count: `🔔 Notifications (3)`.
+- `btnBell` shows the unread count: `🔔 3`; clicking it toasts the newest notification.
 - `lstNotifications` lists the records newest first; unread rows are marked `●`.
 - A newly arrived unread notification also raises a toast
   (`AlertBox.Show(…, ContentAlignment.TopRight, autoCloseDelay: 6000)`) — top-right so it never covers the
   buttons.
-- **Mark all read** calls the service, which writes a `Service:` trace line with the count.
+- **Mark all read** calls the service, which marks the records read and logs the count.
 
 The panel is painted by the observer's push loop like everything else, so a notification written by the
 queue worker appears without the user doing anything.
 
 ## Evidence in the running app
 
-- Start any import: within a second the bell shows `(1)` and a toast says
+- Start any import: within a second the bell shows `🔔 1` and a toast says
   `IMP-… — milestone: validated`. Neither came from a request.
-- Press **Reopen** mid-import and wait: the completion notification arrives on the **new** page. The job was
-  told nothing about the page swap.
+- Close the browser tab mid-import, open the app again and wait: the completion notification arrives in the
+  **new** session. The job was told nothing about the session change.
 - The seeded `fabrikam` job's notifications never appear for `ana.ops@contoso`.

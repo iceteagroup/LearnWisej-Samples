@@ -4,17 +4,16 @@ using Wisej.Web;
 
 namespace TicketOps.Infrastructure
 {
-    /// <summary>The sample files that ship with the project (relative to the project folder).</summary>
+    /// <summary>The import file that ships with the project (relative to the project folder).</summary>
     public static class SampleFiles
     {
         public const string Tickets = "Data/sample-tickets.csv";
-        public const string WrongHeader = "Data/sample-tickets-wrong-header.csv";
     }
 
     /// <summary>
-    /// Turns a project-relative path into the file the import service opens. The files live in the project
-    /// folder (where Default.json is — <c>Application.MapPath</c>) and are also copied next to the binaries
-    /// by the csproj, so both "dotnet run" from the project folder and a published output find them.
+    /// Turns a project-relative path into the file the import service opens. The file lives in the project
+    /// folder (where Default.json is — <c>Application.MapPath</c>) and is also copied next to the binaries
+    /// by the csproj, so both "dotnet run" from the project folder and a published output find it.
     /// Infrastructure may know about Wisej.NET; the import service that receives the path does not.
     /// </summary>
     public sealed class ImportFileLocator
@@ -38,10 +37,7 @@ namespace TicketOps.Infrastructure
             foreach (string candidate in candidates)
             {
                 if (!string.IsNullOrEmpty(candidate) && File.Exists(candidate))
-                {
-                    _log.Info(LogLayer.Infrastructure, "ImportFileLocator.Resolve", $"{relativePath} → {Path.GetDirectoryName(candidate)}");
                     return Path.GetFullPath(candidate);
-                }
             }
 
             // Not found anywhere: hand back the first guess so the service reports "file not found" as a result.

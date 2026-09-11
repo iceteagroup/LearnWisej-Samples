@@ -69,7 +69,7 @@ namespace OrderDesk.Views
             this.Controls.Add(this._close);
             this.Name = "InvoicePreviewForm";
             this.StartPosition = FormStartPosition.CenterParent;
-            this.Text = _fileName + "  ·  generated on the server";
+            this.Text = _fileName;
             this.ResumeLayout(false);
         }
     }

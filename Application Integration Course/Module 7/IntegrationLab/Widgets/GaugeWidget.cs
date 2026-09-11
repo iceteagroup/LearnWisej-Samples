@@ -53,7 +53,6 @@ namespace IntegrationLab.Widgets
                 _value = value;
                 dynamic options = this.Options;
                 options.value = value;                  // first-level field: Wisej renders {"value":…} → update(options)
-                RaiseTrace(TraceDirection.ServerToClient, "update(options)", $"{{\"value\":{PayloadReader.F(value)}}}");
             }
         }
 
@@ -77,10 +76,6 @@ namespace IntegrationLab.Widgets
         [DefaultValue("°F")]
         public string Units { get => _units; set { _units = value ?? ""; ((dynamic)this.Options).units = _units; } }
 
-        /// <summary>Last level reported by a validated thresholdCrossed payload ("warn" / "high"), or "" .</summary>
-        [Browsable(false)]
-        public string LastLevel { get; private set; } = "";
-
         #endregion
 
         #region .NET events
@@ -89,7 +84,7 @@ namespace IntegrationLab.Widgets
         [Description("Raised once when the reading crosses WarnAt or Threshold upward.")]
         public event EventHandler<GaugeThresholdEventArgs> ThresholdCrossed;
 
-        /// <summary>Every message in either direction, for the lab log.</summary>
+        /// <summary>Every payload received and every rejection, for the WidgetEvent log.</summary>
         [Browsable(false)]
         public event EventHandler<TraceEventArgs> Trace;
 
@@ -142,20 +137,11 @@ namespace IntegrationLab.Widgets
             if (value < line)
             { Reject("thresholdCrossed", $"level \"{level}\" claimed but value {PayloadReader.F(value)} is below {PayloadReader.F(line)}"); return; }
 
-            if (Math.Abs(value - _value) > 0.001)
-                RaiseTrace(TraceDirection.Server, "contract check", $"client reported {PayloadReader.F(value)}, server Value is {PayloadReader.F(_value)}: server wins");
-
-            this.LastLevel = level;
-            var args = new GaugeThresholdEventArgs(_value, level);
-            RaiseTrace(TraceDirection.Server, "ThresholdCrossed", $"raised via OnWidgetEvent → GaugeThresholdEventArgs {args}");
-            ThresholdCrossed?.Invoke(this, args);
+            ThresholdCrossed?.Invoke(this, new GaugeThresholdEventArgs(_value, level));   // server Value, client level
         }
 
         private void Reject(string eventName, string reason)
             => RaiseTrace(TraceDirection.Rejected, eventName, "rejected: " + reason);
-
-        public string ToJson()
-            => $"{{\"value\":{PayloadReader.F(_value)},\"min\":{PayloadReader.F(_minimum)},\"max\":{PayloadReader.F(_maximum)},\"warnAt\":{PayloadReader.F(_warnAt)},\"threshold\":{PayloadReader.F(_threshold)},\"label\":\"{_label}\",\"units\":\"{_units}\"}}";
 
         private void PushState()
         {

@@ -1,7 +1,6 @@
 # migration-log.md — LegacyOrderDesk → OrderDesk.Web
 
-One line per accepted decision or workaround. Later modules append to this file; the console's trace panel is the
-live version of it.
+One line per accepted decision or workaround. Later modules append to this file.
 
 ## Module 1 · Migration discovery (2026-09-09)
 
@@ -27,13 +26,12 @@ live version of it.
 
 ## Module 3 · UI porting, navigation, designer & modal workflow (2026-09-10)
 
-- **The main form becomes a shell + screens.** `OrdersForm` → `Shell/AppShell` (`MenuBar` File · View · Reports · Help, `ToolBar` Orders · Customers · Reports ‖ New Order · Print Invoice · Export, `StatusBar`) with a content host; `Screens/OrdersScreen`, `CustomersScreen`, `ReportsScreen` are `UserControl`s, **one instance each for the life of the session**, hidden — never disposed — when another takes over (`NavigateTo`). See `NavigationPort.md`.
+- **The main form becomes a shell + screens.** `OrdersForm` → `Shell/AppShell` (`MenuBar` View · Reports · Help, `ToolBar` Orders · Customers · Reports ‖ New Order · Print Invoice · Export, `StatusBar`) with a content host; `Screens/OrdersScreen`, `CustomersScreen`, `ReportsScreen` are `UserControl`s, **one instance each for the life of the session**, hidden — never disposed — when another takes over (`NavigateTo`). See `NavigationPort.md`.
 - **Fixed layout → Dock/Anchor, in the designer.** `ClientSize 716×372` for a 1024×768 desktop is gone: heading `Dock = Top`, detail `Dock = Right` (220), grid `Dock = Fill`; buttons in the detail panel `Anchor Top|Left|Right`. Docking order = reverse `Controls` order, so the `Fill` control is added first. `"C2"` totals became `"N2"` (the server's culture is not the user's).
-- **`.Designer.cs` stays designer-owned.** Only `InitializeComponent`, the container and the fields live there; every swap is a `// ✓ was:` comment. `EditOrderDialog.Dispose(bool)` moved to the code-behind because it carries `DialogTracker` logic; `MainPage` releases its reusable dialog from the `Disposed` event instead of editing the generated `Dispose`.
+- **`.Designer.cs` stays designer-owned.** Only `InitializeComponent`, the container, `Dispose` and the fields live there; the control swaps are recorded in `NavigationPort.md`.
 - **`ShowDialog` returns at once.** The result is awaited (`await dialog.ShowDialogAsync()` in `async void`) or received in the `ShowDialog(callback)`; the desktop `if (dialog.ShowDialog() == OK)` never runs its body on the server. `EditOrderDialog` itself is unchanged (fields, `DialogResult`, `AcceptButton`).
-- **Closed is not disposed — the caller owns the lifetime.** `using (var dialog = new EditOrderDialog(…)) { … await … }` (or `f.Dispose()` last in the callback). `Dialogs/DialogTracker` counts live instances per session and process-wide; the console's **Edit (leak ×1)** reproduces the desktop habit (+1 per click, never released) next to **Edit (disposed)** (back to 0). See `DialogWorkflow.md`.
-- **Reuse only on purpose.** One instance in a named field, `Bind(order)` resets fields and `DialogResult` before every show, disposed with the page. Accidental reuse (stale `DialogResult.OK`, the previous order's fields) is the trap.
-- **MessageBox reviewed one by one.** Decisions and validation stay modal (`await MessageBox.ShowAsync(YesNo)` for Delete, `MessageBox.Show` for "Select a customer."); informational messages ("Saved.", "Exported to …", About) become `Ui.Toast`. See `NotificationsReview.md`.
-- **Long work leaves the handler.** `Thread.Sleep(3000)` in a Click handler freezes the whole session (0 timer ticks answered, everything arrives 3 s late); `Application.StartTask` + `Application.Update(page, callback)` keeps the page responsive (~14 ticks) and pushes the result. Check `IsDisposed` in the callback.
+- **Closed is not disposed — the caller owns the lifetime.** `using (var dialog = new EditOrderDialog(…)) { … await … }` (or `f.Dispose()` last in the callback). See `DialogWorkflow.md`.
+- **Reuse only on purpose.** A reused dialog lives in a named field, is reset with `Bind(order)` (fields and `DialogResult`) before every show and is disposed with its owner. Accidental reuse (stale `DialogResult.OK`, the previous order's fields) is the trap.
+- **MessageBox reviewed one by one.** Validation stays modal (`MessageBox.Show` for "Select a customer."); informational messages ("Saved.", "Exported to …", About) become `Ui.Toast`. See `NotificationsReview.md`.
 - **Filter state is per screen, not static.** `AppState.CurrentFilter` → a field of `OrdersScreen` (one per session). The general rule lands in Module 4.
-- **Settings and Exit logged, not faked.** `File › Settings…` (HKCU) and `File › Exit` (`Close()` ended the process) raise a `⚠ boundary` line and a warning Toast; sign-out and the per-user profile store are Module 4.
+- **Settings, Exit and Attach file not ported.** `File › Settings…` (HKCU), `File › Exit` (`Close()` ended the process) and Attach file (the user's disk) are left out of the shell; sign-out and the per-user profile store are Module 4, the upload is Module 6.

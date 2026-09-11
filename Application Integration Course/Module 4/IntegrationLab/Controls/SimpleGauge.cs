@@ -136,7 +136,6 @@ namespace IntegrationLab.Controls
                 _value = value;
                 dynamic options = base.Options;
                 options.value = value;     // first-level field: Wisej.NET renders {"value":…} and calls update()
-                Render($"{{\"value\":{F(value)}}}");
             }
         }
 
@@ -162,7 +161,6 @@ namespace IntegrationLab.Controls
                 dynamic options = base.Options;
                 options.min = value;
                 options.warnAt = WarnBandStart();
-                Render($"{{\"min\":{F(value)},\"warnAt\":{F(WarnBandStart())}}}");
                 ClampValueIntoRange();
             }
         }
@@ -189,7 +187,6 @@ namespace IntegrationLab.Controls
                 dynamic options = base.Options;
                 options.max = value;
                 options.warnAt = WarnBandStart();
-                Render($"{{\"max\":{F(value)},\"warnAt\":{F(WarnBandStart())}}}");
                 ClampValueIntoRange();
             }
         }
@@ -210,7 +207,6 @@ namespace IntegrationLab.Controls
                 _caption = value;
                 dynamic options = base.Options;
                 options.label = value;
-                Render($"{{\"label\":\"{value}\"}}");
             }
         }
 
@@ -229,7 +225,6 @@ namespace IntegrationLab.Controls
                 _animationEnabled = value;
                 dynamic options = base.Options;
                 options.animationEnabled = value;
-                Render($"{{\"animationEnabled\":{(value ? "true" : "false")}}}");
             }
         }
 
@@ -252,7 +247,6 @@ namespace IntegrationLab.Controls
                 dynamic options = base.Options;
                 options.threshold = value;
                 options.warnAt = WarnBandStart();
-                Render($"{{\"threshold\":{F(value)},\"warnAt\":{F(WarnBandStart())}}}");
             }
         }
 
@@ -278,13 +272,6 @@ namespace IntegrationLab.Controls
         [Description("Raised when the client adapter caught a vendor failure instead of crashing the page.")]
         public event EventHandler<GaugeErrorEventArgs> WidgetError;
 
-        /// <summary>
-        /// Diagnostics only: every option rendered to the client and every event received from it.
-        /// The lab's demo page uses it to show the wire without knowing any option name.
-        /// </summary>
-        [Browsable(false)]
-        public event EventHandler<TraceEventArgs> Trace;
-
         protected virtual void OnValueChanged(GaugeValueChangedEventArgs e) => ValueChanged?.Invoke(this, e);
         protected virtual void OnThresholdExceeded(GaugeEventArgs e) => ThresholdExceeded?.Invoke(this, e);
         protected virtual void OnWidgetError(GaugeErrorEventArgs e) => WidgetError?.Invoke(this, e);
@@ -300,34 +287,17 @@ namespace IntegrationLab.Controls
             switch (e.Type)
             {
                 case "valueChanged":
-                    {
-                        double reported = ToDouble(data?.value);
-                        double previous = ToDouble(data?.previous);
-                        RaiseTrace(TraceDirection.ClientToServer, "valueChanged",
-                            $"{{\"value\":{F(reported)},\"previous\":{F(previous)}}}");
-                        if (!double.IsNaN(reported) && Math.Abs(reported - _value) > 0.001)
-                            RaiseTrace(TraceDirection.Server, "contract check",
-                                $"client rendered {F(reported)} but server Value is {F(_value)}: server wins");
-                        OnValueChanged(new GaugeValueChangedEventArgs(_value, reported, previous));
-                        break;
-                    }
+                    OnValueChanged(new GaugeValueChangedEventArgs(_value, ToDouble(data?.value), ToDouble(data?.previous)));
+                    break;
+
                 case "thresholdExceeded":
-                    {
-                        double reported = ToDouble(data?.value);
-                        double threshold = ToDouble(data?.threshold);
-                        RaiseTrace(TraceDirection.ClientToServer, "thresholdExceeded",
-                            $"{{\"value\":{F(reported)},\"threshold\":{F(threshold)}}}");
-                        OnThresholdExceeded(new GaugeEventArgs(_value, reported));
-                        break;
-                    }
+                    OnThresholdExceeded(new GaugeEventArgs(_value, ToDouble(data?.value)));
+                    break;
+
                 case "error":
-                    {
-                        string phase = (string)(data?.phase ?? "unknown");
-                        string message = (string)(data?.message ?? "");
-                        RaiseTrace(TraceDirection.ClientToServer, "error", $"{{\"phase\":\"{phase}\",\"message\":\"{message}\"}}");
-                        OnWidgetError(new GaugeErrorEventArgs(phase, message));
-                        break;
-                    }
+                    OnWidgetError(new GaugeErrorEventArgs((string)(data?.phase ?? "unknown"), (string)(data?.message ?? "")));
+                    break;
+
                 default:
                     base.OnWidgetEvent(e);     // never swallow unknown events
                     break;
@@ -391,14 +361,6 @@ namespace IntegrationLab.Controls
 
         #endregion
 
-        #region Diagnostics
-
-        /// <summary>Compact JSON of the state this control owns (what the adapter receives in init/update).</summary>
-        public string ToJson()
-            => $"{{\"value\":{F(_value)},\"min\":{F(_minimum)},\"max\":{F(_maximum)},\"threshold\":{F(_threshold)},\"warnAt\":{F(WarnBandStart())},\"label\":\"{_caption}\",\"animationEnabled\":{(_animationEnabled ? "true" : "false")}}}";
-
-        #endregion
-
         #region Internals
 
         /// <summary>
@@ -407,25 +369,17 @@ namespace IntegrationLab.Controls
         /// </summary>
         private double WarnBandStart() => _threshold - 0.15 * (_maximum - _minimum);
 
-        /// <summary>A shrinking range must not leave Value outside it: clamp, and say so.</summary>
+        /// <summary>A shrinking range must not leave Value outside it: clamp it.</summary>
         private void ClampValueIntoRange()
         {
             double clamped = Math.Max(_minimum, Math.Min(_maximum, _value));
             if (clamped == _value)
                 return;
 
-            RaiseTrace(TraceDirection.Server, "clamped", $"Value {F(_value)} is outside {F(_minimum)}..{F(_maximum)} → {F(clamped)}");
             _value = clamped;
             dynamic options = base.Options;
             options.value = clamped;
-            Render($"{{\"value\":{F(clamped)}}}");
         }
-
-        private void Render(string json)
-            => RaiseTrace(TraceDirection.ServerToClient, "update(options)", json);
-
-        private void RaiseTrace(TraceDirection direction, string name, string payload)
-            => Trace?.Invoke(this, new TraceEventArgs(direction, name, payload));
 
         private static string F(double value)
             => value.ToString(CultureInfo.InvariantCulture);

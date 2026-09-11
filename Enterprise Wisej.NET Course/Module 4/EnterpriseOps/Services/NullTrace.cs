@@ -6,12 +6,12 @@ namespace EnterpriseOps.Services
     /// <summary>
     /// An <see cref="IActivityTrace"/> with no screen behind it. This is what makes the answer to the
     /// module's first review question — "can a save be tested without creating a Form?" — a yes you can
-    /// run: the command service, the repository and the DbContext all take this instead of the page.
+    /// run: the command service, the repository and the DbContext all take this instead of a real log.
     ///
     /// <code>
     /// var trace    = new NullTrace();
     /// using var db = new SessionDatabase(trace);
-    /// var service  = new WorkOrderCommandService(db, trace, new FaultInjector(), () => TimeSpan.FromSeconds(5));
+    /// var service  = new WorkOrderCommandService(db, trace, () => TimeSpan.FromSeconds(5));
     /// var result   = await service.ApproveAsync(command, context, CancellationToken.None);
     /// </code>
     ///

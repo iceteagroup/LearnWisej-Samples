@@ -16,8 +16,7 @@ not styled**: a screen assigns `Status` and `Text`; the theme decides what that 
 | `AppearanceKey = "chip"` | joins the theme system: background, radius and text colour come from the appearance | the mixin |
 | size 132 × 26, label docked, bold 9.5 pt `default` font | padding & radius fixed once | `StatusChip.Designer.cs` + `radius: 13` in the mixin |
 
-There is **no** `BackColor`, `ForeColor` or hex value in `StatusChip.cs`. The file would pass the
-lesson's grep for colour literals.
+There is **no** `BackColor`, `ForeColor` or hex value in `StatusChip.cs`.
 
 ## The theme entry
 
@@ -40,37 +39,24 @@ lesson's grep for colour literals.
 ```
 
 - The four `chip-*` names are the chip's **palette**: three of them are aliases of colours that exist in
-  every Bootstrap theme (`primary`, `danger`, `success` — `#007AFF`, `#DC3444`, `#28A745`/`#188754`),
-  so on **BootstrapDark-4** the done chip turns the darker green the theme owner chose. `chip-inprogress`
-  is a literal because neither Bootstrap theme ships an amber token; a product theme overrides just
-  that one name.
+  every Bootstrap theme (`primary`, `danger`, `success`), so on **BootstrapDark-4** the done chip turns the
+  darker green the theme owner chose. `chip-inprogress` is a literal because neither Bootstrap theme ships
+  an amber token; a product theme overrides just that one name.
 - The backgrounds are translucent tints, so they sit on a white card and on a `#212429` card alike.
 - The label inside the chip has no colour of its own: qooxdoo's `textColor` is inheritable and the
   Bootstrap `textlabel` appearance does not set one, so the chip's `textColor` flows into it.
-- A mixin (`*.mixin.theme` in `/Themes`) is merged into **whichever theme is active**, which is why the
-  chip needs no per-theme code: switch theme, and the same four states resolve against the new palette.
+- The mixin is merged into whichever theme is active (`ThemeSwitcher.MergeMixin`), which is why the chip
+  needs no per-theme code: switch theme, and the same four states resolve against the new palette.
 
 ## Where it is reused
 
 | Screen | Use |
 |---|---|
 | `OperationsDashboard` — KPI cards | four chips, one per status, `chipOpen … chipDone` |
-| `OperationsDashboard` — detail strip | `chipSelected` shows the selected order's status; re-colours as **Walk statuses** advances it |
+| `OperationsDashboard` — detail strip | `chipSelected` shows the selected order's status; re-colours when **Next status** advances it |
 | `WorkOrderDetail` (dialog) | `chipStatus` in the header — same control, same resources, same theme |
 
 The applied-concepts guide shows the chip through `CssClass = "chip chip-" + status` with a stylesheet.
 Wisej.NET's native equivalent — used here — is an **appearance key + theme states**: it needs no CSS
 file, is visible in the Designer, and follows a theme switch automatically. `CssClass`/`CssStyle` stay
 what the lesson says they are: the targeted exception, not the chip's home.
-
-## Evidence (running app)
-
-- On load: the four KPI chips read Open / In progress / Blocked / Done in blue / amber / red / green
-  tints; the detail chip shows the first order's status.
-- **Theme → Dark · BootstrapDark-4**: the cards and grid turn dark; the chips keep their tints, the
-  done chip's text switches to the dark theme's `success` (#188754). The trace shows
-  `[UI] … 5 StatusChips … re-skinned by the theme — no chip code ran`.
-- **Culture → Deutsch**: the captions become Offen / In Bearbeitung / Blockiert / Erledigt; "In Bearbeitung"
-  (the widest translation) fits the 132 px chip in both themes.
-- **▶ Walk statuses**: the detail chip and the KPI counts change every 800 ms; only `Status`/`Text`
-  are set by the handler.

@@ -17,9 +17,8 @@ namespace SupportDesk.Data;
 /// attributes and UI validation (Module 5) never mixes with persistence mapping.
 /// </para>
 /// <para>
-/// The constructor and Dispose report to <see cref="QueryTrace"/> so the lab UI can show every
-/// context being created and disposed inside one click — a teaching instrument, not a
-/// production pattern.
+/// The constructor and Dispose report to <see cref="QueryTrace"/> so the tests can count the
+/// contexts created and disposed inside one operation.
 /// </para>
 /// </remarks>
 public sealed class SupportDeskContext : DbContext

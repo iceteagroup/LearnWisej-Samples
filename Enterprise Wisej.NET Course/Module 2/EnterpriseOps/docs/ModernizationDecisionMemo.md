@@ -5,8 +5,8 @@ It is written *after* the path has run, from what the run produced.
 
 In the sample the memo is **generated**, never typed: `Services/MigrationAssessmentService.BuildDecisionMemo`
 reads the dossier, the seven step states, the last harness verdict and the current theme diff, and returns the
-text that the *Decision memo* tab shows. Click **Write decision memo** before the run and after it — the two
-versions differ, because the evidence differs. That is the point.
+text that the *Decision memo* tab shows. The tab is rewritten after every action — read it before the run and after
+it: the two versions differ, because the evidence differs. That is the point.
 
 ---
 
@@ -78,8 +78,8 @@ the workflow refuses it in code, not in a guideline. See `RollbackPlan.md`.
 
 ## Evidence — what the running app shows
 
-- Click **Write decision memo** with nothing run: the memo says
+- Click **Build dossier** with nothing run: the memo says
   `Steps passed: 0/7` and `Regression harness: not run yet.` — an honest memo with no evidence behind it.
-- Run the path, hit the step-4 failure, then write the memo again: it names the failed step and its fallback point.
-- Finish the path (roll back → map the mixin → re-run) and write it once more:
+- Run the path, hit the step-4 failure, then read the memo again: it names the failed step and its fallback point.
+- Finish the path (roll back → map the mixin → re-run) and read it once more:
   `Steps passed: 7/7`, `Regression harness: PASS — 10/10 flows`, `Theme: Blue-2019 mixin (Wisej.NET 4) — 0 difference(s)`.

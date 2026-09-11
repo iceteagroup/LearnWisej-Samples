@@ -242,17 +242,6 @@ namespace EnterpriseOps.Services
                 : CommandResult.Fail(ctx, diff.ToArray());
         }
 
-        /// <summary>Back to the state right after the package upgrade, so the path can be replayed.</summary>
-        public void Reset()
-        {
-            _steps = _store.Steps();
-            _assessment.ResetRows();
-            _harness.ResetOutcomes();
-            _theme.ResetToUnmapped();
-            LastHarness = null;
-            _trace.Service("MigrationWorkflow.Reset → 7 steps pending, flows not run, dossier rows open, theme unmapped (state right after the package upgrade)");
-        }
-
         private static WorkflowResult Fail(CommandContext ctx, string message, MigrationStep failedStep = null)
         {
             return new WorkflowResult { Succeeded = false, Message = message, FailedStep = failedStep, CorrelationId = ctx.CorrelationId };

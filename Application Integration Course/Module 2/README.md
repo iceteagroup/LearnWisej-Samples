@@ -4,7 +4,7 @@ Local lab build for **Module 2 · JavaScript Essentials**. It follows the walkth
 jQuery-style knob plugin is proven in an isolated HTML page first, then rewritten as the `InitScript` of a
 plain `Wisej.Web.Widget` named `gaugeKnob`, with `Packages` declaring `jQuery → vendor CSS → vendor JS`
 in load order and a `valueChanged` event fired from the vendor callback through a captured widget
-reference (`var me = this`). A second widget runs the broken script so the bug can be seen, not read about.
+reference (`var me = this`).
 
 Nothing here is deployed anywhere; it is a plain Wisej.NET 4 project on this machine.
 
@@ -19,32 +19,16 @@ Then open <http://localhost:5072>. (Visual Studio: open `IntegrationLab.slnx`, p
 
 Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet package.
 
-## What to try in the Knob Demo window
+## What to try
 
-Two knobs sit side by side. Both host the same VendorKnob plugin with the same Packages and the same
-Options; only the InitScript differs.
-
-| Action | Path | What you should see |
-|---|---|---|
-| Drag / wheel the **left** knob (`gaugeKnob`, `gauge-init.js`) | success (events) | `← JS→.NET gaugeKnob.valueChanged {"value":…}` then `→ .NET→JS update(options) {"value":…}`; the status turns green: "valueChanged reached .NET ✓" |
-| Drag / wheel the **right** knob (`gaugeKnobBroken`, `gauge-init.broken.js`) | failure 1 (lost context) | no `valueChanged`; instead `← JS→.NET gaugeKnobBroken.contextError {"message":"this.fireWidgetEvent is not a function","thisWas":"HTMLInputElement",…}`, a red banner explaining that `this` was the `<input>`, status "context lost" |
-| Set 25 / Set 60 / Set 85 | success (state) | `→ .NET→JS update(options) ×2 {"value":…}` — **both** knobs move, because `update()` is a widget method and is not affected by the callback bug |
-| ▶ Stream | progress | a `Timer` replays 14 readings every 600 ms through `Options.value`; the status counts them; click again to stop |
-| Wrong package order | failure 2 (load order) | a third widget `gaugeKnobWrongOrder` is created at runtime inside the empty slot with `vendor-knob.js` listed **before** `jquery-lite.js`; the console shows `ReferenceError: jQuery is not defined`, the slot shows the raw red-dashed `<input>`, and after 2 s the server checks `IsLoaded` and shows the banner "widget never initialized — check Packages order (console: jQuery is not defined)" (or, if the loader still ran `init`, the caught "init failed — $(…).vendorKnob is not a function" banner) |
-| Open plain-JS proof ↗ | deliverable 1 | `wwwroot/proof/knob-proof.html` opens in a new tab: the same plugin, no Wisej.NET, with the broken/fixed callback demo and the load-order checks |
-| Clear trace | – | empties the right-hand list |
-
-The right-hand card is the live client/server trace: every message in both directions, so what the
-video shows in DevTools can be compared with what the server saw.
-
-### About the wrong-order demo
-
-`vendor-knob.js` checks the `jQuery` global once, when its script executes. The Knob Demo page already
-has jQuery (loaded by `gaugeKnob`, in the right order), so a widget that merely lists the packages the
-wrong way round would not fail here. The runtime widget therefore lists `wwwroot/hide-jquery.js`
-first — two lines that drop the `jQuery`/`$` globals to reproduce a fresh page — then the plugin, then the
-stylesheet, then jQuery. Package names differ from `gaugeKnob`'s because Wisej.NET caches packages by
-name. The file is a lab prop and is documented as such.
+- **Knob Demo window** — drag or wheel the Pressure knob. Every change reaches .NET as `valueChanged`;
+  the status in the card shows the value the server recorded (`● 72 psi`). A vendor failure caught by the
+  adapter shows a red banner.
+- **DevTools (F12)** — as in the video: `app.getWidget("gaugeKnob").instance` in the Console returns the
+  vendor object stored on the widget; `gauge-init.js` is listed in Sources thanks to `//# sourceURL`;
+  uncomment the `debugger;` at the top of `init` to pause and inspect `this`, `options` and `this.container`.
+- **Plain-JS proof** — <http://localhost:5072/wwwroot/proof/knob-proof.html>: the same plugin with no
+  Wisej.NET, the callback wired the broken and the fixed way, and load-order checks.
 
 ## Where things live
 
@@ -53,17 +37,14 @@ IntegrationLab/
 ├─ wwwroot/
 │  ├─ proof/knob-proof.html    deliverable 1: the plain-JS proof (no Wisej.NET)
 │  ├─ gauge-init.js            deliverable 2: the context-safe InitScript (embedded resource)
-│  ├─ gauge-init.broken.js     the broken twin: this.fireWidgetEvent inside the vendor callback
 │  ├─ jquery-lite.js           package 1 — tiny jQuery-compatible subset (window.$, $.fn)
 │  ├─ vendor-knob.css          package 2 — vendor stylesheet (+ red fallback for the un-enhanced input)
-│  ├─ vendor-knob.js           package 3 — the "third-party" jQuery plugin, $.fn.vendorKnob
-│  ├─ hide-jquery.js   lab prop for the wrong-order button (parks the jQuery global)
-│  └─ vendor-gauge.js          shared course library, unused in this module
+│  └─ vendor-knob.js           package 3 — the "third-party" jQuery plugin, $.fn.vendorKnob
 ├─ docs/
 │  ├─ PlainJsProof.md          deliverable 1 — what the proof page shows and how it was verified
 │  ├─ ContextSafeInitScript.md deliverable 2 — closure / bind / method, annotated gauge-init.js, load order
 │  └─ DebuggingNotes.md        deliverable 3 — where the instance is stored, sourceURL, debugger, symptom table
-├─ Window1.cs / .Designer.cs   Knob Demo (two Wisej.Web.Widget instances + runtime wrong-order widget)
+├─ Window1.cs / .Designer.cs   Knob Demo (one Wisej.Web.Widget: gaugeKnob)
 ├─ Program.cs                  Wisej.NET session entry point
 └─ Startup.cs                  Kestrel host (app.UseWisej(), static files from the project folder)
 ```
@@ -71,7 +52,7 @@ IntegrationLab/
 ## Deliverables
 
 1. **Working plain JavaScript proof** — [`IntegrationLab/wwwroot/proof/knob-proof.html`](IntegrationLab/wwwroot/proof/knob-proof.html), described in [`IntegrationLab/docs/PlainJsProof.md`](IntegrationLab/docs/PlainJsProof.md)
-2. **Context-safe Wisej.NET InitScript** — [`IntegrationLab/wwwroot/gauge-init.js`](IntegrationLab/wwwroot/gauge-init.js), explained in [`IntegrationLab/docs/ContextSafeInitScript.md`](IntegrationLab/docs/ContextSafeInitScript.md) (broken twin: [`gauge-init.broken.js`](IntegrationLab/wwwroot/gauge-init.broken.js))
+2. **Context-safe Wisej.NET InitScript** — [`IntegrationLab/wwwroot/gauge-init.js`](IntegrationLab/wwwroot/gauge-init.js), explained in [`IntegrationLab/docs/ContextSafeInitScript.md`](IntegrationLab/docs/ContextSafeInitScript.md)
 3. **Debugging notes showing where the widget instance is stored** — [`IntegrationLab/docs/DebuggingNotes.md`](IntegrationLab/docs/DebuggingNotes.md)
 
 ## Self-check answers (lab guide)

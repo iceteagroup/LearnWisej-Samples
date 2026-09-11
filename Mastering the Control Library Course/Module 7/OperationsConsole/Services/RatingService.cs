@@ -5,17 +5,9 @@ using OperationsConsole.Models;
 namespace OperationsConsole.Services
 {
     /// <summary>
-    /// The server-side half of the rating widget: every rule the browser must not be trusted with.
-    /// <para>
-    /// The module reading is explicit about this — "keep business logic on the server", "validate
-    /// event payloads from the browser". <c>rating.js</c> renders stars and reports gestures;
-    /// this class decides what a rating <b>is</b> (an integer 1..5), whether a payload is
-    /// acceptable, and what happens when the store is unavailable.
-    /// </para>
-    /// <para>
-    /// In-memory on purpose (no database in the labs). <see cref="SimulateFailure"/> makes the
-    /// failure path reproducible from the section's command row.
-    /// </para>
+    /// The server-side half of the rating widget: what a rating is (a whole number from 1 to 5), whether a
+    /// payload from the browser is acceptable, and storage. In memory; <see cref="SimulateFailure"/> makes
+    /// <see cref="Save"/> throw.
     /// </summary>
     public class RatingService
     {
@@ -27,10 +19,7 @@ namespace OperationsConsole.Services
 
         private readonly RatingModel _current = new RatingModel { Max = MaxRating };
 
-        /// <summary>
-        /// When true the next <see cref="Save"/> throws, the way an unreachable store would.
-        /// Driven by the "Simulate service failure" CheckBox on the Widgets page.
-        /// </summary>
+        /// <summary>When true, <see cref="Save"/> throws, the way an unreachable store would.</summary>
         public bool SimulateFailure { get; set; }
 
         /// <summary>The rating this session is editing.</summary>
@@ -118,7 +107,7 @@ namespace OperationsConsole.Services
                     "A rating must be between " + MinRating + " and " + MaxRating + ".");
 
             if (this.SimulateFailure)
-                throw new InvalidOperationException("The ratings store did not accept the write (simulated).");
+                throw new InvalidOperationException("The ratings store did not accept the write.");
 
             this._current.Value = value;
             this._current.SavedValue = value;

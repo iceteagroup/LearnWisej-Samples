@@ -90,19 +90,15 @@ correlation id.
 
 ## Evidence — what the running app shows
 
-Reproduce the walkthrough's failure path:
+Reproduce the walkthrough's failure path with two browser tabs (two sessions, one store):
 
 | Step | Action | What you see |
 |---|---|---|
-| 1 | select **2002 · Repair loading dock pump** → **Open selected in editor** | `txtVersion` reads `v7`; trace: `Service: … "Repair loading dock pump" at v7 · this tab now owns that token` |
-| 2 | edit the title to *Repair loading dock pump — urgent* | nothing leaves the browser; the tab still holds `v7` |
-| 3 | **Fail: other session saves** | a second `SessionContext` (`ben.tech`) opens `v7`, saves `Completed`, and the store moves to `v8`. Banner: *"…This tab still holds v7 — the next Save will be rejected, not merged."* The queue's Version column shows `v8` |
-| 4 | **Save** | `Data: WorkOrderStore.TrySave → REJECTED · expected v7, found v8 · nothing written`, then the conflict dialog |
-| 5 | **Reload latest** in the dialog | the editor rebinds at `v8` with the other session's values; banner: *"Reloaded v8 — re-apply your edit on the latest version."* |
-| 6 | re-apply the edit, **Save** | `v8 → v9`, green banner, the queue updates |
+| 1 | in **both** tabs select **2002 · Repair loading dock pump** → **Open selected in editor** | `txtVersion` reads `v7`; footer `Editing — expected version v7` |
+| 2 | tab 1: change the status, **Save** | footer `Saved — v7 → v8 · correlation …`; the queue's Version column shows `v8` |
+| 3 | tab 2: edit the title to *Repair loading dock pump — urgent*, **Save** | footer `Save rejected — expected v7, found v8 · correlation …`, then the conflict dialog; the store wrote nothing |
+| 4 | **Reload latest** in the dialog | the editor rebinds at `v8` with tab 1's values; footer `Reloaded v8 — re-apply your edit on the latest version` |
+| 5 | re-apply the edit, **Save** | `v8 → v9`, the queue updates |
 
-Step 4 is the assertion that matters: the store says *nothing written*. The first session's work is intact and
+Step 3 is the assertion that matters: the store says *nothing written*. The first session's work is intact and
 the second session's edit is still on screen.
-
-Open the sample in two real browser tabs and steps 1–6 behave the same way, because
-`OtherSessionSimulator` does nothing a second tab does not — it just builds its own `SessionContext`.

@@ -8,7 +8,7 @@ using OrderDesk.Domain;
 namespace OrderDesk.Reporting
 {
     /// <summary>
-    /// ✓ A minimal, dependency-free .xlsx writer — the managed replacement for Excel Interop.
+    /// A minimal, dependency-free .xlsx writer — the managed replacement for Excel Interop.
     /// An .xlsx file is a ZIP package of XML parts (Open Packaging Conventions + SpreadsheetML), so
     /// System.IO.Compression.ZipArchive and five small XML strings are enough for a single sheet:
     /// text goes into inline-string cells (t="inlineStr"), numbers into plain value cells.

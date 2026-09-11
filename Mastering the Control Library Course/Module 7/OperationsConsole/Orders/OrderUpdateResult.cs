@@ -8,8 +8,7 @@ namespace OperationsConsole.Orders
     /// A rejected edit is <b>not</b> an exception — it is a normal business answer, and the grid handles it by putting
     /// the old value back and telling the user why. Exceptions are reserved for "the service did not answer at all".
     /// This is also why the validation lives in the service and not in <c>CellFormatting</c> or in the cell handler:
-    /// the same rule has to hold whether the date comes from the in-cell editor, from the command row, or from an
-    /// import nobody has written yet.
+    /// the same rule has to hold whether the date comes from the in-cell editor or from an import nobody has written yet.
     /// </para>
     /// </summary>
     public class OrderUpdateResult

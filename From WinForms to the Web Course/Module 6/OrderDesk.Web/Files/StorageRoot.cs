@@ -7,7 +7,7 @@ using Wisej.Web;
 namespace OrderDesk.Files
 {
     /// <summary>
-    /// ✓ The configured server storage root — the web replacement for every "C:\Orders\…" literal
+    /// The configured server storage root — the web replacement for every "C:\Orders\…" literal
     /// in LegacyOrderDesk. Web.config → appSettings["OrderDesk.StorageRoot"] (default "App_Data")
     /// is resolved under Application.StartupPath with Path.Combine, so the same code runs on
     /// Windows (App_Data\uploads) and Linux (App_Data/uploads). Sub-folders are created on demand
@@ -40,7 +40,7 @@ namespace OrderDesk.Files
                         Configured = ReadConfigured();
                         _root = Path.IsPathRooted(Configured)
                             ? Path.GetFullPath(Configured)
-                            : Path.GetFullPath(Path.Combine(Application.StartupPath, Configured));   // ✓ Path.Combine, never "\\"
+                            : Path.GetFullPath(Path.Combine(Application.StartupPath, Configured));   // Path.Combine, never "\\"
                         Directory.CreateDirectory(_root);
                     }
                     return _root;
@@ -83,14 +83,6 @@ namespace OrderDesk.Files
             var invalid = Path.GetInvalidFileNameChars();
             var chars = leaf.Select(c => invalid.Contains(c) ? '_' : c).ToArray();
             return new string(chars);
-        }
-
-        /// <summary>A one-line description for the trace: where the root is and what it contains.</summary>
-        public static string Describe()
-        {
-            string root = Root;
-            int files = Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories).Count();
-            return $"{root}  ({ConfigKey} = \"{Configured}\" · {files} file(s) · separator '{Path.DirectorySeparatorChar}')";
         }
 
         private static string Ensure(string subFolder)

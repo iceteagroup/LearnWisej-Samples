@@ -15,10 +15,11 @@ Ticked against this solution, each line with the file/test that proves it.
       `docs/ConcurrencyResolution.md`.
 - [x] A stale save throws `DbUpdateConcurrencyException` — proved through the command service, not just raw
       EF Core. — `ConcurrencyAndTransactionsTests.SaveAsync_with_a_stale_RowVersion_throws_DbUpdateConcurrencyException`.
-- [x] The conflict is reproducible on demand, two ways: a page button (`buttonSimulateChange_Click` →
-      `SimulateAnotherOperatorChangeAsync`) for a one-session repro, and a documented two-browser-session
-      walkthrough. — `docs/ConcurrencyResolution.md` "Reproducing the conflict"; the two-session path itself
-      is **unverified** here — see the README's Verified/unverified table, the reviewer confirms it in the
+- [x] The conflict is reproducible on demand: two browser sessions editing the same ticket (lab step 5),
+      and in the tests a second context that changes the row between load and save
+      (`ConcurrencyAndTransactionsTests`' `ChangeAsAnotherOperatorAsync` helper). —
+      `docs/ConcurrencyResolution.md` "Reproducing the conflict"; the two-session path itself is
+      **unverified** here — see the README's Verified/unverified table, the reviewer confirms it in the
       Browser pane.
 - [x] `ConflictResolution.BuildConflictListAsync` lists every differing field (Your / Database / Original),
       skips `UpdatedAt` as noise, keeps `RowVersion` labelled and hex-formatted, and reports a deleted row
@@ -58,10 +59,9 @@ Ticked against this solution, each line with the file/test that proves it.
       `Warning`, `SupportDesk` = `Information`). — same file; `docs/DeploymentNotes.md`.
 - [x] No migration on startup outside Development. — `Startup.cs`'s `if (app.Environment.IsDevelopment())`
       guard is the only call site of `SupportDeskDevelopmentDatabase.EnsureReadyAsync`.
-- [x] A startup log line names the environment and whether migrations were applied. — `Startup.cs`'s two
-      `Console.Error.WriteLine` calls; the page's **Environment & diagnostics** panel renders the same facts
-      from `StartupDiagnostics`.
-- [x] `EnableSensitiveDataLogging` stays inside `if (isDevelopment)`, with a startup trace line reporting
+- [x] A startup log line names the environment, and outside Development a second line says migrations are
+      not applied at startup. — `Startup.cs`'s two `Console.Error.WriteLine` calls.
+- [x] `EnableSensitiveDataLogging` stays inside `if (isDevelopment)`, with a startup console line reporting
       ON/OFF. — `SupportDeskDataServiceCollectionExtensions.AddSupportDeskData`; `Startup.cs`.
 - [x] Deployment notes name where each environment's connection string comes from, the release steps,
       rollback notes and the logging configuration. — `docs/DeploymentNotes.md`.
@@ -72,5 +72,5 @@ Ticked against this solution, each line with the file/test that proves it.
       `BindingSource` bridge, explicit validation, loading guards, `RowVersion` concurrency) and where it
       should say "I'm not sure" instead of inventing (SQL Server-specific behaviour, unverified Wisej.NET
       binding facts, unverified browser paths in this module). — `docs/AiGroundingNote.md`.
-- [x] Every pattern the note names is demonstrated by a working button on the page and covered by at least
-      one test — not aspirational. — cross-referenced in `docs/AiGroundingNote.md`'s Evidence section.
+- [x] Every pattern the note names is visible in the running app and covered by at least one test — not
+      aspirational. — cross-referenced in `docs/AiGroundingNote.md`'s Evidence section.

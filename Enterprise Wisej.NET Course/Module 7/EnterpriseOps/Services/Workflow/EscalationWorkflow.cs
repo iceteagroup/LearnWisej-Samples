@@ -131,9 +131,9 @@ namespace EnterpriseOps.Services.Workflow
         /// </summary>
         public async Task<IReadOnlyList<Approver>> LookupApproversAsync(string tenantId, System.Threading.CancellationToken cancellationToken)
         {
-            _trace.Write($"Service: LookupApproversAsync tenant '{tenantId}' (external directory — the caller owns the timeout)");
+            _trace.Write($"Service: LookupApproversAsync tenant '{tenantId}'");
             var approvers = await _directory.LookupAsync(tenantId, cancellationToken);
-            _trace.Write($"Service: → {approvers.Count} directory entries; eligibility is decided at ValidateStep(Approver)");
+            _trace.Write($"Service: → {approvers.Count} directory entries");
             return approvers;
         }
 
@@ -379,7 +379,7 @@ namespace EnterpriseOps.Services.Workflow
                 _escalations.SetNotificationStatus(escalation.Id, NotificationStatus.Sent);
                 _compensation.Resolve(entry, $"notification retried and sent ({receipt.MessageId})");
                 await _audit.WriteAsync("escalation.notify.retried", escalation.Number, session.User.UserName, correlationId, receipt.MessageId);
-                return new WorkflowResult(true, $"{escalation.Number}: approver notified on retry — the workflow finished later, audit trail intact.")
+                return new WorkflowResult(true, $"{escalation.Number}: approver notified on retry.")
                 {
                     Outcome = WorkflowOutcome.Created, EscalationId = escalation.Id, CorrelationId = correlationId,
                 };

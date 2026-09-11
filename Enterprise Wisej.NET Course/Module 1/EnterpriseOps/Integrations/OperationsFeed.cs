@@ -21,19 +21,12 @@ namespace EnterpriseOps.Integrations
         public string Note { get; }
     }
 
-    /// <summary>Thrown when the external feed cannot be reached. Message is for the log — never for the user.</summary>
-    public sealed class IntegrationUnavailableException : Exception
-    {
-        public IntegrationUnavailableException(string message) : base(message) { }
-    }
-
     /// <summary>
     /// A fake of the external operations feed. Each pull returns the next scripted batch of field changes;
-    /// the first pull is the walkthrough's "INC-1042 mitigated". <see cref="IsAvailable"/> is the outage switch
-    /// used by the failure path: when false, <see cref="PullChangesAsync"/> throws after the simulated timeout.
+    /// the first pull is the walkthrough's "INC-1042 mitigated".
     ///
     /// Integrations live behind their own folder/namespace so the workflow never knows whether the feed is
-    /// HTTP, a queue or a fake — and so the outage can be reproduced on demand.
+    /// HTTP, a queue or a fake.
     /// </summary>
     public sealed class OperationsFeed
     {
@@ -53,25 +46,9 @@ namespace EnterpriseOps.Integrations
             _trace = trace;
         }
 
-        public bool IsAvailable { get; private set; } = true;
-
-        /// <summary>The failure-path switch: simulate the feed going dark (or coming back).</summary>
-        public void SetAvailable(bool available)
-        {
-            IsAvailable = available;
-            _trace.Integration($"OperationsFeed {(available ? "back online" : "OFFLINE (simulated outage)")}");
-        }
-
         public async Task<IReadOnlyList<FeedChange>> PullChangesAsync(string tenantId)
         {
-            _trace.Integration($"OperationsFeed.PullChangesAsync(tenant={tenantId}) …");
             await Task.Delay(SimulatedLatencyMs);
-
-            if (!IsAvailable)
-            {
-                _trace.Integration("OperationsFeed: no response after " + SimulatedLatencyMs + " ms → IntegrationUnavailableException");
-                throw new IntegrationUnavailableException("operations feed unreachable: connect timeout to ops-feed.internal:8443 (simulated)");
-            }
 
             FeedChange[] batch = _script.Count > 0 ? _script.Dequeue() : Array.Empty<FeedChange>();
             _trace.Integration($"OperationsFeed returned {batch.Length} change(s) in {SimulatedLatencyMs} ms");

@@ -81,9 +81,9 @@ edited appearances of the saved file finds none (the only literal left in an edi
    state-order lesson in one gesture. Keep `default` first.
 
 The console's other variants were added the same way: `metric-card` and `metric-strip` (inherit `panel`),
-`heading-label`, `card-title`, `overline-label`, `muted-label`, `mono-label`, `status-label`, `banner-label` (inherit
-`textlabel`, the Label's appearance key), `trace-list` (inherit `list`). `metric-strip` and `status-label` carry custom
-states (`danger` / `warning` / `success`, `ok` / `warn` / `error`) that code selects with `Control.States`.
+`heading-label`, `card-title`, `overline-label`, `muted-label`, `mono-label`, `status-label` (inherit `textlabel`, the
+Label's appearance key). `metric-strip` carries custom states (`danger` / `warning` / `success`) that the Designer
+selects with `Control.States`.
 
 ## Step 5 · Load it in the console
 
@@ -91,11 +91,12 @@ states (`danger` / `warning` / `success`, `ok` / `warn` / `error`) that code sel
    Changing the theme shown in the Visual Studio designer does **not** change what the browser receives.
 2. `AdaptiveOps.csproj`: `Themes\*.theme` as `Content`, `CopyToOutputDirectory = PreserveNewest` (both target
    frameworks) — the loader reads `/Themes` next to the running application.
-3. `MainPage.cs`: `btnApplyTheme_Click` reads `Application.Theme.Name` into the status label, sets
-   `btnSave.AppearanceKey = "action-button"`, inside `try/catch`; `MainPage_Load` reports the name too and shows a
-   banner when the running theme is not `AdaptiveOps` (file missing or malformed → the framework falls back).
+3. `MainPage.cs`: `ApplyTheme()`, called from `MainPage_Load` and `btnApplyTheme_Click`, reads
+   `Application.Theme.Name` into the status label and sets `btnSave.AppearanceKey = "action-button"`, inside
+   `try/catch`; when the running theme is not `AdaptiveOps` (file missing or malformed, the framework falls back) the
+   status label says so.
 4. Remove every `BackColor`, `ForeColor`, `Font` that reached a look the theme now owns (Module 1's cards, strips,
-   title fonts, status colours, banner colours, trace font — all gone; see `MainPage.Designer.cs`).
+   title fonts: all gone; see `MainPage.Designer.cs`).
 5. Run, compare the browser with the preview screenshots (`ThemePreviewScreenshots.md`), check the browser console
    for errors, and confirm the status label reports **AdaptiveOps**.
 
@@ -104,6 +105,5 @@ states (`danger` / `warning` / `success`, `ok` / `warn` / `error`) that code sel
 - `Themes/AdaptiveOps.theme`: `"name": "AdaptiveOps"`, 88 colours (the 14 palette entries first), 6 fonts, 95
   appearances including `action-button` (`"inherit": "button"`, states default › hovered › pressed) — `git diff`
   against a fresh Bootstrap-4 dump shows only the edits listed above.
-- In the running console: `Apply theme` → Token inspector tab lists every token with its resolved value; `Walk
-  states` → the trace resolves each path of the table in Step 3 plus the inherited/overridden states of
-  `action-button`; `Base theme ⇄` → the same console on Bootstrap-4, for the before/after screenshot.
+- In the running console: the status label reads `Theme: AdaptiveOps`; Save shows the `action-button` states; an
+  empty Title shows the `invalid` state; switching `Default.json` to `Bootstrap-4` gives the before screenshot.

@@ -37,7 +37,7 @@ cannot be rolled back is queued only after the commit.
 
 ```csharp
 // A bounded wait: a command that cannot finish becomes DB_TIMEOUT, not a hung session.
-var timeout = _faults.TakeTimeout() ?? _commandTimeout();
+var timeout = _commandTimeout();
 using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 timeoutSource.CancelAfter(timeout);
 var ct = timeoutSource.Token;
@@ -141,23 +141,21 @@ committed in between, that matches **0 rows**, EF Core raises `DbUpdateConcurren
 `catch` above maps it to `WO_CONCURRENCY`. The database arbitrates, not the application — which is the
 only way it works when there are two servers.
 
-## What a batch does
+## What a batch would do
 
-**Batch approve** runs six commands, and therefore six transactions — not one. Each work order commits
-or rolls back on its own; a rejected `OnHold` row does not undo the five that were approved. That is a
-deliberate choice for this operation, and it is the reason the button's tooltip says *one tx each*: a
-single transaction around all six would be the right answer only if the six were meaningless apart.
+A batch of approvals (an import job, a weekly close) runs one command per work order, and therefore one
+transaction per work order — not one around the whole batch. Each work order commits or rolls back on its
+own; a rejected `OnHold` row does not undo the ones that were approved. A single transaction around all of
+them would be the right answer only if they were meaningless apart.
 
 ## Evidence in the running app
 
-Watch the trace card while clicking:
+The server log (`System.Diagnostics.Trace`) records each step in order:
 
-| Click | Trace, in order |
+| Click | Log, in order |
 |---|---|
 | **Approve** an `InProgress` row | `Security: authorize ana.ops (Manager) → Approve allowed` · `Data: DbContext #n created` · `Data: BEGIN TRANSACTION (timeout 5000 ms)` · `Data: SELECT WorkOrders … (tracked)` · `Service: check concurrency: user saw v3, database has v3 → match` · `Service: validate transition InProgress → Completed ✓` · `Data: SaveChanges → UPDATE … WHERE Id=… AND Version=3 · INSERT AuditEntries` · `Data: SaveChanges affected 2 row(s)` · `Data: COMMIT` · `Audit: Approve Committed … (written inside the transaction)` · `Data: DbContext #n disposed … live contexts: 0` |
 | **Approve** `WO-2002` (`OnHold`) | … `Service: validate transition OnHold → Completed ✗` · `Data: ROLLBACK (WO_STATE_INVALID)` · `Data: DbContext #n disposed (1 tracked entities released · rolled back)` · `Audit: Approve Rejected WO_STATE_INVALID … (own transaction, survives the rollback)` |
-| **Fail: stale version** | `Service: check concurrency: user saw v2, database has v3 → MISMATCH (the database will reject the UPDATE)` · `Data: SaveChanges → UPDATE … WHERE … Version=2` · `Data: ROLLBACK ← DbUpdateConcurrencyException` · `Service: ErrorMap: DbUpdateConcurrencyException → WO_CONCURRENCY` |
-| **Batch approve (one tx each)** | six `BEGIN TRANSACTION` lines, each followed by its own `COMMIT` or `ROLLBACK`; the status bar counts `n committed · m rejected` as it goes |
 
 Then open the **Audit log**: the committed approvals and the rejected ones are both there, each with its
 correlation id — proof that the rejection audit survived the rollback.

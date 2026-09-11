@@ -68,7 +68,9 @@ private async void btnApprove_Click(object sender, EventArgs e)
     if (!RequireSelection())
         return;
 
-    BeginBusy("ApproveAsync — short-lived DbContext · transaction open…", …);
+    HideResult();
+    SetStatusBar("ApproveAsync — short-lived DbContext · transaction open…");
+    SetButtonsEnabled(false);
     try
     {
         var result = await _commands.ApproveAsync(BuildApproveCommand(), NewCommand(), CancellationToken.None);
@@ -80,16 +82,16 @@ private async void btnApprove_Click(object sender, EventArgs e)
     }
     finally
     {
-        EndBusy();
-        await RefreshQueueAsync();
+        SetButtonsEnabled(true);
+        await SafeRefreshQueueAsync();
     }
 }
 
-private ApproveWorkOrderCommand BuildApproveCommand(WorkQueueRow row = null, int? expectedVersion = null)
+private ApproveWorkOrderCommand BuildApproveCommand()
 {
-    row = row ?? SelectedRow;
+    var row = SelectedRow;
     return new ApproveWorkOrderCommand(
-        row.Id, _session.TenantId, _session.UserId, txtComment.Text, expectedVersion ?? row.Version);
+        row.Id, _session.TenantId, _session.UserId, txtComment.Text, row.Version);
 }
 ```
 
@@ -104,7 +106,7 @@ Yes — and nothing in the sample needs changing to do it. A test would be:
 ```csharp
 var trace    = new NullTrace();                       // any IActivityTrace
 using var db = new SessionDatabase(trace);            // in-memory SQLite, EnsureCreated + seed
-var service  = new WorkOrderCommandService(db, trace, new FaultInjector(), () => TimeSpan.FromSeconds(5));
+var service  = new WorkOrderCommandService(db, trace, () => TimeSpan.FromSeconds(5));
 
 var context  = new CommandContext("fabrikam", "ana.ops", Role.Manager, "test0001");
 var result   = await service.ApproveAsync(
@@ -126,7 +128,5 @@ referenced by `WorkOrderCommandService.cs`, `WorkOrderQueryService.cs`, `WorkOrd
 * **Approve** on `WO-2002` (seeded `OnHold`) → `CommandResult.Fail`, red banner *"This work order is on
   hold — resolve the hold before approving."*, detail `WO_STATE_INVALID · transaction rolled back ·
   nothing persisted`.
-* **Create work order** → `CommandResult.Ok` carrying the new id and `NewVersion = 1`; the row appears
-  in the grid on the next refresh.
-* The same correlation id appears in the banner, in the trace and in the **Audit log** row — one id to
-  quote to support.
+* The same correlation id appears in the banner detail and in the **Audit log** row — one id to quote to
+  support.

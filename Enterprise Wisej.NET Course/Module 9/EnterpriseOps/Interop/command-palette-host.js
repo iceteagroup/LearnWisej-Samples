@@ -20,8 +20,7 @@
 // THE CONTRACT (docs/InteropContract.md, v1.0)
 //   list    this.GetCommandCatalogAsync(query)                         → [{Id,Title,Shortcut,RequiresEntity,Allowed}]
 //   run     App.MainPage.RunClientCommandAsync(name, entityId, corr)   → {Succeeded,Code,Message,CorrelationId}
-//   events  paletteReady {hotkey,contractVersion} · paletteOpened/paletteClosed {via}
-//           commandRun {command,entityId,code,elapsed} · capabilities {report,forged} · error {phase,message}
+//   events  paletteReady {hotkey,contractVersion} · capabilities {report} · error {phase,message}
 // ===========================================================================================
 
 this._handlers = {};
@@ -50,19 +49,14 @@ this.init = function (options) {
         '<div style="font:700 12px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;letter-spacing:.04em;' +
         'text-transform:uppercase;color:#4a5a6a;">Command palette host</div>' +
         '<div style="margin-top:8px;font-size:14px;">Press <b class="eop-hint-key"></b> anywhere on this page.</div>' +
-        '<div style="margin-top:6px;color:#6a7d92;">The script attached its keydown handler when this widget was created — ' +
-        'not on page load. Nothing listens before the host exists.</div>' +
-        '<div class="eop-hint-contract" style="margin-top:10px;font:11.5px ui-monospace,Consolas,monospace;color:#8a97a4;"></div>' +
-        '<div class="eop-hint-last" style="margin-top:8px;font:12px ui-monospace,Consolas,monospace;color:#6a7d92;">' +
+        '<div class="eop-hint-last" style="margin-top:10px;font:12px ui-monospace,Consolas,monospace;color:#6a7d92;">' +
         'no command sent yet</div>';
     this.container.innerHTML = "";
     this.container.appendChild(host);
     this.host = host;
     this._elKey = host.querySelector(".eop-hint-key");
-    this._elContract = host.querySelector(".eop-hint-contract");
     this._elLast = host.querySelector(".eop-hint-last");
     this._elKey.textContent = this._hotkey;
-    this._elContract.textContent = "contract v" + this._contractVersion + " · commandName · entityId · correlationId";
 
     // ---- the palette (vendor-style library instance) -----------------------------------
     try {
@@ -77,14 +71,12 @@ this.init = function (options) {
         return;
     }
 
-    // open() emits "query" itself, so "opened" must NOT reload the catalogue as well:
-    // one keystroke, one catalogue call.
+    // open() emits "query" itself: one keystroke, one catalogue call. Opening and closing the
+    // palette are browser concerns and do not cross the wire.
     this.widget.on("query", function (e) { me._loadCatalog(e.query); });
-    this.widget.on("opened", function (e) { me._fire("paletteOpened", { via: e.via }); });
-    this.widget.on("closed", function (e) { me._fire("paletteClosed", { via: e.via }); });
-    // A run started by the user closes the palette when the server said OK; a run started by a
-    // server-side button leaves it as it is, so the failure code stays readable in the footer.
-    this.widget.on("run", function (e) { me._send(e.id, e.requiresEntity ? (e.entityId || "") : "", null, true); });
+    // A run closes the palette when the server said OK; on a failure it stays open, so the
+    // failure code stays readable in the footer.
+    this.widget.on("run", function (e) { me._send(e.id, e.requiresEntity ? (e.entityId || "") : ""); });
 
     // ---- the document-level hotkey: attached now, detached in dispose ------------------
     this._onDocumentKeyDown = function (e) { me._hotkeyPressed(e); };
@@ -191,7 +183,7 @@ this._loadCatalog = function (query) {
 // ---------------------------------------------------------------------------------------
 // (2) Run — the ONE remote method the palette may call. Three named fields, nothing else.
 
-this._send = function (commandName, entityId, correlationId, closeAfter) {
+this._send = function (commandName, entityId) {
     var me = this;
     if (this._busy) return;
 
@@ -204,17 +196,13 @@ this._send = function (commandName, entityId, correlationId, closeAfter) {
     // Never pass null to a WebMethod: the client wrapper calls getId on every argument.
     var name = String(commandName === null || commandName === undefined ? "" : commandName);
     var entity = String(entityId === null || entityId === undefined ? "" : entityId);
-    var corr = correlationId === null || correlationId === undefined
-        ? window.EnterpriseOpsPalette.newCorrelationId()
-        : String(correlationId);
+    var corr = window.EnterpriseOpsPalette.newCorrelationId();
 
     this._busy = true;
-    var started = (window.performance && performance.now) ? performance.now() : Date.now();
     this._setLast("→ " + (name || "(empty)") + " " + (entity || "—") + " corr " + corr);
 
     target.RunClientCommandAsync(name, entity, corr).then(function (result) {
         me._busy = false;
-        var elapsed = Math.round(((window.performance && performance.now) ? performance.now() : Date.now()) - started);
 
         // A null result means the server threw: treat it as a failure, never as a success.
         var code = "SERVER_ERROR", message = "The server did not answer.";
@@ -225,10 +213,9 @@ this._send = function (commandName, entityId, correlationId, closeAfter) {
 
         if (me.widget) {
             me.widget.showResult(code, message);
-            if (code === "OK" && closeAfter !== false) me.widget.close("ran");
+            if (code === "OK") me.widget.close("ran");
         }
-        me._setLast("← " + code + " · " + message + "  (" + elapsed + " ms)");
-        me._fire("commandRun", { command: name, entityId: entity, code: code, elapsed: elapsed });
+        me._setLast("← " + code + " · " + message);
     }).catch(function (ex) {
         me._busy = false;
         me._reportError("run", ex && ex.message ? ex.message : String(ex));
@@ -241,18 +228,7 @@ this._send = function (commandName, entityId, correlationId, closeAfter) {
 this.paletteCollect = function () {
     if (!window.EnterpriseOpsPalette) return;
     var report = window.EnterpriseOpsPalette.detectCapabilities();
-    this._fire("capabilities", { report: report, forged: false });
-};
-
-/**
- * The demo of a lying browser: the same report with two keys the server never published.
- * The server does not know them, so it counts and drops them — a report cannot invent a
- * capability, and a capability could not grant a permission even if it were believed.
- */
-this.paletteForge = function () {
-    if (!window.EnterpriseOpsPalette) return;
-    var report = window.EnterpriseOpsPalette.detectCapabilities() + ";canApprove=1;role=Admin";
-    this._fire("capabilities", { report: report, forged: true });
+    this._fire("capabilities", { report: report });
 };
 
 // ---------------------------------------------------------------------------------------
@@ -260,37 +236,6 @@ this.paletteForge = function () {
 
 this.paletteOpen = function () { if (this.widget) this.widget.open("server"); };
 this.paletteClose = function () { if (this.widget) this.widget.close("server"); };
-
-/** Runs a named command through the normal contract path (correlation id generated here). */
-this.paletteRun = function (commandName, entityId) { this._send(commandName, entityId, null, false); };
-
-/** Runs with a caller-supplied correlation id — used to send a payload that breaks the shape. */
-this.paletteRunRaw = function (commandName, entityId, correlationId) { this._send(commandName, entityId, correlationId, false); };
-
-/**
- * ⚠ The anti-pattern, driven from the browser so the demo is honest: this call adds a claimed
- * role and a claimed new status to the payload and hits a DIFFERENT server method — one that
- * believes them. Same widget, same wire, no contract. Compare it with _send above.
- */
-this.paletteRunTrusted = function (commandName, entityId, claimedRole, claimedStatus) {
-    var me = this;
-    var target = (window.App && window.App.MainPage) || null;
-    if (!target || typeof target.RunTrustedClientCommandAsync !== "function") {
-        this._reportError("run", "App.MainPage.RunTrustedClientCommand is not available.");
-        return;
-    }
-    this._setLast("→ ⚠ " + commandName + " " + entityId + " role=" + claimedRole + " status=" + claimedStatus);
-    target.RunTrustedClientCommandAsync(String(commandName || ""), String(entityId || ""),
-        String(claimedRole || ""), String(claimedStatus || "")).then(function (result) {
-            var code = result && (result.Code !== undefined ? result.Code : result.code) || "SERVER_ERROR";
-            var message = result && (result.Message !== undefined ? result.Message : result.message) || "";
-            if (me.widget) me.widget.showResult(code, message);
-            me._setLast("← ⚠ " + code + " · " + message);
-            me._fire("commandRun", { command: String(commandName || ""), entityId: String(entityId || ""), code: code, elapsed: 0 });
-        }).catch(function (ex) {
-            me._reportError("run", ex && ex.message ? ex.message : String(ex));
-        });
-};
 
 this.paletteShowResult = function (code, message) {
     if (this.widget) this.widget.showResult(String(code || ""), String(message || ""));

@@ -75,7 +75,7 @@ namespace EnterpriseOps.Services
 
         /// <summary>
         /// The OperationTimer callback. The Diagnostics layer decides OK / OVER against the budget table; the
-        /// structured log gets the fields; the trace shows the decision. A failed call is logged as such and
+        /// structured log gets the fields; the server trace records the decision. A failed call is logged as such and
         /// does not touch the budget row (a 3 ms exception is not a fast query).
         /// </summary>
         private BudgetRow RecordTiming(string operation, TimeSpan elapsed, string correlationId, WorkQueueQuery query, CommandContext ctx, bool failed)

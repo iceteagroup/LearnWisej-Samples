@@ -44,7 +44,7 @@ namespace EnterpriseOps.Data
             _trace.Write($"Data: {row.Number} notification status → {status}");
         }
 
-        /// <summary>Only the anti-pattern demo needs this: it "cleans up" by deleting, which loses the audit trail.</summary>
+        /// <summary>Rolls back a failed persist — the only step that can be undone, because nothing external happened yet.</summary>
         public void Remove(int id)
         {
             int removed = _rows.RemoveAll(e => e.Id == id);

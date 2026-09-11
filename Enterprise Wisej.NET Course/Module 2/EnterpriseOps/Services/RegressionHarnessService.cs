@@ -51,18 +51,9 @@ namespace EnterpriseOps.Services
 
         public IReadOnlyList<RegressionFlow> Flows => _flows;
 
-        public void ResetOutcomes()
-        {
-            foreach (var flow in _flows)
-            {
-                flow.Outcome = FlowOutcome.NotRun;
-                flow.Actual = "";
-            }
-        }
-
         /// <summary>
         /// Runs the selected flows (all ten when <paramref name="filter"/> is null), reporting each one through
-        /// <paramref name="progress"/> so the grid and the trace update while the harness is still running.
+        /// <paramref name="progress"/> so the grid updates while the harness is still running.
         /// </summary>
         public async Task<HarnessResult> RunAsync(CommandContext ctx, Func<RegressionFlow, bool> filter, Action<RegressionFlow> progress, CancellationToken cancellation)
         {

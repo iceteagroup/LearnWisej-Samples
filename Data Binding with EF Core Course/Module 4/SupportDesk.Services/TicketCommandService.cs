@@ -15,7 +15,7 @@ public sealed record EditorLookups(
 /// <summary>An existing ticket's edit model plus the ticket number, which the model itself never carries.</summary>
 public sealed record TicketEditData(TicketEditModel Model, string Number);
 
-/// <summary>What <c>SaveAsync</c> wrote: the id and number the editor needs to update <c>lblNumber</c> and its title bar.</summary>
+/// <summary>What <c>SaveAsync</c> wrote: the id and number of the saved ticket.</summary>
 public sealed record SaveTicketResult(int Id, string Number);
 
 public enum DeleteOutcome
@@ -30,9 +30,8 @@ public enum DeleteOutcome
 public sealed record DeleteTicketResult(DeleteOutcome Outcome, string? Number, string? Reason);
 
 /// <summary>
-/// Thrown by <see cref="TicketCommandService.SaveAsync(TicketEditModel, TimeSpan, CancellationToken)"/>
-/// when the ticket being edited no longer exists — the editor was open on a row someone else (or the
-/// page's "Simulate: another operator deletes it" button) removed in the meantime.
+/// Thrown by <see cref="TicketCommandService.SaveAsync"/> when the ticket being edited no longer
+/// exists: the editor was open on a row another session removed in the meantime.
 /// </summary>
 public sealed class TicketNotFoundException : Exception
 {
@@ -51,7 +50,7 @@ public sealed class TicketNotFoundException : Exception
 /// state — so a fresh <c>DbContext</c> is created for every operation and disposed before the method
 /// returns. Module 4's habit in code: load for <i>display</i> with <c>AsNoTracking</c>
 /// (<see cref="LoadEditModelAsync"/>), load for a <i>write</i> as a tracked entity inside the very method
-/// that is about to change it (<see cref="SaveAsync(TicketEditModel, TimeSpan, CancellationToken)"/>,
+/// that is about to change it (<see cref="SaveAsync"/>,
 /// <see cref="DeleteAsync"/>) — the two never share a context, and the tracked read is never held longer
 /// than the save it belongs to.
 /// </summary>
@@ -118,10 +117,6 @@ public sealed class TicketCommandService
 
     #region Save — a fresh, tracked context for exactly this write
 
-    /// <summary>No simulated latency — the ordinary path.</summary>
-    public Task<SaveTicketResult> SaveAsync(TicketEditModel model, CancellationToken token = default)
-        => SaveAsync(model, TimeSpan.Zero, token);
-
     /// <summary>
     /// Creates or updates one ticket from the approved fields of <paramref name="model"/> and disposes the
     /// context before returning. <paramref name="model"/>.<c>Id</c> == 0 means "new": a fresh
@@ -130,16 +125,10 @@ public sealed class TicketCommandService
     /// display it — and its fields are overwritten. <c>UpdatedAt</c> and <c>RowVersion</c> are stamped by
     /// <c>SupportDeskContext.SaveChanges(Async)</c>, not here.
     /// </summary>
-    /// <param name="latency">
-    /// Lab prop, like <see cref="TicketQueryService.SearchTicketsSlowlyAsync"/>: an artificial delay
-    /// <b>inside</b> the unit of work (the context is already open, the ticket already mapped) so the
-    /// editor's saving guard and disabled Save button can be watched. Zero in the ordinary path.
-    /// </param>
     /// <exception cref="TicketNotFoundException">
-    /// <paramref name="model"/>.<c>Id</c> names a ticket that no longer exists — someone else (or the
-    /// page's "Simulate: another operator deletes it" button) removed it after the editor loaded it.
+    /// <paramref name="model"/>.<c>Id</c> names a ticket that no longer exists — another session removed it after the editor loaded it.
     /// </exception>
-    public async Task<SaveTicketResult> SaveAsync(TicketEditModel model, TimeSpan latency, CancellationToken token = default)
+    public async Task<SaveTicketResult> SaveAsync(TicketEditModel model, CancellationToken token = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(token);
 
@@ -171,12 +160,6 @@ public sealed class TicketCommandService
         // place. UpdatedAt and RowVersion are stamped by SupportDeskContext.SaveChanges(Async) below (see
         // StampTickets) — this method does not set either one by hand.
 
-        if (latency > TimeSpan.Zero)
-        {
-            QueryTrace.Note($"simulated latency of {latency.TotalSeconds:0.#} s inside the unit of work — the context is already open and Save is guarded");
-            await Task.Delay(latency, token);
-        }
-
         await db.SaveChangesAsync(token);
         return new SaveTicketResult(ticket.Id, ticket.Number);
     }
@@ -191,8 +174,7 @@ public sealed class TicketCommandService
     /// two expected ones:
     /// <list type="bullet">
     /// <item><see cref="DeleteOutcome.Deleted"/> — removed and saved.</item>
-    /// <item><see cref="DeleteOutcome.NotFound"/> — the row is already gone (another session deleted it, or
-    /// the page's "Simulate" button did). The caller should still treat this as "close and refresh": the
+    /// <item><see cref="DeleteOutcome.NotFound"/> — the row is already gone (another session deleted it). The caller should still treat this as "close and refresh": the
     /// grid is stale and a search will fix it.</item>
     /// <item><see cref="DeleteOutcome.Refused"/> — the row exists but <see cref="ClosedCannotBeDeletedMessage"/> applies.</item>
     /// </list>

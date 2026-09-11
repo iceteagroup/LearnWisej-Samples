@@ -6,7 +6,7 @@ video *Add validation & a safe save pipeline*: the Work Order editor gets layere
 that carries the intent through the pipeline, field-level errors painted by an `ErrorProvider` plus a summary
 panel that lists every problem, and a safe save pipeline in `WorkOrderService.SaveAsync` —
 **validate → rules & authorize → persist atomically → confirm** — where nothing is written unless every step
-passes and an unexpected failure reaches the user as one safe sentence. The documented test cases run inside the app.
+passes and an unexpected failure reaches the user as one safe sentence.
 
 Nothing here is deployed anywhere; it is a plain Wisej.NET 4 project on this machine.
 
@@ -21,30 +21,24 @@ Then open <http://localhost:5105>. (Visual Studio: open `TicketOps.slnx`, press 
 `Properties/launchSettings.json`.)
 
 Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet package.
-`dotnet build -nologo -v q` passes with no warnings for both targets (`net10.0-windows`, `net10.0`).
 
-## What to click in the Work Orders window
+## What to try in the Work Orders window
 
-The left card is the editor (grid, fields, **Acting as** role, the error summary panel); the right card is the
-**Activity trace · UI → Service → Domain → Data**. Every save is logged as it crosses a boundary
-(`[UI]` → `[SVC]` → `[DOMAIN]` → `[DATA]` → `[UI]`, plus `[SESSION]` when the role changes and `[CLIENT]` for the
-crafted request), so you can see which step said no and that no `[DATA] tx#…` line exists for a rejected save.
-The grid's **Ver** column is the `RowVersion`: it only moves when a transaction commits.
+#2002 is selected on load. **Acting as** sets the session's role (the server reads it; the command never carries it).
 
-| Button | Path | What you should see |
+| Action | Path | What you should see |
 |---|---|---|
-| **Save** (#2002 is selected on load; change the title) | success | `[UI] buttonSave_Click — command built {…}`, `[UI] pre-check passed → IWorkOrderService.SaveAsync`, `[SVC] step 1 validate …`, `[DATA] FindAsync #2002 found — Assigned · v1`, `[SVC] step 2 rules …`, `[DOMAIN] WorkOrderRules.Check — all rules pass`, `[SVC] step 3 persist`, `[DATA] tx#1 open`, `tx#1 stage UPDATE WorkOrders #2002`, `tx#1 stage INSERT AuditLog`, `tx#1 committed — 1 row(s), 1 audit entry · #2002 now v2`, `[SVC] step 4 confirm`, `[UI] OK · Work order #2002 saved.`; status **● Work order #2002 saved.**; grid shows `v2` |
-| **Save** with a bad value typed in (e.g. clear the title, set cost 25000) | UX pre-check | `⚠ [UI] pre-check: 2 errors (Title, EstimatedCost) — nothing sent, nothing saved` — no `[SVC]` line at all; red glyph beside each field (hover for the message); summary panel "2 problems need attention"; status **● 2 problems found — nothing was saved** |
-| **Acting as** → Supervisor / Technician | — | `[SESSION] SessionContext — role → Supervisor (server-side; the command never carries it)` |
-| **New / ↻ Refresh** | — | clears the editor / reloads through `GetWorkOrdersAsync` |
-| **▶ Run 15 test cases** | progress | one `[DOMAIN] WorkOrderValidator.Validate — TC-nn "…" · expected … · got … → PASS` (or `WorkOrderRules.Check`) per tick; progress bar and **● running TC-07 · 7/7 passed** advance; ends **● 15/15 test cases passed** |
-| **Save with empty title** | failure 1 (validation) | `[UI] pre-check skipped (like an import …) → SaveAsync`, `⚠ [SVC] rejected at validate: 1 error (Title) — nothing persisted`; glyph on Title; panel "• Title — Title is required." |
-| **Save 1,200 hours** | failure 2 (range) | `⚠ [SVC] rejected at validate: 1 error (EstimatedHours)`; glyph on Estimated hours; "Hours must be between 0 and 999." |
-| **Edit closed #2006** | failure 3 (business rule) | `[SVC] step 1 validate … ` passes, `[DATA] FindAsync #2006 found — Closed · v3`, `⚠ [DOMAIN] WorkOrderRules.Check — #2006 rejected: Closed work orders cannot be edited. Ask a Supervisor to reopen it.`, `⚠ [SVC] rejected at rules`; no glyph (every field is valid), the panel carries the summary error |
-| **Bypass: crafted command** | failure 4 (role — the server is the gate) | `⚠ [CLIENT] crafted request — a disabled button is not authorization …`, validator passes (cost 9,500 is in range), `⚠ [DOMAIN] … rejected: Only a Supervisor may set a cost above $2,500.`; switch **Acting as** to Supervisor and click again: it saves (`#2002 now v…`) |
-| **Simulate write outage** | error path | the editor is saved as-is: validation and rules pass, `[DATA] tx#n stage …`, then `✖ [DATA] outage: COMMIT tx#n … failed — timeout connecting to sql01:1433 …`, `⚠ [DATA] tx#n rolled back — 0 rows changed`, `✖ [SVC] persist failed after validation passed — … nothing written`, `✖ [UI] caught DataOutageException — user sees the safe message, edits stay on screen`, `[UI] re-read #2002: v2 … — unchanged, nothing partial`; the user sees only the red banner + toast **The work order could not be saved. Your changes are still here …**, status **● Save failed — your changes are still here**; the editor still holds the edits; **Ver** did not move |
-| **Recover the data store** (same button) | recovery | `[UI] outage OFF → retrying the same save (recovery)` → the full success path, `tx#n+1 committed`, `#2002 now v3`, status **● Work order #2002 saved.** |
-| **Clear trace** | — | empties the right-hand card |
+| Change the title, **Save** | success | status **● Work order #2002 saved.**; the grid reloads |
+| Clear the title and set cost 25000, **Save** | validation | a red glyph beside each field (hover for the message); summary panel "2 problems need attention"; status **● 2 problems found — nothing was saved** |
+| Set the due date in the past, **Save** | due-date rule | glyph on Due date: "Due date can't be in the past." |
+| Set 1,200 estimated hours, **Save** | range | glyph on Estimated hours: "Hours must be between 0 and 999." |
+| Select closed #2006, change the title, **Save** | business rule | no glyph (every field is valid); the panel reads "Closed work orders cannot be edited. Ask a Supervisor to reopen it." |
+| As Technician, set #2002's cost to 9,500, **Save** | role restriction | the panel reads "Only a Supervisor may set a cost above $2,500."; switch **Acting as** to Supervisor and it saves |
+| **New / ↻ Refresh** | — | clears the editor / reloads and discards unsaved values |
+
+If the commit fails, the transaction rolls back, the details go to the log, and the user sees only the red banner +
+toast **The work order could not be saved. Your changes are still here — try again or contact support.**; the editor
+keeps the edits.
 
 ## Deliverables (lab guide)
 
@@ -54,8 +48,8 @@ The grid's **Ver** column is the `RowVersion`: it only moves when a transaction 
 | 2 | Save command object | `Validation/SaveWorkOrderCommand.cs` — immutable, built once by `WorkOrderEditor.BuildSaveCommandFromEditor`, carries no role |
 | 3 | Error summary panel (+ field-level errors) | `Views/WorkOrderEditor.cs` `ShowValidation` — `ErrorProvider.SetError` per field + `panelSummary` listing every error; `Validation/ValidationResult.cs` (`ValidationError`, field vs summary channels) — see [`docs/ErrorUxGuidelines.md`](TicketOps/docs/ErrorUxGuidelines.md) |
 | 4 | Safe save pipeline method | `Services/WorkOrderService.SaveAsync` over `Data/IWorkOrderRepository.cs` + `IWorkOrderTransaction` (`Data/InMemoryWorkOrderRepository.cs`) — see [`docs/SavePipeline.md`](TicketOps/docs/SavePipeline.md) and [`docs/SavePipeline.svg`](TicketOps/docs/SavePipeline.svg) |
-| 5 | Validation test cases | [`docs/TestCases.md`](TicketOps/docs/TestCases.md) + `Validation/ValidationTestCases.cs` (`ValidationTestRunner`), executed by **▶ Run 15 test cases** |
-| 6 | Every path visible without leaking internals | `ShowSaveResult` / `ReportFailure` / `VerifyNothingPartialAsync`, `Resources/Strings.cs`, the trace panel |
+| 5 | Validation test cases | [`docs/TestCases.md`](TicketOps/docs/TestCases.md) + `Validation/ValidationTestCases.cs` (`ValidationTestRunner`) |
+| 6 | Every path visible without leaking internals | `ShowSaveResult` / `ReportFailure`, `Resources/Strings.cs` |
 | 7 | Production-readiness note | [`docs/ProductionReadinessNote.md`](TicketOps/docs/ProductionReadinessNote.md) |
 
 ## Where things live
@@ -81,13 +75,12 @@ TicketOps/
 │  └─ SaveResult.cs                 Saved / Invalid + the collected errors
 ├─ Data/
 │  ├─ IWorkOrderRepository.cs       persistence + IWorkOrderTransaction (Upsert, Audit, CommitAsync, Dispose = rollback)
-│  └─ InMemoryWorkOrderRepository.cs fake store, seeded; SimulateWriteOutage fails the COMMIT like a read-only primary
+│  └─ InMemoryWorkOrderRepository.cs fake store, seeded
 ├─ Infrastructure/
-│  ├─ ILog.cs / ActivityLog.cs      cross-cutting logging (details stay here)
+│  ├─ ILog.cs / ActivityLog.cs      logging (written to the server console; details stay there)
 │  ├─ SessionContext.cs             who is acting (role) — server-side, per session
 │  └─ AppComposition.cs             who gets what: one object graph per session, constructor injection, no statics
 ├─ Resources/Strings.cs             safe user-facing messages (SaveFailed …)
-├─ Diagnostics/ActivityTracePanel   the live trace card
 ├─ docs/                            ValidationRules, SavePipeline (+ .svg), ErrorUxGuidelines, TestCases, ProductionReadinessNote
 ├─ Program.cs                       Wisej.NET session entry point → AppComposition
 └─ Startup.cs                       Kestrel host (app.UseWisej())
@@ -96,8 +89,8 @@ TicketOps/
 ## Self-check answers (lesson guide)
 
 - **Can a malicious user bypass the disabled Save button?**
-  Yes — and it does not matter. **Bypass: crafted command** builds a `SaveWorkOrderCommand` with no editor at all and hands
-  it to `IWorkOrderService.SaveAsync`; the server re-runs `WorkOrderValidator` and `WorkOrderRules` and rejects the
+  Yes — and it does not matter. A `SaveWorkOrderCommand` can be built with no editor at all and handed to
+  `IWorkOrderService.SaveAsync`; the server re-runs `WorkOrderValidator` and `WorkOrderRules` and rejects a
   Technician's $9,500. The editor's pre-check, the spin-box `Maximum` and the button state are hints; step 1 and 2 of
   `SaveAsync` are the guard.
 - **Where is the status-transition rule enforced — client, server, or both?**
@@ -106,9 +99,7 @@ TicketOps/
   difference: the editor thinks Assigned → InProgress is fine, the store says the order is already Completed.
 - **Can the same validation run during an import?**
   Yes. `WorkOrderValidator.Validate` and `WorkOrderRules.Check` take a command, a record and a role — no control, no
-  repository. **▶ Run 15 test cases** is exactly that: fifteen commands validated with no form involved, and the bottom-bar
-  buttons call `SaveAsync` without the pre-check "the way an import would".
+  repository. `ValidationTestCases` is exactly that: fifteen commands validated with no form involved.
 - **Does a failure halfway through the save leave the data untouched?**
-  Yes. The row and its audit entry are staged in one `IWorkOrderTransaction`; the write outage fails the `CommitAsync`,
-  `Dispose` rolls back (`tx#n rolled back — 0 rows changed`), the exception reaches the handler, and
-  `VerifyNothingPartialAsync` re-reads #2002 and logs `v… — unchanged, nothing partial`. **Ver** in the grid never moved.
+  Yes. The row and its audit entry are staged in one `IWorkOrderTransaction`; if `CommitAsync` fails, `Dispose` rolls
+  back, the exception reaches the handler, and the editor keeps the user's values. `RowVersion` only moves on commit.

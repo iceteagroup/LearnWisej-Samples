@@ -19,18 +19,4 @@ namespace EnterpriseOps.Services.Queries
         public DateTime? DueUtc { get; set; }
         public int Version { get; set; }
     }
-
-    /// <summary>The few fields the ApprovePanel shows for the selected work order.</summary>
-    public sealed class WorkOrderHeader
-    {
-        public int Id { get; set; }
-        public string TenantId { get; set; }
-        public string Number { get; set; }
-        public string Title { get; set; }
-        public string Customer { get; set; }
-        public string Site { get; set; }
-        public Domain.WorkOrderStatus Status { get; set; }
-        public Domain.Priority Priority { get; set; }
-        public int Version { get; set; }
-    }
 }

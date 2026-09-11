@@ -48,7 +48,7 @@ namespace EnterpriseOps.Services
         /// <summary>The last result, so the page can show it without re-running the command.</summary>
         public ClientCommandResult LastResult { get; private set; }
 
-        #region The contract path (this is the one the palette uses)
+        #region The contract path
 
         public ClientCommandResult ExecuteFromClient(ClientCommandRequest request)
         {
@@ -111,13 +111,12 @@ namespace EnterpriseOps.Services
             }
 
             // ---- gate 5: the business rule decides -----------------------------------------
-            WorkOrder before = order?.Snapshot();
             CommandResult result = Run(descriptor, context, order);
 
             if (!result.Succeeded)
                 return Deny(context, request, result.Code, result.Message, AuditOutcome.Rejected, result.Message);
 
-            _audit.Record(context, descriptor.Id, request.EntityId, AuditOutcome.Allowed, result.Message, before);
+            _audit.Record(context, descriptor.Id, request.EntityId, AuditOutcome.Allowed, result.Message);
             LastResult = ClientCommandResult.Ok(descriptor.Id, context.CorrelationId, result.Message);
             _trace.Interop($"result {LastResult.Code} · contract v{InteropContract.Version} → browser");
             return LastResult;
@@ -164,89 +163,6 @@ namespace EnterpriseOps.Services
         /// <summary>Which catalogue entries this session may actually run — used by the panel's badges.</summary>
         public bool MayRun(CommandDescriptor descriptor)
             => PermissionService.PermissionsOf(_session.Role).Contains(descriptor.Permission);
-
-        #endregion
-
-        #region The anti-pattern the video warns about (kept on a separate method on purpose)
-
-        /// <summary>
-        /// ⚠ THE ANTI-PATTERN. This is what "trusting the client" looks like in code: the role and
-        /// the new status arrive in the payload and are used as-is. No catalogue lookup, no session
-        /// role, no state rule — the browser decides. The lab keeps it so the failure is visible and
-        /// so the audit trail can prove what it cost; it is never called from the contract path.
-        ///
-        /// Read it next to <see cref="ExecuteFromClient"/>: same wire, same widget, opposite outcome.
-        /// </summary>
-        public ClientCommandResult ExecuteTrustingClient(string commandName, string entityId, string claimedRole, string claimedStatus)
-        {
-            CommandContext context = _session.NewCommand();
-            _trace.Client($"payload claims role=\"{claimedRole}\" status=\"{claimedStatus}\" for {Display(entityId)} ⚠");
-            _trace.Interop("ExecuteTrustingClient — NO catalogue lookup, NO session role, NO state rule ⚠");
-
-            if (!Enum.TryParse(claimedRole, true, out Role role)) role = Role.Technician;
-
-            // The check that looks like security but is not: the role being checked came from the browser.
-            PermissionDecision decision = _permissions is PermissionService concrete
-                ? concrete.CheckWithClaimedRole(_session.UserName, role)
-                : new PermissionDecision { Allowed = true, UserName = _session.UserName, Role = role, Reason = "no check" };
-
-            if (!decision.Allowed)
-            {
-                _audit.Record(context, commandName, entityId, AuditOutcome.Denied, decision.Reason);
-                LastResult = ClientCommandResult.Fail(commandName, context.CorrelationId, ResultCodes.PermissionDenied, decision.Reason);
-                return LastResult;
-            }
-
-            if (!InteropContract.TryReadEntityKey(entityId, out int key))
-            {
-                LastResult = ClientCommandResult.Fail(commandName, context.CorrelationId, ResultCodes.InvalidTarget, "unreadable entity id");
-                return LastResult;
-            }
-
-            WorkOrder order = _workOrders.Resolve(context.TenantId, key);
-            if (order == null)
-            {
-                LastResult = ClientCommandResult.Fail(commandName, context.CorrelationId, ResultCodes.InvalidTarget, "unknown work order");
-                return LastResult;
-            }
-
-            WorkOrder before = order.Snapshot();
-            if (!Enum.TryParse(claimedStatus, true, out WorkOrderStatus status)) status = WorkOrderStatus.Completed;
-
-            // The browser wrote a domain state directly on the entity the repository handed back.
-            // No service call, so: no state rule, no version bump, no repository Save — the row is
-            // simply different now, and only the audit snapshot knows what it used to be.
-            order.Status = status;
-            order.AssignedTo = _session.UserName;
-            _trace.Service($"⚠ status set to {status} straight from the payload — WorkOrderService.Approve never ran, Version still {order.Version}");
-            _audit.Record(context, commandName, entityId, AuditOutcome.Tampered,
-                $"status forced to {status} by a payload claiming role {role}; previous state {before.Status}", before);
-
-            LastResult = ClientCommandResult.Ok(commandName, context.CorrelationId,
-                $"⚠ {entityId} is now {status} — set by the browser, not by a rule.");
-            return LastResult;
-        }
-
-        /// <summary>Recovery: undo the last tampered change using the audit log's before-snapshot.</summary>
-        public CommandResult RevertLastTamperedChange()
-        {
-            CommandContext context = _session.NewCommand();
-            AuditEntry entry = _audit.LastTamperedNotReverted();
-            if (entry == null)
-            {
-                _trace.Audit("no tampered change to revert");
-                return CommandResult.Fail(context.CorrelationId, ResultCodes.InvalidTarget, "Nothing to revert — no tampered change in the audit log.");
-            }
-
-            CommandResult result = _workOrders.RestoreSnapshot(context, entry.Before);
-            if (result.Succeeded)
-            {
-                entry.Reverted = true;
-                _audit.Record(context, entry.CommandName, entry.EntityId, AuditOutcome.Reverted,
-                    $"restored from the audit snapshot taken at {entry.Utc:HH:mm:ss}Z (corr {entry.CorrelationId})");
-            }
-            return result;
-        }
 
         #endregion
 

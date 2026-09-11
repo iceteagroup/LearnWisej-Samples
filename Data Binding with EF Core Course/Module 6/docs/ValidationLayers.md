@@ -77,7 +77,7 @@ run identically whether `TicketEditorForm` calls them or a future import screen 
   CategoryId: Choose a category.
   DueDate: Closed tickets cannot have a future due date.
   ```
-- `TicketEditorForm.SaveAsync` — see [`SummaryAndSaveGating.md`](SummaryAndSaveGating.md) — calls
+- `TicketEditorForm.SaveAsync` — see [`CrossFieldRuleAndSaveGating.md`](CrossFieldRuleAndSaveGating.md) — calls
   `Validator.Validate(model)` immediately after `EndEdit` and returns **before any `DbContext` is created**
-  when the result is non-empty; see [`NegativeTests.md`](NegativeTests.md) for the "no context created" trace
-  line.
+  when the result is non-empty, so an invalid model never reaches the database; the negative cases are
+  listed in [`NegativeTests.md`](NegativeTests.md).

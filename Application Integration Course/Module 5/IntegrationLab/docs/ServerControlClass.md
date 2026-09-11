@@ -19,7 +19,6 @@ once and pays back on every screen that uses it without thinking about it.
 | `OnWebRender(dynamic config)` | the **render contract**: writes `className`, `appearance`, the camel-cased state and the wired events |
 | `OnWebEvent(WisejEventArgs e)` | the **event contract**: `"thresholdExceeded"` → typed `ThresholdExceeded` event; everything else → `base.OnWebEvent(e)` |
 | `IsDesignMode()`, `DesignTimeSampleValue()` | design-time rendering support (see `DesignTimeNotes.md`) |
-| `Trace` event, `RenderCount`, `LastRenderedJson` | lab diagnostics only, never rendered |
 
 ## Validation lives on the server
 
@@ -40,7 +39,7 @@ public double Value
 ```
 
 A rejected value throws before anything is rendered: the browser keeps the last good reading. The
-dashboard's **Invalid value (999 psi)** button exercises exactly this path.
+dashboard catches the exception, shows the message on the tile's banner and stops streaming.
 
 `Minimum`/`Maximum` clamp the current `Value` into the new range instead of throwing, because the
 Designer assigns properties in alphabetical order (`Maximum` before `Minimum` before `Value`).
@@ -63,8 +62,8 @@ protected override void OnWebRender(dynamic config)
 }
 ```
 
-Nothing that exists only for the Designer, for business logic or for diagnostics (`RenderCount`,
-`LastRenderedJson`, the `Trace` event) is written onto `config`, so it never reaches the browser.
+Nothing that exists only for the Designer or for business logic (for example `IsAlarm`) is written
+onto `config`, so it never reaches the browser.
 Wisej.NET diffs the config against the previous render and sends only the changed fields — during
 streaming each tile costs one `{"value": …}` per tick.
 
@@ -72,21 +71,21 @@ streaming each tile costs one `{"value": …}` per tick.
 
 ```csharp
 case "thresholdExceeded":
-    dynamic parameters = e.Parameters;          // WisejEventArgs.Parameters is typed object
-    dynamic data = parameters?.Data;            // the map the client passed to fireDataEvent
-    double reported = ToDouble(data?.value);
-    ThresholdExceeded?.Invoke(this, new GaugeThresholdEventArgs(_value, reported, _threshold));
+    // the server raises the event with its own authoritative value
+    ThresholdExceeded?.Invoke(this, new GaugeThresholdEventArgs(_value, _threshold));
     break;
 default:
     base.OnWebEvent(e);                         // never swallow pointer/focus/resize events
 ```
 
-The .NET event carries the **server** value; the reported value is kept only for the contract check
-in the trace (`client reported X but server Value is Y: server wins`).
+The .NET event carries the **server** value, never the number the browser reported. The client's
+`{ value, threshold }` payload arrives as `e.Parameters.Data` because the event is wired as
+`thresholdExceeded(Data)`.
 
 ## Evidence (running app)
 
-- Page load: four `→ .NET→JS render #1 boiler1 {"className":"integrationlab.controls.SimpleGaugeControl","appearance":"simplegauge","value":70,…}` lines.
-- ▶ Stream live: one `render #n` line per tile per tick; when a reading crosses its threshold one
-  `← JS→.NET thresholdExceeded {"value":…,"threshold":…}` comes back and `• server ThresholdExceeded in C#` follows, the tile shows a red banner and gets a red border (theme state `alarm`).
-- Invalid value: `• server rejected boiler1 Value must be between 0 and 150.` — no render line follows.
+- Page load: the four tiles render with needle, arc and readout and the dashboard starts streaming (`● live`).
+- Streaming: only `value` changes on the wire each tick. When a reading crosses its threshold the client
+  fires `thresholdExceeded`, `ThresholdExceeded` is raised in C#, the tile shows a red banner and gets a red
+  border (theme state `alarm`), and the **Alerts** KPI counts up; the banner clears when the reading falls back.
+- A value outside `Minimum..Maximum` is never rendered: the tile's banner shows the server's message.

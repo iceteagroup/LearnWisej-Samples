@@ -60,29 +60,14 @@ finally
 ```
 
 * Nothing outside `RunAsync` (or one query method) ever holds the reference.
-* `SessionDatabase` counts contexts created and contexts still alive; the header bar shows
-  `ctx 34 · live 0`. **Between operations, `live` must read 0.** That is the decision as a number.
+* `SessionDatabase` counts contexts still alive and logs the count on every disposal.
+  **Between operations it must read 0.** That is the decision as a number.
 * Queries use `AsNoTracking()`, so even during a query the change tracker stays empty.
-
-## The rejected option is in the repository on purpose
-
-`Data/SessionLongContextAntiPattern.cs` implements the session-long lifetime so that the failure can be
-watched instead of described. It holds `_contextKeptForHours` in a field, reads a work order through it,
-then reads the same row through a fresh short-lived context and compares.
 
 ## Evidence in the running app
 
-1. Click **Wrong lifetime: session DbContext**. The trace shows
-   `Data: DbContext #n created (short-lived · SESSION-LONG (anti-pattern))` and
-   `Data: DbContext #n stored in a field — it will not be disposed until the session ends`.
-   The header's `live` counter goes to 1 and stays there.
-2. Approve or update that same work order (the version changes, v8 → v9).
-3. Click **Wrong lifetime** again. The trace now reads
-   `session-long DbContext #n: WO-2002 OnHold v8 · tracked entities 1 · alive 74s` next to
-   `fresh DbContext: WO-2002 Completed v9`, and the banner says *the session-long DbContext is serving
-   stale data*. The SQL ran again; the identity map answered anyway.
-4. Click **Recover: dispose the context**. The trace shows the disposal and the tracked entities being
-   released; the header returns to `live 0`; the next read is correct again.
-5. Everywhere else in the app, `Data: DbContext #n created` is always followed by
-   `Data: DbContext #n disposed (k tracked entities released) · live contexts: 0` within the same
-   operation. Scroll the trace after a batch approve: six commands, six create/dispose pairs.
+Every operation writes its context's lifetime to the server log (`System.Diagnostics.Trace`, e.g. the
+debugger's Output window): `Data: DbContext #n created (short-lived · Approve command)` is always followed,
+within the same operation, by `Data: DbContext #n disposed (k tracked entities released) · live contexts: 0`.
+Search, Approve and Audit log each produce exactly one such pair (a rejected command adds a second pair for
+its rejection audit).

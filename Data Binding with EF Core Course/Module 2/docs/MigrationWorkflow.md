@@ -230,9 +230,10 @@ must never be mixed in one database.
 In production, `Migrate()` at start is the thing to avoid: several instances starting at once race to
 apply the same migration, one wins, the others fail or hang, and nobody reviewed the SQL. The release
 runs the reviewed script or the bundle **before** traffic moves, and the application starts against a
-schema it can only read. The page shows the difference honestly: the **Model & migration card** reads
-`GetAppliedMigrationsAsync()` and `GetPendingMigrationsAsync()` on every refresh, so a pending migration
-would show up in red instead of being applied behind the operator's back.
+schema it can only read. The page shows the difference honestly: the counts line under the buttons ends
+with *Pending migrations N*, read through `SchemaInfoService.DescribeAsync()` (which calls
+`GetPendingMigrationsAsync()`) on load and after every operation, so a pending migration would show up
+there instead of being applied behind the operator's back.
 
 ## Evidence
 
@@ -244,37 +245,9 @@ Server console at start (Development):
 ```
 
 On the second start the same two lines read `0 pending migration(s) applied, 1 applied in total` and
-`nothing to seed: 60 tickets already exist …`.
+`nothing to seed: 60 tickets already exist`.
 
-The **Model & migration card** on the page:
-
-```
-migrations  applied 1: 20260910150534_InitialCreate · pending 0
-```
-
-and the trace line the card writes after every operation — nine statements, because the five row counts
-are followed by two probes of `sqlite_master` and two reads of the history table (applied, then pending):
-
-```
-◦ card         Model & migration card refreshed · SchemaInfoService.DescribeAsync(): 9 statements (1.2 ms), 1 context created, 1 disposed
-```
-
-The statements themselves:
-
-```
-→ SQL          SELECT COUNT(*) FROM "Customers" AS "c"
-→ SQL          SELECT COUNT(*) FROM "Agents" AS "a"
-→ SQL          SELECT COUNT(*) FROM "Categories" AS "c"
-→ SQL          SELECT COUNT(*) FROM "Tickets" AS "t"
-→ SQL          SELECT COUNT(*) FROM "TicketComments" AS "t"
-→ SQL          SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsHistory' AND "type" = 'table';
-→ SQL          SELECT "MigrationId", "ProductVersion" FROM "__EFMigrationsHistory" ORDER BY "MigrationId";
-→ SQL          SELECT COUNT(*) FROM "sqlite_master" WHERE "name" = '__EFMigrationsHistory' AND "type" = 'table';
-→ SQL          SELECT "MigrationId", "ProductVersion" FROM "__EFMigrationsHistory" ORDER BY "MigrationId";
-```
-
-(they are swallowed by their own trace scope so they do not bury the operation the learner clicked; the
-summary line above is what the trace shows.)
+The counts line on the page ends with `Pending migrations 0` once the host has migrated the file.
 
 Tests (`SupportDesk.Tests`):
 

@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace OrderDesk.Security
 {
-    /// <summary>What the sanitizer did to one input — the console shows it next to the result.</summary>
+    /// <summary>What the sanitizer did to one input.</summary>
     public sealed class SanitizeResult
     {
         public string Html { get; set; }

@@ -13,8 +13,8 @@ namespace TicketOps.Services
     /// not the rules: validation and the close rule are the real ones, which is why a screen built
     /// against this service keeps working when the repository becomes a database.
     ///
-    /// Notice what is NOT here: no control, no Text property, no AlertBox. The service can be called
-    /// from a unit test, a bulk job or a second screen.
+    /// No control, no Text property, no AlertBox: the service can be called from a unit test,
+    /// a bulk job or a second screen.
     /// </summary>
     public sealed class TicketService : ITicketService
     {
@@ -31,21 +31,16 @@ namespace TicketOps.Services
 
         public async Task<IReadOnlyList<Ticket>> GetOpenTicketsAsync()
         {
-            _log.Info(LogLayer.Service, "TicketService.GetOpenTicketsAsync", "→ ITicketRepository.GetAllAsync()");
             var all = await _repository.GetAllAsync();
-            var open = all.Where(t => t.Status != TicketStatus.Closed)
-                          .OrderByDescending(t => t.Priority)
-                          .ThenBy(t => t.Id)
-                          .ToList();
-            _log.Info(LogLayer.Service, "TicketService.GetOpenTicketsAsync", $"{open.Count} open of {all.Count} tickets");
-            return open;
+            return all.Where(t => t.Status != TicketStatus.Closed)
+                      .OrderByDescending(t => t.Priority)
+                      .ThenBy(t => t.Id)
+                      .ToList();
         }
 
         public async Task<OperationResult<Ticket>> SaveAsync(TicketDraft draft)
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
-
-            _log.Info(LogLayer.Service, "TicketService.SaveAsync", $"validate {draft}");
 
             var errors = Validate(draft);
             if (errors.Count > 0)
@@ -60,10 +55,7 @@ namespace TicketOps.Services
             {
                 ticket = await _repository.FindAsync(draft.Id.Value);
                 if (ticket == null)
-                {
-                    _log.Warn(LogLayer.Service, "TicketService.SaveAsync", $"ticket #{draft.Id} no longer exists");
                     return OperationResult<Ticket>.Fail("The ticket no longer exists. Refresh the list.");
-                }
             }
             else
             {
@@ -76,28 +68,21 @@ namespace TicketOps.Services
             if (ticket.Status == TicketStatus.Open && ticket.HoursLogged > 0)
                 ticket.Status = TicketStatus.InProgress;
 
-            _log.Info(LogLayer.Service, "TicketService.SaveAsync", $"valid → ITicketRepository.UpsertAsync({(draft.Id.HasValue ? "#" + draft.Id : "new")})");
             var saved = await _repository.UpsertAsync(ticket);
-
             return OperationResult<Ticket>.Ok(saved, $"Ticket #{saved.Id} saved.");
         }
 
         public async Task<OperationResult<Ticket>> CloseAsync(int ticketId)
         {
-            _log.Info(LogLayer.Service, "TicketService.CloseAsync", $"#{ticketId} → ITicketRepository.FindAsync");
             var ticket = await _repository.FindAsync(ticketId);
             if (ticket == null)
                 return OperationResult<Ticket>.Fail("The ticket no longer exists. Refresh the list.");
 
             // The rule lives on the domain object; the service applies it and persists the outcome.
             if (!ticket.CanClose(out string reason))
-            {
-                _log.Warn(LogLayer.Domain, "Ticket.CanClose", $"#{ticketId} rejected: {reason}");
                 return OperationResult<Ticket>.Fail(reason);
-            }
 
             ticket.Close();
-            _log.Info(LogLayer.Domain, "Ticket.Close", $"#{ticketId} status → Closed");
             await _repository.UpsertAsync(ticket);
             return OperationResult<Ticket>.Ok(ticket, $"Ticket #{ticketId} closed.");
         }

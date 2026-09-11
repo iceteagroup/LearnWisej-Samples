@@ -46,9 +46,8 @@ link: the row the grid makes current **is** the object the four fields edit. The
   that raises `PropertyChanged` **only when the value changed** (no needless repaint, no false dirty flag)
   and also announces `IsDirty`. `DueDate` and `Status` additionally announce the derived `IsOverdue`.
 - `BindingList<WorkOrder>` hears each `PropertyChanged` and raises `ListChanged(ItemChanged, row, property)`.
-  The grid repaints that cell; the screen's `visibleOrders_ListChanged` handler refreshes the dirty indicator
-  and writes a `[UI] BindingList.ListChanged` line into the trace so the reader can watch the chain.
-- Adding to the `BindingList` (the import) raises `ItemAdded`: the grid grows. The screen never calls `Rows.Add`.
+  The grid repaints that cell; the screen's `visibleOrders_ListChanged` handler refreshes the dirty indicator.
+- Adding to the `BindingList` raises `ItemAdded`: the grid grows. The screen never calls `Rows.Add`.
 
 ## What stays manual — and why
 
@@ -68,10 +67,9 @@ link: the row the grid makes current **is** the object the four fields edit. The
 
 ## Evidence (what the running app shows)
 
-- Type in **Title** with row 2002 selected: the grid's Title cell follows, turns amber, **● Unsaved changes** appears, the trace shows
-  `[UI] BindingList.ListChanged — #2002.Title PropertyChanged → ItemChanged(row 1) → grid cell repaints · IsDirty = True`.
+- Type in **Title** with row 2002 selected: the grid's Title cell follows, turns amber, **● Unsaved changes** appears.
   No handler in `WorkOrdersPage.cs` wrote to the grid.
 - Change **Cost** to 2150: the Cost cell shows `$2,150.00` — the format lives on the column, the object holds `2150`.
 - Move **Due date** to yesterday: the Due cell gets the overdue tint (CellFormatting read `IsOverdue`, announced from the `DueDate` setter).
-- Click **Discard**: `[DOMAIN] WorkOrder.RejectChanges — #2002 restored…` followed by one `ListChanged` line per restored property; the fields and the row revert with no code that copies values.
-- Search `pump`: `[SVC] WorkOrderService.Filter — {text:"pump", status:All} → 1 of 6 match`, then `[UI] WorkOrdersPage.RebindVisible — BindingList rebuilt with 1 rows … one ResetBindings`.
+- Click **Discard**: the fields and the row revert with no code that copies values.
+- Search `pump`: the grid shows 1 row and the count reads **1 of 6 work orders**; clear it and all six come back with no reload.

@@ -26,12 +26,6 @@ namespace EnterpriseOps.Data
 
         public SemaphoreSlim Gate { get; } = new SemaphoreSlim(1, 1);
 
-        /// <summary>Contexts created so far in this session.</summary>
-        public int ContextsCreated => _instanceCounter;
-
-        /// <summary>Contexts created and not yet disposed — should read 0 between operations.</summary>
-        public int LiveContexts => _liveContexts;
-
         public SessionDatabase(IActivityTrace trace)
         {
             _trace = trace;
@@ -51,7 +45,7 @@ namespace EnterpriseOps.Data
         }
 
         /// <summary>
-        /// A new unit of work. Callers dispose it when the operation ends — the trace shows the pair.
+        /// A new unit of work. Callers release it when the operation ends — the log shows the pair.
         /// </summary>
         public EnterpriseOpsDbContext CreateContext(string purpose)
         {
@@ -62,7 +56,7 @@ namespace EnterpriseOps.Data
             return context;
         }
 
-        /// <summary>Called by the services in their finally block so the trace can show the disposal.</summary>
+        /// <summary>Called by the services in their finally block: disposes the context and logs it.</summary>
         public void Release(EnterpriseOpsDbContext context, string note = null)
         {
             int tracked = context.ChangeTracker.Entries().Count();

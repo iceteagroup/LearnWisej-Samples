@@ -3,9 +3,9 @@
 *Module 5 deliverable · TicketOps Console · Work Order editor*
 
 The rules are pure C# (`Validation/WorkOrderValidator.cs`, `Domain/WorkOrderRules.cs`), so every case below
-is one method call with no form on screen. The same table lives in code as `Validation/ValidationTestCases.All()`;
-**▶ Run 15 test cases** in the app executes it through `ValidationTestRunner` and writes one `[DOMAIN]` line per
-case (`… → PASS` / `… → FAIL`). Moving the file into an xUnit project needs no change — nothing in it references Wisej.NET.
+is one method call with no form on screen. The same table lives in code as `Validation/ValidationTestCases.All()`,
+and `ValidationTestRunner.Run(case)` executes one case and reports PASS / FAIL. Moving the file into an xUnit
+project needs no change — nothing in it references Wisej.NET.
 
 "Today" is pinned to 2026-09-10 inside the runner so the due-date cases never rot.
 
@@ -55,19 +55,11 @@ TC-15 is why the service re-reads the stored record: the editor remembered "Assi
 the order meanwhile. The validator (which only knows the editor's `FromStatus`) says the move is legal; the rules,
 run against the stored status, say no.
 
-## Cases the app exercises end to end (not just the rules)
+## The same rules in the running app
 
-| Path | Button | Proves |
-|---|---|---|
-| Error path | **Simulate write outage** then **Save** (the button saves for you) | validation and rules pass, `COMMIT tx#n` fails, `tx#n rolled back — 0 rows changed`, the user sees one safe sentence, the editor keeps the edits, `VerifyNothingPartial` re-reads the row and finds `v1 … unchanged` |
-| Recovery | **Recover the data store** | the same command commits: `tx#n+1 committed`, `#2002 now v2` |
-| UI bypass | **Bypass: crafted command** | a command that never touched the editor is still rejected by the server's role rule |
-
-## Evidence
-
-- Click **▶ Run 15 test cases**: the progress bar advances one case per tick, the status reads
-  **● running TC-07 · 7/7 passed**, and the trace shows fifteen `[DOMAIN] WorkOrderValidator.Validate — TC-nn "…" · expected … · got … → PASS`
-  / `[DOMAIN] WorkOrderRules.Check — …` lines, then `[UI] test run complete — 15/15 PASS` and status **● 15/15 test cases passed**.
-- To watch a case fail, change an expectation in `ValidationTestCases.cs` (e.g. TC-09 `ExpectedSummaryErrors = 0`): the
-  runner logs `⚠ … → FAIL` and the status turns orange **● 14/15 test cases passed**. Nothing else in the app changes,
-  because the runner never touches a control or the repository.
+| Case | In the editor |
+|---|---|
+| TC-02 | clear the title, **Save** → glyph on Title |
+| TC-06 | set 1,200 estimated hours, **Save** → glyph on Estimated hours |
+| TC-11 | select closed #2006, change the title, **Save** → summary error, no glyph |
+| TC-13 / TC-14 | as Technician, set #2002's cost to 9,500 → summary error; switch **Acting as** to Supervisor → it saves |

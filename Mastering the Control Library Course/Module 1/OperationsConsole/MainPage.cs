@@ -8,10 +8,8 @@ using Wisej.Web;
 namespace OperationsConsole
 {
     /// <summary>
-    /// The Operations Console shell (Module 1 · Control Library Mental Model).
-    /// Four docked areas — navigationPanel (Left), commandPanel (Top), statusPanel (Bottom), contentPanel (Fill, added last) —
-    /// plus the Event log card. Every navigation button routes through the single <see cref="Navigate"/> method,
-    /// and the shell is the only implementation of <see cref="IConsoleShell"/>: sections talk to it through <see cref="ConsoleLog"/>.
+    /// The Operations Console shell: navigationPanel (Left), commandPanel (Top), statusPanel (Bottom) and
+    /// contentPanel (Fill, added last). Every navigation button routes through <see cref="Navigate"/>.
     /// </summary>
     public partial class MainPage : Page, IConsoleShell
     {
@@ -24,22 +22,12 @@ namespace OperationsConsole
 
             Application.ResponsiveProfileChanged += Application_ResponsiveProfileChanged;
 
-            ShowReadyState();
-        }
-
-        /// <summary>The initial "Ready" state the lab asks for: honest status, empty content area, diagnostics filled in.</summary>
-        private void ShowReadyState()
-        {
-            SetStatus("Ready — choose a section on the left.", StatusLevel.Ok);
-            SetSelectedControl(null);
-            SetSelectedRecord(null);
+            SetStatus("Ready", StatusLevel.Ok);
             UpdateProfileLabel();
-            AddLog("Operations Console shell ready · " + _catalog.Sections.Count + " sections in the catalog");
-            AddLog("dock order: commandPanel Top, statusPanel Bottom, then navigationPanel Left + pnlEventLog Right, contentPanel Fill takes what is left");
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Navigation: one handler per button, each one a single call into OpenSection → Navigate.
+        // Navigation
         // ------------------------------------------------------------------------------------------------------------
 
         private void editorsButton_Click(object sender, EventArgs e) => OpenSection(SectionKey.Editors, (Control)sender);
@@ -50,40 +38,28 @@ namespace OperationsConsole
         private void widgetsButton_Click(object sender, EventArgs e) => OpenSection(SectionKey.Widgets, (Control)sender);
 
         /// <summary>
-        /// Asks the catalog for the section page and navigates to it. The failure path (a page that cannot be created)
-        /// is caught here: the status area turns red and stays honest, an AlertBox tells the user what happened in plain
-        /// words, the previous page stays on screen, and the exception details go to the Event log only.
+        /// Creates the section page and navigates to it. A page that cannot be created keeps the previous page on
+        /// screen, turns the status area red and tells the user in plain words.
         /// </summary>
         private void OpenSection(SectionKey key, Control source)
         {
             var info = _catalog.Get(key);
             SetSelectedControl(source.Name);
-            AddLog(source.Name + " → Navigate(" + info.PageTypeName + ", \"" + info.Title + "\")");
 
             try
             {
-                var page = _catalog.CreatePage(key);
-                Navigate(page, info.Title);
+                Navigate(_catalog.CreatePage(key), info.Title);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                AddLog("✗ " + info.PageTypeName + " could not be created — " + ex.GetType().Name);
-                AddLog("   " + ex.Message);
-                SetStatus("The " + info.Title + " section could not be opened — the previous page is still shown.", StatusLevel.Error);
+                SetStatus("Could not open " + info.Title + " — the previous page is still shown.", StatusLevel.Error);
                 AlertBox.Show(
                     "The " + info.Title + " section could not be opened. Please try again; if it keeps failing, contact support.",
                     MessageBoxIcon.Error, alignment: ContentAlignment.TopRight, autoCloseDelay: 5000);
-
-                // one-shot simulation: the recovery is simply clicking the section again
-                if (chkSimulateFailure.Checked)
-                    chkSimulateFailure.Checked = false;
             }
         }
 
-        /// <summary>
-        /// The one navigation method of the shell — the Navigate(Control content, string title) the lab asks for:
-        /// clears the content area, docks the page to Fill, adds it and updates the status area.
-        /// </summary>
+        /// <summary>Clears the content area, docks the page to Fill, adds it and updates the status area.</summary>
         private void Navigate(Control content, string title)
         {
             var previous = _currentPage;
@@ -93,11 +69,10 @@ namespace OperationsConsole
             contentPanel.Controls.Add(content);
             _currentPage = content;
 
-            previous?.Dispose();   // the old page is a server object too — release it, do not just hide it
+            previous?.Dispose();
 
             SetStatus("Showing " + title, StatusLevel.Ok);
             SetSelectedRecord(null);
-            AddLog("✓ showing " + title + " (" + content.GetType().Name + ", Dock = Fill)");
         }
 
         // ------------------------------------------------------------------------------------------------------------
@@ -110,14 +85,12 @@ namespace OperationsConsole
 
             if (_currentPage is ISection section)
             {
-                AddLog("btnRefresh → " + _currentPage.GetType().Name + ".RefreshSection()");
                 section.RefreshSection();
                 lblLastRefresh.Text = "Refreshed: " + DateTime.Now.ToString("HH:mm:ss");
                 SetStatus(section.Title + " refreshed at " + DateTime.Now.ToString("HH:mm:ss"), StatusLevel.Ok);
             }
             else
             {
-                AddLog("btnRefresh → nothing to refresh (no section open)");
                 SetStatus("Nothing to refresh — open a section first.", StatusLevel.Warning);
             }
         }
@@ -125,24 +98,15 @@ namespace OperationsConsole
         private void chkSimulateFailure_CheckedChanged(object sender, EventArgs e)
         {
             _catalog.SimulateFailure = chkSimulateFailure.Checked;
-            AddLog(chkSimulateFailure.Checked
-                ? "SectionCatalog.SimulateFailure = true — the next navigation will throw inside the page factory"
-                : "SectionCatalog.SimulateFailure = false — navigation works again (recovery)");
-        }
-
-        private void btnClearLog_Click(object sender, EventArgs e)
-        {
-            lstEventLog.Items.Clear();
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Responsive profile (diagnostic panel)
+        // Responsive profile
         // ------------------------------------------------------------------------------------------------------------
 
         private void Application_ResponsiveProfileChanged(object sender, ResponsiveProfileChangedEventArgs e)
         {
             UpdateProfileLabel();
-            AddLog("profile changed → " + Application.ActiveProfile.Name + " (" + Application.Browser.Size.Width + " px wide)");
         }
 
         private void UpdateProfileLabel()
@@ -151,14 +115,8 @@ namespace OperationsConsole
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // IConsoleShell — the contract sections and services use (see Shell/IConsoleShell.cs)
+        // IConsoleShell
         // ------------------------------------------------------------------------------------------------------------
-
-        public void AddLog(string message)
-        {
-            lstEventLog.Items.Add(DateTime.Now.ToString("HH:mm:ss") + "  " + message);
-            lstEventLog.SelectedIndex = lstEventLog.Items.Count - 1;
-        }
 
         public void SetStatus(string text, StatusLevel level)
         {

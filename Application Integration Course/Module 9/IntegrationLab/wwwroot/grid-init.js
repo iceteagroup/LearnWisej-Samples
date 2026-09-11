@@ -153,19 +153,4 @@ this._reportError = function (phase, status, message) {
     setTimeout(function () { me.fireWidgetEvent("error", data); }, 0);
 };
 
-// ---- functions the server reaches with Call("name", args) ----------------------------
-// Vendor exceptions thrown synchronously are caught and reported through the error contract.
-this._guard = function (phase, fn) {
-    if (!this.widget) { this._reportError(phase, 0, "the grid is not initialized."); return; }
-    try { fn.call(this); }
-    catch (ex) { this._reportError(phase, 0, ex.message); }
-};
-this.reload = function () { this._guard("read", function () { this.widget.read(); }); };
-this.nextPage = function () { this._guard("read", function () { this.widget.nextPage(); }); };
-this.insertRow = function (values) { this._guard("create", function () { this.widget.insertRow(values); }); };
-this.deleteSelected = function () { this._guard("destroy", function () { this.widget.deleteSelected(); }); };
-this.updateRow = function (rowKey, changes) { this._guard("update", function () { this.widget.updateRow(rowKey, changes); }); };
-this.loadWith = function (paging) { this._guard("read", function () { this.widget.readWith(paging); }); };
-this.getSelectedKey = function () { return this.widget ? this.widget.getSelectedKey() : null; };
-
 //# sourceURL=integrationlab.widgets.WorkOrderGrid.js

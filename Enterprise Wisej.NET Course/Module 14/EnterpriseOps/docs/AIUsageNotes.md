@@ -71,5 +71,5 @@ A reviewer can explain every line of it without the tool present. That was the c
 
 Capstone Review → **Load AI draft #214** → **Review generated code** → **Sign the decision**: the decision
 appears in the **AI usage notes** tab with its verdict, the author, the reviewer and the reason, and the
-audit line `SignReviewDecision … → ok` is written with the same correlation id. Signing while switched to
-`ben.tech` is refused: a Technician does not sign reviews.
+audit line `SignReviewDecision … → ok` is written with the same correlation id. A Technician is refused: a
+Technician does not sign reviews.

@@ -21,16 +21,13 @@ file/method evidence for each area.
   `SupportDesk.Services` (stateless, UI-free, `TicketQueryService`/`TicketCommandService`/`TicketValidator`/
   `ConflictResolution`) → `SupportDesk.Data` (the only project referencing the SQLite provider). See
   `docs/ArchitectureNote.md` for the full diagram.
-- Factory usage: every service holds only `IDbContextFactory<SupportDeskContext>` (or, for a handful of lab
-  props, a small singleton like `DevelopmentOutageSwitch`/`TransactionFailureSwitch`/`StartupDiagnostics`,
-  none of them mutable *application* state). No `DbContext` field exists anywhere outside a method body.
+- Factory usage: every service holds only `IDbContextFactory<SupportDeskContext>` (`TicketCommandService`
+  also takes the stateless `ConflictResolution`). No `DbContext` field exists anywhere outside a method body.
 - No shared mutable state: `TicketBrowserPage`'s fields (`_pageIndex`, `_totalCount`, `_loading`, …) are
-  session state by design — they belong to one browser tab, not shared across sessions. The one place shared
-  mutable state deliberately exists is the lab props themselves (`DevelopmentOutageSwitch.IsDown`,
-  `TransactionFailureSwitch.FailAfterFirstWrite`) — singletons on purpose, so one reviewer's click can be seen
-  by that same reviewer's next click, and both are documented as lab instruments, not production patterns.
-  `SharedContextAntiPattern` (Module 1) is the one place this codebase *shows* what sharing a `DbContext`
-  actually breaks, as a deliberately-wrong demo, never a pattern to keep.
+  session state by design — they belong to one browser tab, not shared across sessions. No singleton in the
+  solution holds mutable state. Sharing one `DbContext` across operations is explained in Module 1's notes
+  as the mistake the factory avoids (two operations at once on one context, a change tracker that grows for
+  the life of the tab); nothing in the code does it.
 
 ## Binding — 20%
 
@@ -60,7 +57,7 @@ file/method evidence for each area.
   overload, awaited; there is no `.Result`/`.Wait()`/blocking call anywhere in the solution.
 - Tracking vs. no-tracking: reads for display (`SearchTicketsAsync`, `LoadEditModelAsync`, `GetLookupsAsync`,
   `GetCustomersAsync`) are `.AsNoTracking()`; reads for a write (`SaveAsync`'s existing-ticket branch,
-  `DeleteAsync`, `CloseTicketWithCommentAsync`) are tracked, loaded fresh, inside the very method that is
+  `DeleteAsync`) are tracked, loaded fresh, inside the very method that is
   about to change them — the two never share a context or an entity instance.
 - Migrations: `InitialCreate` (Module 2) is still the only migration — Module 7 added no entity properties,
   so no new migration was needed (`TicketEditModel.RowVersion` is a UI-model field, not an entity change).
@@ -79,9 +76,10 @@ every message onto `errorProvider.SetError` for the matching control and joins e
 `validationSummaryLabel`; `btnSave.Enabled` tracks the model's live validity; a duplicate ticket number still
 reaches the database and becomes one friendly sentence via `DbUpdateException`. Module 7 adds one more layer
 below it in the same shape: a genuine `DbUpdateConcurrencyException` becomes the `ConflictDialog`'s field-by-
-field list — the same "translate the exception into business language, never show raw SQL" discipline
-`FailDbUpdateAsync` already used. `TicketValidatorTests` (13 tests, Module 5) and `DuplicateNumberTests`
-(3 tests) are unchanged and still pass.
+field list — the same "translate the exception into business language, never show raw SQL" discipline the
+editor's `DbUpdateException` catch already follows (`FriendlyDatabaseErrors.TicketSaveRejected` in an
+`AlertBox`, the full exception on the server console). `TicketValidatorTests` (13 tests, Module 5) and
+`DuplicateNumberTests` (3 tests) are unchanged.
 
 ## Performance — 15%
 
@@ -97,9 +95,7 @@ and filtered in .NET. The whole search is **exactly two statements** regardless 
 (`TicketQueryServiceTests`/`TicketSearchTests` assert the statement count directly via `QueryTrace`), and
 every list the UI binds is a `Select`-projected DTO (`TicketListItem`, `LookupItem`), never a full tracked
 `Ticket` graph. The anti-pattern this correctness is contrasted against — binding an unexecuted
-`IQueryable` to the grid after its context has disposed — is kept as a live, working demo
-(`buttonBindQuery_Click` / `BoundIQueryableAntiPattern`) specifically so the difference is visible, not just
-asserted.
+`IQueryable` to the grid after its context has disposed — is explained in `docs/TicketBrowserBinding.md`.
 
 ## Deployment and diagnostics — 10%
 
@@ -113,10 +109,11 @@ asserted.
 - Migration plan: reviewed script → applied by the release pipeline as one step → traffic switches after;
   never `Migrate()` from application startup outside Development. Full detail, including the
   `--idempotent`/SQLite deviation, in `docs/DeploymentNotes.md`.
-- Diagnostics: the page's **Environment & diagnostics** panel (`StartupDiagnostics`, read once at host start,
-  rendered by `TicketBrowserPage.RefreshEnvironmentPanel`) shows the environment name, whether migrations ran
-  at startup, whether sensitive-data logging is on, the applied migrations, and the script path — the same
-  facts the server console prints, never guessed twice.
+- Diagnostics: at host start `Startup.cs` prints `[SupportDesk] environment: … · sensitive-data logging:
+  ON (Development)/OFF` and, outside Development, a line saying migrations are not applied at startup and
+  naming the script. In Development the migration and seed results follow on their own `[SupportDesk]`
+  lines. Every handled failure writes its full exception to the same console, while the user sees one
+  friendly sentence.
 
 ## What this review does not claim
 

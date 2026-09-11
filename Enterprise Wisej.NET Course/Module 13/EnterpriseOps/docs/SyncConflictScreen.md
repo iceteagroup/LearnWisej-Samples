@@ -81,9 +81,9 @@ designer.
 
 | Claim | Where you see it |
 |---|---|
-| The conflict is detected on the server, by version | Trace: `Service: WO-1037 version mismatch: command based on v2, server is v3 (Cancelled v3 by ana.ops 13:50 …) → Conflict` |
-| The replay stops rather than guessing | Trace: `Job: replay stopped at WO-1037: 0 command(s) stay PendingSync so the order is preserved — a person decides` |
+| The conflict is detected on the server, by version | Server log: `Service: WO-1037 version mismatch: command based on v2, server is v3 (Cancelled v3 by ana.ops 13:50 …) → Conflict` |
+| The replay stops rather than guessing | Server log: `Job: replay stopped at WO-1037: 0 command(s) stay PendingSync`; the status strip reads "Sync conflict on WO-1037 — server changed while offline · waiting for the technician" |
 | Both versions reach the screen | The two boxes in the panel, filled from `SyncConflict.LocalBody` / `.ServerBody` |
-| Nothing is lost by keeping the server version | After **Keep server**: banner reads "…stays Cancelled, your notes are attached to it, and the audit log holds both versions"; the queue card turns grey `Rejected · kept server — notes preserved` |
+| Nothing is lost by keeping the server version | After **Keep server**: the toast reads "…stays Cancelled, your notes are attached to it, and the audit log holds both versions"; the queue card turns grey `Rejected · kept server — notes preserved` |
 | The override rule is enforced server-side | After **Apply my completion…** as `ben.tech`: red toast with the `workorder.override` message; the card stays red `Conflict`; the audit log gains an `Override … Rejected` entry |
-| The queue resumes afterwards | With more than one command queued, resolving the conflict traces `UI → resuming the replay — N command(s) still pending behind the conflict` |
+| The queue resumes afterwards | With commands queued behind the conflict, resolving it restarts the replay and their cards turn `Synced` |

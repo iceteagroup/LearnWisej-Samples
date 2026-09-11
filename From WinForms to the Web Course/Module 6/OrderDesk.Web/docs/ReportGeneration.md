@@ -29,8 +29,7 @@ the 1,204-page invoice batch — and a linear-time byte layout; the Module 1 `Wr
 project a server-safe PDF library replaces the class; what matters is that the PDF is produced on the server for any
 session.
 
-`Legacy/DesktopBoundaries.cs` quotes the desktop `InvoicePrinter.Print` as a comment because `System.Drawing.Printing`
-does not compile for `net10.0` — the file could not be carried over even if one wanted to.
+The desktop `InvoicePrinter.Print` is not carried over: `System.Drawing.Printing` does not compile for `net10.0`.
 
 ## Export to Excel → managed `.xlsx` + Download
 
@@ -61,11 +60,9 @@ A report that takes seconds or minutes is not generated in the request: it is qu
 the worker with the same writers, stored under `App_Data/reports/`, and then viewed (`PdfViewer`) or downloaded
 (`Application.Download(path, name)`) from the queue card.
 
-## Evidence (card C)
+## Evidence
 
-| Button | Path | What the console shows |
-|---|---|---|
-| `buttonPrintPdf` — *Print Invoice → PDF* | recovery | `⚠ boundary Print Invoice  PrintDocument → local printer  ⇒  server PDF (n bytes) → PdfViewer` · `→ .NET→JS InvoicePreviewForm  Invoice-1042.pdf  (PdfViewer.PdfStream, modal)`; the window `Invoice-1042.pdf  ·  generated on the server` opens with the invoice; ⬇ Download saves it; Close logs `• server InvoicePreviewForm  closed and disposed`; status `● invoice 1042 rendered on the server` |
-| `buttonLegacyPrint` — *Legacy print* | failure (explained) | `⚠ boundary ✕ Print Invoice  PrintDocument + PrintPreviewDialog (System.Drawing.Printing) → verdict Redesign: InvoiceDocument lines → InvoicePdfWriter on the server → PdfViewer (InvoicePreviewForm) or Download`; red banner `✕ Legacy print: PrintDocument targets the printer attached to the SERVER (a web server has none) and PrintPreviewDialog is a WinForms window on the server's desktop that would block this request. System.Drawing.Printing does not even compile for net10.0 — the code is quoted in Legacy/DesktopBoundaries.cs. Verdict Redesign → …` |
-| `buttonExportXlsx` — *Export .xlsx ⬇* | recovery | `⚠ boundary Export to Excel  Excel.Application + C:\Orders\out.xlsx  ⇒  XlsxWriter → App_Data\exports\Orders-<stamp>.xlsx (n bytes)` · `→ .NET→JS Application.Download  Orders.xlsx (5 rows) — no Excel.exe, no COM, no dialog, any number of sessions at once`; the browser saves `Orders.xlsx`; the file stays under `App_Data/exports/` |
-| `buttonLegacyExcel` — *Legacy Excel Interop* | failure (explained) | see `UploadExportWorkflow.md` — the ProgID is probed, the COM object is never created |
+| Action | What you should see |
+|---|---|
+| **Print Invoice (PDF)** | the window `Invoice-1042.pdf` opens with the invoice in a `PdfViewer`; ⬇ Download saves it; Close disposes the window |
+| **Export .xlsx ⬇** | the browser saves `Orders.xlsx`; the file stays under `App_Data/exports/` |

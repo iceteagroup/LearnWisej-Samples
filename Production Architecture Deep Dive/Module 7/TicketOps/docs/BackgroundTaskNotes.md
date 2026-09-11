@@ -17,28 +17,26 @@ buttonStartImport_Click
               _importCancel = new CTS
   ShowRunStarted()        (controls, in context)
   BeginPush()             (StartPolling if no socket)
-  tracePanel.BeginDeferred()
   Application.StartTask(…) ───────────────────▶  RunImportAsync
-  return  ← round-trip closes (~5 ms)              IImportService.ImportAsync
+  return  ← round-trip closes                      IImportService.ImportAsync
                                                      per row: token? → parse → InsertAsync (repo lock)
                                                      onProgress(progress)  ─┐  worker thread
                                                                             │
-buttonRefreshList_Click / Cancel / Outage            OnImportProgress  ◀─────┘
-  lock(_sync) snapshot                                 lock(_sync): _lastProgress, _pushes, ShouldPush?
+buttonRefreshList_Click / Cancel                     OnImportProgress  ◀─────┘
+  lock(_sync) snapshot                                 ShouldPush?
   ITicketService.CountAsync (repo lock)                Application.Update(this, () => {      ← in context
-  tracePanel.FlushPending()                              IsDisposed? → return
-                                                         ApplyProgress, UpdateStateLabel
-                                                         tracePanel.FlushPending()
+                                                         IsDisposed? → return
+                                                         ApplyProgress
                                                        })  → ONE flush to the browser
                                                      …
                                                    finally:
                                                      lock(_sync): _isRunning=false, _resumeAtRow
                                                      PushFinalState → Application.Update(this, …)
-                                                       ShowRunFinished, EndPush, EndDeferred
+                                                       ShowRunFinished, EndPush
 ```
 
-- **Request thread** — every click, `Load`, the trace panel in direct mode. Already in the session
-  context; control changes travel back with the response, no `Update` needed.
+- **Request thread** — every click and `Load`. Already in the session context; control changes travel
+  back with the response, no `Update` needed.
 - **Import task** — one per run, started with `Application.StartTask`, bound to this session. It runs
   `ImportService.ImportAsync`, which never sees a control. The only code on this thread that touches
   controls is inside `Application.Update(this, () => …)`.
@@ -50,20 +48,17 @@ buttonRefreshList_Click / Cancel / Outage            OnImportProgress  ◀──
 
 1. **Get onto the context.** From the worker, `Application.Update(this, callback)` (or
    `Application.RunInContext(this, callback)` when nothing needs to be pushed) restores the session for
-   the duration of the callback. `this` (the Form) is the context object; `Application.Current` captured
-   in a handler works too and survives the Form being disposed.
+   the duration of the callback. `this` (the Form) is the context object.
 2. **Flush.** `Application.Update` pushes every pending change in one message. Without it the server
-   objects change and the browser shows nothing until the next click.
-
-The screen never sets `progressImport.Value` from a bare worker call — not even from inside the
-`StartTask` thread, which technically could — so the same code stays correct if the service ever awaits
-a real driver and continues on a thread-pool thread.
+   objects change and the browser shows nothing until the next click — the final reset in
+   `PushFinalState` is no exception: it runs inside `Application.Update(this, …)` so the page never stays
+   stuck on "importing".
 
 ## 3. Update rate — bounded on purpose
 
 | Event | Push? | Why |
 |---|---|---|
-| `Started` | yes | the first log line + "importing 0/600" appear at once |
+| `Started` | yes | the first log line appears at once |
 | every 25th imported row (`PushEveryRows`) | yes | ~4 pushes/s at 10 ms/row: smooth bar, no flood |
 | every 10 % milestone (row 60, 120, …) | yes | the import-log line "Row 60 imported — 10%" |
 | every skipped row | yes | a per-row error is worth seeing immediately |
@@ -71,8 +66,7 @@ a real driver and continues on a thread-pool thread.
 | any other imported row | no | the model is exact on the server; the browser does not need it |
 | final state (`finally`) | yes, always | buttons restored, outcome shown, `EndPolling` if it was on |
 
-600 rows → about 24 + 10 + 4 + 2 ≈ 40 pushes instead of 600. The **SERVER STATE** line prints `pushes=`
-so you can count them, and the trace logs one `[UI] push #n` per flush.
+600 rows → about 40 pushes instead of 600.
 
 **Polling fallback.** `Application.IsWebSocket` is `false` during `Load` (the socket opens after the
 first response), so `StartPolling` must never be called there. `BeginPush()` runs in the click: with a
@@ -84,24 +78,19 @@ the fallback: the same pushes arrive about a second late, carried by the polls.
 
 | State | Written by | Read by | Protection |
 |---|---|---|---|
-| `_isRunning` | click (start), task (`finally`) | clicks (start, reset, refresh), state label | `lock (_sync)` on every access |
+| `_isRunning` | click (start), task (`finally`) | Start click | `lock (_sync)` on every access |
 | `_importCancel` (CTS) | click (new), task (`finally` → null + Dispose) | Cancel click, `Disposed` handler | `lock (_sync)`; a cancelled source is never reused; `ObjectDisposedException` caught around `Cancel()` |
-| `_resumeAtRow` | task (`finally`), Reset click | Start click | `lock (_sync)` |
-| `_pushes`, `_lastProgress` | worker (`OnImportProgress`) | state label (both threads) | `lock (_sync)`; copied out, printed outside the lock |
+| `_resumeAtRow` | task (`finally`) | Start click | `lock (_sync)` |
 | `ImportProgress` objects | worker (created) | callback in context | immutable — no lock needed |
 | `_file`, `_pushers`, `_polling` | request thread | callbacks running in context | request-thread only; callbacks run in context (serialized with requests) |
-| `InMemoryTicketRepository._tickets` | task (`InsertAsync`), Reset click | Refresh click (`CountAsync`), `FinishAsync` | the repository's own `lock (_gate)` around every dictionary access, reads included; check-and-insert is one locked step |
-| `InMemoryTicketRepository.SimulateOutage` | Outage click | task (each `InsertAsync`) | `volatile` — a single flag, no pair to keep consistent |
-| `ActivityLog._entries` | both threads | trace panel, `Entries` | its own lock (template) |
-| `ActivityTracePanel` list | trace panel | — | **deferred mode**: while a run is active, entries are queued under a lock and rendered only inside `Application.Update` callbacks or request handlers (`FlushPending`) |
+| `InMemoryTicketRepository._tickets` | task (`InsertAsync`) | Refresh click (`CountAsync`), `FinishAsync` | the repository's own `lock (_gate)` around every dictionary access, reads included; check-and-insert is one locked step |
 | the run's counters and error list | task only | — | local variables in `ImportAsync` — the best lock is the one you never need |
 
 Rules applied:
 
 - Lock the **data**, briefly, on **every** access (reads too). Never hold `_sync` while touching a control
-  or calling `Application.Update` — copy the values out first (`UpdateStateLabel`, `OnImportProgress`).
+  or calling `Application.Update`.
 - Two fields that must stay consistent (`_isRunning` + `_importCancel`) change under the same lock.
-- A single flag read by one thread and written by another (`SimulateOutage`) is `volatile`.
 - Nothing is `static` except the constant tables in `TicketImportRules` and the seed data. Every session
   has its own repository, log, services, page and running import (`AppComposition`).
 
@@ -109,7 +98,7 @@ Rules applied:
 
 | Per session (one per browser tab) | Shared by all sessions |
 |---|---|
-| `ActivityLog`, `InMemoryTicketRepository` and its tickets, `TicketService`, `ImportService`, `ImportFileLocator`, `ImportPage`, the running task and its `CancellationTokenSource` | the CSV files on disk (read-only), `TicketImportRules` constants, the code |
+| `ActivityLog`, `InMemoryTicketRepository` and its tickets, `TicketService`, `ImportService`, `ImportFileLocator`, `ImportPage`, the running task and its `CancellationTokenSource` | the CSV file on disk (read-only), `TicketImportRules` constants, the code |
 
 Two tabs importing at once never share a dictionary; the repository lock exists for the two threads of
 **one** session. In a real deployment the repository would be a database shared by every session, and
@@ -119,20 +108,16 @@ Two tabs importing at once never share a dictionary; the repository lock exists 
 
 | Outcome | What stops it | Rows already written | Next action |
 |---|---|---|---|
-| Completed | end of file | all valid rows; bad rows listed | ▶ Start import again (all rows now duplicates) or Reset sample data |
+| Completed | end of file | all valid rows; bad rows listed | — (a second run skips every row as a duplicate) |
 | Cancelled | `token.IsCancellationRequested` between two rows | kept | ▶ Resume import (row n) |
-| Faulted | the repository throws on a write | kept; the failing row was **not** written | Recover the data store → ▶ Resume import (row n) |
+| Faulted | the repository throws on a write | kept; the failing row was **not** written | ▶ Resume import (row n) once the store answers |
 
 A row that breaks a rule is none of these: it is skipped, logged (`⚠ Row 214 skipped — invalid due date
 "2026-06-31"`) and the run continues.
 
 ## Evidence
 
-- Start the import: the click returns immediately (the trace's `[UI] buttonStartImport_Click → Application.StartTask` line has the
-  same timestamp as the response); the bar moves every ~250 ms; `[SVC]`/`[DATA]` lines arrive in batches of 25 with each push.
-- Click **↻ Refresh list** during the run: a `[UI] buttonRefreshList_Click → ITicketService.CountAsync() on request thread N —
-  while the import task is writing` line, a count that grows, and an import-log line "List refreshed — 237 tickets" while the
-  bar keeps moving. The SERVER STATE line shows a different thread id for a request than for a push.
-- **Start import twice** while idle: one `StartTask`, then `⚠ [UI] ImportPage.TryBeginRun — buttonStartImport_Click: refused —
-  _isRunning is true`.
-- The final state always arrives (green, amber or red) with the Start button enabled — even after Cancel or an outage.
+- Start the import: the click returns immediately; the bar moves every ~250 ms.
+- Click **↻ Refresh list** during the run: the count grows and the import log gets "List refreshed — 237
+  tickets" while the bar keeps moving.
+- The final state always arrives (green or amber) with the Start button enabled — even after Cancel.

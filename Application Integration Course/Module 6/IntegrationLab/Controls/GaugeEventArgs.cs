@@ -8,11 +8,10 @@ namespace IntegrationLab.Controls
     /// </summary>
     public class GaugeEventArgs : EventArgs
     {
-        public GaugeEventArgs(double value, string range, double reportedValue)
+        public GaugeEventArgs(double value, string range)
         {
             this.Value = value;
             this.Range = range;
-            this.ReportedValue = reportedValue;
         }
 
         /// <summary>The authoritative server value at the time the event was raised.</summary>
@@ -20,9 +19,6 @@ namespace IntegrationLab.Controls
 
         /// <summary>Range name reported by the widget: "normal", "warm" or "high".</summary>
         public string Range { get; }
-
-        /// <summary>The value the client widget reported in its payload (for contract checks).</summary>
-        public double ReportedValue { get; }
     }
 
     /// <summary>
@@ -41,32 +37,9 @@ namespace IntegrationLab.Controls
         public string Message { get; }
     }
 
-    /// <summary>
-    /// Data for <see cref="SimpleGauge.LeakDetected"/>: the client adapter found a
-    /// <c>debugDump</c> object in its options and measured what actually reached the browser.
-    /// </summary>
-    public class LeakDetectedEventArgs : EventArgs
-    {
-        public LeakDetectedEventArgs(int bytes, int keys, string sample)
-        {
-            this.Bytes = bytes;
-            this.Keys = keys;
-            this.Sample = sample;
-        }
+    public enum TraceDirection { ServerToClient, ClientToServer }
 
-        /// <summary>Length of <c>JSON.stringify(options.debugDump)</c> in the browser.</summary>
-        public int Bytes { get; }
-
-        /// <summary>Number of top-level keys the browser received.</summary>
-        public int Keys { get; }
-
-        /// <summary>A few of the keys the browser can now read (e.g. "customer.taxId").</summary>
-        public string Sample { get; }
-    }
-
-    public enum TraceDirection { ServerToClient, ClientToServer, Server }
-
-    /// <summary>One line of the client/server trace shown by the lab UI.</summary>
+    /// <summary>One line of the command trace: a command, result or event that crossed the wire.</summary>
     public class TraceEventArgs : EventArgs
     {
         public TraceEventArgs(TraceDirection direction, string name, string payload)

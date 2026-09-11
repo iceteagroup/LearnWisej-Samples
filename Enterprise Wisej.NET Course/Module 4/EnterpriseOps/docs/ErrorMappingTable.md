@@ -63,26 +63,24 @@ the audit lines are the application's vocabulary, not the provider's.
    a caller and a column in the audit grid.
 4. **Every failure is auditable.** Rejections are written after the rollback in their own transaction, so
    the record of the failure is not undone by the failure.
-5. **The correlation id is on all three.** Banner, trace and audit row carry the same eight hex
+5. **The correlation id is on all three.** Banner, log and audit row carry the same eight hex
    characters, so a screenshot is enough to find the row.
 6. **Auditing may never make things worse.** `WriteRejectionAuditAsync` swallows its own exceptions and
-   traces `could not write the rejection audit: …`; a mapped failure never becomes an unmapped one.
+   logs `could not write the rejection audit: …`; a mapped failure never becomes an unmapped one.
 
 ## Evidence in the running app
 
-| Button | Code you should see | Banner / status bar |
+| Action | Code you should see | Banner / status bar |
 |---|---|---|
 | **Approve** with `WO-2002` selected (seeded `OnHold`) | `WO_STATE_INVALID` | "This work order is on hold — resolve the hold before approving." · `WO_STATE_INVALID · transaction rolled back · nothing persisted` |
 | **Approve** with the comment box emptied | `VALIDATION_FAILED` | "An approval comment is required." |
-| **Fail: duplicate number** | `WO_NUMBER_IN_USE` | "That work order number is already in use for this tenant. Choose another number." — trace shows `ErrorMap: DbUpdateException → WO_NUMBER_IN_USE` |
-| **Fail: stale version** | `WO_CONCURRENCY` | "This work order was changed by someone else while you were editing it. Reload and try again." |
-| **Fail: slow query (timeout)** | `DB_TIMEOUT` | "The operation could not be completed in time. Try again, or quote correlation id … to support." — the trace shows `simulated slow query: 1500 ms inside the transaction…` then `ROLLBACK ← TaskCanceledException` |
-| **Sign in as ben.tech** (then it approves) | `PERMISSION_DENIED` | "Only a manager or an administrator can approve a work order." — the trace shows **no** `BEGIN TRANSACTION` line |
-| **Audit log** as ben.tech | denied in the query service | "Only a manager or an administrator can read the audit log." — `Security: authorize ben.tech (Technician) → ReadAudit DENIED (no query was run)` |
 
-Codes 4, 5, 8, 10 and 11 have no button. `WO_NOT_FOUND` cannot be reached from this screen precisely
-because the tenant filter is applied on both sides — the grid only ever offers ids that exist in the
-selected tenant — but a stale link, a replayed batch or a WebMethod caller can still ask for one, so the
-service checks. The rest need a broken schema, a missing tenant row or a broken file, which an in-memory
-lab database cannot produce on demand. All five go through the same `ErrorMap.Map` switch, and
+The screen signs in as `ana.ops` (Manager) for tenant `fabrikam`, so the other rows are reached from code
+or from a test rather than from a button: `WO_CONCURRENCY` when another writer commits first,
+`WO_NUMBER_IN_USE` when `CreateAsync` is given a number the tenant already uses, `PERMISSION_DENIED` when a
+Technician calls `ApproveAsync` or `GetAuditAsync` (no `BEGIN TRANSACTION`, no query), `DB_TIMEOUT` when
+a command outlives `SessionContext.CommandTimeout`. `WO_NOT_FOUND` cannot be reached from this screen
+precisely because the tenant filter is applied on both sides — the grid only ever offers ids that exist in
+the tenant — but a stale link, a replayed batch or a WebMethod caller can still ask for one, so the
+service checks. All of them go through the same `ErrorMap.Map` switch or `ErrorMap.Rejected`, and
 `UNEXPECTED` is what any new, unmapped exception falls into by design.

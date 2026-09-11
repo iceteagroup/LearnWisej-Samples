@@ -9,9 +9,9 @@ TicketOps/
   Services/        ITicketService + workflows     ITicketService, TicketService
   Domain/          Ticket and business rules      Ticket, TicketDraft, OperationResult
   Data/            repositories, persistence      ITicketRepository, InMemoryTicketRepository, SeedData
-  Infrastructure/  logging, config, wiring        ILog, ActivityLog, AppComposition
+  Infrastructure/  config, wiring, contracts      ILog, AppComposition
   Resources/       images, themes, strings        Strings
-  Diagnostics/     health checks, troubleshooting ActivityTracePanel
+  Diagnostics/     logging & error tracking       ActivityLog
   docs/            lab deliverables
   Program.cs       session entry point → AppComposition.CreateMainView().Show()
   Startup.cs       Kestrel host, app.UseWisej()
@@ -27,8 +27,8 @@ TicketOps/
 | `Data/` | `TicketOps.Data` | Domain, Infrastructure (`ILog`) | Wisej.Web, Services, Views |
 | `Infrastructure/` | `TicketOps.Infrastructure` | everything (it composes the graph) | — |
 
-`InMemoryTicketRepository` is the only Data type a View sees, and only because the lab's outage
-switch lives on it; in production the screen would take `ITicketService` alone.
+No View references a Data type: `TicketEditor` takes `ITicketService` and `ILog` alone, and only
+`AppComposition` knows that the service sits on `InMemoryTicketRepository`.
 
 ## Natural first assembly split
 

@@ -13,11 +13,9 @@ namespace OrderDesk
     {
         static void Main(NameValueCollection args)
         {
-            // The real session-end cleanup lives HERE, not in the page: Wisej.NET may dispose the page
-            // before ApplicationExit fires, and a handler the page detaches in Dispose would then never
-            // run. Subscribed once per session in Main, the handler lives exactly as long as the session.
-            // No UI work — there may be no page left to push to; the steps go to the host console.
-            // It must never throw: an exception here would escape into the session teardown.
+            // Session-end cleanup (timeout expired, Application.Exit, browser gone). Subscribed here, once
+            // per session, so it runs even after the page is disposed. No UI work: there may be no page left
+            // to push to, so the steps go to the host console. It must never throw.
             Application.ApplicationExit += (s, e) =>
             {
                 try

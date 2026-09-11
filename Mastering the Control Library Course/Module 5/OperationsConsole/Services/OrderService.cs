@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using OperationsConsole.Models;
 using OperationsConsole.Orders;
-using OperationsConsole.Shell;
 
 namespace OperationsConsole.Services
 {
     /// <summary>
     /// Thrown when the orders back end does not answer. The screen catches it, says something friendly and keeps the
-    /// grid usable; the type name and the message go to the Event log only.
+    /// grid usable.
     /// </summary>
     public class OrderServiceException : Exception
     {
@@ -17,17 +16,8 @@ namespace OperationsConsole.Services
     }
 
     /// <summary>
-    /// The in-memory orders back end for Module 5 (DataGridView Mastery).
-    /// <para>
-    /// It stands in for the query layer a real Operations Console would have, and it is deliberately the <b>only</b>
-    /// place with business rules: filtering, paging, the due-date rules and the failure switch. No cell handler
-    /// decides anything; they call these methods and report what comes back.
-    /// </para>
-    /// <para>
-    /// Every call that would be a query in production is counted and written to the Event log
-    /// (<see cref="FetchCount"/>). That counter is the point of the lab's last step: scroll the virtual grid and watch
-    /// the log show <b>one fetch per page</b>, not one per cell and not one per row.
-    /// </para>
+    /// The in-memory orders back end. It is the only place with business rules: filtering, paging, the due-date rules
+    /// and the failure switch. No cell handler decides anything.
     /// </summary>
     public class OrderService
     {
@@ -41,7 +31,7 @@ namespace OperationsConsole.Services
             "Wide World Importers", "Litware Systems", "Proseware Medical", "Woodgrove Supply", "Alpine Ski House",
             "Blue Yonder Airlines", "Trey Research", "Lucerne Publishing", "Fourth Coffee", "Graphic Design Institute",
             "Humongous Insurance", "Margie's Travel", "Nod Publishers", "Coho Vineyard", "Relecloud Hosting",
-            // human-typed names really do contain & and <, which is exactly why the status badge encodes its text
+            // human-typed names really do contain & and <, which is why the status badge encodes its text
             "Novak & Sons", "Bergström <Nordic> AB", "O'Rourke & Daughters"
         };
 
@@ -57,42 +47,20 @@ namespace OperationsConsole.Services
             _orders = Generate(orderCount);
         }
 
-        // ------------------------------------------------------------------------------------------------------------
-        // Diagnostics — the failure switch and the service log counter
-        // ------------------------------------------------------------------------------------------------------------
-
-        /// <summary>When true the next call fails, so the failure path is reproducible from the command row.</summary>
+        /// <summary>When true every call fails, so the failure path can be shown.</summary>
         public bool SimulateFailure { get; set; }
-
-        /// <summary>How many "queries" this service has answered since <see cref="ResetFetchCount"/>.</summary>
-        public int FetchCount { get; private set; }
-
-        /// <summary>How many orders exist in total, before any filter.</summary>
-        public int TotalOrders => _orders.Count;
-
-        /// <summary>Zeroes the counter so the next scroll can be read on its own.</summary>
-        public void ResetFetchCount()
-        {
-            FetchCount = 0;
-        }
 
         // ------------------------------------------------------------------------------------------------------------
         // Reads
         // ------------------------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// The filtered working set for the <b>bound</b> path, capped at <paramref name="maxRows"/>.
-        /// <para>
-        /// The cap is the point: binding a list means one row object per row, so the bound path is for a set a person
-        /// can actually work with. The returned <see cref="OrderPage.TotalCount"/> is the real number of matches, so
-        /// the screen can say "the first 250 of 1 342" instead of quietly hiding rows — and the user can either narrow
-        /// the filter or switch to the virtual path.
-        /// </para>
+        /// The filtered working set for the bound path, capped at <paramref name="maxRows"/>.
+        /// <see cref="OrderPage.TotalCount"/> is the real number of matches.
         /// </summary>
         public OrderPage GetOrders(OrderFilter filter, int maxRows = 250)
         {
             Fail();
-            FetchCount++;
 
             if (maxRows < 1)
                 maxRows = 1;
@@ -100,32 +68,20 @@ namespace OperationsConsole.Services
             var filtered = Filtered(filter).ToList();
             var rows = filtered.Take(maxRows).ToList();
 
-            ConsoleLog.Add("OrderService.GetOrders(" + Describe(filter) + ", max " + maxRows + ") → " + rows.Count +
-                           " of " + filtered.Count + " matching rows  [fetch #" + FetchCount + "]");
             return new OrderPage(0, rows, filtered.Count);
         }
 
-        /// <summary>
-        /// How many rows the filter matches — the number the grid's <c>RowCount</c> is set from in virtual mode.
-        /// Counting is cheap; materialising the rows is not.
-        /// </summary>
+        /// <summary>How many rows the filter matches — the grid's <c>RowCount</c> in virtual mode.</summary>
         public int Count(OrderFilter filter)
         {
             Fail();
-            FetchCount++;
-            var count = Filtered(filter).Count();
-            ConsoleLog.Add("OrderService.Count(" + Describe(filter) + ") → " + count + " rows  [fetch #" + FetchCount + "]");
-            return count;
+            return Filtered(filter).Count();
         }
 
-        /// <summary>
-        /// One page of the filtered result — the only read the virtual path makes. <paramref name="first"/> is an
-        /// index into the filtered result, not into the whole table.
-        /// </summary>
+        /// <summary>One page of the filtered result — the only read the virtual path makes.</summary>
         public OrderPage GetPage(OrderFilter filter, int first, int count)
         {
             Fail();
-            FetchCount++;
 
             if (first < 0)
                 first = 0;
@@ -134,90 +90,45 @@ namespace OperationsConsole.Services
 
             var filtered = Filtered(filter).ToList();
             var rows = filtered.Skip(first).Take(count).ToList();
-            var page = new OrderPage(first, rows, filtered.Count);
-
-            ConsoleLog.Add("OrderService.GetPage(first=" + first + ", count=" + count + ") → " + rows.Count +
-                           " rows of " + filtered.Count + "  [fetch #" + FetchCount + "]");
-            return page;
+            return new OrderPage(first, rows, filtered.Count);
         }
 
-        /// <summary>One order by its stable ID — what the command column calls. Never "by whatever the cell shows".</summary>
+        /// <summary>One order by its stable ID — what the command column calls.</summary>
         public OrderRow GetOrder(string number)
         {
             Fail();
-            FetchCount++;
-            var order = _orders.FirstOrDefault(o => o.Number == number);
-            ConsoleLog.Add("OrderService.GetOrder(\"" + number + "\") → " + (order == null ? "not found" : order.Status + ", due " + order.DueDate.ToString("yyyy-MM-dd")) +
-                           "  [fetch #" + FetchCount + "]");
-            return order;
+            return _orders.FirstOrDefault(o => o.Number == number);
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Writes — the business rules of this screen
+        // Writes
         // ------------------------------------------------------------------------------------------------------------
 
         /// <summary>
-        /// Reschedules an order.
-        /// <list type="bullet">
-        /// <item>a due date in the past is rejected — you cannot promise a date that has already gone;</item>
-        /// <item>a cancelled order cannot be rescheduled;</item>
-        /// <item>more than a year out is rejected as a typo (2062 instead of 2026).</item>
-        /// </list>
-        /// A rejection is a normal answer: <see cref="OrderUpdateResult.Accepted"/> is false and the caller puts the
-        /// stored value back into the cell.
+        /// Reschedules an order. A due date in the past, a cancelled order, or a date more than a year out is rejected;
+        /// a rejection is a normal answer and the caller puts the stored value back.
         /// </summary>
         public OrderUpdateResult UpdateDueDate(string number, DateTime dueDate)
         {
             Fail();
-            FetchCount++;
 
             var order = _orders.FirstOrDefault(o => o.Number == number);
             if (order == null)
-            {
-                ConsoleLog.Add("OrderService.UpdateDueDate(\"" + number + "\") → rejected: unknown order  [fetch #" + FetchCount + "]");
                 return OrderUpdateResult.Rejected(null, "That order is no longer available. Refresh the list and try again.");
-            }
 
             var date = dueDate.Date;
 
             if (order.Status == "Cancelled")
-            {
-                ConsoleLog.Add("OrderService.UpdateDueDate(\"" + number + "\", " + date.ToString("yyyy-MM-dd") + ") → rejected: order is cancelled  [fetch #" + FetchCount + "]");
                 return OrderUpdateResult.Rejected(order, "Order " + number + " is cancelled, so its due date cannot be changed.");
-            }
 
             if (date < DateTime.Today)
-            {
-                ConsoleLog.Add("OrderService.UpdateDueDate(\"" + number + "\", " + date.ToString("yyyy-MM-dd") + ") → rejected: due date is in the past  [fetch #" + FetchCount + "]");
                 return OrderUpdateResult.Rejected(order, "A due date in the past cannot be saved — pick " + DateTime.Today.ToString("d") + " or later.");
-            }
 
             if (date > DateTime.Today.AddYears(1))
-            {
-                ConsoleLog.Add("OrderService.UpdateDueDate(\"" + number + "\", " + date.ToString("yyyy-MM-dd") + ") → rejected: more than a year out  [fetch #" + FetchCount + "]");
                 return OrderUpdateResult.Rejected(order, "A due date more than a year away is usually a typing slip — pick a date before " + DateTime.Today.AddYears(1).ToString("d") + ".");
-            }
 
             order.DueDate = date;
-            ConsoleLog.Add("OrderService.UpdateDueDate(\"" + number + "\", " + date.ToString("yyyy-MM-dd") + ") → accepted  [fetch #" + FetchCount + "]");
             return OrderUpdateResult.Ok(order, "Order " + number + " is now due " + date.ToString("d") + ".");
-        }
-
-        /// <summary>
-        /// Stores a status exactly as it is given — used by the "Inject unsafe status" demo to prove that the badge in
-        /// <c>CellFormatting</c> encodes whatever the model holds instead of executing it.
-        /// </summary>
-        public OrderRow SetStatus(string number, string status)
-        {
-            Fail();
-            FetchCount++;
-
-            var order = _orders.FirstOrDefault(o => o.Number == number);
-            if (order != null)
-                order.Status = status;
-
-            ConsoleLog.Add("OrderService.SetStatus(\"" + number + "\", <raw text>) → stored unchanged  [fetch #" + FetchCount + "]");
-            return order;
         }
 
         // ------------------------------------------------------------------------------------------------------------
@@ -243,20 +154,13 @@ namespace OperationsConsole.Services
             return rows;
         }
 
-        private static string Describe(OrderFilter filter) => filter == null ? "no filter" : filter.Describe();
-
         private void Fail()
         {
-            if (!SimulateFailure)
-                return;
-
-            throw new OrderServiceException("simulated back-end failure (the 'Simulate service failure' switch is on)");
+            if (SimulateFailure)
+                throw new OrderServiceException("The orders service did not answer.");
         }
 
-        /// <summary>
-        /// A few thousand deterministic orders. Deterministic on purpose: the same seed gives the same list every run,
-        /// so a log line the reviewer reads once still means the same thing on the next run.
-        /// </summary>
+        /// <summary>A few thousand deterministic orders (fixed seed).</summary>
         private static List<OrderRow> Generate(int count)
         {
             var random = new Random(20260910);

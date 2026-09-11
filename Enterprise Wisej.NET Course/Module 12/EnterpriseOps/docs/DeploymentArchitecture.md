@@ -13,7 +13,7 @@
 | Application | `app-node-A`, `app-node-B` | Kestrel + Wisej.NET, **in-memory session state**, `/healthz` + `/healthz/live` | `Startup.cs`, `Services/HealthProbeService.cs`, `Services/LoadBalancerSimulator.cs` |
 | Data | SQL database | shared across nodes, migrated once per release | `Data/WorkOrderRepository.cs` (in-memory fake for the lab) |
 | Data | Object storage | uploads — never node-local disk, or a drained node loses files | `storage` check in `HealthCheck.json` |
-| Secrets | Vault / platform secret store | supplies `EnterpriseOps__ConnectionString`, `EnterpriseOps__IdentityProvider__ClientSecret` as environment variables at deploy time | `Services/ConfigurationService.PlatformSecrets`, `Services/StartupValidation.cs` |
+| Secrets | Vault / platform secret store | supplies `EnterpriseOps__ConnectionString`, `EnterpriseOps__IdentityProvider__ClientSecret` as environment variables at deploy time | `Services/StartupValidation.cs` |
 | Pipeline | build → config → staging → smoke → health → production → monitor → rollback | one artifact promoted, never rebuilt per environment | `Services/ReleaseService.cs`, `ReleaseRunbook.md` |
 
 ## Deployment targets this architecture supports unchanged
@@ -35,4 +35,4 @@
 
 - Start the app and look at the **Nodes — live from HealthCheck.json** grid: `app-node-A` is this process (its row comes from the real `GET /healthz`), `app-node-B` is the simulated peer.
 - `GET http://localhost:5212/healthz` returns the readiness body; `GET /healthz/live` returns liveness. The `.json` files themselves are never served — `Startup.cs` filters them out of the file server.
-- **Fail: balancer without affinity** routes this session's next request round-robin, and the trace shows `app-node-B has no session … in memory → a NEW session starts`. That is the diagram's "why affinity is mandatory" note, executed.
+- The first **Deploy…** fails on `app-node-B`: the balancer routes new sessions away from it while `app-node-A` keeps its pinned sessions — the diagram's "why affinity is mandatory" note, executed.

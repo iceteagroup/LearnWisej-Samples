@@ -1,5 +1,3 @@
-using TicketOps.Services;
-
 namespace TicketOps.Diagnostics
 {
     /// <summary>
@@ -26,8 +24,5 @@ namespace TicketOps.Diagnostics
 
         /// <summary>Application.ServerName:ServerPort.</summary>
         string Server { get; }
-
-        /// <summary>Whether Application.Session (Wisej's per-session bag) still holds the very same SessionContext instance.</summary>
-        bool? SessionBagHolds(SessionContext ctx);
     }
 }

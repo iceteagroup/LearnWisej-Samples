@@ -12,11 +12,9 @@ namespace EnterpriseOps.UI
         /// </summary>
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && (components != null))
             {
-                DetachTrace();                  // the session's trace outlives this screen — see the code-behind
-                if (components != null)
-                    components.Dispose();
+                components.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -28,11 +26,10 @@ namespace EnterpriseOps.UI
             this.components = new System.ComponentModel.Container();
             this.pnlHeader = new Wisej.Web.Panel();
             this.lblTitle = new Wisej.Web.Label();
-            this.lblTenant = new Wisej.Web.Label();
-            this.lblUser = new Wisej.Web.Label();
-            this.lblCorrelation = new Wisej.Web.Label();
+            this.btnDashboard = new Wisej.Web.Button();
             this.tabCapstone = new Wisej.Web.TabControl();
             this.tabPackage = new Wisej.Web.TabPage();
+            this.btnVerifyPackage = new Wisej.Web.Button();
             this.lblPackageStatus = new Wisej.Web.Label();
             this.dgvPackage = new Wisej.Web.DataGridView();
             this.colDeliverable = new Wisej.Web.DataGridViewTextBoxColumn();
@@ -55,6 +52,10 @@ namespace EnterpriseOps.UI
             this.lstPrompts = new Wisej.Web.ListBox();
             this.txtPrompt = new Wisej.Web.TextBox();
             this.tabReview = new Wisej.Web.TabPage();
+            this.btnLoadDraft = new Wisej.Web.Button();
+            this.btnLoadFixed = new Wisej.Web.Button();
+            this.btnReviewGeneratedCode = new Wisej.Web.Button();
+            this.btnSignDecision = new Wisej.Web.Button();
             this.lblVerdict = new Wisej.Web.Label();
             this.lblReviewSource = new Wisej.Web.Label();
             this.txtGeneratedCode = new Wisej.Web.TextBox();
@@ -81,19 +82,6 @@ namespace EnterpriseOps.UI
             this.colDecisionAuthor = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colDecisionReviewer = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colDecisionReason = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.pnlTrace = new Wisej.Web.Panel();
-            this.lblTraceTitle = new Wisej.Web.Label();
-            this.lstTrace = new Wisej.Web.ListBox();
-            this.lblTraceFooter = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.Panel();
-            this.btnVerifyPackage = new Wisej.Web.Button();
-            this.btnLoadDraft = new Wisej.Web.Button();
-            this.btnReviewGeneratedCode = new Wisej.Web.Button();
-            this.btnLoadFixed = new Wisej.Web.Button();
-            this.btnSignDecision = new Wisej.Web.Button();
-            this.btnMissingDeliverable = new Wisej.Web.Button();
-            this.btnDashboard = new Wisej.Web.Button();
-            this.btnClearTrace = new Wisej.Web.Button();
             this.pnlHeader.SuspendLayout();
             this.tabCapstone.SuspendLayout();
             this.tabPackage.SuspendLayout();
@@ -102,8 +90,6 @@ namespace EnterpriseOps.UI
             this.tabReview.SuspendLayout();
             this.tabChecklist.SuspendLayout();
             this.tabDecisions.SuspendLayout();
-            this.pnlTrace.SuspendLayout();
-            this.pnlActions.SuspendLayout();
             this.SuspendLayout();
             //
             // pnlHeader
@@ -111,12 +97,10 @@ namespace EnterpriseOps.UI
             this.pnlHeader.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(21, 101, 216);
             this.pnlHeader.Controls.Add(this.lblTitle);
-            this.pnlHeader.Controls.Add(this.lblTenant);
-            this.pnlHeader.Controls.Add(this.lblUser);
-            this.pnlHeader.Controls.Add(this.lblCorrelation);
+            this.pnlHeader.Controls.Add(this.btnDashboard);
             this.pnlHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1348, 44);
+            this.pnlHeader.Size = new System.Drawing.Size(932, 44);
             //
             // lblTitle
             //
@@ -125,49 +109,22 @@ namespace EnterpriseOps.UI
             this.lblTitle.ForeColor = System.Drawing.Color.White;
             this.lblTitle.Location = new System.Drawing.Point(24, 0);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(620, 44);
-            this.lblTitle.Text = "EnterpriseOps — Capstone review · the delivery package";
+            this.lblTitle.Size = new System.Drawing.Size(420, 44);
+            this.lblTitle.Text = "EnterpriseOps — Capstone review";
             this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // lblTenant
+            // btnDashboard
             //
-            this.lblTenant.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblTenant.AutoSize = false;
-            this.lblTenant.Font = new System.Drawing.Font("default", 9F);
-            this.lblTenant.ForeColor = System.Drawing.Color.FromArgb(214, 228, 243);
-            this.lblTenant.Location = new System.Drawing.Point(700, 0);
-            this.lblTenant.Name = "lblTenant";
-            this.lblTenant.Size = new System.Drawing.Size(180, 44);
-            this.lblTenant.Text = "tenant: contoso";
-            this.lblTenant.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnDashboard.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
+            this.btnDashboard.Location = new System.Drawing.Point(768, 6);
+            this.btnDashboard.Name = "btnDashboard";
+            this.btnDashboard.Size = new System.Drawing.Size(148, 32);
+            this.btnDashboard.Text = "← Command Center";
+            this.btnDashboard.Click += new System.EventHandler(this.btnDashboard_Click);
             //
-            // lblUser
+            // tabCapstone
             //
-            this.lblUser.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblUser.AutoSize = false;
-            this.lblUser.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblUser.ForeColor = System.Drawing.Color.White;
-            this.lblUser.Location = new System.Drawing.Point(886, 0);
-            this.lblUser.Name = "lblUser";
-            this.lblUser.Size = new System.Drawing.Size(270, 44);
-            this.lblUser.Text = "Signed in: ana.ops · Manager";
-            this.lblUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            // lblCorrelation
-            //
-            this.lblCorrelation.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblCorrelation.AutoSize = false;
-            this.lblCorrelation.Font = new System.Drawing.Font("monospace", 9F);
-            this.lblCorrelation.ForeColor = System.Drawing.Color.FromArgb(214, 228, 243);
-            this.lblCorrelation.Location = new System.Drawing.Point(1162, 0);
-            this.lblCorrelation.Name = "lblCorrelation";
-            this.lblCorrelation.Size = new System.Drawing.Size(162, 44);
-            this.lblCorrelation.Text = "corr —";
-            this.lblCorrelation.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            // tabCapstone  (one tab per deliverable, in the order the lab lists them)
-            //
-            this.tabCapstone.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
+            this.tabCapstone.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.tabCapstone.Controls.Add(this.tabPackage);
             this.tabCapstone.Controls.Add(this.tabPrompts);
             this.tabCapstone.Controls.Add(this.tabChecklist);
@@ -182,10 +139,20 @@ namespace EnterpriseOps.UI
             // tabPackage
             //
             this.tabPackage.BackColor = System.Drawing.Color.White;
+            this.tabPackage.Controls.Add(this.btnVerifyPackage);
             this.tabPackage.Controls.Add(this.lblPackageStatus);
             this.tabPackage.Controls.Add(this.dgvPackage);
             this.tabPackage.Name = "tabPackage";
             this.tabPackage.Text = "Capstone package";
+            //
+            // btnVerifyPackage
+            //
+            this.btnVerifyPackage.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
+            this.btnVerifyPackage.Location = new System.Drawing.Point(12, 8);
+            this.btnVerifyPackage.Name = "btnVerifyPackage";
+            this.btnVerifyPackage.Size = new System.Drawing.Size(170, 30);
+            this.btnVerifyPackage.Text = "✓ Verify package";
+            this.btnVerifyPackage.Click += new System.EventHandler(this.btnVerifyPackage_Click);
             //
             // lblPackageStatus
             //
@@ -193,10 +160,10 @@ namespace EnterpriseOps.UI
             this.lblPackageStatus.AutoSize = false;
             this.lblPackageStatus.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.lblPackageStatus.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblPackageStatus.Location = new System.Drawing.Point(12, 10);
+            this.lblPackageStatus.Location = new System.Drawing.Point(194, 10);
             this.lblPackageStatus.Name = "lblPackageStatus";
-            this.lblPackageStatus.Size = new System.Drawing.Size(860, 26);
-            this.lblPackageStatus.Text = "● not verified — press \"Verify capstone package\"";
+            this.lblPackageStatus.Size = new System.Drawing.Size(678, 26);
+            this.lblPackageStatus.Text = "● not verified";
             //
             // dgvPackage
             //
@@ -212,13 +179,13 @@ namespace EnterpriseOps.UI
             this.colDeliverableRequired,
             this.colDeliverableResult,
             this.colDeliverableDetail});
-            this.dgvPackage.Location = new System.Drawing.Point(12, 42);
+            this.dgvPackage.Location = new System.Drawing.Point(12, 46);
             this.dgvPackage.MultiSelect = false;
             this.dgvPackage.Name = "dgvPackage";
             this.dgvPackage.ReadOnly = true;
             this.dgvPackage.RowHeadersVisible = false;
             this.dgvPackage.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvPackage.Size = new System.Drawing.Size(860, 468);
+            this.dgvPackage.Size = new System.Drawing.Size(860, 464);
             this.colDeliverable.DataPropertyName = "Deliverable";
             this.colDeliverable.HeaderText = "Deliverable";
             this.colDeliverable.Name = "colDeliverable";
@@ -268,7 +235,7 @@ namespace EnterpriseOps.UI
             this.lstPrompts.Size = new System.Drawing.Size(280, 468);
             this.lstPrompts.SelectedIndexChanged += new System.EventHandler(this.lstPrompts_SelectedIndexChanged);
             //
-            // txtPrompt  (the prompt as it would be pasted: the project rules header first, then the task)
+            // txtPrompt
             //
             this.txtPrompt.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.txtPrompt.Font = new System.Drawing.Font("monospace", 9F);
@@ -295,7 +262,7 @@ namespace EnterpriseOps.UI
             this.lblChecklistTitle.Location = new System.Drawing.Point(12, 10);
             this.lblChecklistTitle.Name = "lblChecklistTitle";
             this.lblChecklistTitle.Size = new System.Drawing.Size(860, 26);
-            this.lblChecklistTitle.Text = "docs/GeneratedCodeReviewChecklist.md — every change, generated or not";
+            this.lblChecklistTitle.Text = "docs/GeneratedCodeReviewChecklist.md";
             //
             // dgvChecklist
             //
@@ -322,7 +289,7 @@ namespace EnterpriseOps.UI
             this.colRuleId.Name = "colRuleId";
             this.colRuleId.Width = 50;
             this.colRuleQuestion.DataPropertyName = "Question";
-            this.colRuleQuestion.HeaderText = "The question asked of every change";
+            this.colRuleQuestion.HeaderText = "Question";
             this.colRuleQuestion.Name = "colRuleQuestion";
             this.colRuleQuestion.Width = 500;
             this.colRuleSeverity.DataPropertyName = "Severity";
@@ -330,19 +297,56 @@ namespace EnterpriseOps.UI
             this.colRuleSeverity.Name = "colRuleSeverity";
             this.colRuleSeverity.Width = 90;
             this.colRuleReference.DataPropertyName = "DocReference";
-            this.colRuleReference.HeaderText = "Written down in";
+            this.colRuleReference.HeaderText = "Reference";
             this.colRuleReference.Name = "colRuleReference";
             this.colRuleReference.Width = 320;
             //
-            // tabReview  (the failure path: run the checklist over generated code)
+            // tabReview
             //
             this.tabReview.BackColor = System.Drawing.Color.White;
+            this.tabReview.Controls.Add(this.btnLoadDraft);
+            this.tabReview.Controls.Add(this.btnLoadFixed);
+            this.tabReview.Controls.Add(this.btnReviewGeneratedCode);
+            this.tabReview.Controls.Add(this.btnSignDecision);
             this.tabReview.Controls.Add(this.lblVerdict);
             this.tabReview.Controls.Add(this.lblReviewSource);
             this.tabReview.Controls.Add(this.txtGeneratedCode);
             this.tabReview.Controls.Add(this.dgvFindings);
             this.tabReview.Name = "tabReview";
             this.tabReview.Text = "Generated-code review";
+            //
+            // btnLoadDraft
+            //
+            this.btnLoadDraft.Location = new System.Drawing.Point(12, 8);
+            this.btnLoadDraft.Name = "btnLoadDraft";
+            this.btnLoadDraft.Size = new System.Drawing.Size(150, 30);
+            this.btnLoadDraft.Text = "Load AI draft #214";
+            this.btnLoadDraft.Click += new System.EventHandler(this.btnLoadDraft_Click);
+            //
+            // btnLoadFixed
+            //
+            this.btnLoadFixed.Location = new System.Drawing.Point(168, 8);
+            this.btnLoadFixed.Name = "btnLoadFixed";
+            this.btnLoadFixed.Size = new System.Drawing.Size(150, 30);
+            this.btnLoadFixed.Text = "Load rev 2 (fixed)";
+            this.btnLoadFixed.Click += new System.EventHandler(this.btnLoadFixed_Click);
+            //
+            // btnReviewGeneratedCode
+            //
+            this.btnReviewGeneratedCode.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
+            this.btnReviewGeneratedCode.Location = new System.Drawing.Point(324, 8);
+            this.btnReviewGeneratedCode.Name = "btnReviewGeneratedCode";
+            this.btnReviewGeneratedCode.Size = new System.Drawing.Size(200, 30);
+            this.btnReviewGeneratedCode.Text = "▶ Review generated code";
+            this.btnReviewGeneratedCode.Click += new System.EventHandler(this.btnReviewGeneratedCode_Click);
+            //
+            // btnSignDecision
+            //
+            this.btnSignDecision.Location = new System.Drawing.Point(530, 8);
+            this.btnSignDecision.Name = "btnSignDecision";
+            this.btnSignDecision.Size = new System.Drawing.Size(150, 30);
+            this.btnSignDecision.Text = "Sign the decision";
+            this.btnSignDecision.Click += new System.EventHandler(this.btnSignDecision_Click);
             //
             // lblVerdict
             //
@@ -351,7 +355,7 @@ namespace EnterpriseOps.UI
             this.lblVerdict.BackColor = System.Drawing.Color.FromArgb(244, 246, 249);
             this.lblVerdict.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.lblVerdict.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblVerdict.Location = new System.Drawing.Point(12, 8);
+            this.lblVerdict.Location = new System.Drawing.Point(12, 44);
             this.lblVerdict.Name = "lblVerdict";
             this.lblVerdict.Padding = new Wisej.Web.Padding(10, 0, 10, 0);
             this.lblVerdict.Size = new System.Drawing.Size(860, 30);
@@ -364,19 +368,19 @@ namespace EnterpriseOps.UI
             this.lblReviewSource.AutoSize = false;
             this.lblReviewSource.Font = new System.Drawing.Font("default", 8F);
             this.lblReviewSource.ForeColor = System.Drawing.Color.FromArgb(120, 136, 153);
-            this.lblReviewSource.Location = new System.Drawing.Point(12, 42);
+            this.lblReviewSource.Location = new System.Drawing.Point(12, 78);
             this.lblReviewSource.Name = "lblReviewSource";
             this.lblReviewSource.Size = new System.Drawing.Size(860, 18);
-            this.lblReviewSource.Text = "Pull request #214 · generated by an AI assistant · the text below is reviewed exactly as pasted";
+            this.lblReviewSource.Text = "Pull request #214 · generated by an AI assistant";
             //
-            // txtGeneratedCode  (the change under review — editable, so a learner can paste their own)
+            // txtGeneratedCode
             //
             this.txtGeneratedCode.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.txtGeneratedCode.Font = new System.Drawing.Font("monospace", 9F);
-            this.txtGeneratedCode.Location = new System.Drawing.Point(12, 64);
+            this.txtGeneratedCode.Location = new System.Drawing.Point(12, 98);
             this.txtGeneratedCode.Multiline = true;
             this.txtGeneratedCode.Name = "txtGeneratedCode";
-            this.txtGeneratedCode.Size = new System.Drawing.Size(860, 228);
+            this.txtGeneratedCode.Size = new System.Drawing.Size(860, 200);
             //
             // dgvFindings
             //
@@ -393,13 +397,13 @@ namespace EnterpriseOps.UI
             this.colFinding,
             this.colEvidence,
             this.colFix});
-            this.dgvFindings.Location = new System.Drawing.Point(12, 300);
+            this.dgvFindings.Location = new System.Drawing.Point(12, 306);
             this.dgvFindings.MultiSelect = false;
             this.dgvFindings.Name = "dgvFindings";
             this.dgvFindings.ReadOnly = true;
             this.dgvFindings.RowHeadersVisible = false;
             this.dgvFindings.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvFindings.Size = new System.Drawing.Size(860, 210);
+            this.dgvFindings.Size = new System.Drawing.Size(860, 204);
             this.colRule.DataPropertyName = "RuleId";
             this.colRule.HeaderText = "Rule";
             this.colRule.Name = "colRule";
@@ -413,7 +417,7 @@ namespace EnterpriseOps.UI
             this.colLine.Name = "colLine";
             this.colLine.Width = 50;
             this.colFinding.DataPropertyName = "Message";
-            this.colFinding.HeaderText = "Why it fails the checklist";
+            this.colFinding.HeaderText = "Finding";
             this.colFinding.Name = "colFinding";
             this.colFinding.Width = 420;
             this.colEvidence.DataPropertyName = "Evidence";
@@ -421,11 +425,11 @@ namespace EnterpriseOps.UI
             this.colEvidence.Name = "colEvidence";
             this.colEvidence.Width = 300;
             this.colFix.DataPropertyName = "Fix";
-            this.colFix.HeaderText = "What the accepted version does";
+            this.colFix.HeaderText = "Fix";
             this.colFix.Name = "colFix";
             this.colFix.Width = 380;
             //
-            // tabDocs  (the MCP-ready documentation index, read back from docs/index.json)
+            // tabDocs
             //
             this.tabDocs.BackColor = System.Drawing.Color.White;
             this.tabDocs.Controls.Add(this.lblDocsStatus);
@@ -494,10 +498,9 @@ namespace EnterpriseOps.UI
             this.colDocResolves.DataPropertyName = "Exists";
             this.colDocResolves.HeaderText = "Resolves";
             this.colDocResolves.Name = "colDocResolves";
-            this.colDocResolves.ToolTipText = "False means the documentation endpoint would answer 404 for this resource.";
             this.colDocResolves.Width = 80;
             //
-            // tabDecisions  (which generated code was accepted, by whom and why)
+            // tabDecisions
             //
             this.tabDecisions.BackColor = System.Drawing.Color.White;
             this.tabDecisions.Controls.Add(this.lblDecisionsStatus);
@@ -563,145 +566,13 @@ namespace EnterpriseOps.UI
             this.colDecisionReason.Name = "colDecisionReason";
             this.colDecisionReason.Width = 420;
             //
-            // pnlTrace  (the same session buffer the Command Center shows)
-            //
-            this.pnlTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.pnlTrace.BackColor = System.Drawing.Color.White;
-            this.pnlTrace.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.pnlTrace.Controls.Add(this.lblTraceTitle);
-            this.pnlTrace.Controls.Add(this.lstTrace);
-            this.pnlTrace.Controls.Add(this.lblTraceFooter);
-            this.pnlTrace.Location = new System.Drawing.Point(932, 56);
-            this.pnlTrace.Name = "pnlTrace";
-            this.pnlTrace.Size = new System.Drawing.Size(400, 560);
-            //
-            // lblTraceTitle
-            //
-            this.lblTraceTitle.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblTraceTitle.AutoSize = false;
-            this.lblTraceTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblTraceTitle.Location = new System.Drawing.Point(14, 10);
-            this.lblTraceTitle.Name = "lblTraceTitle";
-            this.lblTraceTitle.Size = new System.Drawing.Size(368, 26);
-            this.lblTraceTitle.Text = "Server · live activity trace";
-            //
-            // lstTrace
-            //
-            this.lstTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lstTrace.Font = new System.Drawing.Font("monospace", 9F);
-            this.lstTrace.Location = new System.Drawing.Point(14, 42);
-            this.lstTrace.Name = "lstTrace";
-            this.lstTrace.Size = new System.Drawing.Size(368, 482);
-            //
-            // lblTraceFooter
-            //
-            this.lblTraceFooter.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblTraceFooter.AutoSize = false;
-            this.lblTraceFooter.Font = new System.Drawing.Font("default", 8F);
-            this.lblTraceFooter.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblTraceFooter.Location = new System.Drawing.Point(14, 528);
-            this.lblTraceFooter.Name = "lblTraceFooter";
-            this.lblTraceFooter.Size = new System.Drawing.Size(368, 24);
-            this.lblTraceFooter.Text = "UI → · Security: · Service: · Data: · Job: · Review: · Docs:";
-            //
-            // pnlActions
-            //
-            this.pnlActions.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.pnlActions.Controls.Add(this.btnVerifyPackage);
-            this.pnlActions.Controls.Add(this.btnLoadDraft);
-            this.pnlActions.Controls.Add(this.btnReviewGeneratedCode);
-            this.pnlActions.Controls.Add(this.btnLoadFixed);
-            this.pnlActions.Controls.Add(this.btnSignDecision);
-            this.pnlActions.Controls.Add(this.btnMissingDeliverable);
-            this.pnlActions.Controls.Add(this.btnDashboard);
-            this.pnlActions.Controls.Add(this.btnClearTrace);
-            this.pnlActions.Location = new System.Drawing.Point(16, 624);
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Size = new System.Drawing.Size(1316, 44);
-            //
-            // btnVerifyPackage  (the success path: the package checks itself in front of the reviewer)
-            //
-            this.btnVerifyPackage.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.btnVerifyPackage.Location = new System.Drawing.Point(0, 4);
-            this.btnVerifyPackage.Name = "btnVerifyPackage";
-            this.btnVerifyPackage.Size = new System.Drawing.Size(170, 36);
-            this.btnVerifyPackage.Text = "✓ Verify package";
-            this.btnVerifyPackage.ToolTipText = "CapstonePackageService.VerifyAsync — every deliverable, its file, its size and the section that proves it.";
-            this.btnVerifyPackage.Click += new System.EventHandler(this.btnVerifyPackage_Click);
-            //
-            // btnLoadDraft
-            //
-            this.btnLoadDraft.Location = new System.Drawing.Point(176, 4);
-            this.btnLoadDraft.Name = "btnLoadDraft";
-            this.btnLoadDraft.Size = new System.Drawing.Size(160, 36);
-            this.btnLoadDraft.Text = "Load AI draft #214";
-            this.btnLoadDraft.ToolTipText = "The generated pull request the walkthrough reviews: it compiles, and it is wrong in five ways.";
-            this.btnLoadDraft.Click += new System.EventHandler(this.btnLoadDraft_Click);
-            //
-            // btnReviewGeneratedCode  (the failure path: the checklist runs and blocks the merge)
-            //
-            this.btnReviewGeneratedCode.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.btnReviewGeneratedCode.Location = new System.Drawing.Point(342, 4);
-            this.btnReviewGeneratedCode.Name = "btnReviewGeneratedCode";
-            this.btnReviewGeneratedCode.Size = new System.Drawing.Size(190, 36);
-            this.btnReviewGeneratedCode.Text = "▶ Review generated code";
-            this.btnReviewGeneratedCode.ToolTipText = "Runs the ten checklist rules over the text in the box and reports every violation with its line.";
-            this.btnReviewGeneratedCode.Click += new System.EventHandler(this.btnReviewGeneratedCode_Click);
-            //
-            // btnLoadFixed  (the recovery: the same feature, rewritten)
-            //
-            this.btnLoadFixed.Location = new System.Drawing.Point(538, 4);
-            this.btnLoadFixed.Name = "btnLoadFixed";
-            this.btnLoadFixed.Size = new System.Drawing.Size(160, 36);
-            this.btnLoadFixed.Text = "Load rev 2 (fixed)";
-            this.btnLoadFixed.ToolTipText = "Instance service, session-scoped state, DataGridView.VirtualMode cited from the documentation.";
-            this.btnLoadFixed.Click += new System.EventHandler(this.btnLoadFixed_Click);
-            //
-            // btnSignDecision
-            //
-            this.btnSignDecision.Location = new System.Drawing.Point(704, 4);
-            this.btnSignDecision.Name = "btnSignDecision";
-            this.btnSignDecision.Size = new System.Drawing.Size(150, 36);
-            this.btnSignDecision.Text = "Sign the decision";
-            this.btnSignDecision.ToolTipText = "Records which generated code was accepted and why — signed by a reviewer, never by the author.";
-            this.btnSignDecision.Click += new System.EventHandler(this.btnSignDecision_Click);
-            //
-            // btnMissingDeliverable  (failure path 2: a deliverable that was never written)
-            //
-            this.btnMissingDeliverable.Location = new System.Drawing.Point(860, 4);
-            this.btnMissingDeliverable.Name = "btnMissingDeliverable";
-            this.btnMissingDeliverable.Size = new System.Drawing.Size(176, 36);
-            this.btnMissingDeliverable.Text = "Fail: missing document";
-            this.btnMissingDeliverable.ToolTipText = "Adds an indexed document that is not on disk: the index would 404 and the package stops passing.";
-            this.btnMissingDeliverable.Click += new System.EventHandler(this.btnMissingDeliverable_Click);
-            //
-            // btnDashboard
-            //
-            this.btnDashboard.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.btnDashboard.Location = new System.Drawing.Point(1042, 4);
-            this.btnDashboard.Name = "btnDashboard";
-            this.btnDashboard.Size = new System.Drawing.Size(158, 36);
-            this.btnDashboard.Text = "← Command Center";
-            this.btnDashboard.Click += new System.EventHandler(this.btnDashboard_Click);
-            //
-            // btnClearTrace
-            //
-            this.btnClearTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.btnClearTrace.Location = new System.Drawing.Point(1206, 4);
-            this.btnClearTrace.Name = "btnClearTrace";
-            this.btnClearTrace.Size = new System.Drawing.Size(110, 36);
-            this.btnClearTrace.Text = "Clear trace";
-            this.btnClearTrace.Click += new System.EventHandler(this.btnClearTrace_Click);
-            //
             // CapstoneReviewPage
             //
             this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
             this.Controls.Add(this.pnlHeader);
             this.Controls.Add(this.tabCapstone);
-            this.Controls.Add(this.pnlTrace);
-            this.Controls.Add(this.pnlActions);
             this.Name = "CapstoneReviewPage";
-            this.Size = new System.Drawing.Size(1348, 680);
+            this.Size = new System.Drawing.Size(932, 632);
             this.Text = "EnterpriseOps — Capstone review";
             this.Load += new System.EventHandler(this.CapstoneReviewPage_Load);
             this.pnlHeader.ResumeLayout(false);
@@ -712,8 +583,6 @@ namespace EnterpriseOps.UI
             this.tabReview.ResumeLayout(false);
             this.tabChecklist.ResumeLayout(false);
             this.tabDecisions.ResumeLayout(false);
-            this.pnlTrace.ResumeLayout(false);
-            this.pnlActions.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -721,11 +590,10 @@ namespace EnterpriseOps.UI
 
         private Wisej.Web.Panel pnlHeader;
         private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblTenant;
-        private Wisej.Web.Label lblUser;
-        private Wisej.Web.Label lblCorrelation;
+        private Wisej.Web.Button btnDashboard;
         private Wisej.Web.TabControl tabCapstone;
         private Wisej.Web.TabPage tabPackage;
+        private Wisej.Web.Button btnVerifyPackage;
         private Wisej.Web.Label lblPackageStatus;
         private Wisej.Web.DataGridView dgvPackage;
         private Wisej.Web.DataGridViewTextBoxColumn colDeliverable;
@@ -748,6 +616,10 @@ namespace EnterpriseOps.UI
         private Wisej.Web.ListBox lstPrompts;
         private Wisej.Web.TextBox txtPrompt;
         private Wisej.Web.TabPage tabReview;
+        private Wisej.Web.Button btnLoadDraft;
+        private Wisej.Web.Button btnLoadFixed;
+        private Wisej.Web.Button btnReviewGeneratedCode;
+        private Wisej.Web.Button btnSignDecision;
         private Wisej.Web.Label lblVerdict;
         private Wisej.Web.Label lblReviewSource;
         private Wisej.Web.TextBox txtGeneratedCode;
@@ -774,18 +646,5 @@ namespace EnterpriseOps.UI
         private Wisej.Web.DataGridViewTextBoxColumn colDecisionAuthor;
         private Wisej.Web.DataGridViewTextBoxColumn colDecisionReviewer;
         private Wisej.Web.DataGridViewTextBoxColumn colDecisionReason;
-        private Wisej.Web.Panel pnlTrace;
-        private Wisej.Web.Label lblTraceTitle;
-        private Wisej.Web.ListBox lstTrace;
-        private Wisej.Web.Label lblTraceFooter;
-        private Wisej.Web.Panel pnlActions;
-        private Wisej.Web.Button btnVerifyPackage;
-        private Wisej.Web.Button btnLoadDraft;
-        private Wisej.Web.Button btnReviewGeneratedCode;
-        private Wisej.Web.Button btnLoadFixed;
-        private Wisej.Web.Button btnSignDecision;
-        private Wisej.Web.Button btnMissingDeliverable;
-        private Wisej.Web.Button btnDashboard;
-        private Wisej.Web.Button btnClearTrace;
     }
 }

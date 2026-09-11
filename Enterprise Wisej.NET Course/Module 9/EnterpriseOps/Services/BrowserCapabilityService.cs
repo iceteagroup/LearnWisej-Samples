@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
 namespace EnterpriseOps.Services
@@ -22,7 +21,7 @@ namespace EnterpriseOps.Services
             string tail = Available
                 ? (string.IsNullOrEmpty(Detail) ? "" : "  " + Detail)
                 : "  " + (string.IsNullOrEmpty(Fallback) ? "unavailable" : Fallback);
-            return $"{mark} {Title,-22}{tail}";
+            return $"{mark} {Title,-19}{tail}";
         }
     }
 
@@ -33,8 +32,8 @@ namespace EnterpriseOps.Services
     /// bigger permission. Nothing here is ever consulted by ClientCommandService — grep for it and
     /// you will find no call, which is the point a reviewer should check.
     ///
-    /// Validation: the server owns the key list. Keys it does not know are counted and dropped,
-    /// which is what happens to a forged report that tries to smuggle "canApprove": true.
+    /// Validation: the server owns the key list. Keys it does not know are counted, logged and
+    /// dropped — a report that tries to smuggle "canApprove=1" loses the key here.
     /// </summary>
     public sealed class BrowserCapabilityService
     {
@@ -68,8 +67,6 @@ namespace EnterpriseOps.Services
         }
 
         public IReadOnlyList<CapabilityReading> Readings => _readings;
-        public DateTime? CollectedUtc { get; private set; }
-        public int IgnoredKeys { get; private set; }
         public int Reports { get; private set; }
 
         /// <summary>
@@ -129,8 +126,6 @@ namespace EnterpriseOps.Services
                 }
             }
 
-            IgnoredKeys = ignored;
-            CollectedUtc = DateTime.UtcNow;
             _readings.Clear();
             _readings.AddRange(accepted.OrderBy(r => Order(r.Key)));
 
@@ -140,21 +135,6 @@ namespace EnterpriseOps.Services
                 _trace.Service($"  fallback · {reading.Title} unavailable → {reading.Fallback}");
 
             return _readings;
-        }
-
-        /// <summary>The one-line summary the status bar shows.</summary>
-        public string Summary()
-        {
-            if (CollectedUtc == null) return "No capability report yet — the widget has not reported.";
-            int available = _readings.Count(r => r.Available);
-            return $"{available}/{_readings.Count} available · {IgnoredKeys} unknown key(s) ignored · collected {CollectedUtc.Value.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}Z";
-        }
-
-        public void Reset()
-        {
-            _readings.Clear();
-            CollectedUtc = null;
-            IgnoredKeys = 0;
         }
 
         private static int Order(string key)

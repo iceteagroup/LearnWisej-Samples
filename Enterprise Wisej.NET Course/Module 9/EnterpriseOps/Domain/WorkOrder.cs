@@ -41,8 +41,5 @@ namespace EnterpriseOps.Domain
         public int Version { get; set; }
 
         public bool IsTerminal => Status == WorkOrderStatus.Completed || Status == WorkOrderStatus.Cancelled;
-
-        /// <summary>A detached copy — used for audit snapshots so a tampered change can be reverted.</summary>
-        public WorkOrder Snapshot() => (WorkOrder)MemberwiseClone();
     }
 }

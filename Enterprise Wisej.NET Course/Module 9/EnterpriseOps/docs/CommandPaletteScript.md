@@ -60,7 +60,7 @@ would surface on some unrelated screen.
 ### The server side of the same rule
 
 `CommandPaletteHost.Send(...)` refuses to call a widget that does not exist yet: it checks
-`PaletteReady && IsLoaded`, queues the call, raises `Deferred`, and flushes the queue when
+`PaletteReady && IsLoaded`, queues the call, and flushes the queue when
 `paletteReady` arrives. Nothing is silently lost and nothing throws.
 
 ---
@@ -84,19 +84,17 @@ Notes that cost real debugging time:
 * **A `null` result means the server threw.** The Promise resolves — it does not reject — so the
   adapter treats `null` as `SERVER_ERROR` and never as success.
 * **Never redefine a framework method** on the wrapper (`getWidth`, `resize`, `getValue`, `destroy`…).
-  Every function this adapter adds is prefixed: `paletteOpen`, `paletteRun`, `paletteCollect`, `paletteForge`.
+  Every function this adapter adds is prefixed: `paletteOpen`, `paletteClose`, `paletteCollect`, `paletteShowResult`.
 
 ## Events out (`WiredEvents`)
 
 | Event | Payload | Why it is worth a round trip |
 | --- | --- | --- |
 | `paletteReady` | `{hotkey, contractVersion}` | the lifecycle signal the server waits for |
-| `paletteOpened` / `paletteClosed` | `{via}` | UI telemetry — traced, never acted on |
-| `commandRun` | `{command, entityId, code, elapsed}` | the browser's view of the crossing, for support |
-| `capabilities` | `{report, forged}` | the capability report |
+| `capabilities` | `{report}` | the capability report |
 | `error` | `{phase, message}` | the script failed; the server state is unchanged |
 
-A keystroke does **not** raise an event. A palette that reported every keypress would flood the
+A keystroke does **not** raise an event, and neither does opening or closing the palette. A palette that reported every keypress would flood the
 session with round trips and tell the server nothing it can act on; the catalogue call while typing
 is a query, and only the selection is a business fact.
 
@@ -106,8 +104,7 @@ is a query, and only the selection is a business fact.
 
 | Path | How to reproduce | What proves it |
 | --- | --- | --- |
-| Attach after creation | load the page | trace: `Interop: server → client call "paletteShowResult" DEFERRED — the host widget does not exist yet`, then `Client: paletteReady …` and `Interop: flushing 1 deferred server → client call(s)` |
-| Real browser round trip | **Run approve** | trace `Client: App.MainPage.RunClientCommand("workorder.approve", …) — untrusted`, then `Client: browser rendered OK for workorder.approve in NN ms` |
-| Server → client callback | **Open palette (server → client)** | the palette opens with no keystroke; trace `UI → Call("paletteOpen")` and `Client: palette opened (via server)` |
-| The display hint is only a hint | sign in as `ben.tech`, press Ctrl+K | "Approve work order…" is greyed with *needs a higher role* — run it anyway and the server answers `PERMISSION_DENIED` |
+| Attach after creation | load the page | the capability panel fills a moment after load: the first report is sent from the `setTimeout` in `init`, i.e. after the widget exists |
+| Real browser round trip | press Ctrl+K, type *escalate*, Enter | the resting card shows `→ workorder.escalate WO-1040 corr …` then `← OK · Escalated (v2).`; server log `Client: App.MainPage.RunClientCommand("workorder.escalate", …)` |
+| The display hint is only a hint | press Ctrl+K (the session is `ben.tech`, a Technician) | "Approve work order…" is greyed with *needs a higher role* — run it anyway and the server answers `PERMISSION_DENIED` |
 | Detach | close the browser tab / dispose the page | the `document` keydown handler and the `.eop-overlay` node are removed in `dispose()` before the framework's own dispose runs |

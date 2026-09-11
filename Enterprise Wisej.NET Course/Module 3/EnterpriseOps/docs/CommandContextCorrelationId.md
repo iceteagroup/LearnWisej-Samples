@@ -30,30 +30,26 @@ Eight hex characters: short enough for a status bar, unique enough for a log sea
 
 ## One id per user action
 
-`WorkOrderEditorPage.BeginBusy(text, commandName)` is the only place a command starts:
+`WorkOrderEditorPage.BeginBusy(commandName)` is the only place a command starts:
 
 ```csharp
-private void BeginBusy(string text, string commandName)
+private void BeginBusy(string commandName)
 {
-    NewCommand(commandName);          // fresh correlation id → header label
-    SetButtons(false);
-    SetStatus(text, StatusKind.Warn);
-    lblStatusBar.Text = $"{commandName} · tenant {_session.TenantId} · corr {_current.CorrelationId}";
+    NewCommand(commandName);          // _current = _session.BeginCommand(commandName) — fresh correlation id
+    SetControlsEnabled(false);
 }
 ```
 
 Every service call inside that handler uses `CurrentContext`, so the id is the same from the click to the last
 audit line. The command names in this screen: `work-queue.load`, `work-order.open`, `work-order.save`,
-`work-order.reload`, `session.switch-tenant`, `demo.other-session`, `demo.cross-tenant`, `state.audit`,
-`state.leak-demo`.
+`session.switch-tenant`.
 
 ## Where the id shows up
 
 | Place | Example |
 |---|---|
-| Header label `lblCorrelation` | `corr 8f3a21c4` |
-| Dark footer `lblStatusBar` | `work-order.save · tenant contoso · corr 8f3a21c4` |
-| Activity trace, every layer | `Service:  WorkOrderService.SaveAsync(#2002) expecting v7 (correlation 8f3a21c4)` |
+| Dark footer `lblStatusBar` | `Saved — v7 → v8 · correlation 5d11e9b2` / `Save rejected — expected v7, found v8 · correlation 8f3a21c4` |
+| Server log (`System.Diagnostics.Trace`), every layer | `Service:  WorkOrderService.SaveAsync(#2002) expecting v7 (correlation 8f3a21c4)` |
 | Audit trail | `work-order.save.conflict — #2002 expected v7, found v8 (saved by ben.tech)` |
 | Conflict dialog footnote | `correlation 8f3a21c4 — expected v7, found v8` |
 | Error log | `[8f3a21c4] CrossTenantAccessException: Cross-tenant access denied.` |
@@ -69,9 +65,9 @@ Three reasons, all of them visible in the sample:
 1. **Background work.** A job started with `Application.StartTask` can outlive the session; a service that read
    `Application.Session` would fault or, worse, read a *different* session. A `CommandContext` is a value —
    it is still valid when the browser has gone.
-2. **A second session in the same process.** `Services/OtherSessionSimulator.cs` builds a second
-   `SessionContext`, gets its own `CommandContext` from it, and calls the *same* `WorkOrderService` class. The
-   service cannot tell which session is calling and does not need to: everything it must know is in the context.
+2. **A second session in the same process.** A second browser tab builds a second `SessionContext`, gets its
+   own `CommandContext` from it, and calls the *same* `WorkOrderService` class. The service cannot tell which
+   session is calling and does not need to: everything it must know is in the context.
 3. **Reviewability.** A service whose tenant comes from an argument can be read in one screenful and tested
    without a browser.
 
@@ -85,8 +81,7 @@ through one lock, and `Snapshot(tenantId)` filters by tenant so the trail is sha
 
 | Action | What you see |
 |---|---|
-| Any button | the header's `corr …` changes once, and every trace line of that action repeats the same id |
-| **Save** (success) | `Audit: work-order.save — #2002 v7 → v8 …` with the id from the header |
-| **Save** (stale) | three lines share one id: `Data: … REJECTED`, `Service: … returning a ConflictInfo`, `Audit: work-order.save.conflict` |
-| Conflict dialog → any button | `Audit: conflict resolution recorded — #2002 expected v7, found v8 → Reload (correlation 8f3a21c4)` |
-| **Fail: other session saves** | a *different* id appears on the `session B` lines — a different command in a different session, correctly not sharing this one's id |
+| **Save** (success) | footer `Saved — v7 → v8 · correlation …`; the audit entry `work-order.save — #2002 v7 → v8 …` carries the same id |
+| **Save** (stale) | footer `Save rejected — expected v7, found v8 · correlation 8f3a21c4`; the dialog footnote repeats the id; in the server log `Data: … REJECTED`, `Service: … returning a ConflictInfo` and the `work-order.save.conflict` audit entry share it |
+| Conflict dialog → any button | audit entry `work-order.conflict.reload — #2002 expected v7, found v8 → Reload`, same correlation id |
+| A save from a second browser tab | a *different* id — a different command in a different session, correctly not sharing this one's id |

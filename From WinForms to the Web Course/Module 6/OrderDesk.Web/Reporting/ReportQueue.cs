@@ -93,7 +93,7 @@ namespace OrderDesk.Reporting
     }
 
     /// <summary>
-    /// ✓ A process-wide report queue: one list of jobs for every session (like a database table),
+    /// A process-wide report queue: one list of jobs for every session (like a database table),
     /// one worker that runs them sequentially, progress and cancellation. Pages poll it with a
     /// Wisej.Web.Timer and every browser sees the same queue — that is the multi-user proof.
     ///
@@ -222,7 +222,7 @@ namespace OrderDesk.Reporting
                 byte[] result = job.Work(percent => SetProgress(job, percent), token);
                 token.ThrowIfCancellationRequested();
 
-                string path = Path.Combine(job.OutputFolder, $"{job.Id:D4}-{job.ResultFileName}");   // ✓ server storage, Path.Combine
+                string path = Path.Combine(job.OutputFolder, $"{job.Id:D4}-{job.ResultFileName}");   // server storage, Path.Combine
                 Directory.CreateDirectory(job.OutputFolder);
                 File.WriteAllBytes(path, result);
 

@@ -5,7 +5,6 @@ using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using TicketOps.Controls;
-using TicketOps.Data;
 using TicketOps.Domain;
 using TicketOps.Infrastructure;
 using TicketOps.Resources;
@@ -15,8 +14,8 @@ using Wisej.Web;
 namespace TicketOps.Views
 {
     /// <summary>
-    /// TicketOps Console · Work Orders — the Module 4 screen: a data-bound grid with search and status
-    /// filter, a master-detail editor and Save / Discard with dirty tracking.
+    /// TicketOps Console · Work Orders: a data-bound grid with search and status filter, a master-detail
+    /// editor and Save / Discard with dirty tracking.
     ///
     /// The binding contract, in one picture:
     ///
@@ -33,22 +32,15 @@ namespace TicketOps.Views
     /// What stays manual, and why, is written down in docs/BindingDecisions.md: the two enum combos
     /// (enum ↔ index), the dirty indicator (display of WorkOrder.IsDirty) and the filter (the BindingList is
     /// rebuilt from the service's answer; BindingSource.Filter is not honoured by a BindingList).
-    ///
-    /// Handlers stay thin — read the screen, call IWorkOrderService, show the result — and every async
-    /// handler owns its try/catch: the user never sees an exception, the trace does.
     /// </summary>
     public partial class WorkOrdersPage : Form
     {
-        private const int ImportTotal = 60;
-        private const int ImportBatch = 5;
-
         private static readonly Color DirtyColor = Color.FromArgb(214, 122, 0);
         private static readonly Color OverdueBack = Color.FromArgb(253, 232, 232);
         private static readonly Color OverdueFore = Color.FromArgb(192, 57, 43);
         private static readonly Color UnassignedFore = Color.FromArgb(154, 167, 180);
 
         private readonly IWorkOrderService _workOrders;
-        private readonly InMemoryWorkOrderRepository _repository;   // only for the lab's outage switch
         private readonly ILog _log;
 
         /// <summary>Every loaded object (the master list). Filtering never removes anything from here.</summary>
@@ -59,26 +51,18 @@ namespace TicketOps.Views
 
         private bool _loaded;          // filters are ignored until the first load has run
         private bool _fillingDetail;   // the enum combos are being set from the current item, not by the user
-        private bool _settingSearch;   // the search box is being set from code (bottom bar), not typed
-        private int _importRemaining;
-        private int _importNext;
 
         // The Designer keeps the parameterless constructor; real wiring goes through the other one.
-        public WorkOrdersPage() : this(null, null, new ActivityLog())
+        public WorkOrdersPage() : this(null, new ActivityLog())
         {
         }
 
-        public WorkOrdersPage(IWorkOrderService workOrders, InMemoryWorkOrderRepository repository, ILog log)
+        public WorkOrdersPage(IWorkOrderService workOrders, ILog log)
         {
             InitializeComponent();
 
             _workOrders = workOrders;
-            _repository = repository;
             _log = log;
-
-            if (log is ActivityLog activityLog)
-                this.tracePanel.Attach(activityLog);
-            this.tracePanel.Title = "Activity trace · UI → Service → Data · binding events";
 
             this.comboStatusFilter.Items.AddRange(new object[] { "All statuses", "Open", "Scheduled", "In Progress", "Closed" });
             this.comboStatusFilter.SelectedIndex = 0;
@@ -88,7 +72,7 @@ namespace TicketOps.Views
             InitializeBinding();
         }
 
-        #region Binding configuration (the lab's "BindingSource configuration" deliverable)
+        #region Binding configuration
 
         /// <summary>
         /// Wires the list, the BindingSource and the controls together — once. From here on nothing in
@@ -96,8 +80,7 @@ namespace TicketOps.Views
         /// </summary>
         private void InitializeBinding()
         {
-            // 1. A change-announcing list of change-announcing objects. ListChanged is also what drives the
-            //    dirty indicator and the "binding events" lines in the trace.
+            // 1. A change-announcing list of change-announcing objects. ListChanged also drives the dirty indicator.
             _visibleOrders.ListChanged += visibleOrders_ListChanged;
 
             // 2. The coordination point every control binds through.
@@ -115,23 +98,19 @@ namespace TicketOps.Views
             this.textAssignedTo.DataBindings.Add("Text", this.workOrderSource, nameof(WorkOrder.AssignedTo), true, DataSourceUpdateMode.OnPropertyChanged);
             this.dateDue.DataBindings.Add("Value", this.workOrderSource, nameof(WorkOrder.DueDate), true, DataSourceUpdateMode.OnPropertyChanged);
             this.numericCost.DataBindings.Add("Value", this.workOrderSource, nameof(WorkOrder.Cost), true, DataSourceUpdateMode.OnPropertyChanged);
-
-            _log.Info(LogLayer.UI, "WorkOrdersPage.InitializeBinding",
-                "BindingList<WorkOrder> → workOrderSource → dgvWorkOrders (AutoGenerateColumns = false, 7 columns by DataPropertyName) + 4 detail bindings (Title, AssignedTo, DueDate, Cost · OnPropertyChanged)");
         }
 
         #endregion
 
-        #region Screen lifecycle
+        #region Load
 
         private async void WorkOrdersPage_Load(object sender, EventArgs e)
         {
-            _log.Info(LogLayer.UI, "WorkOrdersPage.Load", "screen shown → IWorkOrderService.LoadAsync()");
-            await LoadAsync("WorkOrdersPage.Load");
+            await LoadAsync();
         }
 
         /// <summary>Data → UI: the only place that fills the master list. The grid is filled by the binding.</summary>
-        private async Task LoadAsync(string source)
+        private async Task LoadAsync()
         {
             try
             {
@@ -142,11 +121,11 @@ namespace TicketOps.Views
                 _allOrders.AddRange(rows);
                 _loaded = true;
 
-                ApplyFilter(source);
+                ApplyFilter();
             }
             catch (Exception ex)
             {
-                ReportFailure(source + " → LoadAsync", ex);
+                ReportFailure("WorkOrdersPage.LoadAsync", ex);
             }
         }
 
@@ -161,13 +140,12 @@ namespace TicketOps.Views
             return new WorkOrderQuery(this.textSearch.Text, status);
         }
 
-        private void ApplyFilter(string source)
+        private void ApplyFilter()
         {
             if (!_loaded)
                 return;
 
             var query = ReadQueryFromForm();
-            _log.Info(LogLayer.UI, source, $"→ IWorkOrderService.Filter({_allOrders.Count} rows, {query})");
             var matches = _workOrders.Filter(_allOrders, query);
 
             RebindVisible(matches);
@@ -200,19 +178,16 @@ namespace TicketOps.Views
             _visibleOrders.ResetBindings();          // one Reset for the grid instead of one event per Add
 
             RefreshDetail();
-            _log.Info(LogLayer.UI, "WorkOrdersPage.RebindVisible", $"BindingList rebuilt with {rows.Count} rows (events off during the rebuild → one ResetBindings) — current: {DescribeCurrent()}");
         }
 
         private void textSearch_TextChanged(object sender, EventArgs e)
         {
-            if (_settingSearch)
-                return;
-            ApplyFilter("textSearch.TextChanged");
+            ApplyFilter();
         }
 
         private void comboStatusFilter_SelectedIndexChanged(object sender, EventArgs e)
         {
-            ApplyFilter("comboStatusFilter.SelectedIndexChanged");
+            ApplyFilter();
         }
 
         #endregion
@@ -220,9 +195,8 @@ namespace TicketOps.Views
         #region Master-detail: the BindingSource's current item drives the editor
 
         /// <summary>
-        /// The bound current item, or null. Verified at runtime: BindingSource.Current THROWS IndexOutOfRangeException
-        /// ("Index -1 does not have a value") while the list is being reset or has no rows, instead of returning null,
-        /// so the position is checked first — a ListChanged(Reset) handler reaches this getter in that very state.
+        /// The bound current item, or null. BindingSource.Current throws IndexOutOfRangeException while the list
+        /// is being reset or has no rows, instead of returning null, so the position is checked first.
         /// </summary>
         private WorkOrder Current
         {
@@ -235,8 +209,6 @@ namespace TicketOps.Views
             }
         }
 
-        private string DescribeCurrent() => Current == null ? "none" : $"#{Current.Id}";
-
         /// <summary>
         /// Fires when the current item moves — a row click, an arrow key, a filter that changed the list.
         /// The bound fields re-read themselves; this handler only does the extras: header, enum combos, dirty state.
@@ -244,9 +216,6 @@ namespace TicketOps.Views
         private void workOrderSource_CurrentChanged(object sender, EventArgs e)
         {
             RefreshDetail();
-            var current = Current;
-            if (current != null)
-                _log.Info(LogLayer.UI, "workOrderSource.CurrentChanged", $"current → #{current.Id} — Title/AssignedTo/DueDate/Cost re-read by their bindings; Status/Priority combos filled by hand (enum ↔ index)");
         }
 
         private void RefreshDetail()
@@ -296,27 +265,11 @@ namespace TicketOps.Views
 
         #endregion
 
-        #region Binding events → dirty indicator + trace
+        #region Dirty indicator
 
-        /// <summary>
-        /// BindingList&lt;T&gt; turns every item PropertyChanged into ListChanged(ItemChanged). The grid uses
-        /// it to repaint the cell; this screen uses it to keep the dirty indicator honest and to show the
-        /// reader, in the trace, that no code copied anything.
-        /// </summary>
+        /// <summary>BindingList&lt;T&gt; turns every item PropertyChanged into ListChanged(ItemChanged); keep the dirty indicator honest.</summary>
         private void visibleOrders_ListChanged(object sender, ListChangedEventArgs e)
         {
-            if (e.ListChangedType == ListChangedType.ItemChanged && e.PropertyDescriptor != null
-                && e.NewIndex >= 0 && e.NewIndex < _visibleOrders.Count)
-            {
-                string property = e.PropertyDescriptor.Name;
-                if (property != nameof(WorkOrder.IsDirty) && property != nameof(WorkOrder.IsOverdue))
-                {
-                    var o = _visibleOrders[e.NewIndex];
-                    _log.Info(LogLayer.UI, "BindingList.ListChanged",
-                        $"#{o.Id}.{property} PropertyChanged → ItemChanged(row {e.NewIndex}) → grid cell repaints · IsDirty = {o.IsDirty}");
-                }
-            }
-
             UpdateDirtyState();
         }
 
@@ -421,25 +374,19 @@ namespace TicketOps.Views
             {
                 this.statusBanner.HideBanner();
                 this.statusBanner.SetStatus(result.Message, StatusKind.Success);
-                _log.Info(LogLayer.UI, "WorkOrdersPage.ShowResult", $"OK · {result.Message}");
             }
             else
             {
-                // Expected outcome: the service explained it in words the user may read.
                 this.statusBanner.ShowBanner(result.Message, StatusKind.Warning);
                 this.statusBanner.SetStatus("not saved", StatusKind.Warning);
-                _log.Warn(LogLayer.UI, "WorkOrdersPage.ShowResult", $"FAIL · {result.Message}");
             }
         }
 
-        /// <summary>
-        /// Unexpected failure: details go to the log (with the exception type and message), the user sees
-        /// one safe sentence. Nothing internal leaks through the banner.
-        /// </summary>
+        /// <summary>Unexpected failure: the details go to the log, the user sees one safe sentence.</summary>
         private void ReportFailure(string source, Exception ex, string safeMessage = null)
         {
             safeMessage = safeMessage ?? Strings.ActionFailed;
-            _log.Error(LogLayer.UI, source, ex, $"caught {ex.GetType().Name} — user sees the safe message");
+            _log.Error(LogLayer.UI, source, ex);
             this.statusBanner.ShowBanner("✖ " + safeMessage, StatusKind.Error);
             this.statusBanner.SetStatus("failed", StatusKind.Error);
             AlertBox.Show(safeMessage, MessageBoxIcon.Error,
@@ -448,7 +395,7 @@ namespace TicketOps.Views
 
         #endregion
 
-        #region Thin handlers: Save / Discard / Reload
+        #region Handlers: Save / Discard / Reload
 
         private async void buttonSave_Click(object sender, EventArgs e)
         {
@@ -458,8 +405,7 @@ namespace TicketOps.Views
                 if (current == null)
                     return;
 
-                this.workOrderSource.EndEdit();                                  // BindingSource.EndEdit(): flush a pending bound value into the object
-                _log.Info(LogLayer.UI, "WorkOrdersPage.buttonSave_Click", $"workOrderSource.EndEdit() → IWorkOrderService.SaveAsync(#{current.Id})");
+                this.workOrderSource.EndEdit();                                  // flush a pending bound value into the object
                 var result = await _workOrders.SaveAsync(current);               // validate → persist → AcceptChanges, all in the service
                 ShowResult(result);                                              // IsDirty already notified: indicator and amber title clear themselves
             }
@@ -467,7 +413,6 @@ namespace TicketOps.Views
             {
                 // The store failed before AcceptChanges ran: the object is untouched and still dirty, so the edits stay on screen.
                 ReportFailure("WorkOrdersPage.buttonSave_Click", ex, Strings.SaveFailedEditsKept);
-                _log.Warn(LogLayer.UI, "WorkOrdersPage.buttonSave_Click", $"edits kept: {DescribeCurrent()} still dirty = {Current?.IsDirty}");
             }
         }
 
@@ -479,7 +424,6 @@ namespace TicketOps.Views
                 if (current == null)
                     return;
 
-                _log.Info(LogLayer.UI, "WorkOrdersPage.buttonDiscard_Click", $"→ IWorkOrderService.Discard(#{current.Id}) — the grid row and the bound fields revert through PropertyChanged");
                 ShowResult(_workOrders.Discard(current));
             }
             catch (Exception ex)
@@ -492,147 +436,19 @@ namespace TicketOps.Views
         {
             try
             {
-                int dirty = _allOrders.Count(o => o.IsDirty);
-                if (dirty > 0)
+                if (_allOrders.Any(o => o.IsDirty))
                 {
                     // Guard the unsaved edit: a reload would replace the objects and lose them silently.
-                    _log.Warn(LogLayer.UI, "WorkOrdersPage.buttonReload_Click", $"{dirty} row(s) with unsaved changes — reload refused");
                     ShowResult(OperationResult<WorkOrder>.Fail(Strings.ReloadBlockedByUnsaved));
                     return;
                 }
 
-                _log.Info(LogLayer.UI, "WorkOrdersPage.buttonReload_Click", "→ IWorkOrderService.LoadAsync()");
-                await LoadAsync("WorkOrdersPage.buttonReload_Click");
+                await LoadAsync();
             }
             catch (Exception ex)
             {
                 ReportFailure("WorkOrdersPage.buttonReload_Click", ex);
             }
-        }
-
-        #endregion
-
-        #region Bottom bar: progress, validation, empty result, outage and recovery
-
-        /// <summary>Progress path: a Timer imports five work orders per tick through the service; the grid grows through the BindingList.</summary>
-        private void buttonImport_Click(object sender, EventArgs e)
-        {
-            if (this.timerImport.Enabled || !_loaded)
-                return;
-
-            _importRemaining = ImportTotal;
-            _importNext = 1;
-            this.progressImport.Value = 0;
-            this.progressImport.Visible = true;
-            this.statusBanner.HideBanner();
-            this.statusBanner.SetStatus($"importing 0/{ImportTotal}", StatusKind.Busy);
-            _log.Info(LogLayer.UI, "WorkOrdersPage.buttonImport_Click", $"{ImportTotal} work orders in batches of {ImportBatch} per tick — each batch is added to the BindingList, never to dgvWorkOrders.Rows");
-            this.timerImport.Start();
-        }
-
-        private async void timerImport_Tick(object sender, EventArgs e)
-        {
-            try
-            {
-                int batch = Math.Min(ImportBatch, _importRemaining);
-                var created = await _workOrders.ImportBatchAsync(_importNext, batch);
-                _importNext += batch;
-                _importRemaining -= batch;
-
-                _allOrders.AddRange(created);
-
-                // Respect the active filter: only matching rows join the bound list. ItemAdded does the rest.
-                var query = ReadQueryFromForm();
-                var visible = query.IsEmpty ? created : _workOrders.Filter(created, query);
-                foreach (var o in visible)
-                    _visibleOrders.Add(o);
-
-                int done = ImportTotal - _importRemaining;
-                this.progressImport.Value = done;
-                this.labelCount.Text = $"{_visibleOrders.Count} of {_allOrders.Count} work orders";
-                this.statusBanner.SetStatus($"importing {done}/{ImportTotal}", StatusKind.Busy);
-                _log.Info(LogLayer.UI, "WorkOrdersPage.timerImport_Tick", $"{visible.Count} of {created.Count} added to the BindingList → ItemAdded × {visible.Count} → grid now {_visibleOrders.Count} rows");
-
-                if (_importRemaining == 0)
-                {
-                    this.timerImport.Stop();
-                    this.progressImport.Visible = false;
-                    this.statusBanner.SetStatus($"{ImportTotal} work orders imported", StatusKind.Success);
-                    _log.Info(LogLayer.UI, "WorkOrdersPage.timerImport_Tick", $"import complete — {_allOrders.Count} work orders, {_visibleOrders.Count} shown, no Rows.Add and no rebind");
-                }
-            }
-            catch (Exception ex)
-            {
-                this.timerImport.Stop();
-                this.progressImport.Visible = false;
-                ReportFailure("WorkOrdersPage.timerImport_Tick", ex);
-            }
-        }
-
-        /// <summary>Failure path (validation): the service rejects the save; the edit stays on screen and the row stays dirty.</summary>
-        private async void buttonSaveEmpty_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                var current = Current;
-                if (current == null)
-                {
-                    ShowResult(OperationResult<WorkOrder>.Fail("Select a work order first."));
-                    return;
-                }
-
-                _log.Info(LogLayer.UI, "WorkOrdersPage.buttonSaveEmpty_Click", $"#{current.Id}.Title = \"\" written on the object — the bound field and the grid cell empty themselves → IWorkOrderService.SaveAsync");
-                current.Title = "";
-                ShowResult(await _workOrders.SaveAsync(current));
-            }
-            catch (Exception ex)
-            {
-                ReportFailure("WorkOrdersPage.buttonSaveEmpty_Click", ex, Strings.SaveFailedEditsKept);
-            }
-        }
-
-        /// <summary>Not a failure: a search with no matches. Click again to clear it.</summary>
-        private void buttonNoMatch_Click(object sender, EventArgs e)
-        {
-            const string term = "turbine";
-            bool clearing = this.textSearch.Text == term;
-
-            _settingSearch = true;
-            try
-            {
-                this.textSearch.Text = clearing ? "" : term;
-            }
-            finally
-            {
-                _settingSearch = false;
-            }
-
-            this.buttonNoMatch.Text = clearing ? "Search with no matches" : "Clear the search";
-            _log.Info(LogLayer.UI, "WorkOrdersPage.buttonNoMatch_Click", clearing ? "search cleared → every row comes back from the master list, no reload" : $"search \"{term}\" — expect 0 matches, an empty grid and a disabled editor, not an error");
-            ApplyFilter("WorkOrdersPage.buttonNoMatch_Click");
-        }
-
-        /// <summary>Error path + recovery: toggle the repository outage; the next Save or Reload shows the effect.</summary>
-        private void buttonOutage_Click(object sender, EventArgs e)
-        {
-            if (_repository == null)
-                return;
-
-            _repository.SimulateOutage = !_repository.SimulateOutage;
-            bool on = _repository.SimulateOutage;
-            this.buttonOutage.Text = on ? "Recover the data store" : "Simulate data outage";
-            this.statusBanner.HideBanner();
-            this.statusBanner.SetStatus(on ? "data store offline (simulated)" : "data store online", on ? StatusKind.Warning : StatusKind.Success);
-            _log.Info(LogLayer.UI, "WorkOrdersPage.buttonOutage_Click",
-                on ? "outage ON — edit a row and Save: expect ✖ in DATA, the safe message in the UI, and the edits still on screen"
-                   : "outage OFF (recovery) — Save the same row again: the edits are still there and go through");
-        }
-
-        private void buttonClear_Click(object sender, EventArgs e)
-        {
-            this.tracePanel.ClearTrace();
-            this.statusBanner.HideBanner();
-            this.statusBanner.SetStatus("ready", StatusKind.Normal);
         }
 
         #endregion

@@ -3,11 +3,11 @@
 | Check | Result | Evidence |
 |---|---|---|
 | The screen remains usable in the Visual Studio / Wisej.NET Designer | ✔ | `Views/WorkOrderQueue.Designer.cs` and `Dialogs/ApprovalDialog.Designer.cs` hold the whole layout in `InitializeComponent()`; both forms keep a parameterless constructor; no logic in the generated files |
-| Controls are named clearly enough for a teammate to follow the event code | ✔ | `gridWorkOrders`, `buttonReview`, `radioApprove`, `radioReject`, `textComments`, `buttonConfirm`, `buttonCancel`, `buttonTests`, `buttonRejectNoComments`, `buttonDecideAgain`, `buttonOutage`; handlers are `<control>_<event>` |
+| Controls are named clearly enough for a teammate to follow the event code | ✔ | `gridWorkOrders`, `buttonReview`, `radioApprove`, `radioReject`, `textComments`, `buttonConfirm`, `buttonCancel`, `buttonRefresh`; handlers are `<control>_<event>` |
 | Business logic is not trapped in visual event handlers | ✔ | the comments rule and the confirmed gate are re-checked in `ApprovalService`; the status rule is `WorkOrder.CanDecide`; the transaction is `InMemoryWorkOrderRepository.Commit`. `WorkOrderQueue.cs` reads `wo.IsPending` / `wo.Status` only to colour the labels and enable the button (display), never to decide anything |
 | The dialog exposes a typed result; callers never read its controls | ✔ | `ApprovalDialog.Result` (`ApprovalDialogResult`: `Confirmed`, `Action`, `Comments`); `grep -n "dialog\." Views/WorkOrderQueue.cs` finds only `dialog.ShowDialogAsync()` and `dialog.Result` |
 | Changes are applied only when `DialogResult.OK` is returned | ✔ | `if (outcome != DialogResult.OK \|\| !result.Confirmed) return;` precedes the only `ApplyAsync` call in the success path; the dialog never touches the `WorkOrder` it was given |
-| Failure paths are visible, logged, and explained without leaking internals | ✔ | expected refusals → `ShowResult` (orange banner, `⚠` in the trace); the outage → `ReportFailure` (red banner + toast with `Strings.ActionFailed`, `✖` line with `DataOutageException` and `sql01:1433` in the trace only) |
+| Failure paths are visible, logged, and explained without leaking internals | ✔ | expected refusals → `ShowResult` (orange banner); a failed commit → `ReportFailure` (red banner + toast with `Strings.ActionFailed`; exception details in `ILog` only) |
 | No per-user state is held in static fields | ✔ | `AppComposition` per session in `Program.Main`; statics are constants and pure helpers only |
 | The deliverable can be reviewed without running the whole course | ✔ | `README.md` + this `docs/` folder; the app runs standalone on port 5106 |
 

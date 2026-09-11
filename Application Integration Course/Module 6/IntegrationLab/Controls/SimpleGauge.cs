@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
 using IntegrationLab.Contracts;
@@ -10,8 +9,8 @@ using Wisej.Web;
 namespace IntegrationLab.Controls
 {
     /// <summary>
-    /// Reusable gauge: a server Control that hosts the third-party VendorGauge inside a
-    /// Wisej.NET widget container and exposes a small command API on top of the typed state.
+    /// Reusable gauge: hosts the third-party VendorGauge inside a Wisej.NET widget container and
+    /// exposes a small command API on top of the typed state.
     /// <para>
     /// Two ways the server talks to the browser, and when to use each:
     /// </para>
@@ -21,9 +20,8 @@ namespace IntegrationLab.Controls
     ///   client adapter applies them in <c>update(options, old)</c>. State is durable: it is
     ///   re-rendered on every <c>init</c> (page refresh, late-joining client).</item>
     ///   <item><b>Commands</b> — <see cref="SetValue"/>, <see cref="ResetAnimation"/> use <c>Call</c>
-    ///   (one-way, queued, no answer). <see cref="GetRenderedSizeAsync"/>, <see cref="GetSelectedStateAsync"/>
-    ///   use <c>CallAsync</c> and <see cref="GetWidthViaEvalAsync"/> uses <c>EvalAsync</c>: the handler
-    ///   awaits the browser because the next statement needs the value.</item>
+    ///   (one-way, queued, no answer). <see cref="GetRenderedSizeAsync"/> and <see cref="GetSelectedStateAsync"/>
+    ///   use <c>CallAsync</c>: the handler awaits the browser because the next statement needs the value.</item>
     /// </list>
     /// <para>
     /// Every command targets a function defined on the client <b>wrapper</b> (gauge-init.js), never a
@@ -45,7 +43,6 @@ namespace IntegrationLab.Controls
         public const string JsResetAnimation = "resetAnimation";
         public const string JsGetRenderedSize = "getRenderedSize";
         public const string JsGetSelectedState = "getSelectedState";
-        public const string JsGetWidthExpression = "this.measureWidth()";   // an EXPRESSION: EvalAsync rejects a "return" statement; and never name wrapper functions after qx methods (getWidth/getHeight are the layout getters)
 
         // ---- server-owned state -------------------------------------------
         private double _value = 72;
@@ -69,7 +66,7 @@ namespace IntegrationLab.Controls
             this.InitScript = GetResourceString("IntegrationLab.wwwroot.gauge-init.js");
 
             // The events this wrapper is allowed to raise (the documented contract).
-            this.WiredEvents = new[] { "thresholdExceeded", "rangeChanged", "error", "leakDetected" };
+            this.WiredEvents = new[] { "thresholdExceeded", "rangeChanged", "error" };
 
             this.Size = new System.Drawing.Size(480, 244);
             PushState();
@@ -178,13 +175,9 @@ namespace IntegrationLab.Controls
         [Browsable(false)]
         public string CurrentRange { get; private set; } = "normal";
 
-        /// <summary>Server-side answer to "is the reading above threshold" (does not ask the browser).</summary>
-        [Browsable(false)]
-        public bool IsAboveThreshold => _value >= _threshold;
-
         /// <summary>
-        /// How long an awaited call may wait for the browser before the lab gives up.
-        /// A closed tab never replies; without a bound the handler would stay suspended.
+        /// How long an awaited call may wait for the browser. A closed tab never replies;
+        /// without a bound the handler would stay suspended.
         /// </summary>
         [Browsable(false)]
         public TimeSpan ClientReplyTimeout { get; set; } = TimeSpan.FromSeconds(5);
@@ -205,14 +198,7 @@ namespace IntegrationLab.Controls
         [Description("Raised when the client adapter caught a vendor failure.")]
         public event EventHandler<GaugeErrorEventArgs> WidgetError;
 
-        /// <summary>Raised when the client adapter found a leaked domain object in its options.</summary>
-        [Description("Raised when the client adapter found a leaked domain object in its options.")]
-        public event EventHandler<LeakDetectedEventArgs> LeakDetected;
-
-        /// <summary>
-        /// Raised for every message that crosses the wire in either direction.
-        /// Used by the lab UI to show the live command trace.
-        /// </summary>
+        /// <summary>Raised for every command, result and event that crosses the wire.</summary>
         [Browsable(false)]
         public event EventHandler<TraceEventArgs> Trace;
 
@@ -223,13 +209,10 @@ namespace IntegrationLab.Controls
         /// <summary>
         /// Sets the reading and tells the live widget to sweep its needle to it.
         /// <para>
-        /// Why both <see cref="Value"/> and <c>Call</c>? They do different jobs.
-        /// <c>Value</c> writes the durable state into <c>Options</c>: it survives a page refresh,
-        /// is what <c>init(options)</c> renders for a late-joining client, and is what the server
-        /// validates and audits. <c>Call("setValue", v)</c> is a transient command to the widget that
-        /// exists right now: it is queued, flushed with this response, executed once and never
-        /// replayed. The client wrapper dedupes the two by target value, so it does not matter which
-        /// one the browser applies first.
+        /// <c>Value</c> writes the durable state into <c>Options</c>: it survives a page refresh and is
+        /// what <c>init(options)</c> renders for a late-joining client. <c>Call("setValue", v)</c> is a
+        /// transient command to the widget that exists right now: queued, flushed with this response,
+        /// executed once and never replayed. The client wrapper dedupes the two by target value.
         /// </para>
         /// <para>Server does not wait: the return is immediate, no result comes back.</para>
         /// </summary>
@@ -243,12 +226,10 @@ namespace IntegrationLab.Controls
                 _value = value;
                 dynamic options = this.Options;
                 options.value = value;               // state: {"value":72} rendered with this response
-                RaiseTrace(TraceDirection.ServerToClient, "update(options)", $"{{\"value\":{F(value)}}}");
             }
 
-            // command: queued now, sent with the same response, runs this.setValue(72) on the wrapper.
-            this.Call(JsSetValue, value);
-            RaiseTrace(TraceDirection.ServerToClient, $"Call(\"{JsSetValue}\", {F(value)})", "one-way · queued · no result");
+            this.Call(JsSetValue, value);            // command: queued, runs this.setValue(72) on the wrapper
+            RaiseTrace(TraceDirection.ServerToClient, $"Call(\"{JsSetValue}\", {F(value)})", "");
         }
 
         /// <summary>
@@ -258,12 +239,12 @@ namespace IntegrationLab.Controls
         public void ResetAnimation()
         {
             this.Call(JsResetAnimation);
-            RaiseTrace(TraceDirection.ServerToClient, $"Call(\"{JsResetAnimation}\")", "one-way · queued · no result");
+            RaiseTrace(TraceDirection.ServerToClient, $"Call(\"{JsResetAnimation}\")", "");
         }
 
         #endregion
 
-        #region Commands: server → client with a result (CallAsync / EvalAsync)
+        #region Commands: server → client with a result (CallAsync)
 
         /// <summary>
         /// Asks the browser how big the gauge really is. The handler that calls this needs the
@@ -277,13 +258,11 @@ namespace IntegrationLab.Controls
         /// <exception cref="InvalidOperationException">The browser replied with nothing usable.</exception>
         public async Task<RenderedSize> GetRenderedSizeAsync()
         {
-            RaiseTrace(TraceDirection.ServerToClient, $"CallAsync(\"{JsGetRenderedSize}\")", "awaiting the browser…");
-            var watch = Stopwatch.StartNew();
+            RaiseTrace(TraceDirection.ServerToClient, $"await CallAsync(\"{JsGetRenderedSize}\")", "");
 
             dynamic result = await AwaitClient(this.CallAsync(JsGetRenderedSize), JsGetRenderedSize);
 
-            watch.Stop();
-            RaiseTrace(TraceDirection.ClientToServer, "result", $"{ToWireJson((object)result)}  ({watch.ElapsedMilliseconds} ms round trip)");
+            RaiseTrace(TraceDirection.ClientToServer, "result", ToWireJson((object)result));
 
             if (result == null)
                 throw new InvalidOperationException($"{JsGetRenderedSize} returned null.");
@@ -303,39 +282,17 @@ namespace IntegrationLab.Controls
         }
 
         /// <summary>
-        /// The same round trip through <c>EvalAsync</c>: an arbitrary expression evaluated in the
-        /// component's client context (<c>this</c> = the wrapper), returning a primitive.
-        /// </summary>
-        public async Task<double> GetWidthViaEvalAsync()
-        {
-            RaiseTrace(TraceDirection.ServerToClient, $"EvalAsync(\"{JsGetWidthExpression}\")", "awaiting the browser…");
-            var watch = Stopwatch.StartNew();
-
-            object result = await AwaitClient(this.EvalAsync(JsGetWidthExpression), "getWidth");
-
-            watch.Stop();
-            RaiseTrace(TraceDirection.ClientToServer, "result", $"{ToWireJson(result)}  ({watch.ElapsedMilliseconds} ms round trip)");
-
-            double width = ToDouble(result);
-            if (double.IsNaN(width) || width <= 0)
-                throw new InvalidOperationException($"getWidth returned {ToWireJson(result)}: not a usable width.");
-            return width;
-        }
-
-        /// <summary>
         /// Returns the selected client-side state as a small DTO. The browser answers with
         /// <c>{ value, isAboveThreshold, width, height, isAnimating }</c>; the server maps it by the
         /// JavaScript names and validates the value against its own range before trusting it.
         /// </summary>
         public async Task<GaugeStateDto> GetSelectedStateAsync()
         {
-            RaiseTrace(TraceDirection.ServerToClient, $"CallAsync(\"{JsGetSelectedState}\")", "awaiting the browser…");
-            var watch = Stopwatch.StartNew();
+            RaiseTrace(TraceDirection.ServerToClient, $"await CallAsync(\"{JsGetSelectedState}\")", "");
 
             dynamic result = await AwaitClient(this.CallAsync(JsGetSelectedState), JsGetSelectedState);
 
-            watch.Stop();
-            RaiseTrace(TraceDirection.ClientToServer, "result", $"{ToWireJson((object)result)}  ({watch.ElapsedMilliseconds} ms round trip)");
+            RaiseTrace(TraceDirection.ClientToServer, "result", ToWireJson((object)result));
 
             if (result == null)
                 throw new InvalidOperationException($"{JsGetSelectedState} returned null.");
@@ -354,103 +311,12 @@ namespace IntegrationLab.Controls
                 throw new InvalidOperationException(
                     $"client reported value {F(state.Value)} outside {F(_minimum)}..{F(_maximum)}; state rejected.");
 
-            if (Math.Abs(state.Value - _value) > 0.001)
-                RaiseTrace(TraceDirection.Server, "contract check",
-                    $"client shows {F(state.Value)} but server Value is {F(_value)}" +
-                    (state.IsAnimating ? " (sweep in flight): server wins" : ": server wins"));
-
-            return state;
-        }
-
-        /// <summary>
-        /// THE CAMEL-CASE PITFALL, on purpose. Same call as <see cref="GetSelectedStateAsync"/>, but the
-        /// result is read with Pascal-case names (<c>result.Width</c>, <c>result.Value</c>). Those members
-        /// do not exist on the wire (<c>width</c>, <c>value</c> do), so dynamic access either yields
-        /// <c>null</c> or throws a binder exception depending on the dynamic implementation. Both are
-        /// caught and reported through the trace; the returned DTO keeps its defaults (0 / false),
-        /// which is exactly the silent-wrong-data failure the lesson warns about.
-        /// </summary>
-        public async Task<GaugeStateDto> GetSelectedStateWrongCaseAsync()
-        {
-            RaiseTrace(TraceDirection.ServerToClient, $"CallAsync(\"{JsGetSelectedState}\")", "awaiting the browser… (pitfall demo)");
-
-            dynamic result = await AwaitClient(this.CallAsync(JsGetSelectedState), JsGetSelectedState);
-
-            RaiseTrace(TraceDirection.ClientToServer, "result", ToWireJson((object)result));
-
-            var state = new GaugeStateDto();
-            if (result == null)
-                return state;
-
-            // Wrong: Pascal-case reads of a camelCase wire object.
-            try
-            {
-                object width = result.Width;
-                object value = result.Value;
-                RaiseTrace(TraceDirection.Server, "result.Width  (PascalCase)",
-                    width == null ? "null  ← the member is \"width\"; no error, just wrong data" : ToWireJson(width));
-                RaiseTrace(TraceDirection.Server, "result.Value  (PascalCase)",
-                    value == null ? "null  ← the member is \"value\"; no error, just wrong data" : ToWireJson(value));
-                state.Width = width == null ? 0 : ToInt(width);
-                state.Value = value == null ? 0 : ToDouble(value);
-            }
-            catch (Exception ex)
-            {
-                RaiseTrace(TraceDirection.Server, "result.Width  (PascalCase)", $"threw {ex.GetType().Name}: {ex.Message}");
-            }
-
-            // Right: the JavaScript names.
-            RaiseTrace(TraceDirection.Server, "result.width  (camelCase)", ToWireJson((object)result.width));
-            RaiseTrace(TraceDirection.Server, "result.value  (camelCase)", ToWireJson((object)result.value));
-
             return state;
         }
 
         #endregion
 
-        #region Failure path: serialization discipline
-
-        /// <summary>
-        /// Deliberately assigns a domain object to <c>Options.debugDump</c>. Wisej.NET serializes it
-        /// (camel-cased, with the Customer navigation object and every line) and ships it to the browser
-        /// with the next response. The client adapter reports what it received through the
-        /// <see cref="LeakDetected"/> event; call <see cref="RemoveLeakedObject"/> to clean up.
-        /// </summary>
-        /// <returns>The size in characters of the JSON the server serialized.</returns>
-        public int LeakDomainObjectForTesting()
-        {
-            var order = DomainWorkOrder.Sample();
-            string json = ToWireJson(order);
-
-            dynamic options = this.Options;
-            options.debugDump = order;                 // BAD: a domain object crosses the wire
-
-            int customerAt = json.IndexOf("\"customer\"", StringComparison.Ordinal);
-            string peek = customerAt >= 0 ? json.Substring(customerAt, Math.Min(96, json.Length - customerAt)) + "…" : json.Substring(0, Math.Min(96, json.Length)) + "…";
-            RaiseTrace(TraceDirection.ServerToClient, "update(options)",
-                $"{{\"debugDump\":{{… {json.Length} chars …}}}}  ← domain object leaked on purpose");
-            RaiseTrace(TraceDirection.Server, "serialized (peek)", peek);
-            return json.Length;
-        }
-
-        /// <summary>Recovery: takes the leaked object back out of the rendered options.</summary>
-        public void RemoveLeakedObject()
-        {
-            dynamic options = this.Options;
-            options.debugDump = null;
-            RaiseTrace(TraceDirection.ServerToClient, "update(options)", "{\"debugDump\":null}  (cleaned up)");
-        }
-
-        #endregion
-
-        /// <summary>Compact JSON of the state this component owns (what the widget receives on init).</summary>
-        public string ToJson()
-            => $"{{\"value\":{F(_value)},\"min\":{F(_minimum)},\"max\":{F(_maximum)},\"warnAt\":{F(_warnAt)},\"threshold\":{F(_threshold)},\"label\":\"{_caption}\",\"units\":\"{_units}\"}}";
-
-        /// <summary>
-        /// Serializes any value the way Wisej.NET puts it on the wire: camelCase property names.
-        /// Used by the UI to show DTOs and raw client results as JSON.
-        /// </summary>
+        /// <summary>Serializes a value the way Wisej.NET puts it on the wire: camelCase property names.</summary>
         public static string ToWireJson(object value)
         {
             if (value == null)
@@ -473,7 +339,7 @@ namespace IntegrationLab.Controls
                     {
                         double reported = ToDouble(data?.value);
                         RaiseTrace(TraceDirection.ClientToServer, "thresholdExceeded", $"{{\"value\":{F(reported)}}}");
-                        ThresholdExceeded?.Invoke(this, new GaugeEventArgs(_value, "high", reported));
+                        ThresholdExceeded?.Invoke(this, new GaugeEventArgs(_value, "high"));
                         break;
                     }
                 case "rangeChanged":
@@ -482,7 +348,7 @@ namespace IntegrationLab.Controls
                         double reported = ToDouble(data?.value);
                         this.CurrentRange = range;
                         RaiseTrace(TraceDirection.ClientToServer, "rangeChanged", $"{{\"range\":\"{range}\",\"value\":{F(reported)}}}");
-                        RangeChanged?.Invoke(this, new GaugeEventArgs(_value, range, reported));
+                        RangeChanged?.Invoke(this, new GaugeEventArgs(_value, range));
                         break;
                     }
                 case "error":
@@ -493,24 +359,11 @@ namespace IntegrationLab.Controls
                         WidgetError?.Invoke(this, new GaugeErrorEventArgs(phase, message));
                         break;
                     }
-                case "leakDetected":
-                    {
-                        int bytes = ToInt(data?.bytes);
-                        int keys = ToInt(data?.keys);
-                        string sample = (string)(data?.sample ?? "");
-                        RaiseTrace(TraceDirection.ClientToServer, "leakDetected", $"{{\"bytes\":{bytes},\"keys\":{keys},\"sample\":\"{sample}\"}}");
-                        LeakDetected?.Invoke(this, new LeakDetectedEventArgs(bytes, keys, sample));
-                        break;
-                    }
                 default:
                     base.OnWidgetEvent(e);
                     break;
             }
         }
-
-        /// <summary>Called by the UI when it wants a line in the trace on behalf of this component.</summary>
-        public void TraceStateOut(string what, string json)
-            => RaiseTrace(TraceDirection.ServerToClient, what, json);
 
         #region internals
 
@@ -522,10 +375,7 @@ namespace IntegrationLab.Controls
         {
             var completed = await Task.WhenAny(call, Task.Delay(this.ClientReplyTimeout));
             if (completed != call)
-            {
-                RaiseTrace(TraceDirection.Server, "timeout", $"{what}: no reply within {ClientReplyTimeout.TotalSeconds:0.#} s");
                 throw new TimeoutException($"The browser did not answer {what} within {ClientReplyTimeout.TotalSeconds:0.#} s.");
-            }
             return await call;      // re-await to surface any exception from the call itself
         }
 

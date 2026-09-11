@@ -5,15 +5,9 @@ using Wisej.Web;
 namespace OperationsConsole.Shell
 {
     /// <summary>
-    /// The record header that used to be copied onto every section page: a title, a record count, the time of the
-    /// last refresh and a Refresh button.
-    /// <para>
-    /// This is the module's <b>reuse boundary</b>. Its whole public surface is three properties
-    /// (<see cref="Title"/>, <see cref="RecordCount"/>, <see cref="LastRefresh"/>) and one event
-    /// (<see cref="RefreshRequested"/>). <c>lblTitle</c>, <c>lblCount</c>, <c>lblRefreshed</c> and
-    /// <c>btnRefresh</c> stay private, so they can be renamed, restyled or replaced tomorrow without any
-    /// consuming page noticing — which is exactly what a consumer could <i>not</i> do if the controls were public.
-    /// </para>
+    /// The record header of a section page: a title, a record count, the time of the last refresh and a Refresh
+    /// button. Its public surface is <see cref="Title"/>, <see cref="RecordCount"/>, <see cref="LastRefresh"/> and
+    /// <see cref="RefreshRequested"/>; every child control is private.
     /// </summary>
     public partial class RecordHeader : UserControl
     {
@@ -33,7 +27,7 @@ namespace OperationsConsole.Shell
             set => this.lblTitle.Text = value;
         }
 
-        /// <summary>How many records the page holds. The control decides how to word it.</summary>
+        /// <summary>How many records the page holds.</summary>
         [DefaultValue(0)]
         public int RecordCount
         {
@@ -58,7 +52,7 @@ namespace OperationsConsole.Shell
             }
         }
 
-        /// <summary>Raised when the user asks for a refresh. What that means is the consuming page's business.</summary>
+        /// <summary>Raised when the user asks for a refresh.</summary>
         public event EventHandler RefreshRequested;
 
         private void btnRefresh_Click(object sender, EventArgs e)

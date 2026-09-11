@@ -5,12 +5,8 @@ using OperationsConsole.Models;
 namespace OperationsConsole.Services
 {
     /// <summary>
-    /// The in-memory data behind the Layouts section: one card per region of the console, plus the rules the
-    /// module teaches. Business logic lives here and not in the page, so the page's event handlers stay thin.
-    /// <para>
-    /// <see cref="SimulateFailure"/> makes <see cref="Save"/> throw, which is how the Layouts section
-    /// demonstrates a failure the user cannot fix from the screen.
-    /// </para>
+    /// The in-memory data behind the Layouts section: one card per region of the console.
+    /// <see cref="SimulateFailure"/> makes <see cref="Save"/> throw, so the error outcome of Save can be shown.
     /// </summary>
     public sealed class LayoutCardService
     {
@@ -36,13 +32,13 @@ namespace OperationsConsole.Services
             Add("Record header", "RecordHeader UserControl", "repeated UI belongs in a UserControl, not in six copies");
         }
 
-        /// <summary>When true, <see cref="Save"/> throws — the reproducible error path of this section.</summary>
+        /// <summary>When true, <see cref="Save"/> throws.</summary>
         public bool SimulateFailure { get; set; }
 
         /// <summary>The cards, in the order they were created.</summary>
         public IReadOnlyList<LayoutCard> Cards => _cards;
 
-        /// <summary>How many cards the section holds (the StatusBar's record count).</summary>
+        /// <summary>How many cards the section holds.</summary>
         public int Count => _cards.Count;
 
         /// <summary>Adds the next card from the sample set and returns it.</summary>
@@ -52,15 +48,11 @@ namespace OperationsConsole.Services
             return Add(row[0], row[1], row[2]);
         }
 
-        /// <summary>Saves the cards. Throws when <see cref="SimulateFailure"/> is set.</summary>
+        /// <summary>Saves the cards.</summary>
         public void Save()
         {
             if (SimulateFailure)
-                throw new InvalidOperationException(
-                    "LayoutCardService.Save failed: simulated service failure (\"Simulate service failure\" is ticked). " +
-                    "In a real application this is the exception a repository throws when the database refuses the write.");
-
-            // in-memory sample: there is nothing to persist, the cards are already the state
+                throw new InvalidOperationException("The layout cards could not be saved.");
         }
 
         private LayoutCard Add(string region, string container, string rule)

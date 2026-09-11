@@ -6,7 +6,7 @@ namespace EnterpriseOps.Data
 {
     /// <summary>
     /// Deterministic seed: 60 work orders (ids 2001–2060) across contoso / fabrikam / northwind, with
-    /// versions, assignees and a mix of statuses so the grid, the batch and every failure path look real.
+    /// versions, assignees and a mix of statuses so the grid and every failure path look real.
     /// Work order 2002 is the walkthrough's: "Repair loading dock pump", fabrikam, on hold, v8.
     /// </summary>
     public static class SeedData
@@ -79,7 +79,7 @@ namespace EnterpriseOps.Data
             pump.ApprovedBy = null;
             pump.ApprovedUtc = null;
 
-            // Make sure fabrikam has a few approvable rows for the happy path and the batch.
+            // Make sure fabrikam has a few approvable rows for the happy path.
             int inProgress = 0;
             foreach (var row in rows)
             {

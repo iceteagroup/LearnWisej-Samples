@@ -10,8 +10,8 @@ Parity first, then targeted modernization.
 
 | Criterion | Met by |
 |---|---|
-| It runs in a browser — and you can explain what was reused vs rebuilt | `http://localhost:5607`; the three tables below; every console button traces which side of the line it is on (`• server` reused logic, `⚠ boundary` replaced desktop assumption) |
-| It survives two concurrent users with logging and rollback | **Open second session ↗**, kelly in one tab, sam in the other: separate session contexts, one audit log seen by both (`AuditLog (other session)` trace line), sam's Export denied, kelly's Download allowed; `docs/DeploymentChecklist.md` — backup & rollback (build output vs storage root) |
+| It runs in a browser — and you can explain what was reused vs rebuilt | `http://localhost:5607`; the three tables below |
+| It survives two concurrent users with logging and rollback | **Second session ↗**, kelly in one tab, sam in the other: separate session contexts, one audit log seen by both (the dashboard's activity feed), sam's Export denied, kelly's Export downloaded; `docs/DeploymentChecklist.md` — backup and rollback (build output vs storage root) |
 
 ## Reused — moved unchanged
 
@@ -41,11 +41,11 @@ Parity first, then targeted modernization.
 
 | Change | Detail |
 |---|---|
-| Theme + mixin | `Bootstrap-4` / `Material-3` / `FluentDark-5` live via `Application.LoadTheme`; `Themes/orderdesk.mixin.theme` merged (button radius 14) — `ModernizationNotes.md` |
+| Theme + mixin | `Bootstrap-4` from `Default.json`; `Themes/orderdesk.mixin.theme` merged at startup (button radius 14) — `ModernizationNotes.md` |
 | Shell of the Orders screen | watermark search box, `ToolBar` tool buttons instead of four push buttons, toast instead of MessageBox — zero lines of `Domain/` changed |
-| Responsive | `ClientProfiles.json` (Phone ≤600 · Tablet 601–1024 · Desktop ≥1025) + `ResponsiveLayout` (three layouts, event-driven and simulated) — `ResponsiveProfiles.md` |
+| Responsive | `ClientProfiles.json` (Phone ≤600 · Tablet 601–1024 · Desktop ≥1025) + `ResponsiveLayout` (three layouts, driven by `ResponsiveProfileChanged`) — `ResponsiveProfiles.md` |
 | Security as a web app | server-side auth per action, salted hashes, download guard, AllowHtml policy with sanitizer, session lifecycle, audit log — `SecurityReview.md` |
-| Operations | dashboard (KPIs, orders-by-status `Canvas` chart, live activity feed), `/health` endpoint, `AppLog`, readiness checklist as code, static-state audit — `ReadinessChecklist.md` |
+| Operations | dashboard (KPIs, orders-by-status `Canvas` chart, live activity feed), `/health` endpoint, `AppLog` — `ReadinessChecklist.md` |
 | Deployment | IIS `web.config`, Dockerfile + compose, production settings notes — `DeploymentChecklist.md` |
 
 ## Risks that remain (migration debt)
@@ -55,10 +55,10 @@ Parity first, then targeted modernization.
 2. **Demo accounts in code.** `AuthService` holds two salted hashes; production maps OpenID Connect / Windows
    authentication claims to the same `Manager` / `Clerk` roles and keeps `Demand()` as it is. No sign-in rate limit.
 3. **Two export paths.** The capstone snapshot exports CSV (`CsvExport`); Module 6's .xlsx writer and the report
-   queue were not carried into this console to keep it readable. Merge them for the release.
+   queue were not carried into the capstone. Merge them for the release.
 4. **Theme is process-wide.** `LoadTheme` restyles every session — right for a house style, not a per-user toggle.
-5. **Responsive claims are narrow.** Three layouts, one screen, tested with simulate buttons and a resized browser;
-   no phone device (`ResponsiveProfiles.md`).
+5. **Responsive claims are narrow.** Three layouts, one screen, tested with a resized browser; no phone device
+   (`ResponsiveProfiles.md`).
 6. **Session affinity untested behind a real load balancer**; the container/IIS assets are written, not executed here.
 7. **Audit log is in memory** (`AuditLog`), mirrored to the file log; a production sink (table / SIEM) is one
    `Record` implementation away.

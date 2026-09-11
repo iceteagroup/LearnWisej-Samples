@@ -18,7 +18,7 @@ namespace EnterpriseOps.Security
         public override string ToString() => $"{Utc:HH:mm:ss} {Action} {Subject} by {User} [{CorrelationId}] {Detail}";
     }
 
-    /// <summary>Thrown by the audit store when the write fails (simulated for the lab's third review question).</summary>
+    /// <summary>Thrown by the audit store when the write fails.</summary>
     public class AuditWriteException : Exception
     {
         public AuditWriteException(string message) : base(message) { }
@@ -26,13 +26,12 @@ namespace EnterpriseOps.Security
 
     /// <summary>
     /// In-memory audit log. In production this is a separate store (append-only table, SIEM, …) — which is
-    /// exactly why it can fail AFTER the notification was already sent. FailNextWrite() simulates that.
+    /// exactly why it can fail AFTER the notification was already sent.
     /// </summary>
     public class AuditLog
     {
         private readonly ActivityTrace _trace;
         private readonly List<AuditEntry> _entries = new List<AuditEntry>();
-        private string _failNextReason;
 
         public AuditLog(ActivityTrace trace)
         {
@@ -41,24 +40,9 @@ namespace EnterpriseOps.Security
 
         public IReadOnlyList<AuditEntry> Entries => _entries;
 
-        /// <summary>Lab switch: the next WriteAsync throws instead of writing.</summary>
-        public void FailNextWrite(string reason)
-        {
-            _failNextReason = reason;
-            _trace.Write($"Security: AuditLog armed — the next write will fail ({reason})");
-        }
-
         public async Task WriteAsync(string action, string subject, string user, string correlationId, string detail)
         {
             await Task.Delay(120);                  // a remote append-only store, not a local list
-
-            if (_failNextReason != null)
-            {
-                string reason = _failNextReason;
-                _failNextReason = null;
-                _trace.Write($"Security: audit write FAILED for {action} {subject} — {reason}");
-                throw new AuditWriteException(reason);
-            }
 
             _entries.Add(new AuditEntry
             {

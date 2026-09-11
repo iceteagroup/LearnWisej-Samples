@@ -2,11 +2,9 @@
 
 One runnable Wisej.NET 4 application per module, built from the course's lesson guide, applied-concepts
 guide, lab guide and walkthrough video. The app under study is the course's **TicketOps Console**.
-Every sample follows the same layout: the module's screen on the left, an **Activity trace ·
-UI → Service → Data** on the right (every click logged as it crosses a boundary), and a bottom button
-bar that exercises the success path, a progress path, at least one failure path and the error path
-with its recovery. Each folder has its own `README.md` (what to click, deliverables, self-check answers)
-and a `docs/` folder with the lab deliverables.
+Each sample contains only the screen the lab guide and the video build; diagnostics go to the server
+console through `ILog`. Each folder has its own `README.md` (what the screen contains and where each
+deliverable lives) and a `docs/` folder with the lab deliverables.
 
 Requirements already on this machine: .NET 10 SDK and the `Wisej-4` 4.1.0 NuGet package. Nothing is deployed anywhere.
 
@@ -38,7 +36,7 @@ or open the `TicketOps.slnx` in the module folder with Visual Studio and press F
 ## `_template`
 
 The scaffold every module was built from (the production folder structure with the shared
-`ILog`/`ActivityLog`, the `ActivityTracePanel` diagnostics card, the `StatusBanner` control, `Strings`
+`ILog`/`ActivityLog`, the `ActivityTracePanel` diagnostics card (no longer used by the module samples), the `StatusBanner` control, `Strings`
 and the per-session `AppComposition`), plus `COOKBOOK.md`: the conventions verified while building and
 running these samples (handler shape, results vs exceptions, the trace format, the Wisej.NET APIs each
 module relies on and which of them were verified at runtime). Read it before writing a new sample.

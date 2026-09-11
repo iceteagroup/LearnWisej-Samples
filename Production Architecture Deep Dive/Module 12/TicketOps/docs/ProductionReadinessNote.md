@@ -24,18 +24,17 @@ restart, a recycle or a scale-down interrupts. Deploy in a low-traffic window an
 `Default.json` with `"debug": false`, the manifest's `environment`), never from code. The **Runtime mode** row
 proves the production flag took.
 
-**Logging.** Every layer logs through `ILog` with a layer tag (`[UI] [SVC] [INFRA] [DATA] [SESSION]`) and a short
-source (`Class.Method`); driver messages (`sql01:1433`) stay in the log, the UI shows `Strings.*`. The session id
-on the diagnostics page is the correlation handle for an incident.
+**Logging.** Every layer logs through `ILog` with a layer tag and a short source (`Class.Method`); exception
+details stay in the log, the UI shows `Strings.*`. The session id on the diagnostics page is the correlation
+handle for an incident.
 
 **Release & rollback.** `docs/ReleaseNotes.md` is structured (Added / Changed / Fixed / Ops / Migration /
 Rollback) and names the rollback trigger (`/HealthCheck.json` non-200 or wrong version for 5 minutes; smoke test
 fails), the owner and the steps. The previous artifact is retained; this release has no migration to undo.
 
-**Every path visible, nothing leaked.** Success (Healthy · 200), progress (40 work units), permission failure
-(Access denied), dependency failure (Degraded · 200, app still working), error (Unhealthy · 503) and recovery
-(Healthy · 200) are each one button on the bottom bar, each traced across the layers, each explained to the user
-in a sentence from `Resources/Strings.cs`.
+**Every path visible, nothing leaked.** Healthy, Degraded and Unhealthy each get a status line and, when not
+healthy, a banner sentence from `Resources/Strings.cs`; a role without access gets `Strings.DiagnosticsAccessDenied`
+and no data.
 
 **Known limitation, stated.** The store is in-memory and per session; the `database` probe therefore proves the
 pattern, not a real database. Swapping `InMemoryTicketRepository` for a SQL repository touches `AppComposition`

@@ -114,7 +114,7 @@ namespace EnterpriseOps.Services.Jobs
                 return;
             }
 
-            _store.AppendHistory(queued.JobId, "Queue:", $"Worker picked up {record.Number} (thread {Environment.CurrentManagedThreadId}, no session attached).");
+            _store.AppendHistory(queued.JobId, "Queue:", $"Worker picked up {record.Number} (thread {Environment.CurrentManagedThreadId}).");
             try
             {
                 await queued.Job.RunAsync(sink, queued.Cancellation.Token);
@@ -152,9 +152,6 @@ namespace EnterpriseOps.Services.Jobs
             public async Task PublishAsync(JobProgress progress, CancellationToken cancellationToken)
             {
                 await _storeSink.PublishAsync(progress, cancellationToken);
-
-                if (!progress.IsMilestone)
-                    return;
 
                 string title = null;
                 if (progress.Status == JobStatus.Running && progress.Message.StartsWith("Validated", StringComparison.Ordinal))

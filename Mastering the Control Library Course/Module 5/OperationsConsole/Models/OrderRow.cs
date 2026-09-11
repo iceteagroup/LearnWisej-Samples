@@ -18,7 +18,7 @@ namespace OperationsConsole.Models
     public class OrderRow
     {
         /// <summary>Stable ID of the order ("SO-100417"). Separate from the display text — the command column and
-        /// <c>ConsoleLog.Record(...)</c> use this, never the cell text of another column.</summary>
+        /// <c>ShellStatus.Record(...)</c> use this, never the cell text of another column.</summary>
         public string Number { get; set; }
 
         /// <summary>Customer name as typed by a human — it may contain &amp;, &lt; or &gt;, which is why any HTML the

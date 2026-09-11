@@ -3,71 +3,47 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TicketOps.Domain;
-using TicketOps.Infrastructure;
 
 namespace TicketOps.Data
 {
-    /// <summary>
-    /// Raised by the data layer when the store is unreachable. Its message is deliberately internal
-    /// (host names, table names): it belongs in the log, and the screen must not show it.
-    /// </summary>
-    public sealed class DataOutageException : Exception
-    {
-        public DataOutageException(string message) : base(message) { }
-    }
-
     /// <summary>
     /// In-memory work-order store seeded with the TicketOps demo queue. One instance per session
     /// (created in AppComposition), so two browser tabs never share a queue — the same reason nothing
     /// here is static.
     ///
-    /// The interesting part is <see cref="BeginTransaction"/>: a transaction buffers its writes and
-    /// its commit applies them to a working copy of the store, which replaces the live store only when
-    /// every statement succeeded. <see cref="SimulateOutage"/> makes the second statement of a commit
-    /// (the audit INSERT) fail like a real driver would, after the status UPDATE already "ran" — so the
-    /// lab can show that nothing was partially applied.
+    /// <see cref="BeginTransaction"/>: a transaction buffers its writes and its commit applies them to a
+    /// working copy of the store, which replaces the live store only when every statement succeeded.
     /// </summary>
     public sealed class InMemoryWorkOrderRepository : IWorkOrderRepository
     {
         private readonly object _gate = new object();
-        private readonly ILog _log;
         private Dictionary<int, WorkOrder> _workOrders = new Dictionary<int, WorkOrder>();
         private List<ApprovalRecord> _audit = new List<ApprovalRecord>();
         private List<string> _notifications = new List<string>();
-        private int _transactionCount;
-
-        /// <summary>Lab switch for the error path: the next commit fails on its audit INSERT and rolls back.</summary>
-        public bool SimulateOutage { get; set; }
 
         public int AuditCount { get { lock (_gate) return _audit.Count; } }
         public int NotificationCount { get { lock (_gate) return _notifications.Count; } }
 
-        public InMemoryWorkOrderRepository(ILog log)
+        public InMemoryWorkOrderRepository()
         {
-            _log = log ?? throw new ArgumentNullException(nameof(log));
             foreach (var wo in SeedData.WorkOrders())
                 _workOrders[wo.Id] = wo;
             _audit.AddRange(SeedData.AuditTrail());
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository", $"seeded {_workOrders.Count} work orders, {_audit.Count} audit rows (in-memory, per session)");
         }
 
         public Task<IReadOnlyList<WorkOrder>> GetAllAsync()
         {
-            EnsureAvailable("SELECT * FROM WorkOrders");
             IReadOnlyList<WorkOrder> rows;
             lock (_gate)
                 rows = _workOrders.Values.Select(Clone).ToList();
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.GetAllAsync", $"{rows.Count} rows");
             return Task.FromResult(rows);
         }
 
         public Task<WorkOrder> FindAsync(int id)
         {
-            EnsureAvailable($"SELECT * FROM WorkOrders WHERE Id={id}");
             WorkOrder wo;
             lock (_gate)
                 _workOrders.TryGetValue(id, out wo);
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.FindAsync", wo == null ? $"#{id} not found" : $"#{id} found ({wo.Number} · {wo.Status})");
             return Task.FromResult(wo == null ? null : Clone(wo));
         }
 
@@ -81,17 +57,12 @@ namespace TicketOps.Data
 
         public IWorkOrderTransaction BeginTransaction()
         {
-            int id;
-            lock (_gate)
-                id = ++_transactionCount;
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.BeginTransaction", $"tx#{id} begin — writes are buffered until commit");
-            return new InMemoryTransaction(this, id);
+            return new InMemoryTransaction(this);
         }
 
         /// <summary>
         /// The commit: statements run against a working copy; the copy becomes the live store only after the
-        /// last statement succeeded. When the outage switch is on the audit INSERT throws — the status
-        /// UPDATE that ran before it is discarded with the copy, so the caller observes zero writes.
+        /// last statement succeeded. If a statement throws, the copy is dropped and the caller observes zero writes.
         /// </summary>
         private void Commit(InMemoryTransaction tx)
         {
@@ -100,61 +71,16 @@ namespace TicketOps.Data
                 var workOrders = _workOrders.ToDictionary(p => p.Key, p => Clone(p.Value));
                 var audit = _audit.ToList();
                 var notifications = _notifications.ToList();
-                int applied = 0;
-                int total = tx.Updates.Count + tx.Audit.Count + tx.Notifications.Count;
-                string source = "tx#" + tx.Id;
 
-                try
-                {
-                    foreach (var wo in tx.Updates)
-                    {
-                        workOrders[wo.Id] = Clone(wo);
-                        applied++;
-                        _log.Info(LogLayer.Data, source, $"UPDATE WorkOrders SET Status='{wo.Status}' WHERE Id={wo.Id} → {applied}/{total} on the working copy");
-                    }
-
-                    foreach (var record in tx.Audit)
-                    {
-                        if (SimulateOutage)
-                            throw Outage($"INSERT INTO ApprovalAudit ({record.WorkOrderNumber}) in tx#{tx.Id}");
-                        audit.Add(record);
-                        applied++;
-                        _log.Info(LogLayer.Data, source, $"INSERT INTO ApprovalAudit ({record}) → {applied}/{total} on the working copy");
-                    }
-
-                    foreach (var note in tx.Notifications)
-                    {
-                        notifications.Add(note);
-                        applied++;
-                        _log.Info(LogLayer.Data, source, $"INSERT INTO Outbox ({note}) → {applied}/{total} on the working copy");
-                    }
-                }
-                catch
-                {
-                    // The working copy is simply dropped: the live store never saw a single statement.
-                    _log.Warn(LogLayer.Data, source, $"rolled back — {applied} of {total} statements discarded, live store unchanged");
-                    throw;
-                }
+                foreach (var wo in tx.Updates)
+                    workOrders[wo.Id] = Clone(wo);
+                audit.AddRange(tx.Audit);
+                notifications.AddRange(tx.Notifications);
 
                 _workOrders = workOrders;
                 _audit = audit;
                 _notifications = notifications;
-                _log.Info(LogLayer.Data, source, $"commit — {applied} of {total} statements applied atomically");
             }
-        }
-
-        private void EnsureAvailable(string statement)
-        {
-            if (SimulateOutage)
-                throw Outage(statement);
-        }
-
-        private DataOutageException Outage(string statement)
-        {
-            // What a real driver would say — and exactly what must not reach the user.
-            _log.Error(LogLayer.Data, "InMemoryWorkOrderRepository", null,
-                $"outage: {statement} failed — timeout connecting to sql01:1433 (TicketOps.dbo.WorkOrders)");
-            return new DataOutageException("Timeout connecting to sql01:1433 while executing: " + statement);
         }
 
         private static WorkOrder Clone(WorkOrder w) => new WorkOrder
@@ -177,15 +103,13 @@ namespace TicketOps.Data
             private readonly InMemoryWorkOrderRepository _owner;
             private bool _committed;
 
-            public int Id { get; }
             public List<WorkOrder> Updates { get; } = new List<WorkOrder>();
             public List<ApprovalRecord> Audit { get; } = new List<ApprovalRecord>();
             public List<string> Notifications { get; } = new List<string>();
 
-            public InMemoryTransaction(InMemoryWorkOrderRepository owner, int id)
+            public InMemoryTransaction(InMemoryWorkOrderRepository owner)
             {
                 _owner = owner;
-                Id = id;
             }
 
             public void Update(WorkOrder workOrder)
@@ -208,7 +132,7 @@ namespace TicketOps.Data
             public Task CommitAsync()
             {
                 if (_committed)
-                    throw new InvalidOperationException($"tx#{Id} was already committed.");
+                    throw new InvalidOperationException("The transaction was already committed.");
                 _owner.Commit(this);
                 _committed = true;
                 return Task.CompletedTask;
@@ -216,8 +140,7 @@ namespace TicketOps.Data
 
             public void Dispose()
             {
-                if (!_committed && (Updates.Count + Audit.Count + Notifications.Count) > 0)
-                    _owner._log.Info(LogLayer.Data, "tx#" + Id, "disposed without commit — buffered writes dropped (rollback)");
+                // Not committed: the buffered writes are simply dropped (rollback).
             }
         }
     }

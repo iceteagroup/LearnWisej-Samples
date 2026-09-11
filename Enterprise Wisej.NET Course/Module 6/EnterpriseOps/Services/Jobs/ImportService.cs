@@ -25,10 +25,9 @@ namespace EnterpriseOps.Services.Jobs
     ///   * which tenant's jobs a session may see (the store is process-wide; the boundary is enforced here)
     ///   * what a job record says before the worker ever touches it
     ///
-    /// It is created per session (it holds the session's ActivityTrace) but owns nothing durable: the queue,
-    /// the store, the notifications and the work-order table come from <see cref="JobInfrastructure"/> and
-    /// outlive every page and every session. That is the answer to "who owns the job after the session
-    /// closes?" — these four, never the screen.
+    /// It is created by the page but owns nothing durable: the queue, the store, the notifications and the
+    /// work-order table come from <see cref="JobInfrastructure"/> and outlive every page and every session.
+    /// That is the answer to "who owns the job after the session closes?" — these four, never the screen.
     /// </summary>
     public sealed class ImportService
     {
@@ -58,10 +57,6 @@ namespace EnterpriseOps.Services.Jobs
             _trace = trace;
         }
 
-        public RetryPolicy RetryPolicy => _retry;
-
-        public int WorkOrderCount(string tenantId) => _workOrders.CountFor(tenantId);
-
         public IReadOnlyList<ImportFileInfo> ListFiles() => _files.ListFiles();
 
         #region Commands
@@ -86,11 +81,7 @@ namespace EnterpriseOps.Services.Jobs
                 return CommandResult<JobRecord>.Fail(ctx.CorrelationId, $"'{command.FileName}' is not in the import drop folder.");
             }
 
-            var definition = new ImportJobDefinition
-            {
-                FileName = command.FileName,
-                PublishEveryRow = command.PublishEveryRow,
-            };
+            var definition = new ImportJobDefinition { FileName = command.FileName };
 
             var job = new ImportWorkOrdersJob(definition, ctx.TenantId, _files, _workOrders, _retry);
             var record = new JobRecord
@@ -108,9 +99,7 @@ namespace EnterpriseOps.Services.Jobs
             var queued = _queue.Enqueue(job, record);
 
             _trace.Add($"Service: enqueued {queued.Number} \"{queued.Description}\" for {ctx.User}@{ctx.TenantId} [{ctx.CorrelationId}]");
-            _trace.Add($"Queue: {_queue.PendingCount} pending · worker {(_queue.IsWorkerBusy ? "busy" : "idle")} · the request thread is free again.");
-            if (command.PublishEveryRow)
-                _trace.Add("Service: ANTI-PATTERN requested — the job will publish a progress event per row.");
+            _trace.Add($"Queue: {_queue.PendingCount} pending · worker {(_queue.IsWorkerBusy ? "busy" : "idle")}.");
 
             return CommandResult<JobRecord>.Ok(ctx.CorrelationId, queued);
         }
@@ -148,20 +137,8 @@ namespace EnterpriseOps.Services.Jobs
 
         #region Queries (tenant boundary lives here)
 
-        /// <summary>
-        /// The store is process-wide and holds every tenant's jobs; this is where the boundary is enforced.
-        /// The trace reports how many rows were filtered out so the reviewer can see it happening.
-        /// </summary>
-        public IReadOnlyList<JobRecord> ListJobs(CommandContext ctx, bool trace = false)
-        {
-            var mine = _store.List(ctx.TenantId);
-            if (trace)
-            {
-                int hidden = _store.ListAll().Count - mine.Count;
-                _trace.Add($"Data: {mine.Count} job(s) for tenant {ctx.TenantId}; {hidden} belonging to other tenants were not returned.");
-            }
-            return mine;
-        }
+        /// <summary>The store is process-wide and holds every tenant's jobs; this is where the boundary is enforced.</summary>
+        public IReadOnlyList<JobRecord> ListJobs(CommandContext ctx) => _store.List(ctx.TenantId);
 
         public IReadOnlyList<JobQueueRow> ListJobRows(CommandContext ctx) =>
             ListJobs(ctx).Select(ToRow).ToList();

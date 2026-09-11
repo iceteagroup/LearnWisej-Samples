@@ -29,7 +29,6 @@ namespace EnterpriseOps.UI
             this.listHistory = new Wisej.Web.ListBox();
             this.labelErrorsTitle = new Wisej.Web.Label();
             this.listRowErrors = new Wisej.Web.ListBox();
-            this.labelPolicy = new Wisej.Web.Label();
             this.SuspendLayout();
             //
             // labelDetailTitle
@@ -60,7 +59,7 @@ namespace EnterpriseOps.UI
             this.labelHistoryTitle.Location = new System.Drawing.Point(16, 64);
             this.labelHistoryTitle.Name = "labelHistoryTitle";
             this.labelHistoryTitle.Size = new System.Drawing.Size(510, 18);
-            this.labelHistoryTitle.Text = "STATUS HISTORY — every transition the store recorded";
+            this.labelHistoryTitle.Text = "STATUS HISTORY";
             //
             // listHistory
             //
@@ -79,7 +78,7 @@ namespace EnterpriseOps.UI
             this.labelErrorsTitle.Location = new System.Drawing.Point(538, 64);
             this.labelErrorsTitle.Name = "labelErrorsTitle";
             this.labelErrorsTitle.Size = new System.Drawing.Size(330, 18);
-            this.labelErrorsTitle.Text = "ROWS THAT FAILED — line, ref, transient or terminal";
+            this.labelErrorsTitle.Text = "ROWS THAT FAILED";
             //
             // listRowErrors
             //
@@ -87,18 +86,7 @@ namespace EnterpriseOps.UI
             this.listRowErrors.Font = new System.Drawing.Font("monospace", 9F);
             this.listRowErrors.Location = new System.Drawing.Point(538, 86);
             this.listRowErrors.Name = "listRowErrors";
-            this.listRowErrors.Size = new System.Drawing.Size(330, 148);
-            //
-            // labelPolicy
-            //
-            this.labelPolicy.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
-            this.labelPolicy.AutoSize = false;
-            this.labelPolicy.Font = new System.Drawing.Font("monospace", 8F);
-            this.labelPolicy.ForeColor = System.Drawing.Color.FromArgb(110, 126, 142);
-            this.labelPolicy.Location = new System.Drawing.Point(538, 238);
-            this.labelPolicy.Name = "labelPolicy";
-            this.labelPolicy.Size = new System.Drawing.Size(330, 20);
-            this.labelPolicy.Text = "retry policy: —";
+            this.listRowErrors.Size = new System.Drawing.Size(330, 172);
             //
             // JobDetailPanel
             //
@@ -110,7 +98,6 @@ namespace EnterpriseOps.UI
             this.Controls.Add(this.listHistory);
             this.Controls.Add(this.labelErrorsTitle);
             this.Controls.Add(this.listRowErrors);
-            this.Controls.Add(this.labelPolicy);
             this.Name = "JobDetailPanel";
             this.Size = new System.Drawing.Size(884, 274);
             this.ResumeLayout(false);
@@ -124,6 +111,5 @@ namespace EnterpriseOps.UI
         private Wisej.Web.ListBox listHistory;
         private Wisej.Web.Label labelErrorsTitle;
         private Wisej.Web.ListBox listRowErrors;
-        private Wisej.Web.Label labelPolicy;
     }
 }

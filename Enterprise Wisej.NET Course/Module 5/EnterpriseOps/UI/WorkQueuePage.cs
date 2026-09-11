@@ -14,33 +14,25 @@ using Wisej.Web;
 namespace EnterpriseOps.UI
 {
     /// <summary>
-    /// EnterpriseOps — Enterprise Work Queue (Advanced Module 5).
+    /// EnterpriseOps — Enterprise Work Queue.
     ///
-    /// Left card:   the filter bar (search · status · assigned · sort), the saved views, <c>dgvQueue</c> bound to
-    ///              <b>one page</b> of <see cref="WorkQueueRow"/>, the pager, the batch bar, the progress line and
-    ///              the dark footer ("50 of 4,331 matching · sorted by Priority ↓ · 38 ms server · 12.4 KB page").
-    /// Right card:  the live activity trace — every layer's decision, tagged UI → / Session: / Security: /
-    ///              Service: / Data: / Job:.
-    /// Bottom bar:  the anti-pattern the video measures (load everything), the failure paths (approval lock,
-    ///              concurrent edit, run as a Technician), the recovery (retry the failed rows only) and Clear trace.
+    /// The filter bar (search · status · assigned · sort), the saved views, <c>dgvQueue</c> bound to <b>one page</b>
+    /// of <see cref="WorkQueueRow"/>, the pager, the batch bar, the progress line and the status bar.
     ///
-    /// The boundary: this file owns UI state only — what is on screen and what colour it is. Every decision is a
-    /// service's: <see cref="WorkQueueQueryService"/> filters, sorts, pages and projects;
+    /// This file owns UI state only. <see cref="WorkQueueQueryService"/> filters, sorts, pages and projects;
     /// <see cref="BatchReassignWorkflow"/> validates and commits each row and returns the per-row report;
     /// <see cref="PermissionService"/> decides who may reassign. The grid state (filters, sort, page, selection)
-    /// lives in <see cref="SessionContext"/>, not in this page, so "Simulate refresh" can throw the page away.
+    /// lives in <see cref="SessionContext"/>, not in this page, so a rebuilt page restores the same view.
     /// </summary>
     public partial class WorkQueuePage : Page
     {
-        // Per-session services, wired in the constructor. Instance fields — never statics: two users must never
-        // share a session, a selection or a trace. The store and the audit log stand in for shared tables.
+        // Per-session services, wired in the constructor. Instance fields — never statics.
         private readonly SessionContext _session;
-        private readonly ActivityTrace _trace;
+        private readonly ActivityTrace _log;
         private readonly WorkOrderStore _store;
         private readonly PermissionService _permissions;
         private readonly WorkQueueQueryService _queryService;
         private readonly BatchReassignWorkflow _batchWorkflow;
-        private readonly LoadEverythingAntiPattern _antiPattern;
 
         private CommandContext _current;
 
@@ -48,16 +40,13 @@ namespace EnterpriseOps.UI
         private CancellationTokenSource _batchCancellation;
 
         private string _batchTarget = "";
-        private BatchResult _lastResult;
         private List<WorkQueueRow> _pageRows = new List<WorkQueueRow>();
         private bool _syncingSelection;
-        private int _lockedOrderId;
-        private double _lastPageKb;
 
-        /// <summary>Grid column order → the sort key the service understands (null = not sortable).</summary>
+        /// <summary>Grid column order → the sort key the service understands.</summary>
         private static readonly string[] SortKeys =
         {
-            "Number", "Title", "Status", "Priority", "AssignedTo", "DueAt", "AgeDays", null,
+            "Number", "Title", "Status", "Priority", "AssignedTo", "DueAt", "AgeDays",
         };
 
         public WorkQueuePage()
@@ -65,31 +54,26 @@ namespace EnterpriseOps.UI
             InitializeComponent();
 
             _session = SessionContext.Current;
-            _trace = _session.Trace;
+            _log = _session.Trace;
             _store = WorkOrderStore.Instance;
             _permissions = new PermissionService();
             _queryService = new WorkQueueQueryService(_store, _permissions, _session);
-            _batchWorkflow = new BatchReassignWorkflow(_store, _permissions, AuditTrail.Instance, _trace);
-            _antiPattern = new LoadEverythingAntiPattern(_store, _queryService, _trace);
+            _batchWorkflow = new BatchReassignWorkflow(_store, _permissions, AuditTrail.Instance, _log);
 
             FillFilterChoices();
-            _trace.LineAdded += trace_LineAdded;
         }
 
-        /// <summary>The grid state the session owns — not a field of this page, on purpose.</summary>
+        /// <summary>The grid state the session owns.</summary>
         private GridState Grid => _session.WorkQueueGrid;
 
         /// <summary>The command running right now: same tenant and user, one correlation id per action.</summary>
         private CommandContext CurrentContext => _current ?? NewCommand();
 
-        #region Event handlers — thin, one service call each (the shape the lab code check expects)
+        #region Event handlers
 
         private async void WorkQueuePage_Load(object sender, EventArgs e)
         {
-            ReplayTrace();
-            ShowSignedIn();
             WriteQueryToControls(Grid.Query);
-            _trace.Write($"UI → WorkQueuePage_Load: restoring grid state from the session — {Grid.Describe()}");
             try
             {
                 await RunQueryAsync(Grid.Query, "Loading the first page…");
@@ -100,10 +84,9 @@ namespace EnterpriseOps.UI
             }
         }
 
-        /// <summary>The walkthrough's Search: the screen fills a WorkQueueQuery, the service returns one page.</summary>
+        /// <summary>Search: the screen fills a WorkQueueQuery, the service returns one page.</summary>
         private async void btnSearch_Click(object sender, EventArgs e)
         {
-            _trace.Write("UI → btnSearch_Click: filters read into the grid state, page reset to 1");
             try
             {
                 await RunQueryAsync(ReadFiltersIntoGridState(1), "Searching…");
@@ -136,7 +119,6 @@ namespace EnterpriseOps.UI
                 return;
 
             bool descending = Grid.Query.SortBy == key ? !Grid.Query.Descending : DefaultDescending(key);
-            _trace.Write($"UI → header '{key}' clicked → sort {(descending ? "desc" : "asc")} stored in GridState; page reset to 1");
             try
             {
                 SelectByKey(cboSort, key);
@@ -162,7 +144,6 @@ namespace EnterpriseOps.UI
                 row.Selected = true;
             _syncingSelection = false;
             SyncSelectionFromGrid();
-            _trace.Write($"UI → btnSelectPage_Click: page added to the server-side selection ({Grid.Selected.Count} total)");
         }
 
         private void btnClearSelection_Click(object sender, EventArgs e)
@@ -172,7 +153,6 @@ namespace EnterpriseOps.UI
             dgvQueue.ClearSelection();
             _syncingSelection = false;
             UpdateActionUi();
-            _trace.Write("UI → btnClearSelection_Click: selection cleared in GridState");
         }
 
         /// <summary>Applying a saved view runs the stored query again — the rows are always current.</summary>
@@ -182,7 +162,6 @@ namespace EnterpriseOps.UI
             if (view == null)
                 return;
 
-            _trace.Write($"Service: saved view \"{view.Name}\" = {SavedViewStore.Serialize(view.Definition)} — a stored query, not a cached result");
             try
             {
                 Grid.SavedViewName = view.Name;
@@ -201,23 +180,10 @@ namespace EnterpriseOps.UI
             var view = _session.SavedViews.Add(SavedViewStore.SuggestName(definition), _session.TenantId, _session.UserName, definition);
             Grid.SavedViewName = view.Name;
 
-            _trace.Write($"Service: saved view #{view.Id} \"{view.Name}\" stored for {view.Owner}@{view.TenantId} → {SavedViewStore.Serialize(view.Definition)}");
             FillSavedViews(view);
             UpdateViewBadge();
             AlertBox.Show($"Saved view “{view.Name}”.", MessageBoxIcon.Information,
                 alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
-        }
-
-        /// <summary>
-        /// Review question 3: can the user repeat the search after a refresh? This throws the page away and builds
-        /// a new one. Nothing about the query lives here, so the new page finds the same filters, sort, page and
-        /// selection in <see cref="SessionContext"/>.
-        /// </summary>
-        private void btnSimulateRefresh_Click(object sender, EventArgs e)
-        {
-            _trace.Write($"UI → btnSimulateRefresh_Click: disposing the page; the session keeps {Grid.Describe()}");
-            DetachTrace();
-            Application.MainPage = new WorkQueuePage();
         }
 
         /// <summary>The batch command. While it runs the same button cancels it.</summary>
@@ -225,7 +191,6 @@ namespace EnterpriseOps.UI
         {
             if (_batchCancellation != null)
             {
-                _trace.Write("UI → cancel requested; the rows already committed stay committed");
                 _batchCancellation.Cancel();
                 return;
             }
@@ -242,139 +207,19 @@ namespace EnterpriseOps.UI
                     $"Reassign {items.Count} work order(s) to {target}?\r\n\r\nEach row is validated and committed on its own; you will get a per-row report.",
                     "Batch reassignment", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (answer != DialogResult.Yes)
-                {
-                    _trace.Write("UI → batch abandoned at the confirmation");
                     return;
-                }
 
-                await RunBatchLoopAsync(items, target, isRetry: false);
+                await RunBatchLoopAsync(items, target);
             }
             catch (Exception ex)
             {
                 ReportFailure(ex);
             }
-        }
-
-        /// <summary>The recovery: retry the failed rows only, with freshly read versions, never the successes.</summary>
-        private async void btnRetryFailed_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (_lastResult == null || _lastResult.Failed == 0)
-                {
-                    AlertBox.Show("There are no failed rows to retry.", MessageBoxIcon.Information,
-                        alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
-                    return;
-                }
-
-                await RunBatchLoopAsync(BuildRetryItems(_lastResult), _lastResult.TargetTechnician, isRetry: true);
-            }
-            catch (Exception ex)
-            {
-                ReportFailure(ex);
-            }
-        }
-
-        /// <summary>The anti-pattern the video shows, measured: every tenant row materialized, projected and bound.</summary>
-        private async void btnLoadEverything_Click(object sender, EventArgs e)
-        {
-            _trace.Write("UI → btnLoadEverything_Click: grid.DataSource = db.WorkOrders.ToList() — measured, not guessed");
-            BeginBusy("Loading everything…");
-            try
-            {
-                var measurement = await _antiPattern.LoadEverythingAsync(_session.TenantId);
-                ShowAntiPattern(measurement);
-            }
-            catch (Exception ex)
-            {
-                ReportFailure(ex);
-            }
-            finally
-            {
-                EndBusy();
-            }
-        }
-
-        /// <summary>Failure path 1 / recovery 1: another user opens an approval on a selected row, then completes it.</summary>
-        private async void btnApprovalLock_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (_lockedOrderId != 0)
-                {
-                    _store.CompleteApproval(_lockedOrderId);
-                    _trace.Write($"Data: approval on WO-{_lockedOrderId} completed by another user — the row can be reassigned again");
-                    _lockedOrderId = 0;
-                    btnApprovalLock.Text = "Fail: approval lock on a row";
-                    await RunQueryAsync(Grid.Query, "Reloading the page…");
-                    return;
-                }
-
-                var row = LastSelectedRow();
-                if (row == null)
-                {
-                    AlertBox.Show("Select at least one row first.", MessageBoxIcon.Warning,
-                        alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
-                    return;
-                }
-
-                _store.OpenApproval(row.Id, "APR-1042");
-                _lockedOrderId = row.Id;
-                btnApprovalLock.Text = "Recover: complete the approval";
-                _trace.Write($"Data: another user opened approval APR-1042 on {row.Number} — the next batch will fail that row only");
-                ShowBanner($"{row.Number} is now locked by approval APR-1042. Run the batch: it fails that row and changes the others.", BannerKind.Warning);
-            }
-            catch (Exception ex)
-            {
-                ReportFailure(ex);
-            }
-        }
-
-        /// <summary>
-        /// Failure path 2: another session writes to a selected row. The page is deliberately NOT reloaded, so the
-        /// selection snapshot keeps the version the user saw and the batch fails that row with stale-version.
-        /// </summary>
-        private void btnConcurrentEdit_Click(object sender, EventArgs e)
-        {
-            var row = LastSelectedRow();
-            if (row == null)
-            {
-                AlertBox.Show("Select at least one row first.", MessageBoxIcon.Warning,
-                    alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
-                return;
-            }
-
-            _store.TouchByAnotherUser(row.Id);
-            var order = _store.Find(row.Id);
-            _trace.Write($"Data: another session wrote {row.Number} — Version {row.Version} → {order.Version}; the grid still shows v{row.Version}");
-            ShowBanner($"{row.Number} was changed by another user (v{row.Version} → v{order.Version}). The batch will refuse it instead of overwriting.", BannerKind.Warning);
-        }
-
-        /// <summary>Failure path 3 / recovery 3: the permission flags are recomputed by the server, per row.</summary>
-        private async void btnSwitchUser_Click(object sender, EventArgs e)
-        {
-            string next = _session.UserName == "ana.ops" ? "ben.tech" : "ana.ops";
-            try
-            {
-                _session.SwitchUser(next);
-                ShowSignedIn();
-                await RunQueryAsync(Grid.Query, $"Re-running as {next}…");
-            }
-            catch (Exception ex)
-            {
-                ReportFailure(ex);
-            }
-        }
-
-        private void btnClearTrace_Click(object sender, EventArgs e)
-        {
-            _trace.Clear();
-            lstTrace.Items.Clear();
         }
 
         #endregion
 
-        #region Running the services (await here, decisions there)
+        #region Running the services
 
         /// <summary>One page in, one page out. The only place that calls the query service.</summary>
         private async Task RunQueryAsync(WorkQueueQuery query, string busyText)
@@ -398,7 +243,6 @@ namespace EnterpriseOps.UI
             if (target == Grid.Query.Page)
                 return;
 
-            _trace.Write($"UI → pager: page {Grid.Query.Page} → {target}; one more SearchAsync, {Grid.Query.PageSize} rows");
             try
             {
                 await RunQueryAsync(Grid.Query with { Page = target }, $"Loading page {target}…");
@@ -410,20 +254,21 @@ namespace EnterpriseOps.UI
         }
 
         /// <summary>
-        /// Runs the batch, shows the per-row report, and loops while the user asks to retry the failures. No
-        /// recursion: a retry is the next turn of this loop, with freshly read versions and a new correlation id.
+        /// Runs the batch, shows the per-row report, and loops while the user asks to retry the failures.
+        /// A retry is the next turn of this loop, with freshly read versions and a new correlation id.
         /// </summary>
-        private async Task RunBatchLoopAsync(IReadOnlyList<BatchItem> items, string technician, bool isRetry)
+        private async Task RunBatchLoopAsync(IReadOnlyList<BatchItem> items, string technician)
         {
+            bool isRetry = false;
             while (items != null && items.Count > 0)
             {
                 var result = await RunBatchAsync(items, technician, isRetry);
                 if (result == null)
                     return;                                     // cancelled, or the command was rejected
 
-                _lastResult = result;
-                ShowBatchOutcome(result);
                 await RunQueryAsync(Grid.Query, "Reloading the page…");
+                ShowBatchOutcome(result);
+                Application.Update(this);
 
                 DialogResult answer;
                 using (var dialog = new BatchResultDialog(result))
@@ -434,14 +279,13 @@ namespace EnterpriseOps.UI
 
                 items = BuildRetryItems(result);
                 isRetry = true;
-                _trace.Write($"UI → retry: {items.Count} failed row(s), versions re-read from the store");
             }
         }
 
         /// <summary>One run of the workflow with progress. Returns null when the user cancelled or the command was invalid.</summary>
         private async Task<BatchResult> RunBatchAsync(IReadOnlyList<BatchItem> items, string technician, bool isRetry)
         {
-            BeginBusy(isRetry ? "Retrying…" : "Reassigning…");     // one fresh correlation id for this batch
+            BeginBusy($"Reassigning {items.Count} work order(s) to {technician}…");
             var context = CurrentContext;
 
             _batchTarget = technician;
@@ -458,17 +302,15 @@ namespace EnterpriseOps.UI
             }
             catch (OperationCanceledException)
             {
-                _trace.Write($"Job: {context.CorrelationId} cancelled by the user — committed rows stay committed and audited");
                 ShowBanner("Batch cancelled. The rows already committed were not rolled back — the audit log lists them.", BannerKind.Warning);
-                SetStatus("batch cancelled", StatusKind.Warn);
+                lblStatusBar.Text = "Batch cancelled";
                 return null;
             }
             catch (ArgumentException ex)
             {
                 // Command-level validation: nothing was touched.
-                _trace.Write($"Service: command rejected — {ex.Message}; no row was changed");
                 ShowBanner(ex.Message, BannerKind.Warning);
-                SetStatus("command rejected", StatusKind.Warn);
+                lblStatusBar.Text = "Batch rejected — no work order was changed";
                 return null;
             }
             finally
@@ -491,7 +333,7 @@ namespace EnterpriseOps.UI
             Application.Update(this);
         }
 
-        /// <summary>The failed rows only, with the version they have <b>now</b> — that is what "refresh and retry" means.</summary>
+        /// <summary>The failed rows only, with the version they have now.</summary>
         private List<BatchItem> BuildRetryItems(BatchResult result)
         {
             var items = new List<BatchItem>();
@@ -506,9 +348,9 @@ namespace EnterpriseOps.UI
 
         #endregion
 
-        #region Showing results — UI state only, no decisions
+        #region Showing results
 
-        /// <summary>One page of the projection → the grid, the pager, the footer. Nothing is computed per row here.</summary>
+        /// <summary>One page of the projection → the grid, the pager, the status bar.</summary>
         private void ShowPage(PagedResult<WorkQueueRow> result)
         {
             _pageRows = new List<WorkQueueRow>(result.Items);
@@ -522,60 +364,29 @@ namespace EnterpriseOps.UI
             Grid.LastTotalCount = result.TotalCount;
             Grid.LastPageCount = result.PageCount;
             Grid.LastLoadedUtc = DateTime.UtcNow;
-            _lastPageKb = _queryService.LastPayloadBytes / 1024.0;
 
             lblPage.Text = string.Format(CultureInfo.InvariantCulture, "Page {0:N0} of {1:N0}", result.Page, result.PageCount);
             lblStatusBar.Text = string.Format(CultureInfo.InvariantCulture,
-                "{0} of {1:N0} matching · sorted by {2} {3} · {4} ms server · {5:0.0} KB page",
-                result.Items.Count, result.TotalCount, Grid.Query.SortBy, Grid.Query.Descending ? "↓" : "↑",
-                _queryService.LastElapsedMs, _lastPageKb);
+                "Page {0:N0} of {1:N0} · {2} of {3:N0} matching · sorted by {4} {5} · {6} ms",
+                result.Page, result.PageCount, result.Items.Count, result.TotalCount,
+                Grid.Query.SortBy, Grid.Query.Descending ? "↓" : "↑", _queryService.LastElapsedMs);
 
             UpdateSortHeaders();
             UpdateViewBadge();
             UpdatePagerButtons(result);
-            SetStatus($"{result.Items.Count} rows loaded", StatusKind.Ok);
-            _trace.Write($"UI ← ShowPage: {result.Items.Count} rows bound to dgvQueue; {Grid.Selected.Count} selected across pages");
         }
 
-        /// <summary>The measured anti-pattern: bind everything, then say what it cost next to one page.</summary>
-        private void ShowAntiPattern(AntiPatternMeasurement measurement)
-        {
-            _syncingSelection = true;
-            dgvQueue.DataSource = new List<WorkQueueRow>(measurement.Rows);
-            _syncingSelection = false;
-
-            double kb = measurement.PayloadBytes / 1024.0;
-            double factor = _lastPageKb > 0 ? kb / _lastPageKb : 0;
-
-            lblPage.Text = "no paging";
-            lblStatusBar.Text = string.Format(CultureInfo.InvariantCulture,
-                "{0:N0} rows bound · {1:N0} KB · materialize {2} ms + project {3} ms — one page was {4:0.0} KB",
-                measurement.EntitiesMaterialized, kb, measurement.MaterializeMs, measurement.ProjectMs, _lastPageKb);
-            ShowBanner(string.Format(CultureInfo.InvariantCulture,
-                "Anti-pattern: {0:N0} rows loaded into the browser, the session and this grid — ≈{1:0}× the payload of one page. Click Search to go back to paging.",
-                measurement.EntitiesMaterialized, factor), BannerKind.Warning);
-            SetStatus("everything loaded — do not ship this", StatusKind.Warn);
-        }
-
-        /// <summary>Partial failure is a normal result: a banner that names the numbers, then the per-row report.</summary>
+        /// <summary>Partial failure is a normal result: the status bar names the numbers, the report says why.</summary>
         private void ShowBatchOutcome(BatchResult result)
         {
-            if (result.Failed == 0)
-            {
-                ShowBanner($"Batch {result.CorrelationId} — {result.Summary} in {result.ElapsedMs} ms · {result.Rows.Count} audit entries.", BannerKind.Success);
-                SetStatus(result.Summary, StatusKind.Ok);
-            }
-            else
-            {
-                ShowBanner($"Batch {result.CorrelationId} — {result.Summary}. {result.Failed} row(s) were not changed; the report says why.", BannerKind.Warning);
-                SetStatus(result.Summary, result.Succeeded == 0 ? StatusKind.Error : StatusKind.Warn);
-            }
+            lblStatusBar.Text = string.Format(CultureInfo.InvariantCulture,
+                "Batch complete — {0} succeeded · {1} failed{2} · per-row report · audited",
+                result.Succeeded, result.Failed, result.Skipped > 0 ? $" · {result.Skipped} skipped" : "");
 
-            // A row that succeeded is no longer interesting to the selection; the failures stay selected for the retry.
+            // A row that succeeded leaves the selection; the failures stay selected for the retry.
             foreach (var row in result.Rows.Where(r => r.Outcome == BatchRowOutcome.Succeeded))
                 Grid.Selected.Remove(row.WorkOrderId);
-
-            btnRetryFailed.Enabled = result.Failed > 0;
+            UpdateActionUi();
         }
 
         private void ShowProgress(int done, int total)
@@ -598,9 +409,10 @@ namespace EnterpriseOps.UI
         /// <summary>Unexpected failure: log it with the correlation id, tell the user something generic, keep the screen usable.</summary>
         private void ReportFailure(Exception ex)
         {
-            _trace.Write($"Service: unhandled {ex.GetType().Name} — {ex.Message} (ref {CurrentContext.CorrelationId})");
-            ShowBanner($"The action could not be completed. Check the log for details.  (ref {CurrentContext.CorrelationId})", BannerKind.Error);
-            SetStatus("failed — see the trace", StatusKind.Error);
+            string reference = CurrentContext.CorrelationId;
+            _log.Write($"Error: {ex.GetType().Name} — {ex.Message} (ref {reference})");
+            ShowBanner($"The action could not be completed. Check the log for details.  (ref {reference})", BannerKind.Error);
+            lblStatusBar.Text = "The action could not be completed";
             AlertBox.Show("The action could not be completed. Check the log for details.", MessageBoxIcon.Error,
                 alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
         }
@@ -634,10 +446,6 @@ namespace EnterpriseOps.UI
             }
         }
 
-        /// <summary>The row the failure-path buttons act on: the last one the user selected.</summary>
-        private WorkQueueRow LastSelectedRow() =>
-            Grid.Selected.Count == 0 ? null : Grid.Selected.Values.OrderBy(r => r.Id).Last();
-
         private void UpdateActionUi()
         {
             int selected = Grid.Selected.Count;
@@ -645,10 +453,9 @@ namespace EnterpriseOps.UI
 
             lblSelection.Text = selected == 0
                 ? "0 selected"
-                : $"{selected} selected across pages · {allowed} the server would allow";
+                : $"{selected} selected · {allowed} can be reassigned";
             btnBatchReassign.Text = selected == 0 ? "Reassign selected…" : $"Reassign {selected} selected…";
             btnBatchReassign.Enabled = selected > 0;
-            btnRetryFailed.Enabled = _lastResult != null && _lastResult.Failed > 0;
         }
 
         #endregion
@@ -741,7 +548,7 @@ namespace EnterpriseOps.UI
         private void UpdateViewBadge()
         {
             bool saved = Grid.SavedViewName != null;
-            lblViewBadge.Text = saved ? "★ " + Grid.SavedViewName : "custom filters";
+            lblViewBadge.Text = saved ? $"★ Saved view: “{Grid.SavedViewName}”" : "custom filters";
             lblViewBadge.ForeColor = saved
                 ? System.Drawing.Color.FromArgb(11, 106, 230)
                 : System.Drawing.Color.FromArgb(90, 107, 125);
@@ -753,13 +560,13 @@ namespace EnterpriseOps.UI
             btnNext.Enabled = btnLast.Enabled = result.Page < result.PageCount;
         }
 
-        /// <summary>The active sort column carries the arrow — the grid never sorted anything itself.</summary>
+        /// <summary>The active sort column carries the arrow.</summary>
         private void UpdateSortHeaders()
         {
-            string[] captions = { "Number", "Title", "Status", "Priority", "Assigned", "Due", "Age (d)", "v" };
+            string[] captions = { "Number", "Title", "Status", "Priority", "Assigned", "Due", "Age (d)" };
             for (int i = 0; i < dgvQueue.Columns.Count && i < captions.Length; i++)
             {
-                bool active = SortKeys[i] != null && SortKeys[i] == Grid.Query.SortBy;
+                bool active = SortKeys[i] == Grid.Query.SortBy;
                 dgvQueue.Columns[i].HeaderText = active
                     ? captions[i] + (Grid.Query.Descending ? " ▼" : " ▲")
                     : captions[i];
@@ -776,8 +583,7 @@ namespace EnterpriseOps.UI
 
         #region Small UI helpers
 
-        private enum StatusKind { Ok, Warn, Error }
-        private enum BannerKind { Success, Warning, Error }
+        private enum BannerKind { Warning, Error }
 
         /// <summary>A filter / sort / page-size option: the key the service understands plus the text the user reads.</summary>
         private sealed class Choice
@@ -811,7 +617,6 @@ namespace EnterpriseOps.UI
         private CommandContext NewCommand()
         {
             _current = _session.NewCommandContext();
-            lblCorrelation.Text = "corr " + _current.CorrelationId;
             return _current;
         }
 
@@ -819,7 +624,7 @@ namespace EnterpriseOps.UI
         {
             NewCommand();
             SetControlsEnabled(false);
-            SetStatus(text, StatusKind.Warn);
+            lblStatusBar.Text = text;
             HideBanner();
         }
 
@@ -836,62 +641,31 @@ namespace EnterpriseOps.UI
             btnSearch.Enabled = enabled;
             btnApplyView.Enabled = enabled;
             btnSaveView.Enabled = enabled;
-            btnSimulateRefresh.Enabled = enabled;
             btnFirst.Enabled = btnPrev.Enabled = btnNext.Enabled = btnLast.Enabled = enabled;
             btnSelectPage.Enabled = btnClearSelection.Enabled = enabled;
             btnBatchReassign.Enabled = enabled && Grid.Selected.Count > 0;
-            btnLoadEverything.Enabled = enabled;
-            btnApprovalLock.Enabled = enabled;
-            btnConcurrentEdit.Enabled = enabled;
-            btnSwitchUser.Enabled = enabled;
-            btnRetryFailed.Enabled = enabled && _lastResult != null && _lastResult.Failed > 0;
             dgvQueue.Enabled = enabled;
-        }
-
-        private void ShowSignedIn()
-        {
-            lblTenant.Text = "tenant: " + _session.TenantId;
-            lblUser.Text = $"Signed in: {_session.UserName} · {_session.Role}";
-            btnSwitchUser.Text = _session.Role == UserRole.Technician
-                ? "Back to ana.ops (Manager)"
-                : "Run as ben.tech (Technician)";
-        }
-
-        private void SetStatus(string text, StatusKind kind)
-        {
-            lblStatus.Text = "● " + text;
-            lblStatus.ForeColor = kind switch
-            {
-                StatusKind.Error => System.Drawing.Color.FromArgb(224, 86, 59),
-                StatusKind.Warn => System.Drawing.Color.FromArgb(232, 161, 60),
-                _ => System.Drawing.Color.FromArgb(31, 157, 87),
-            };
         }
 
         private void ShowBanner(string text, BannerKind kind)
         {
             lblBanner.Text = text;
-            switch (kind)
+            if (kind == BannerKind.Warning)
             {
-                case BannerKind.Success:
-                    lblBanner.BackColor = System.Drawing.Color.FromArgb(233, 247, 238);
-                    lblBanner.ForeColor = System.Drawing.Color.FromArgb(15, 122, 58);
-                    break;
-                case BannerKind.Warning:
-                    lblBanner.BackColor = System.Drawing.Color.FromArgb(255, 244, 229);
-                    lblBanner.ForeColor = System.Drawing.Color.FromArgb(146, 64, 14);
-                    break;
-                default:
-                    lblBanner.BackColor = System.Drawing.Color.FromArgb(253, 236, 234);
-                    lblBanner.ForeColor = System.Drawing.Color.FromArgb(178, 59, 39);
-                    break;
+                lblBanner.BackColor = System.Drawing.Color.FromArgb(255, 244, 229);
+                lblBanner.ForeColor = System.Drawing.Color.FromArgb(146, 64, 14);
+            }
+            else
+            {
+                lblBanner.BackColor = System.Drawing.Color.FromArgb(253, 236, 234);
+                lblBanner.ForeColor = System.Drawing.Color.FromArgb(178, 59, 39);
             }
             lblBanner.Visible = true;
         }
 
         private void HideBanner() => lblBanner.Visible = false;
 
-        /// <summary>Overdue rows read red; everything else reads normal. Display only — IsOverdue was computed on the server.</summary>
+        /// <summary>Overdue rows read red; everything else reads normal. IsOverdue was computed on the server.</summary>
         private void PaintOverdueRows()
         {
             for (int i = 0; i < dgvQueue.Rows.Count && i < _pageRows.Count; i++)
@@ -900,33 +674,6 @@ namespace EnterpriseOps.UI
                     ? System.Drawing.Color.FromArgb(178, 59, 39)
                     : System.Drawing.Color.FromArgb(31, 45, 58);
             }
-        }
-
-        /// <summary>The trace sink: one line per layer decision. The only place that knows about lstTrace.</summary>
-        private void trace_LineAdded(string line)
-        {
-            if (IsDisposed)
-                return;
-
-            lstTrace.Items.Add(line);
-            lstTrace.SelectedIndex = lstTrace.Items.Count - 1;
-        }
-
-        /// <summary>The trace belongs to the session: a rebuilt page replays what the previous one wrote.</summary>
-        private void ReplayTrace()
-        {
-            lstTrace.Items.Clear();
-            foreach (string line in _trace.Lines)
-                lstTrace.Items.Add(line);
-            if (lstTrace.Items.Count > 0)
-                lstTrace.SelectedIndex = lstTrace.Items.Count - 1;
-        }
-
-        /// <summary>Called from Dispose and before "Simulate refresh" so a discarded page stops receiving trace lines.</summary>
-        private void DetachTrace()
-        {
-            if (_trace != null)
-                _trace.LineAdded -= trace_LineAdded;
         }
 
         #endregion

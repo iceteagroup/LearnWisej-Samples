@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TicketOps.Data;
 using TicketOps.Services;
 using Wisej.Services;
 using Wisej.Web;
@@ -70,36 +69,30 @@ namespace TicketOps.Infrastructure
         }
 
         /// <summary>
-        /// Registered once, never replaced by a profile switch: the session log the trace panel is attached
-        /// to, and the session's outage switch. Both have parameterless constructors, so the container can
-        /// create them by type.
+        /// Registered once, never replaced by a profile change: the session log. It has a parameterless
+        /// constructor, so the container can create it by type.
         /// </summary>
         private static void RegisterInfrastructure(ServiceProvider services, List<ServiceRegistrationEntry> table)
         {
             if (!services.HasService<ILog>())
                 services.AddService<ILog, ActivityLog>(ServiceLifetime.Session);
             table.Add(Entry<ILog, ActivityLog>(ServiceLifetime.Session,
-                "the activity trace is per browser tab; a Shared log would interleave every user's clicks"));
-
-            if (!services.HasService<DataStoreHealth>())
-                services.AddService<DataStoreHealth, DataStoreHealth>(ServiceLifetime.Session);
-            table.Add(Entry<DataStoreHealth, DataStoreHealth>(ServiceLifetime.Session,
-                "the lab's outage switch breaks one tab's data store, not the server's"));
+                "one log per browser session; the session's lines stay together"));
         }
 
         /// <summary>Fake profile: build and test the screen before any database exists.</summary>
         public static void RegisterFakeServices(ServiceProvider services, List<ServiceRegistrationEntry> table)
         {
             Register<ITicketService, FakeTicketService>(services, table, ServiceLifetime.Session,
-                t => new FakeTicketService(services.GetService<ILog>(), services.GetService<DataStoreHealth>()),
+                t => new FakeTicketService(services.GetService<ILog>()),
                 "the open-ticket list is per user; a Shared list would show user A's changes to user B");
 
             Register<IUserService, FakeUserService>(services, table, ServiceLifetime.Session,
-                t => new FakeUserService(services.GetService<ILog>()),
+                t => new FakeUserService(),
                 "\"who is signed in\" is the definition of per-session state");
 
             Register<IPermissionService, FakePermissionService>(services, table, ServiceLifetime.Session,
-                t => new FakePermissionService(services.GetService<IUserService>(), services.GetService<ILog>()),
+                t => new FakePermissionService(services.GetService<IUserService>()),
                 "it captures the Session IUserService, and a service can never outlive a collaborator it holds");
 
             Register<INotificationService, FakeNotificationService>(services, table, ServiceLifetime.Transient,
@@ -114,7 +107,7 @@ namespace TicketOps.Infrastructure
         public static void RegisterProductionServices(ServiceProvider services, List<ServiceRegistrationEntry> table)
         {
             Register<ITicketService, SqlTicketService>(services, table, ServiceLifetime.Session,
-                t => new SqlTicketService(services.GetService<ILog>(), services.GetService<DataStoreHealth>()),
+                t => new SqlTicketService(services.GetService<ILog>()),
                 "per-user connection scope and result set; the session disposes it when the user leaves");
 
             Register<IUserService, DirectoryUserService>(services, table, ServiceLifetime.Session,
@@ -122,7 +115,7 @@ namespace TicketOps.Infrastructure
                 "the authenticated principal is per session");
 
             Register<IPermissionService, RolePermissionService>(services, table, ServiceLifetime.Session,
-                t => new RolePermissionService(services.GetService<IUserService>(), services.GetService<ILog>()),
+                t => new RolePermissionService(services.GetService<IUserService>()),
                 "evaluates the role of the Session IUserService it holds");
 
             Register<INotificationService, EmailNotificationService>(services, table, ServiceLifetime.Transient,

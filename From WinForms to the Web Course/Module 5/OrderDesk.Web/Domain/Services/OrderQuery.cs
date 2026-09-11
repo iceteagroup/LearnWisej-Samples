@@ -14,7 +14,7 @@ namespace OrderDesk.Domain
     }
 
     /// <summary>
-    /// Module 5 addition to the Domain: the filter + sort + page the server applies BEFORE anything
+    /// Added to the Domain: the filter + sort + page the server applies BEFORE anything
     /// is sent to the browser. LegacyOrderDesk had only <see cref="OrderFilter"/> (status + text) and
     /// bound the whole result to the grid; this class carries the rest of the "virtual row thinking":
     /// the user sees a page-sized viewport, so the query says which page. No UI dependency.
@@ -49,19 +49,6 @@ namespace OrderDesk.Domain
         /// </summary>
         public string Key =>
             $"{(Status.HasValue ? Status.Value.ToString() : "*")}|{(Text ?? "").Trim().ToLowerInvariant()}|{(CustomerId.HasValue ? CustomerId.Value.ToString() : "*")}|{SortBy}|{(Descending ? "desc" : "asc")}";
-
-        /// <summary>Human-readable form for the trace: "status=Open · text='north' · sort=Date desc".</summary>
-        public string Describe()
-        {
-            var parts = new List<string>
-            {
-                "status=" + (Status.HasValue ? Status.Value.ToString() : "all")
-            };
-            if (!string.IsNullOrWhiteSpace(Text)) parts.Add($"text='{Text.Trim()}'");
-            if (CustomerId.HasValue) parts.Add("customer=" + CustomerId.Value);
-            parts.Add($"sort={SortBy} {(Descending ? "desc" : "asc")}");
-            return string.Join(" · ", parts);
-        }
     }
 
     /// <summary>One page of a server-side query plus the numbers the grid footer and the trace need.</summary>

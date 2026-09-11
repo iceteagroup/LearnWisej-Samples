@@ -12,7 +12,7 @@ postback URL that already carries the identifiers the framework needs to deliver
 | Side | Call | Where in this lab |
 |---|---|---|
 | Client (wrapper) | `this.getPostbackUrl()` | `wwwroot/grid-init.js` → `init()`: `this._baseUrl = this.getPostbackUrl()` |
-| Server | `((IWisejHandler)this).GetPostbackURL()` (extension method in `Wisej.Core.IWisejHandlerExtension`) | `GridWidget.PostbackUrl`, shown by **Show postback URL** with the middle redacted |
+| Server | `((IWisejHandler)this).GetPostbackURL()` (extension method in `Wisej.Core.IWisejHandlerExtension`) | `GridWidget.PostbackUrl` (the page does not need it: the adapter builds the URL on the client) |
 
 The wrapper appends its own query parameter to name the action and hands the result to the vendor
 as its data-source address:
@@ -29,7 +29,7 @@ GET /…postback…?…&action=load&page=1&size=10&sort=id&desc=false
 
 Two grids on the same page get two different URLs; each request lands on the component that owns
 the data. The URL is **session-scoped and short-lived**: it is not a public API address, it is
-never stored, never shared between users, and the lab only ever displays it redacted.
+never stored and never shared between users.
 
 ## 2. The handler: `WebRequest`
 
@@ -56,8 +56,8 @@ private void grid_WebRequest(object sender, WebRequestEventArgs e)
 }
 ```
 
-The handler runs **with the component instance**: it can read the widget's state (`PageSize`,
-counters) and the session's services (`WorkOrderService`) without any of that being passed from
+The handler runs **with the component instance**: it can read the widget's state (`PageSize`)
+and the session's services (`WorkOrderService`) without any of that being passed from
 the browser. That is the whole advantage over a detached controller: tenant, filters and permissions
 are already known here.
 
@@ -82,9 +82,9 @@ Every data endpoint accepts input from the browser, and the browser can be scrip
 | `desc` | `QueryString["desc"]` | `"true"`/`"1"` → true, anything else → false | never fails |
 
 Error responses carry **a status code and a short generic reason**. No exception type, no stack,
-no file path, no hint about the server beyond "you asked wrong". The trace shows the rejection
-with `(rejected on the server)`, the vendor draws a red row `HTTP 400 — unknown action`, and the
-adapter raises one `error {status:400, message, phase}` event so the page can react.
+no file path, no hint about the server beyond "you asked wrong". The Network list shows the
+`400` response, the vendor draws a red row `HTTP 400 — unknown action`, and the adapter raises
+one `error {status:400, message, phase}` event, which the page shows as an error toast.
 
 ## 4. Content types
 
@@ -99,14 +99,11 @@ The content type is set **explicitly on every response**, before the body is wri
 
 ## 5. Evidence (what the running app shows)
 
-| Path | Click | Trace lines | Grid |
+| Path | Action | Network list | Grid |
 |---|---|---|---|
-| success | (page load) / **Reload both** | `⇄ HTTP [postback] WebRequest GET ?…&action=load&page=1&size=10…` then `⇄ HTTP [postback] 200 application/json {"rows":10,"total":120,…}` then `← JS→.NET [postback] dataLoaded {…,"via":"GET postbackUrl&action=load"}` | 10 rows, WO-1042 first, footer `page 1 / 12` |
-| progress | **Next page**, **Sort by status** | `→ .NET→JS [postback] Call("setPage") 2` followed by the same GET/200/dataLoaded triple | page 2 / sorted by status |
-| failure 1 | **Invalid action** | `GET ?…&action=delete…` then `⇄ HTTP [postback] 400 application/json {"error":"unknown action"} (rejected on the server)` then `← JS→.NET [postback] error {"status":400,…}` | red row `✖ HTTP 400 — unknown action`, red banner, status `● HTTP 400` |
-| failure 2 | **Oversized page** | `GET ?…&size=1000…` then `400 … {"error":"size must be between 1 and 50"}` | red row, banner |
-| recovery | **Reload both** | `Call("reload")` then GET/200/dataLoaded | rows are back, banner gone |
-| routing | **Show postback URL** | `• server GetPostbackURL() http://…[redacted]…` and the request/rejection counters | — |
+| success | page load | `⇄ HTTP [postback] GET ?…&action=load&page=1&size=10…` then `⇄ HTTP [postback] 200 application/json {"rows":10,"total":120,…}` | 10 rows, WO-1042 first, footer `page 1 / 12` |
+| progress | the grid's **Next ›** button, a click on a column header | the same GET/200 pair with `page=2` / `sort=status` | page 2 / sorted by status |
+| failure | re-send the grid's request from the browser's DevTools with `action=delete` or `size=1000` | `⇄ HTTP [postback] 400 application/json {"error":"unknown action"}` / `{"error":"size must be between 1 and 50"}` | unchanged; the response body in DevTools is the short JSON error |
 
 Files: `Widgets/GridWidget.cs` (handler + `PostbackUrl`), `wwwroot/grid-init.js` (adapter),
 `wwwroot/vendor-grid.js` (the "third-party" grid), `Data/PageRequest.cs` (validation),

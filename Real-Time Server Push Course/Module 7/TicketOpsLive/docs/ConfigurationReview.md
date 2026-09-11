@@ -62,7 +62,7 @@ in this lab — confirm against the Wisej.NET deployment documentation for your 
 - **ASP.NET Core hosting** for .NET builds (`app.UseWisej()` in `Startup.cs`, as here); IIS module/handler settings
   instead for .NET Framework apps.
 - **A place for the logs.** `Console.Error` is the sample's stand-in; production wants a logging framework with the
-  session id, the job id and the event id kept as fields, not baked into a message string.
+  session id and the job id kept as fields, not baked into a message string.
 
 ## What the reviewer should check in the running app
 

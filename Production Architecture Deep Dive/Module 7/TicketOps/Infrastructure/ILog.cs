@@ -3,8 +3,7 @@ using System;
 namespace TicketOps.Infrastructure
 {
     /// <summary>
-    /// The layer that produced a log entry. The activity trace shows it as a column so the reader can
-    /// follow one user action through UI → Service → Data (and back) at a glance.
+    /// The layer that produced a log entry.
     /// </summary>
     public enum LogLayer
     {

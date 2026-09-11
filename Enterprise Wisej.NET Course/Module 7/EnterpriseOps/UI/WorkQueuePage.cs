@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using EnterpriseOps.Domain;
-using EnterpriseOps.Integrations;
 using EnterpriseOps.Security;
 using EnterpriseOps.Services;
 using EnterpriseOps.Services.Workflow;
@@ -11,15 +9,8 @@ using Wisej.Web;
 namespace EnterpriseOps.UI
 {
     /// <summary>
-    /// EnterpriseOps — the work queue that opens the Escalation Wizard.
-    ///
-    /// Left card:  the queue (WorkQueueRow projections), the "Escalate work order…" button that opens the wizard
-    ///             modally, the manual-review queue the compensations land in, its retry / resolve buttons and the
-    ///             dark strip showing the last WorkflowResult verbatim.
-    /// Right card: the live activity trace — every layer tags its line (UI → / Service: / Security: / Data: /
-    ///             Integrations:), which is how a reviewer sees that the handlers here decide nothing.
-    /// Bottom bar: three armed failure paths (notification, audit, directory timeout), the same workflow run
-    ///             WITHOUT the wizard, the anti-pattern that inlines the flow in this page, and Clear trace.
+    /// EnterpriseOps — the work queue that opens the Escalation Wizard modally, and the manual-review queue
+    /// the workflow's compensations land in (an outstanding notification is retried from here).
     /// </summary>
     public partial class WorkQueuePage : Page
     {
@@ -34,7 +25,6 @@ namespace EnterpriseOps.UI
             InitializeComponent();
 
             _services = new SessionServices("contoso", UserDirectory.AnaOps);
-            _services.Trace.Written += trace_Written;
             _services.Compensation.Changed += compensation_Changed;
         }
 
@@ -42,26 +32,22 @@ namespace EnterpriseOps.UI
 
         private void WorkQueuePage_Load(object sender, EventArgs e)
         {
-            lblTenant.Text = "tenant: " + _services.Session.TenantId;
-            lblUser.Text = "user: " + _services.Session.User;
-            _services.Trace.Write($"UI → WorkQueuePage_Load session {_services.Session.TenantId}/{_services.Session.User.UserName}");
             LoadQueue();
             RenderCompensationQueue();
         }
 
-        /// <summary>The success path: open the wizard modally and show the typed result it brings back.</summary>
+        /// <summary>Open the wizard modally and show the typed result it brings back.</summary>
         private async void btnEscalate_Click(object sender, EventArgs e)
         {
             var row = SelectedRow();
             if (row == null)
             {
-                ShowStatus("Select a work order in the queue first.", StatusKind.Warn);
+                ShowBanner("Select a work order in the queue first.", BannerKind.Warn);
                 return;
             }
 
             try
             {
-                _services.Trace.Write($"UI → btnEscalate_Click {row.Number} → new EscalationWizard(...) → await ShowDialogAsync()");
                 var wizard = new EscalationWizard(_services, row.Id);
                 DialogResult answer = await wizard.ShowDialogAsync();
                 ShowWizardOutcome(answer, wizard);
@@ -74,16 +60,19 @@ namespace EnterpriseOps.UI
             {
                 LoadQueue();
                 RenderCompensationQueue();
+
+                // The awaits end after the request returned: push the final UI state to the browser.
+                Application.Update(this);
             }
         }
 
-        /// <summary>The recovery: the queued compensation is retried, and the workflow finishes later.</summary>
+        /// <summary>The queued compensation is retried, and the workflow finishes later.</summary>
         private async void btnRetryNotification_Click(object sender, EventArgs e)
         {
             var entry = SelectedCompensation();
             if (entry == null)
             {
-                ShowStatus("Select an entry in the manual-review queue first.", StatusKind.Warn);
+                ShowBanner("Select an entry in the manual-review queue first.", BannerKind.Warn);
                 return;
             }
 
@@ -102,171 +91,10 @@ namespace EnterpriseOps.UI
                 btnRetryNotification.Enabled = true;
                 RenderCompensationQueue();
                 LoadQueue();
+
+                // The awaits end after the request returned: push the final UI state to the browser.
+                Application.Update(this);
             }
-        }
-
-        /// <summary>An audit gap cannot be retried — a sent notification cannot be unsent. An operator closes it.</summary>
-        private void btnResolveManually_Click(object sender, EventArgs e)
-        {
-            var entry = SelectedCompensation();
-            if (entry == null)
-            {
-                ShowStatus("Select an entry in the manual-review queue first.", StatusKind.Warn);
-                return;
-            }
-
-            _services.Compensation.Resolve(entry, $"closed manually by {_services.Session.User.UserName} after follow-up");
-            ShowStatus($"Compensation #{entry.Id} resolved manually.", StatusKind.Ok);
-            RenderCompensationQueue();
-        }
-
-        private void btnFailNotify_Click(object sender, EventArgs e)
-        {
-            _services.Notifications.FailNextSend("smtp timeout after 30s");
-            ShowStatus("Armed: the next approver notification will fail AFTER the escalation is persisted.", StatusKind.Warn);
-        }
-
-        private void btnFailAudit_Click(object sender, EventArgs e)
-        {
-            _services.Audit.FailNextWrite("audit store unavailable (503)");
-            ShowStatus("Armed: the next audit write will fail AFTER the notification was sent.", StatusKind.Warn);
-        }
-
-        private void btnFailDirectory_Click(object sender, EventArgs e)
-        {
-            _services.Directory.HangNextLookup();
-            ShowStatus("Armed: the next approver lookup will outlast the wizard's 5 s timeout.", StatusKind.Warn);
-        }
-
-        /// <summary>
-        /// Review question 1 — "can the workflow be tested without the wizard?". This handler is the proof:
-        /// it builds an EscalationCommand in code and calls the same EscalateAsync the wizard calls.
-        /// A unit test would be these same six lines without the labels.
-        /// </summary>
-        private async void btnRunHeadless_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                var target = FirstEscalatable();
-                if (target == null)
-                {
-                    ShowStatus("No escalatable work order left in this tenant.", StatusKind.Warn);
-                    return;
-                }
-
-                var command = new EscalationCommand(
-                    WorkOrderId: target.Id,
-                    WorkOrderVersion: target.Version,
-                    TenantId: _services.Session.TenantId,
-                    Reason: "Batch escalation: vendor SLA breached and the site has been without cooling for two days.",
-                    Attachments: new List<Attachment>(),
-                    ApproverId: "m.weber",
-                    DueAt: DateTimeOffset.Now.AddHours(8),
-                    Channels: NotificationChannels.Email | NotificationChannels.InApp,
-                    RequestedBy: _services.Session.User.UserName,
-                    CorrelationId: _services.Session.NextCorrelation());
-
-                _services.Trace.Write($"UI → btnRunHeadless_Click — no wizard, no dialog: EscalateAsync({target.Number}) with a hand-built command");
-                var result = await _services.Workflow.EscalateAsync(command);
-                ShowResult(result);
-            }
-            catch (Exception ex)
-            {
-                ReportUnexpected(ex);
-            }
-            finally
-            {
-                LoadQueue();
-                RenderCompensationQueue();
-            }
-        }
-
-        /// <summary>
-        /// THE ANTI-PATTERN the video shows — the same escalation written inside the screen.
-        ///
-        /// Everything wrong with it is on display: the rules are duplicated here (and already differ from the
-        /// workflow's), the page talks to the stores and the gateway directly, there is no correlation id and no
-        /// audit entry, and when the external step fails it "cleans up" by DELETING the escalation — a false
-        /// transaction that throws away a valid record and any trace that it ever existed.
-        ///
-        /// Compare with btnEscalate_Click: four lines, one dialog, one typed result.
-        /// </summary>
-        private async void btnAntiPattern_Click(object sender, EventArgs e)
-        {
-            var target = FirstEscalatable();
-            if (target == null)
-            {
-                ShowStatus("No escalatable work order left in this tenant.", StatusKind.Warn);
-                return;
-            }
-
-            _services.Trace.Write("UI → btnAntiPattern_Click — the flow inlined in the page (arming the same SMTP failure)");
-            _services.Notifications.FailNextSend("smtp timeout after 30s");
-
-            string reason = "Escalating from the page because the wizard was in a hurry.";
-            if (reason.Length < 10)                                  // a rule invented here — the workflow says 20
-            {
-                ShowStatus("Reason too short.", StatusKind.Error);
-                return;
-            }
-
-            Escalation escalation = null;
-            var previousStatus = target.Status;
-            var previousVersion = target.Version;
-            try
-            {
-                escalation = await _services.Escalations.AddAsync(new Escalation
-                {
-                    WorkOrderId = target.Id,
-                    TenantId = target.TenantId,
-                    Reason = reason,
-                    ApproverId = "m.weber",
-                    DueAt = DateTimeOffset.Now.AddDays(30),          // 30 days out — no rule ever looked at it
-                    Channels = NotificationChannels.Email,
-                    RequestedBy = _services.Session.User.UserName,
-                    CreatedUtc = DateTime.UtcNow,
-                    CorrelationId = "(none)",
-                });
-                _services.WorkOrders.MarkEscalated(target.Id, target.Version);
-
-                var approver = new Approver { Id = "m.weber", DisplayName = "Mara Weber", Role = "Supervisor" };
-                await _services.Notifications.SendApproverNotificationAsync(escalation, approver);
-
-                ShowStatus($"Anti-pattern run created {escalation.Number} — and nothing was audited.", StatusKind.Warn);
-            }
-            catch (NotificationFailedException ex)
-            {
-                // The "rollback" nobody asked for: a valid escalation is deleted because an e-mail did not go out.
-                _services.Escalations.Remove(escalation.Id);
-                _services.WorkOrders.Revert(target.Id, previousStatus, previousVersion);
-                _services.Trace.Write($"UI ← anti-pattern: notify failed ({ex.Message}) → the page DELETED {escalation.Number} and reverted {target.Number}");
-                _services.Trace.Write("UI ← nothing compensated, nothing audited, nothing queued — the escalation simply never happened");
-
-                ShowBanner($"Anti-pattern: the notification failed, so the page deleted a valid escalation for {target.Number}. No compensation, no audit entry, no retry.");
-                ShowStatus("Anti-pattern: a false transaction threw the record away.", StatusKind.Error);
-                lblStatusBar.Text = "No WorkflowResult — the page swallowed the outcome in a catch block.";
-            }
-            catch (Exception ex)
-            {
-                ReportUnexpected(ex);
-            }
-            finally
-            {
-                LoadQueue();
-                RenderCompensationQueue();
-            }
-        }
-
-        private void btnClearTrace_Click(object sender, EventArgs e)
-        {
-            lstTrace.Items.Clear();
-            lblBanner.Visible = false;
-        }
-
-        private void trace_Written(string line)
-        {
-            lstTrace.Items.Add(line);
-            lstTrace.SelectedIndex = lstTrace.Items.Count - 1;
         }
 
         private void compensation_Changed()
@@ -282,7 +110,6 @@ namespace EnterpriseOps.UI
         {
             _rows = _services.WorkQueue.Load(_services.Session);
             dgvWorkQueue.DataSource = new BindingSource { DataSource = _rows };
-            lblCorrelation.Text = "corr " + _services.Session.CorrelationId;
         }
 
         private void RenderCompensationQueue()
@@ -305,65 +132,57 @@ namespace EnterpriseOps.UI
                 return;
             }
 
-            lblBanner.Visible = false;
-            ShowStatus(wizard.DraftKept
-                    ? "Wizard cancelled — the draft is kept on the server; \"Escalate work order…\" resumes it."
-                    : "Wizard cancelled — draft discarded and the staged uploads cleaned up. Nothing was persisted.",
-                StatusKind.Warn);
-            lblStatusBar.Text = "No WorkflowResult — the workflow was never called.";
+            ShowBanner(wizard.DraftKept
+                    ? "Escalation cancelled — the draft is kept; \"Escalate work order…\" resumes it."
+                    : "Escalation cancelled — the draft was discarded. Nothing was saved.",
+                BannerKind.Warn);
         }
 
         /// <summary>One typed result in, one screen state out. Switch on the Outcome, never on the message.</summary>
         private void ShowResult(WorkflowResult result)
         {
-            lblStatusBar.Text = result.ToString();
-            lblCorrelation.Text = "corr " + result.CorrelationId;
-
             switch (result.Outcome)
             {
                 case WorkflowOutcome.Created:
-                    lblBanner.Visible = false;
-                    ShowStatus(result.Message, StatusKind.Ok);
+                    ShowBanner(result.Message, BannerKind.Ok);
                     AlertBox.Show(result.Message, MessageBoxIcon.Information,
                         alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
                     break;
 
                 case WorkflowOutcome.CreatedWithCompensation:
-                    ShowBanner($"{result.Message}  ·  {result.CompensationAction}  ·  next: {result.NextAction}");
-                    ShowStatus("Escalation kept, compensation recorded — see the manual-review queue.", StatusKind.Warn);
+                    ShowBanner($"{result.Message}  ·  {result.CompensationAction}  ·  next: {result.NextAction}", BannerKind.Warn);
                     AlertBox.Show(result.Message, MessageBoxIcon.Warning,
                         alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
                     break;
 
                 case WorkflowOutcome.ValidationFailed:
-                    ShowBanner(result.Message + "  ·  " + string.Join(" · ", result.FieldErrors.Select(f => $"{WizardSteps.Title(f.Step)}/{f.Field}: {f.Message}")));
-                    ShowStatus("Validation failed — nothing was persisted.", StatusKind.Error);
+                    ShowBanner(result.Message + "  ·  " + string.Join(" · ", result.FieldErrors.Select(f => $"{WizardSteps.Title(f.Step)}/{f.Field}: {f.Message}")), BannerKind.Error);
                     break;
 
                 default:
-                    ShowBanner($"{result.Message}  ·  next: {result.NextAction}");
-                    ShowStatus($"{result.Outcome} — nothing was persisted.", StatusKind.Error);
+                    ShowBanner($"{result.Message}  ·  next: {result.NextAction}  ·  correlation {result.CorrelationId}", BannerKind.Error);
                     break;
             }
         }
 
-        private void ShowBanner(string text)
+        private enum BannerKind { Ok, Warn, Error }
+
+        private void ShowBanner(string text, BannerKind kind)
         {
             lblBanner.Text = text;
-            lblBanner.Visible = true;
-        }
-
-        private enum StatusKind { Ok, Warn, Error }
-
-        private void ShowStatus(string text, StatusKind kind)
-        {
-            lblStatus.Text = "● " + text;
-            lblStatus.ForeColor = kind switch
+            lblBanner.BackColor = kind switch
             {
-                StatusKind.Ok => System.Drawing.Color.FromArgb(31, 157, 87),
-                StatusKind.Warn => System.Drawing.Color.FromArgb(232, 161, 60),
-                _ => System.Drawing.Color.FromArgb(224, 86, 59),
+                BannerKind.Ok => System.Drawing.Color.FromArgb(240, 249, 243),
+                BannerKind.Warn => System.Drawing.Color.FromArgb(255, 248, 236),
+                _ => System.Drawing.Color.FromArgb(253, 236, 234),
             };
+            lblBanner.ForeColor = kind switch
+            {
+                BannerKind.Ok => System.Drawing.Color.FromArgb(21, 95, 51),
+                BannerKind.Warn => System.Drawing.Color.FromArgb(122, 82, 16),
+                _ => System.Drawing.Color.FromArgb(154, 42, 24),
+            };
+            lblBanner.Visible = true;
         }
 
         private WorkQueueRow SelectedRow()
@@ -378,21 +197,11 @@ namespace EnterpriseOps.UI
             return index >= 0 && index < _queue.Count ? _queue[index] : null;
         }
 
-        /// <summary>A work order this tenant can still escalate — used by the two "no wizard" buttons.</summary>
-        private WorkOrder FirstEscalatable()
-        {
-            return _services.WorkOrders.ForTenant(_services.Session.TenantId)
-                .FirstOrDefault(w => w.Status != WorkOrderStatus.Completed
-                                  && w.Status != WorkOrderStatus.Cancelled
-                                  && w.Status != WorkOrderStatus.Escalated
-                                  && !_services.Escalations.ExistsForWorkOrder(w.Id));
-        }
-
         private void ReportUnexpected(Exception ex)
         {
-            _services.Trace.Write($"UI ← unexpected {ex.GetType().Name}: {ex.Message}");
-            ShowStatus("The action could not be completed. Check the trace for details.", StatusKind.Error);
-            AlertBox.Show("The action could not be completed. Check the log for details.",
+            _services.Trace.Write($"UI: unexpected {ex.GetType().Name}: {ex.Message}");
+            ShowBanner("The action could not be completed. Please try again.", BannerKind.Error);
+            AlertBox.Show("The action could not be completed.",
                 MessageBoxIcon.Error, alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
         }
 

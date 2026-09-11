@@ -29,16 +29,13 @@ namespace TicketOps.Services
 
         public async Task<OperationResult<DiagnosticsSnapshot>> GetSnapshotAsync()
         {
-            _log.Info(LogLayer.Service, "DiagnosticsService.GetSnapshotAsync", $"authorize {_user.UserName} ({_user.Role}) — Supervisor required");
-
             if (_user.Role != OperatorRole.Supervisor)
             {
                 // Expected outcome, not an exception: the screen shows the sentence, nothing else is revealed.
-                _log.Warn(LogLayer.Service, "DiagnosticsService.GetSnapshotAsync", $"access denied for {_user.UserName}: diagnostics map the system, operators only");
+                _log.Warn(LogLayer.Service, "DiagnosticsService.GetSnapshotAsync", $"access denied for {_user.UserName}: diagnostics are for Supervisors only");
                 return OperationResult<DiagnosticsSnapshot>.Fail(Strings.DiagnosticsAccessDenied);
             }
 
-            _log.Info(LogLayer.Service, "DiagnosticsService.GetSnapshotAsync", "→ IRuntimeInfo (ServerName, ServerPort, RuntimeMode, ProductVersion, SessionCount, IsWebSocket, uptime)");
             var snapshot = new DiagnosticsSnapshot
             {
                 ServerName = _runtime.ServerName,
@@ -56,10 +53,6 @@ namespace TicketOps.Services
                 OperatorRole = _user.Role
             };
 
-            _log.Info(LogLayer.Session, "DiagnosticsService.GetSnapshotAsync",
-                $"{snapshot.SessionCount} live session(s) on {snapshot.ServerName}:{snapshot.ServerPort} · this one {snapshot.ShortSessionId} · WebSocket {(snapshot.IsWebSocket ? "yes" : "no")} · up {FormatUptime(snapshot.Uptime)}");
-
-            _log.Info(LogLayer.Service, "DiagnosticsService.GetSnapshotAsync", "→ IHealthCheckService.CheckAsync()");
             snapshot.Health = await _health.CheckAsync();
             snapshot.TakenAt = DateTime.Now;
 

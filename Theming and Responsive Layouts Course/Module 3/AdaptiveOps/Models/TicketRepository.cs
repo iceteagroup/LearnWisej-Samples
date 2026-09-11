@@ -6,7 +6,7 @@ namespace AdaptiveOps.Models
 {
     /// <summary>
     /// Thrown by <see cref="TicketRepository.Save"/> when a ticket does not pass server-side validation.
-    /// The UI catches it, shows the banner and logs the rejection; nothing is written.
+    /// Nothing is written.
     /// </summary>
     public sealed class TicketValidationException : Exception
     {
@@ -34,13 +34,6 @@ namespace AdaptiveOps.Models
 
         public TicketRepository()
         {
-            Reset();
-        }
-
-        /// <summary>Restores the seed data (the recovery path of the lab).</summary>
-        public void Reset()
-        {
-            _tickets.Clear();
             _tickets.AddRange(Seed());
         }
 

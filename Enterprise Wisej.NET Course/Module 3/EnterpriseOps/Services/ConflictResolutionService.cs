@@ -74,14 +74,6 @@ namespace EnterpriseOps.Services
             _audit.Record(context, "work-order.conflict." + choice.ToString().ToLowerInvariant(), detail);
             _trace.Audit($"conflict resolution recorded — {detail} (correlation {context.CorrelationId})");
         }
-
-        /// <summary>What each path means, in the words the dialog shows under the buttons.</summary>
-        public static string Explain(ConflictResolution choice) => choice switch
-        {
-            ConflictResolution.Reload => "Reload discards the local edits and shows the current record.",
-            ConflictResolution.Compare => "Compare shows both versions field by field so the edit can be merged.",
-            _ => "Cancel leaves the screen as it is — nothing saved, nothing lost, decide later.",
-        };
     }
 
     /// <summary>One of the two rows at the top of the conflict dialog. A projection built for that grid alone.</summary>

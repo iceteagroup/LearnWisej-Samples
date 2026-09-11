@@ -9,9 +9,8 @@ namespace SupportDesk.Data;
 /// handler returns. It is never a session object, never a static, never shared between users.
 /// </summary>
 /// <remarks>
-/// The constructor and Dispose report to <see cref="QueryTrace"/> so the lab UI can show every
-/// context being created and disposed inside one click — a teaching instrument, not a
-/// production pattern.
+/// The constructor and Dispose report to <see cref="QueryTrace"/> so the tests can count the
+/// contexts created and disposed inside one operation.
 /// </remarks>
 public sealed class SupportDeskContext : DbContext
 {

@@ -1,7 +1,7 @@
 # Deliverable 1 · Working plain JavaScript proof
 
-**File:** `wwwroot/proof/knob-proof.html` — open it from the Knob Demo with **Open plain-JS proof ↗**,
-or directly at <http://localhost:5072/wwwroot/proof/knob-proof.html> while the app runs.
+**File:** `wwwroot/proof/knob-proof.html` — open <http://localhost:5072/wwwroot/proof/knob-proof.html>
+while the app runs.
 It is served by the app's static file server (`Startup.cs` → `UseFileServer()` over the project folder);
 it contains **no Wisej.NET** — the point is to prove the vendor sample before any adapter code exists.
 

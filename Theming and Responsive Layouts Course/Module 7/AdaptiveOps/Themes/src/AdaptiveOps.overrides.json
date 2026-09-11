@@ -149,24 +149,7 @@
       }
     },
 
-    "banner-danger": {
-      "inherit": "panel",
-      "states": {
-        "default": {
-          "styles": { "backgroundColor": "dangerSurface", "width": 1, "style": "solid", "color": "danger", "radius": "$borderRadius" },
-          "properties": { "textColor": "danger" }
-        }
-      }
-    },
 
-    "cost-bar-fill": {
-      "inherit": "panel",
-      "states": { "default": { "styles": { "backgroundColor": "brandPrimary", "width": 0, "radius": 3 } } }
-    },
-    "cost-bar-track": {
-      "inherit": "panel",
-      "states": { "default": { "styles": { "backgroundColor": "surfaceRail", "width": 0, "radius": 3 } } }
-    },
 
     "heading-label": {
       "inherit": "textlabel",
@@ -195,10 +178,7 @@
     "status-label": {
       "inherit": "textlabel",
       "states": {
-        "default": { "properties": { "font": "defaultBold", "textColor": "textMuted" } },
-        "ok":      { "properties": { "textColor": "success" } },
-        "warn":    { "properties": { "textColor": "warning" } },
-        "error":   { "properties": { "textColor": "danger" } }
+        "default": { "properties": { "font": "defaultBold", "textColor": "textMuted" } }
       }
     },
     "validation-label": {
@@ -209,10 +189,6 @@
       }
     },
 
-    "trace-list": {
-      "inherit": "list",
-      "states": { "default": { "properties": { "font": "mono", "textColor": "textMain", "itemHeight": 22 } } }
-    },
 
     "textbox": {
       "states": {

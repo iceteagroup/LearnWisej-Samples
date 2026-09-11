@@ -5,7 +5,7 @@ namespace EnterpriseOps.Services
 {
     /// <summary>
     /// Who is using this session: tenant + user + role. Stored in Application.Session by Program.Main —
-    /// per session, never static — so it survives "Reopen page" and is gone when the session is gone.
+    /// per session, never static — and gone when the session is gone.
     /// </summary>
     public sealed class SessionContext
     {
@@ -15,14 +15,12 @@ namespace EnterpriseOps.Services
             TenantName = tenantName;
             User = user;
             Role = role;
-            SessionCorrelationId = NewCorrelationId();
         }
 
         public string TenantId { get; }
         public string TenantName { get; }
         public string User { get; }
         public string Role { get; }
-        public string SessionCorrelationId { get; }
 
         /// <summary>Every command gets its own correlation id; the job that a command starts inherits it.</summary>
         public CommandContext NewCommand() => new CommandContext(TenantId, User, Role, NewCorrelationId());
@@ -30,7 +28,7 @@ namespace EnterpriseOps.Services
         internal static string NewCorrelationId() => Guid.NewGuid().ToString("N").Substring(0, 8);
     }
 
-    /// <summary>Tenant + user + correlation id — what every service method receives and every trace line shows.</summary>
+    /// <summary>Tenant + user + correlation id — what every service method receives and every log line shows.</summary>
     public sealed class CommandContext
     {
         public CommandContext(string tenantId, string user, string role, string correlationId)

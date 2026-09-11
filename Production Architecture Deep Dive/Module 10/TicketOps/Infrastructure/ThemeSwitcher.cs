@@ -13,15 +13,10 @@ namespace TicketOps.Infrastructure
     /// The one place that knows the theme names and how the running app changes its look. Screens call
     /// <see cref="Apply"/> with a name; nothing else in the code base mentions "Bootstrap-4".
     ///
-    /// Two mechanisms, both re-skinning every open window without rebuilding a control:
-    ///  - <c>Application.LoadTheme(name)</c> swaps the GLOBAL theme: every session of this process re-skins,
-    ///    and the framework merges the /Themes/*.mixin.theme files (the chip appearance) for us
-    ///    (verified in the Integration course; the shape the course brief asks for);
-    ///  - <c>Application.Theme = new ClientTheme(name, json)</c> assigns a theme to THIS session only
-    ///    (XML docs: "update the current session using the new custom theme") — what a per-operator dark mode
-    ///    needs when two operators share one server. The JSON is the built-in theme embedded in
-    ///    Wisej.Framework.dll with our mixin merged in by hand, because the mixin step of LoadTheme is not
-    ///    public API.
+    /// <c>Application.Theme = theme</c> re-skins every open window of THIS session without rebuilding a control —
+    /// an operator's dark mode must not turn every other operator's console dark, which is what the process-wide
+    /// <c>Application.LoadTheme(name)</c> would do. The theme is the built-in JSON embedded in Wisej.Framework.dll
+    /// with our mixin (the chip appearance) merged in, because the mixin step of LoadTheme is not public API.
     /// The choice is remembered in the per-session <see cref="SessionContext"/> and mirrored into
     /// <c>Application.Session</c>, so the dashboard reopens the way the operator left it.
     ///
@@ -57,26 +52,13 @@ namespace TicketOps.Infrastructure
 
         public bool IsDark => string.Equals(Current, Dark, StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>Re-skins the app with the named built-in theme and remembers the choice for this session.</summary>
-        public void Apply(string themeName, bool sessionOnly)
+        /// <summary>Re-skins this session with the named built-in theme and remembers the choice.</summary>
+        public void Apply(string themeName)
         {
             if (string.IsNullOrWhiteSpace(themeName))
                 throw new ArgumentException("A theme name is required.", nameof(themeName));
 
-            if (sessionOnly)
-            {
-                Application.Theme = BuildSessionTheme(themeName);
-                _log.Info(LogLayer.Infrastructure, "ThemeSwitcher.Apply",
-                    $"Application.Theme = new ClientTheme(\"{themeName}\", embedded JSON + {MixinFile}) · this session only (a second tab keeps its theme)");
-            }
-            else
-            {
-                // Global: the framework swaps the theme for every session of this process and applies the default mixins.
-                Application.LoadTheme(themeName);
-                _log.Info(LogLayer.Infrastructure, "ThemeSwitcher.Apply",
-                    $"Application.LoadTheme(\"{themeName}\") · global: every session of this process re-skins, no control was rebuilt");
-            }
-
+            Application.Theme = BuildSessionTheme(themeName);
             Remember(themeName);
         }
 
@@ -87,23 +69,13 @@ namespace TicketOps.Infrastructure
         public void RestoreSaved()
         {
             string saved = _session.Theme ?? ReadSessionBag();
-            if (string.IsNullOrEmpty(saved))
-            {
-                _log.Info(LogLayer.Session, "ThemeSwitcher.RestoreSaved", $"no saved theme for this session → Default.json theme \"{Current}\"");
+            if (string.IsNullOrEmpty(saved) || string.Equals(saved, Current, StringComparison.OrdinalIgnoreCase))
                 return;
-            }
 
-            if (string.Equals(saved, Current, StringComparison.OrdinalIgnoreCase))
-            {
-                _log.Info(LogLayer.Session, "ThemeSwitcher.RestoreSaved", $"saved theme \"{saved}\" already active");
-                return;
-            }
-
-            _log.Info(LogLayer.Session, "ThemeSwitcher.RestoreSaved", $"saved theme \"{saved}\" → re-applying before the screen paints");
-            Apply(saved, sessionOnly: true);
+            Apply(saved);
         }
 
-        #region Session-only theme: embedded built-in JSON + our mixin
+        #region Session theme: embedded built-in JSON + our mixin
 
         private ClientTheme BuildSessionTheme(string themeName)
         {
@@ -133,16 +105,16 @@ namespace TicketOps.Infrastructure
         }
 
         /// <summary>
-        /// What LoadTheme does for us: merge Themes/TicketOps.mixin.theme (colours + the "chip" appearance) into the theme.
+        /// Merges Themes/TicketOps.mixin.theme (colours + the "chip" appearance) into the theme.
         /// The csproj copies /Themes next to the binaries, so the file is read from the application base directory.
-        /// A missing mixin is traced, not thrown: the app still re-skins, the chips just lose their tint.
+        /// A missing mixin is logged, not thrown: the app still re-skins, the chips just lose their tint.
         /// </summary>
         private string MergeMixin(string themeJson)
         {
             string path = Path.Combine(AppContext.BaseDirectory, "Themes", MixinFile);
             if (!File.Exists(path))
             {
-                _log.Warn(LogLayer.Infrastructure, "ThemeSwitcher.MergeMixin", $"{MixinFile} not found under {AppContext.BaseDirectory} → session theme without the chip appearance");
+                _log.Warn(LogLayer.Infrastructure, "ThemeSwitcher.MergeMixin", $"{MixinFile} not found under {AppContext.BaseDirectory} → theme without the chip appearance");
                 return themeJson;
             }
 
@@ -150,7 +122,6 @@ namespace TicketOps.Infrastructure
             var theme = JsonNode.Parse(themeJson, null, options).AsObject();
             var mixin = JsonNode.Parse(File.ReadAllText(path), null, options).AsObject();
 
-            int merged = 0;
             foreach (string section in new[] { "colors", "appearances" })
             {
                 if (!(mixin[section] is JsonObject source))
@@ -163,13 +134,9 @@ namespace TicketOps.Infrastructure
                 }
 
                 foreach (var entry in source)
-                {
                     target[entry.Key] = entry.Value?.DeepClone();
-                    merged++;
-                }
             }
 
-            _log.Info(LogLayer.Infrastructure, "ThemeSwitcher.MergeMixin", $"{MixinFile}: {merged} colour/appearance entries merged into the session theme");
             return theme.ToJsonString();
         }
 
@@ -181,11 +148,10 @@ namespace TicketOps.Infrastructure
             try
             {
                 Application.Session.TicketOpsTheme = themeName;        // dynamic per-session bag
-                _log.Info(LogLayer.Session, "ThemeSwitcher.Remember", $"SessionContext.Theme = \"{themeName}\" · Application.Session.TicketOpsTheme = \"{themeName}\"");
             }
             catch (Exception ex)
             {
-                _log.Warn(LogLayer.Session, "ThemeSwitcher.Remember", $"SessionContext.Theme = \"{themeName}\" · Application.Session not writable here ({ex.GetType().Name}) — the SessionContext copy is authoritative");
+                _log.Warn(LogLayer.Session, "ThemeSwitcher.Remember", $"Application.Session not writable here ({ex.GetType().Name}) — the SessionContext copy is authoritative");
             }
         }
 

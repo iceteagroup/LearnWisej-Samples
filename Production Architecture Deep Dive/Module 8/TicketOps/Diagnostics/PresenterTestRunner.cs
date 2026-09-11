@@ -18,11 +18,10 @@ namespace TicketOps.Diagnostics
     }
 
     /// <summary>
-    /// The unit tests from the lesson, runnable inside the app: every test builds the presenter with
-    /// hand-written fakes — no container, no Form, no browser — calls one method and checks the outcome.
-    /// It is plain C# (a test project would host the same methods under [Test]); the screen only
-    /// paces it with a Timer and renders pass/fail. Nothing here touches the Form's injected services:
-    /// that independence is the point.
+    /// The presenter's unit tests: every test builds the presenter with hand-written fakes — no container,
+    /// no Form, no browser — calls one method and checks the outcome. It is plain C# (a test project would
+    /// host the same methods under [Test]). Nothing here touches the Form's injected services: that
+    /// independence is the point.
     /// </summary>
     public sealed class PresenterTestRunner
     {
@@ -70,7 +69,6 @@ namespace TicketOps.Diagnostics
 
         private sealed class Fixture
         {
-            public readonly DataStoreHealth Health;
             public readonly FakeTicketService Tickets;
             public readonly FakeUserService Users;
             public readonly FakePermissionService Permissions;
@@ -80,10 +78,9 @@ namespace TicketOps.Diagnostics
 
             public Fixture(ILog log)
             {
-                Health = new DataStoreHealth();
-                Tickets = new FakeTicketService(log, Health);
-                Users = new FakeUserService(log);
-                Permissions = new FakePermissionService(Users, log);
+                Tickets = new FakeTicketService(log);
+                Users = new FakeUserService();
+                Permissions = new FakePermissionService(Users);
                 Notifications = new FakeNotificationService(log);
                 Audit = new FakeAuditLogService();
                 Presenter = new TicketWorkflowPresenter(Tickets, Users, Permissions, Notifications, Audit, log);
@@ -179,19 +176,35 @@ namespace TicketOps.Diagnostics
         private async Task Data_outage_surfaces_as_an_exception_not_a_result()
         {
             var f = new Fixture(_log);
-            f.Health.SimulateOutage = true;
+            var presenter = new TicketWorkflowPresenter(new UnavailableTicketService(), f.Users, f.Permissions, f.Notifications, f.Audit, _log);
 
             try
             {
-                await f.Presenter.CloseAsync(1041, "Fixed on site");
-                Assert(false, "expected a DataOutageException");
+                await presenter.CloseAsync(1041, "Fixed on site");
+                Assert(false, "expected a StoreUnavailableException");
             }
-            catch (DataOutageException)
+            catch (StoreUnavailableException)
             {
                 // expected: an unexpected failure is an exception for the handler to catch, not a result for the user to read
             }
 
             Assert(f.Audit.Count == 0, "nothing should be audited during an outage");
+        }
+
+        // ---- test doubles ------------------------------------------------------------------------------
+
+        private sealed class StoreUnavailableException : Exception
+        {
+            public StoreUnavailableException() : base("The ticket store did not answer.") { }
+        }
+
+        /// <summary>A ticket service whose store is down: every call throws.</summary>
+        private sealed class UnavailableTicketService : ITicketService
+        {
+            public Task<IReadOnlyList<Ticket>> GetOpenTicketsAsync() => throw new StoreUnavailableException();
+            public Task<Ticket> FindAsync(int ticketId) => throw new StoreUnavailableException();
+            public Task<OperationResult<Ticket>> CloseAsync(int ticketId, string reason) => throw new StoreUnavailableException();
+            public Task<OperationResult<Ticket>> AssignAsync(int ticketId, int operatorId) => throw new StoreUnavailableException();
         }
     }
 }

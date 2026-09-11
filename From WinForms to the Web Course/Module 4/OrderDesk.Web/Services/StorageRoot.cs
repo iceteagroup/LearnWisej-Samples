@@ -6,12 +6,10 @@ using Wisej.Web;
 namespace OrderDesk.Services
 {
     /// <summary>
-    /// ✓ The application's storage root: Web.config &lt;appSettings&gt; "OrderDesk.StorageRoot" (default
+    /// The application's storage root: Web.config &lt;appSettings&gt; "OrderDesk.StorageRoot" (default
     /// "App_Data"), resolved under Application.StartupPath — the project folder under dotnet run. The one
-    /// place that knows where per-user profiles (profiles/), per-session temp folders (tmp/) and staged
-    /// exports (exports/&lt;user&gt;) live. Read once and cached under a lock; the "App_Data" literal appears
-    /// nowhere else. System.Configuration.ConfigurationManager is not referenced, so Web.config is read
-    /// with System.Xml.Linq (the Module 2 rule).
+    /// place that knows where the per-session temp folders (tmp/) live. Read once and cached under a lock.
+    /// System.Configuration.ConfigurationManager is not referenced, so Web.config is read with System.Xml.Linq.
     /// </summary>
     public static class StorageRoot
     {

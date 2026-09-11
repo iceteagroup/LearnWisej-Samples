@@ -55,9 +55,6 @@ namespace AdaptiveOps.Shell
             }
         }
 
-        /// <summary>The number of buttons and their display mode, for the trace and the QA matrix.</summary>
-        public string Describe() => $"{(IconOnly ? "icon-only" : "text")} rail · {Buttons().Length} nav-item buttons · width {this.Width}";
-
         private Button[] Buttons() => new[] { this.btnDashboard, this.btnTickets, this.btnReports, this.btnSettings, this.btnHelp };
 
         private void btnNav_Click(object sender, EventArgs e)

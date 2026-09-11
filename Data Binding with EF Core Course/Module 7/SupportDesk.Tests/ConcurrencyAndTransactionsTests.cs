@@ -11,22 +11,19 @@ namespace SupportDesk.Tests;
 /// The Module 7 deliverables, tested without the UI: the <c>RowVersion</c> round trip really produces
 /// <see cref="DbUpdateConcurrencyException"/> for a stale save (through <see cref="TicketCommandService"/>,
 /// not just raw EF Core), <see cref="ConflictResolution.BuildConflictListAsync"/> reports the right fields
-/// and the "deleted by another user" case, Reload and Overwrite behave as the conflict dialog promises, and
-/// <see cref="TicketCommandService.CloseTicketWithCommentAsync"/> is a real transaction — it rolls back on
-/// the lab's simulated failure and commits otherwise.
+/// and the "deleted by another user" case, Reload and Overwrite behave as the conflict dialog promises,.
 /// </summary>
 public sealed class ConcurrencyAndTransactionsTests : IDisposable
 {
     private readonly SqliteTestFactory _factory = new();
     private readonly ConflictResolution _conflictResolution = new();
-    private readonly TransactionFailureSwitch _transactionFailure = new();
     private readonly TicketCommandService _commands;
     private readonly ITestOutputHelper _output;
 
     public ConcurrencyAndTransactionsTests(ITestOutputHelper output)
     {
         _output = output;
-        _commands = new TicketCommandService(_factory, _conflictResolution, _transactionFailure);
+        _commands = new TicketCommandService(_factory, _conflictResolution);
     }
 
     private Task<SeedResult> SeedAsync() => new DevelopmentSeeder(_factory).SeedDevelopmentDataAsync();
@@ -46,9 +43,8 @@ public sealed class ConcurrencyAndTransactionsTests : IDisposable
         var model = data.Model;
         model.Title = "Escalated by the agent";
 
-        // Another operator changes the same row through a separate context, exactly like
-        // TicketCommandService.SimulateAnotherOperatorChangeAsync — the row now has a new RowVersion.
-        await _commands.SimulateAnotherOperatorChangeAsync(id);
+        // Another operator changes the same row through a separate context, — the row now has a new RowVersion.
+        await ChangeAsAnotherOperatorAsync(id);
 
         // The stale model.RowVersion becomes OriginalValue; SaveChangesAsync's
         // WHERE "Id" = @p AND "RowVersion" = @original matches zero rows.
@@ -90,8 +86,8 @@ public sealed class ConcurrencyAndTransactionsTests : IDisposable
         var model = data.Model;
         model.Status = TicketStatuses.Resolved;   // "your value"
 
-        // "database value": SimulateAnotherOperatorChangeAsync sets Status = Closed, Priority = High.
-        await _commands.SimulateAnotherOperatorChangeAsync(id);
+        // "database value": ChangeAsAnotherOperatorAsync sets Status = Closed, Priority = High.
+        await ChangeAsAnotherOperatorAsync(id);
 
         var ex = await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => _commands.SaveAsync(model));
 
@@ -168,7 +164,7 @@ public sealed class ConcurrencyAndTransactionsTests : IDisposable
         var before = await _commands.LoadEditModelAsync(id);
         var staleRowVersion = before.Model.RowVersion;
 
-        await _commands.SimulateAnotherOperatorChangeAsync(id);
+        await ChangeAsAnotherOperatorAsync(id);
 
         var reloaded = await _commands.LoadEditModelAsync(id);
 
@@ -189,64 +185,20 @@ public sealed class ConcurrencyAndTransactionsTests : IDisposable
         var model = data.Model;
         model.Title = "The agent's edit — should win on Overwrite";
 
-        await _commands.SimulateAnotherOperatorChangeAsync(id);
+        await ChangeAsAnotherOperatorAsync(id);
 
         var ex = await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => _commands.SaveAsync(model));
         var conflicts = (ConflictSet)ex.Data["ConflictSet"]!;
         Assert.NotNull(conflicts.DatabaseRowVersion);
 
         // The ConflictDialog's Overwrite path: the database's current token becomes OriginalValue.
-        var result = await _commands.SaveAsync(model, TimeSpan.Zero, forceDuplicateNumber: false, conflicts.DatabaseRowVersion);
+        var result = await _commands.SaveAsync(model, forceDuplicateNumber: false, conflicts.DatabaseRowVersion);
         Assert.Equal(id, result.Id);
 
         await using var check = _factory.CreateDbContext();
         var reloaded = await check.Tickets.SingleAsync(t => t.Id == id);
         Assert.Equal("The agent's edit — should win on Overwrite", reloaded.Title);   // your value won
         Assert.NotEqual(conflicts.DatabaseRowVersion, reloaded.RowVersion);            // a fresh token was stamped by SaveChanges
-    }
-
-    #endregion
-
-    #region Transactions — CloseTicketWithCommentAsync
-
-    [Fact]
-    public async Task CloseTicketWithCommentAsync_commits_both_writes_together()
-    {
-        await SeedAsync();
-        int id;
-        await using (var db = _factory.CreateDbContext())
-            id = (await db.Tickets.Where(t => t.Status != TicketStatuses.Closed).OrderBy(t => t.Id).FirstAsync()).Id;
-
-        var result = await _commands.CloseTicketWithCommentAsync(id, "Resolved and closed by the transaction demo.");
-
-        await using var check = _factory.CreateDbContext();
-        var ticket = await check.Tickets.Include(t => t.Comments).SingleAsync(t => t.Id == id);
-        Assert.Equal(TicketStatuses.Closed, ticket.Status);
-        Assert.Contains(ticket.Comments, c => c.Id == result.CommentId && c.Body.Contains("Resolved and closed"));
-    }
-
-    [Fact]
-    public async Task CloseTicketWithCommentAsync_rolls_back_the_status_write_when_the_switch_fails_after_it()
-    {
-        await SeedAsync();
-        int id;
-        string originalStatus;
-        await using (var db = _factory.CreateDbContext())
-        {
-            var ticket = await db.Tickets.Where(t => t.Status != TicketStatuses.Closed).OrderBy(t => t.Id).FirstAsync();
-            id = ticket.Id;
-            originalStatus = ticket.Status;
-        }
-
-        _transactionFailure.FailAfterFirstWrite = true;
-
-        await Assert.ThrowsAsync<SimulatedTransactionFailureException>(() => _commands.CloseTicketWithCommentAsync(id, "Should never be written."));
-
-        await using var check = _factory.CreateDbContext();
-        var reloaded = await check.Tickets.Include(t => t.Comments).SingleAsync(t => t.Id == id);
-        Assert.Equal(originalStatus, reloaded.Status);                                         // rolled back — status unchanged
-        Assert.DoesNotContain(reloaded.Comments, c => c.Body.Contains("Should never be written")); // the second write never landed
-        Assert.False(_transactionFailure.FailAfterFirstWrite);                                  // fires once, then resets itself
     }
 
     #endregion
@@ -272,7 +224,7 @@ public sealed class ConcurrencyAndTransactionsTests : IDisposable
         var model = data.Model;
         model.Status = TicketStatuses.Resolved;
 
-        await _commands.SimulateAnotherOperatorChangeAsync(id);
+        await ChangeAsAnotherOperatorAsync(id);
 
         var lines = new List<string>();
         using (QueryTrace.Begin(entry => lines.Add($"{entry.Kind}: {entry.Text}" + (entry.Milliseconds is double ms ? $" ({ms:0.0} ms)" : ""))))
@@ -289,30 +241,17 @@ public sealed class ConcurrencyAndTransactionsTests : IDisposable
         Assert.Contains(lines, l => l.Contains("UPDATE") && l.Contains("RowVersion"));
     }
 
-    /// <summary>Same idea as <see cref="Prints_the_trace_for_one_reproduced_conflict"/>, for the transaction rollback: both SaveChangesAsync calls, the simulated failure, and the rollback note.</summary>
-    [Fact]
-    public async Task Prints_the_trace_for_the_transaction_rollback()
-    {
-        await SeedAsync();
-        int id;
-        await using (var db = _factory.CreateDbContext())
-            id = (await db.Tickets.Where(t => t.Status != TicketStatuses.Closed).OrderBy(t => t.Id).FirstAsync()).Id;
-
-        _transactionFailure.FailAfterFirstWrite = true;
-
-        var lines = new List<string>();
-        using (QueryTrace.Begin(entry => lines.Add($"{entry.Kind}: {entry.Text}")))
-        {
-            await Assert.ThrowsAsync<SimulatedTransactionFailureException>(() => _commands.CloseTicketWithCommentAsync(id, "Should never be written."));
-        }
-
-        foreach (var line in lines)
-            _output.WriteLine(line);
-
-        Assert.Contains(lines, l => l.Contains("rolled back"));
-    }
-
     #endregion
+
+    /// <summary>Another operator changes the same row through a separate context: a fresh RowVersion is stamped.</summary>
+    private async Task ChangeAsAnotherOperatorAsync(int id)
+    {
+        await using var db = _factory.CreateDbContext();
+        var ticket = await db.Tickets.SingleAsync(t => t.Id == id);
+        ticket.Status = TicketStatuses.Closed;
+        ticket.Priority = TicketPriorities.High;
+        await db.SaveChangesAsync();
+    }
 
     public void Dispose() => _factory.Dispose();
 }

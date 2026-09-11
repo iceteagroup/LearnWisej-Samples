@@ -6,7 +6,6 @@
 | **Owner** | Tech lead (EnterpriseOps) |
 | **Date** | 2026-09-09 |
 | **Review date** | 2027-03-09 (six months — revisit when the first second team joins or the first module needs a separate deployable) |
-| **As data** | `Architecture/DecisionLog.cs` → `DecisionLog.Adr001SolutionStructure` (the dashboard traces it on load) |
 | **Shape** | `Architecture/ArchitectureGovernancePatterns.cs` → `ArchitectureDecision` record |
 
 ## Context
@@ -40,9 +39,9 @@ EnterpriseOps.Services      application services, commands, contexts, results; S
 EnterpriseOps.Data          repositories behind interfaces (in-memory now, EF Core in Module 4)
 EnterpriseOps.Integrations  external systems behind fakes (OperationsFeed, ReleaseCalendar)
 EnterpriseOps.Security      identity, roles, policies — every permission decision
-EnterpriseOps.Diagnostics   the activity trace and the error log
+EnterpriseOps.Diagnostics   the activity log and the error log
 EnterpriseOps.Resources     user-facing strings (UiText) — never an exception in a message
-EnterpriseOps.Architecture  ADRs (this folder), the governance patterns, the runnable review gate
+EnterpriseOps.Architecture  ADRs (this folder), the governance patterns, the review gate
 Deployment/                 launch profiles, environment notes, later the Dockerfile and health probe
 ```
 
@@ -55,7 +54,7 @@ Rules that follow from it (the full list is `docs/CodingStandards.md`):
    typed `CommandResult`. Handlers are `try { await _workflow.XAsync(ctx); ShowResult(result); } catch { log; generic message }`.
 3. Entities never cross into the UI. Services project them (`IncidentRow`, `DashboardKpis`).
 4. Security decides first: a policy runs before any integration or query; a denial is a result, not an exception.
-5. Screens stay designable: layout, tiles, grid columns, banners and the trace list live in `.Designer.cs` and open
+5. Screens stay designable: layout, tiles, grid columns, banners and the status bar live in `.Designer.cs` and open
    in the Wisej Designer. The parameterless constructor gives the Designer a default `SessionContext`.
 
 ## Consequences
@@ -63,12 +62,11 @@ Rules that follow from it (the full list is `docs/CodingStandards.md`):
 - **Findable.** A new senior developer opens `Services/Workflow/` and finds `DashboardWorkflow.cs` for
   `UI/CommandCenterDashboard.cs` by name — the review question "under one minute" is answered by the folder tree.
 - **Explainable.** Every boundary has a one-line reason in the tree above and a longer one in
-  `docs/SolutionStructure.md`; the live activity trace shows the layers in the order they decide.
+  `docs/SolutionStructure.md`; the activity log records the layers in the order they decide.
 - **Designer keeps working.** Orchestration never lives in event handlers, so the Designer never has to load a
   repository or an integration to render the page.
-- **Reviewable without the Designer.** `ReviewGate.CheckEventHandler` (lesson code, verbatim) runs on the real
-  source file: > 20 lines or no service call blocks the merge. `Review gate: legacy handler` shows the failure,
-  `Review gate: this screen` shows the pass.
+- **Reviewable without the Designer.** `ReviewGate.CheckEventHandler` (lesson code, verbatim): > 20 lines or no
+  service call blocks the merge. `Architecture/Samples/OrderEntryLegacy.cs.txt` is the handler it rejects.
 - **Cost.** More files per feature (screen + workflow + result + policy). Accepted: each file has one reason to change.
 - **Cost.** Folder discipline is enforced by review, not by the compiler, until the split into projects (option B).
   The review checklist carries the rule; the six-month review decides whether the compiler should.

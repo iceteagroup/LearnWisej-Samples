@@ -9,7 +9,7 @@
 //
 // THE CONTRACT (docs/EventContract.md) — the only thing that crosses the wire:
 //   down (Options → init/update):  segments[{key,label,value}] · palette · caption · showLegend
-//                                  · badge · simulateBlockedVendor · simulateVendorFailure
+//                                  · badge · selectedKey
 //   up   (WiredEvents):            pointSelected {key, label, value, percent}
 //                                  error         {phase, message}
 //   calls (server → wrapper):      selectSegment(key) · getRenderState()
@@ -41,7 +41,6 @@ this.init = function (options) {
     this.host = host;
 
     this._options = options;
-    this._blocked = false;
 
     this._createVendor(options);
 
@@ -77,14 +76,6 @@ this.update = function (options, old) {
 
     this._options = options;
 
-    // The proxy-block simulation flips the vendor in and out; treat it as a re-init.
-    var blockedNow = options.simulateBlockedVendor === true;
-    if (blockedNow !== this._blocked) {
-        this._destroyVendor();
-        this._createVendor(options);
-        return;
-    }
-
     if (!this.widget) {
         // Still on the fallback: redraw it so the numbers stay current.
         this._renderFallback(options, this._lastErrorMessage);
@@ -92,13 +83,6 @@ this.update = function (options, old) {
     }
 
     try {
-        if (options.simulateVendorFailure === true) {
-            // The lab's "the vendor throws" path: hand the vendor an option it rejects. The vendor
-            // validates BEFORE it touches the screen, so the chart on screen is still the old one.
-            this.widget.setOptions({ segments: null });
-            return;
-        }
-
         this.widget.setOptions({
             segments: options.segments,
             palette: options.palette,
@@ -140,15 +124,11 @@ this._createVendor = function (options) {
 
     var me = this;
     if (options) options.segments = this._normalizeSegments(options.segments);
-    this._blocked = options.simulateBlockedVendor === true;
 
-    // The real guard: the package may not have loaded at all (proxy, CSP, offline, 404).
-    var available = (typeof EnterpriseOpsChart !== "undefined") && !this._blocked;
-    if (!available) {
+    // The package may not have loaded at all (proxy, CSP, offline, 404).
+    if (typeof EnterpriseOpsChart === "undefined") {
         this.widget = null;
-        var why = this._blocked
-            ? "vendor-opschart.js was blocked before it could define EnterpriseOpsChart"
-            : "EnterpriseOpsChart is not defined — Widgets/vendor-opschart.js did not load";
+        var why = "EnterpriseOpsChart is not defined — Widgets/vendor-opschart.js did not load";
         this._reportError("init", why);
         this._renderFallback(options, why);
         return;

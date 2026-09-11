@@ -38,26 +38,15 @@ namespace TicketOps.Views
             this.columnAssigned = new Wisej.Web.DataGridViewTextBoxColumn();
             this.columnVisibility = new Wisej.Web.DataGridViewTextBoxColumn();
             this.labelSelected = new Wisej.Web.Label();
-            this.labelClipboardCaption = new Wisej.Web.Label();
+            this.labelLinkCaption = new Wisej.Web.Label();
             this.textLink = new Wisej.Web.TextBox();
             this.labelAuditCaption = new Wisej.Web.Label();
             this.listAudit = new Wisej.Web.ListBox();
-            this.progressBatch = new Wisej.Web.ProgressBar();
-            this.tracePanel = new TicketOps.Diagnostics.ActivityTracePanel();
-            this.panelActions = new Wisej.Web.Panel();
-            this.buttonBatch = new Wisej.Web.Button();
-            this.buttonCopyUnknown = new Wisej.Web.Button();
-            this.buttonCopyConfidential = new Wisej.Web.Button();
-            this.buttonClipboardDenied = new Wisej.Web.Button();
-            this.buttonOutage = new Wisej.Web.Button();
-            this.buttonClear = new Wisej.Web.Button();
-            this.timerBatch = new Wisej.Web.Timer(this.components);
             this.javaScript = new Wisej.Web.JavaScript(this.components);
             this.panelScreen.SuspendLayout();
-            this.panelActions.SuspendLayout();
             this.SuspendLayout();
             //
-            // panelScreen  (Work Orders: search + grid + copy link — display and input only)
+            // panelScreen
             //
             this.panelScreen.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.panelScreen.BackColor = System.Drawing.Color.White;
@@ -70,14 +59,13 @@ namespace TicketOps.Views
             this.panelScreen.Controls.Add(this.buttonCopyLink);
             this.panelScreen.Controls.Add(this.gridWorkOrders);
             this.panelScreen.Controls.Add(this.labelSelected);
-            this.panelScreen.Controls.Add(this.labelClipboardCaption);
+            this.panelScreen.Controls.Add(this.labelLinkCaption);
             this.panelScreen.Controls.Add(this.textLink);
             this.panelScreen.Controls.Add(this.labelAuditCaption);
             this.panelScreen.Controls.Add(this.listAudit);
-            this.panelScreen.Controls.Add(this.progressBatch);
             this.panelScreen.Location = new System.Drawing.Point(30, 30);
             this.panelScreen.Name = "panelScreen";
-            this.panelScreen.Size = new System.Drawing.Size(760, 560);
+            this.panelScreen.Size = new System.Drawing.Size(760, 544);
             //
             // labelScreenTitle
             //
@@ -88,7 +76,7 @@ namespace TicketOps.Views
             this.labelScreenTitle.Size = new System.Drawing.Size(300, 30);
             this.labelScreenTitle.Text = "Work Orders";
             //
-            // statusBanner  (Controls/StatusBanner: "● state" + banner line)
+            // statusBanner
             //
             this.statusBanner.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.statusBanner.Location = new System.Drawing.Point(24, 20);
@@ -110,8 +98,7 @@ namespace TicketOps.Views
             this.searchBox.Location = new System.Drawing.Point(24, 92);
             this.searchBox.Name = "searchBox";
             this.searchBox.Size = new System.Drawing.Size(380, 34);
-            this.searchBox.Watermark = "Search work orders…  (Ctrl+K from anywhere)";
-            this.searchBox.ToolTipText = "Global search. Ctrl+K focuses it in the browser (embedded script via the JavaScript extender); the server is told through the [WebMethod] ReportShortcut. Esc clears it.";
+            this.searchBox.Watermark = "Search work orders…";
             this.searchBox.TextChanged += new System.EventHandler(this.searchBox_TextChanged);
             this.searchBox.ShortcutPressed += new System.EventHandler<TicketOps.Controls.ShortcutEventArgs>(this.searchBox_ShortcutPressed);
             //
@@ -127,7 +114,7 @@ namespace TicketOps.Views
             this.labelShortcutHint.Location = new System.Drawing.Point(412, 98);
             this.labelShortcutHint.Name = "labelShortcutHint";
             this.labelShortcutHint.Size = new System.Drawing.Size(180, 22);
-            this.labelShortcutHint.Text = "Ctrl + K  ·  ? = shortcuts";
+            this.labelShortcutHint.Text = "Ctrl + K";
             //
             // buttonCopyLink
             //
@@ -135,7 +122,6 @@ namespace TicketOps.Views
             this.buttonCopyLink.Name = "buttonCopyLink";
             this.buttonCopyLink.Size = new System.Drawing.Size(130, 34);
             this.buttonCopyLink.Text = "⧉ Copy link";
-            this.buttonCopyLink.ToolTipText = "Success path: ITicketLinkService.BuildLinkAsync(id) → BrowserApi.CopyToClipboardAsync (navigator.clipboard.writeText, awaited) → ConfirmCopiedAsync (audit) only after the browser confirmed";
             this.buttonCopyLink.Click += new System.EventHandler(this.buttonCopyLink_Click);
             //
             // gridWorkOrders
@@ -190,23 +176,25 @@ namespace TicketOps.Views
             this.labelSelected.Size = new System.Drawing.Size(712, 22);
             this.labelSelected.Text = "Select a work order";
             //
-            // clipboard chip: the last link the SERVER built (also the manual fallback)
+            // labelLinkCaption
             //
-            this.labelClipboardCaption.AutoSize = false;
-            this.labelClipboardCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
-            this.labelClipboardCaption.ForeColor = System.Drawing.Color.FromArgb(31, 138, 76);
-            this.labelClipboardCaption.Location = new System.Drawing.Point(24, 364);
-            this.labelClipboardCaption.Name = "labelClipboardCaption";
-            this.labelClipboardCaption.Size = new System.Drawing.Size(712, 18);
-            this.labelClipboardCaption.Text = "CLIPBOARD · the link the server built and signed (select it here if the browser refuses the copy)";
+            this.labelLinkCaption.AutoSize = false;
+            this.labelLinkCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
+            this.labelLinkCaption.ForeColor = System.Drawing.Color.FromArgb(74, 90, 106);
+            this.labelLinkCaption.Location = new System.Drawing.Point(24, 364);
+            this.labelLinkCaption.Name = "labelLinkCaption";
+            this.labelLinkCaption.Size = new System.Drawing.Size(712, 18);
+            this.labelLinkCaption.Text = "LINK";
+            //
+            // textLink
+            //
             this.textLink.Font = new System.Drawing.Font("monospace", 9F);
             this.textLink.Location = new System.Drawing.Point(24, 384);
             this.textLink.Name = "textLink";
             this.textLink.ReadOnly = true;
             this.textLink.Size = new System.Drawing.Size(712, 30);
-            this.textLink.Watermark = "no link built yet — select a work order and press Copy link";
             //
-            // audit log strip (server)
+            // labelAuditCaption
             //
             this.labelAuditCaption.AutoSize = false;
             this.labelAuditCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
@@ -214,98 +202,25 @@ namespace TicketOps.Views
             this.labelAuditCaption.Location = new System.Drawing.Point(24, 424);
             this.labelAuditCaption.Name = "labelAuditCaption";
             this.labelAuditCaption.Size = new System.Drawing.Size(712, 18);
-            this.labelAuditCaption.Text = "AUDIT LOG (SERVER) · written only after the browser confirmed the copy";
-            this.listAudit.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
+            this.labelAuditCaption.Text = "AUDIT LOG";
+            //
+            // listAudit
+            //
+            this.listAudit.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.listAudit.Font = new System.Drawing.Font("monospace", 9F);
             this.listAudit.Location = new System.Drawing.Point(24, 444);
             this.listAudit.Name = "listAudit";
             this.listAudit.Size = new System.Drawing.Size(712, 76);
             //
-            // progressBatch
-            //
-            this.progressBatch.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.progressBatch.Location = new System.Drawing.Point(24, 530);
-            this.progressBatch.Maximum = 6;
-            this.progressBatch.Name = "progressBatch";
-            this.progressBatch.Size = new System.Drawing.Size(712, 18);
-            this.progressBatch.Visible = false;
-            //
-            // tracePanel  (Diagnostics: the live activity trace)
-            //
-            this.tracePanel.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
-            this.tracePanel.Location = new System.Drawing.Point(810, 30);
-            this.tracePanel.Name = "tracePanel";
-            this.tracePanel.Size = new System.Drawing.Size(508, 560);
-            //
-            // panelActions  (bottom bar: progress / failures / clipboard denied / outage + recovery / clear)
-            //
-            this.panelActions.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.panelActions.Controls.Add(this.buttonBatch);
-            this.panelActions.Controls.Add(this.buttonCopyUnknown);
-            this.panelActions.Controls.Add(this.buttonCopyConfidential);
-            this.panelActions.Controls.Add(this.buttonClipboardDenied);
-            this.panelActions.Controls.Add(this.buttonOutage);
-            this.panelActions.Controls.Add(this.buttonClear);
-            this.panelActions.Location = new System.Drawing.Point(30, 606);
-            this.panelActions.Name = "panelActions";
-            this.panelActions.Size = new System.Drawing.Size(1288, 44);
-            //
-            // bottom bar buttons
-            //
-            this.buttonBatch.Location = new System.Drawing.Point(0, 4);
-            this.buttonBatch.Name = "buttonBatch";
-            this.buttonBatch.Size = new System.Drawing.Size(170, 36);
-            this.buttonBatch.Text = "▶ Verify 6 links";
-            this.buttonBatch.ToolTipText = "Progress path: a Timer builds and verifies one link per tick through ITicketLinkService — no clipboard call, because a Timer tick is not a user gesture";
-            this.buttonBatch.Click += new System.EventHandler(this.buttonBatch_Click);
-            this.buttonCopyUnknown.Location = new System.Drawing.Point(180, 4);
-            this.buttonCopyUnknown.Name = "buttonCopyUnknown";
-            this.buttonCopyUnknown.Size = new System.Drawing.Size(190, 36);
-            this.buttonCopyUnknown.Text = "Copy link for #9999";
-            this.buttonCopyUnknown.ToolTipText = "Failure path 1: a forged client id — the service re-loads it, finds nothing and refuses; nothing crosses to the browser";
-            this.buttonCopyUnknown.Click += new System.EventHandler(this.buttonCopyUnknown_Click);
-            this.buttonCopyConfidential.Location = new System.Drawing.Point(380, 4);
-            this.buttonCopyConfidential.Name = "buttonCopyConfidential";
-            this.buttonCopyConfidential.Size = new System.Drawing.Size(210, 36);
-            this.buttonCopyConfidential.Text = "Copy confidential #2006";
-            this.buttonCopyConfidential.ToolTipText = "Failure path 2: WorkOrder.CanShareLink (domain rule) says no — the rule lives on the server, never in the script";
-            this.buttonCopyConfidential.Click += new System.EventHandler(this.buttonCopyConfidential_Click);
-            this.buttonClipboardDenied.Location = new System.Drawing.Point(600, 4);
-            this.buttonClipboardDenied.Name = "buttonClipboardDenied";
-            this.buttonClipboardDenied.Size = new System.Drawing.Size(220, 36);
-            this.buttonClipboardDenied.Text = "Simulate clipboard denied";
-            this.buttonClipboardDenied.ToolTipText = "Client-side error path: the script rejects like a browser that denied clipboard permission — no audit entry, a fallback sentence, the link stays selectable. Click again to restore and copy successfully.";
-            this.buttonClipboardDenied.Click += new System.EventHandler(this.buttonClipboardDenied_Click);
-            this.buttonOutage.Location = new System.Drawing.Point(830, 4);
-            this.buttonOutage.Name = "buttonOutage";
-            this.buttonOutage.Size = new System.Drawing.Size(200, 36);
-            this.buttonOutage.Text = "Simulate data outage";
-            this.buttonOutage.ToolTipText = "Error path: the repository throws (also while Copy link re-checks the id); the log gets the details, the user gets a safe message. Click again to recover.";
-            this.buttonOutage.Click += new System.EventHandler(this.buttonOutage_Click);
-            this.buttonClear.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.buttonClear.Location = new System.Drawing.Point(1148, 4);
-            this.buttonClear.Name = "buttonClear";
-            this.buttonClear.Size = new System.Drawing.Size(140, 36);
-            this.buttonClear.Text = "Clear trace";
-            this.buttonClear.Click += new System.EventHandler(this.buttonClear_Click);
-            //
-            // timerBatch
-            //
-            this.timerBatch.Interval = 350;
-            this.timerBatch.Tick += new System.EventHandler(this.timerBatch_Tick);
-            //
             // WorkOrdersView
             //
             this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
-            this.ClientSize = new System.Drawing.Size(1348, 680);
+            this.ClientSize = new System.Drawing.Size(820, 604);
             this.Controls.Add(this.panelScreen);
-            this.Controls.Add(this.tracePanel);
-            this.Controls.Add(this.panelActions);
             this.Name = "WorkOrdersView";
-            this.Text = "TicketOps Console — Module 9 · JavaScript interop";
+            this.Text = "TicketOps Console";
             this.Load += new System.EventHandler(this.WorkOrdersView_Load);
             this.panelScreen.ResumeLayout(false);
-            this.panelActions.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -325,20 +240,10 @@ namespace TicketOps.Views
         private Wisej.Web.DataGridViewTextBoxColumn columnAssigned;
         private Wisej.Web.DataGridViewTextBoxColumn columnVisibility;
         private Wisej.Web.Label labelSelected;
-        private Wisej.Web.Label labelClipboardCaption;
+        private Wisej.Web.Label labelLinkCaption;
         private Wisej.Web.TextBox textLink;
         private Wisej.Web.Label labelAuditCaption;
         private Wisej.Web.ListBox listAudit;
-        private Wisej.Web.ProgressBar progressBatch;
-        private TicketOps.Diagnostics.ActivityTracePanel tracePanel;
-        private Wisej.Web.Panel panelActions;
-        private Wisej.Web.Button buttonBatch;
-        private Wisej.Web.Button buttonCopyUnknown;
-        private Wisej.Web.Button buttonCopyConfidential;
-        private Wisej.Web.Button buttonClipboardDenied;
-        private Wisej.Web.Button buttonOutage;
-        private Wisej.Web.Button buttonClear;
-        private Wisej.Web.Timer timerBatch;
         private Wisej.Web.JavaScript javaScript;
     }
 }

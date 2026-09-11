@@ -34,7 +34,7 @@ private void ShowValidation(IReadOnlyList<ValidationMessage> messages)
             // a null FieldName (the cross-field rule) reaches only the summary label
         }
     }
-    // … validationSummaryLabel — see SummaryAndSaveGating.md
+    // … validationSummaryLabel — see CrossFieldRuleAndSaveGating.md
 }
 ```
 
@@ -50,7 +50,7 @@ Two callers, both going through `RunValidation(paint: true)` (never `ShowValidat
 1. **`SaveAsync`**, right after `errorProvider.Clear()` → `editBindingSource.EndEdit()` → the model is read.
    This is the "first failed Save" moment the lab guide asks about.
 2. **Live field-change events** (`Field_Changed`, `DueDate_Changed` — see
-   [`SummaryAndSaveGating.md`](SummaryAndSaveGating.md)), wired in the Designer to `Validated` on
+   [`CrossFieldRuleAndSaveGating.md`](CrossFieldRuleAndSaveGating.md)), wired in the Designer to `Validated` on
    `txtTitle`/`txtDescription`, `SelectedValueChanged` on `cboCustomer`/`cboCategory`/`cboStatus`, and
    `ValueChanged`/`Validated` on `dtpDueDate`.
 

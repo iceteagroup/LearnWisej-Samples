@@ -6,11 +6,11 @@ right. Written the way a review comment is written — short, and specific about
 ## What is production-shaped already
 
 - **State ownership.** The queue, the job store, the notification service and the work-order table live in
-  the process (`JobInfrastructure`); the page owns only controls. Closing the page (**Reopen**) proves it.
+  the process (`JobInfrastructure`); the page owns only controls. Closing the browser tab mid-import and
+  opening the app again proves it.
 - **Tenant boundary in the service.** The store is global; `ImportService.ListJobs` / `GetJob` are the only
-  ways in, and both filter by `CommandContext.TenantId`. Refusals are traced as `Security:` lines.
-- **Bounded UI updates.** One observer per page, one constant (`MinPushIntervalMs = 400`), measured on
-  every run and printed in the trace.
+  ways in, and both filter by `CommandContext.TenantId`. Refusals are logged as `Security:` lines.
+- **Bounded UI updates.** One observer per page, one constant (`MinPushIntervalMs = 400`).
 - **Errors are classified, not caught-and-hidden.** Transient / terminal-row / terminal-job, each with a
   different consequence, and every one of them recorded.
 - **Idempotent writes.** Upsert by tenant + `ExternalRef`, so retries and duplicate messages are safe.
@@ -36,9 +36,7 @@ right. Written the way a review comment is written — short, and specific about
 - **Who owns the job after the session closes?** The queue (execution) and the job store (state) — the
   service layer, never the screen. The screen is one of possibly zero observers.
 - **How often does the UI update?** At most 2.5 times a second per page
-  (`JobProgressObserver.MinPushIntervalMs = 400`), regardless of how many events the job raises. The
-  anti-pattern button runs the same loop unthrottled (a push per event, back to back — only the cost of the
-  refresh itself limits it; the verified run shows `212 change event(s) → 6 push(es) in 1.5 s`) for comparison.
+  (`JobProgressObserver.MinPushIntervalMs = 400`), regardless of how many events the job raises.
 - **Which errors are retryable and which are terminal?** Retryable = a failure a later attempt could
   survive (`TransientRowException`: timeouts, contention), bounded to 3 attempts with exponential backoff.
   Terminal = a failure that will always fail the same way (bad asset code, malformed file) — and anything

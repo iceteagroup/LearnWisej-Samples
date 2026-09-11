@@ -11,15 +11,14 @@ namespace EnterpriseOps.Services
     /// Application.Session — never in a static.
     ///
     /// SECURITY: this is the ONLY place the user name, the role and the tenant come from.
-    /// Nothing that arrives from JavaScript is allowed to change any of the three (see
-    /// ClientCommandService.Execute vs ExecuteTrustingClient).
+    /// Nothing that arrives from JavaScript is allowed to change any of the three.
     /// </summary>
     public sealed class SessionContext
     {
         public string TenantId { get; private set; } = "contoso";
-        public string UserName { get; private set; } = "ana.ops";
-        public string DisplayName { get; private set; } = "Ana Ops";
-        public Role Role { get; private set; } = Role.Manager;
+        public string UserName { get; private set; }
+        public string DisplayName { get; private set; }
+        public Role Role { get; private set; }
 
         /// <summary>Stable per session; every command carries it into the trace and the audit log.</summary>
         public string CorrelationId { get; } = NewCorrelationId();
@@ -32,15 +31,6 @@ namespace EnterpriseOps.Services
             UserName = user.UserName;
             DisplayName = user.DisplayName;
             Role = user.Role;
-        }
-
-        public void SwitchTenant(string tenantId)
-        {
-            foreach (Domain.Tenant tenant in Domain.Tenant.All)
-            {
-                if (tenant.Id == tenantId) { TenantId = tenantId; return; }
-            }
-            throw new ArgumentException($"Unknown tenant '{tenantId}'.", nameof(tenantId));
         }
 
         /// <summary>
@@ -116,6 +106,12 @@ namespace EnterpriseOps.Services
         public static SessionContext CreateSessionContext()
         {
             var context = new SessionContext();
+
+            // The sample has no login screen: every session is the course's technician, who may
+            // escalate and open the work queue but not approve — so the palette's "approve"
+            // answers PERMISSION_DENIED, as in the walkthrough.
+            context.SignInAs("ben.tech");
+
             try { context.SessionId = Application.SessionId; }
             catch (Exception) { context.SessionId = "design-time"; }
             try { Application.Session.Context = context; }       // the per-user dynamic bag

@@ -25,7 +25,7 @@ int blocked            = matrix.Count(m => !m.Supported);
 int withoutMitigation  = matrix.Count(m => !m.Supported && string.IsNullOrWhiteSpace(m.Mitigation));
 ```
 
-and the trace prints `every blocked entry has a mitigation` — or names how many do not. A blocked entry without a
+and the server log records `every blocked entry has a mitigation` — or names how many do not. A blocked entry without a
 mitigation is the one condition that should stop the project before step 1.
 
 ## The three blocked rows, in words
@@ -55,7 +55,7 @@ Risk is derived from two recorded facts, never typed — see `MigrationDossier.m
 ## Evidence — what the running app shows
 
 - **Build dossier** → the *Compatibility / risk* tab shows the nine entries above with the risk column coloured.
-- The trace prints
+- The server log records
   `Service:  compatibility matrix: 9 entries, 6 supported, 3 blocked → every blocked entry has a mitigation`.
 - The footer of the dossier card summarises it:
   `Dossier: 7 areas · risk H×3 M×3 L×1 · 3 blocked combinations mitigated`.

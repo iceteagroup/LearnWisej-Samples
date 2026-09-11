@@ -315,39 +315,4 @@ public sealed class TicketSearchTests : IClassFixture<SeededSupportDesk>
     }
 
     #endregion
-
-    #region The anti-pattern
-
-    [Fact]
-    public async Task Binding_the_query_instead_of_the_list_fails_when_the_grid_enumerates()
-    {
-        var antiPattern = new BoundIQueryableAntiPattern(_db.Factory);
-
-        var ex = await Assert.ThrowsAnyAsync<Exception>(() => antiPattern.BindTheQueryAndLetTheGridEnumerateAsync());
-
-        Assert.True(ex is ObjectDisposedException or InvalidOperationException, $"unexpected {ex.GetType().Name}");
-        Assert.Contains("disposed context", ex.Message, StringComparison.OrdinalIgnoreCase);
-    }
-
-    #endregion
-
-    #region The slow search (the progress path)
-
-    [Fact]
-    public async Task The_slow_search_returns_the_same_page_and_still_sends_two_statements()
-    {
-        var entries = new List<TraceEntry>();
-        using var scope = QueryTrace.Begin(entries.Add);
-
-        var slow = await _db.Tickets.SearchTicketsSlowlyAsync(Page(), TimeSpan.FromMilliseconds(20));
-        var fast = await _db.Tickets.SearchTicketsAsync(Page());
-
-        Assert.Equal(fast.TotalCount, slow.TotalCount);
-        Assert.Equal(fast.Items.Select(t => t.Id), slow.Items.Select(t => t.Id));
-        Assert.Equal(4, scope.Commands);                                 // two searches, two statements each
-        Assert.Equal(2, scope.ContextsCreated);
-        Assert.Equal(2, scope.ContextsDisposed);                         // the latency did not extend a lifetime
-    }
-
-    #endregion
 }

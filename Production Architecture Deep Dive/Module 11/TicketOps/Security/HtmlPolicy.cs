@@ -11,7 +11,7 @@ namespace TicketOps.Security
     ///    so the framework escapes the string and a note containing "&lt;img onerror=…&gt;" shows those characters.
     /// 2. Any HTML-capable surface that must show user text (a label with AllowHtml = true, a tooltip, a grid
     ///    cell with HTML enabled) receives <see cref="Encode"/>d text. Surfaces that already escape — a Label with
-    ///    AllowHtml = false, the trace/audit ListBox (verified at runtime) — receive plain text: encoding twice shows entities.
+    ///    AllowHtml = false, the audit ListBox — receive plain text: encoding twice shows entities.
     /// 3. When formatting is genuinely required, <see cref="RenderWithAllowList"/> encodes EVERYTHING first and
     ///    then restores only the tags in <see cref="AllowedTags"/> — literal, attribute-free tags, so no
     ///    "onerror", no "href", no "style" can ever come back.
@@ -42,9 +42,5 @@ namespace TicketOps.Security
             }
             return safe;
         }
-
-        /// <summary>True when the text contains something that would be interpreted as markup on an HTML-capable surface.</summary>
-        public static bool LooksLikeMarkup(string userText)
-            => !string.IsNullOrEmpty(userText) && (userText.IndexOf('<') >= 0 || userText.IndexOf('&') >= 0);
     }
 }

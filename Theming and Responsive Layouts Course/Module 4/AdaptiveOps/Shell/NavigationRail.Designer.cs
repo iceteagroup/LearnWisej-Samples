@@ -25,11 +25,9 @@ namespace AdaptiveOps.Shell
             this.btnNavSchedules = new Wisej.Web.Button();
             this.btnNavSettings = new Wisej.Web.Button();
             this.btnNavHelp = new Wisej.Web.Button();
-            this.lblSelected = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblNavTitle  (AutoSize = true: the content decides the size - a translated caption
-            // grows or shrinks by itself; compare lblSelected below, which is fixed + AutoEllipsis)
+            // lblNavTitle  (AutoSize = true: the content decides the size)
             //
             this.lblNavTitle.AutoSize = true;
             this.lblNavTitle.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
@@ -38,9 +36,7 @@ namespace AdaptiveOps.Shell
             this.lblNavTitle.Name = "lblNavTitle";
             this.lblNavTitle.Text = "NAVIGATION";
             //
-            // Section buttons: Anchor Top | Left | Right, so they stretch with the rail and stay put
-            // vertically. Seven of them on purpose: the rail is taller than a short browser window,
-            // and AutoScroll (below) is what makes it scroll instead of clipping the last entries.
+            // Section buttons: Anchor Top | Left | Right, so they stretch with the rail and stay put vertically.
             //
             this.btnNavDashboard.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.btnNavDashboard.Location = new System.Drawing.Point(12, 40);
@@ -85,24 +81,10 @@ namespace AdaptiveOps.Shell
             this.btnNavHelp.Text = "Help";
             this.btnNavHelp.Click += new System.EventHandler(this.btnNav_Click);
             //
-            // lblSelected  (AutoSize = false + AutoEllipsis: the container decides the width, the text is cut)
-            //
-            this.lblSelected.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblSelected.AutoEllipsis = true;
-            this.lblSelected.AutoSize = false;
-            this.lblSelected.ForeColor = System.Drawing.Color.FromArgb(103, 112, 133);
-            this.lblSelected.Location = new System.Drawing.Point(12, 352);
-            this.lblSelected.Name = "lblSelected";
-            this.lblSelected.Size = new System.Drawing.Size(186, 32);
-            this.lblSelected.Text = "Section: Tickets";
-            this.lblSelected.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
             // NavigationRail
             //
-            // AutoScroll + ScrollBars.Hidden: when the browser is shorter than the rail's content
-            // (about 396 px) the rail scrolls by wheel or touch instead of clipping the last sections,
-            // and no scrollbar steals width from the buttons. AutoScrollMargin leaves room after the
-            // last control.
+            // AutoScroll + ScrollBars.Hidden: in a short browser window the rail scrolls by wheel or
+            // touch instead of clipping the last sections, and no scrollbar steals width.
             //
             this.AutoScroll = true;
             this.AutoScrollMargin = new System.Drawing.Size(0, 12);
@@ -116,7 +98,6 @@ namespace AdaptiveOps.Shell
             this.Controls.Add(this.btnNavSchedules);
             this.Controls.Add(this.btnNavSettings);
             this.Controls.Add(this.btnNavHelp);
-            this.Controls.Add(this.lblSelected);
             this.Name = "NavigationRail";
             this.ScrollBars = Wisej.Web.ScrollBars.Hidden;
             this.Size = new System.Drawing.Size(212, 588);
@@ -133,6 +114,5 @@ namespace AdaptiveOps.Shell
         private Wisej.Web.Button btnNavSchedules;
         private Wisej.Web.Button btnNavSettings;
         private Wisej.Web.Button btnNavHelp;
-        private Wisej.Web.Label lblSelected;
     }
 }

@@ -41,21 +41,16 @@ Named after what the *application* wants, never after a vendor function.
 | `ShowLegend` | Whether the legend is drawn. |
 | `SampleMode` | Design-time sample data (on automatically in the Designer). Never calls a service. |
 | `SelectedKey` (read-only) / `Select(key)` | The highlighted slice. `Select` moves the highlight without raising `SegmentClicked`. |
-| `IsFallbackRendered`, `VendorVersion`, `DescribeWirePayload()` | Diagnostics the lab screen prints. |
+| `IsFallbackRendered`, `VendorVersion` | Read-only state: is the fallback on screen, which vendor version the wrapper targets. |
 | `SegmentClicked` | **Named server event**: the user clicked a slice. `ChartSegmentEventArgs { Key, Label, Value, Percent }`. |
 | `WidgetError` | The adapter caught a vendor failure and already fell back. `WidgetErrorEventArgs { Phase, Message, FallbackRendered }`. |
-| `Trace` | Diagnostics only: every option that went down, every event that came up. |
 
 ### What is deliberately hidden
 
 `Packages`, `InitScript`, `WiredEvents`, `Options`, `Call`, `CallAsync` are shadowed read-only with
 `[Browsable(false)]`, `[EditorBrowsable(Never)]` and `[DesignerSerializationVisibility(Hidden)]`. They are
-exactly what the prototype edits on every page (`Controls/Samples/LeakyChartScreen.cs.txt`); once the class
-owns the setup, letting one screen change them breaks that screen only — the worst kind of bug. The class
-itself always goes through `base.`.
-
-`SimulateBlockedVendor` and `SimulateVendorFailure()` are diagnostics-only members for the lab's failure
-buttons, kept out of the Properties window.
+exactly what a leaky screen would edit on every page; once the class owns the setup, letting one screen
+change them breaks that screen only — the worst kind of bug. The class itself always goes through `base.`.
 
 ## The client adapter (`opschart-init.js`)
 
@@ -87,9 +82,6 @@ That is not paranoia: the browser is the one part of the system the server does 
 
 | Do this | You should see |
 |---|---|
-| Open the page | A stacked bar: Open 38 · On hold 22 · Escalated 12 · Done 28 (the walkthrough's numbers, computed by the service for tenant `fabrikam`). The trace prints the wire payload — four `{key,label,value}` objects and nothing else. |
-| Click the red **Escalated** slice | Footer: `SegmentClicked("escalated") — named server event · grid filtered server-side · 12 rows`. The trace shows `Client → WorkOrderChartWidget.SegmentClicked → key 'escalated' (12, 12%) — a key, not a work order`, then the service query. |
-| **Fail: invalid palette** | Red banner *invalid palette refused on the server — nothing was sent to the browser*; the trace has `Component: server rejected palette 'neon-pink'…`. The chart on screen is unchanged. |
-| **Fail: vendor throws** | The adapter hands the vendor `segments: null`, the vendor throws `EnterpriseOpsChart: options.segments must be an array…`, the adapter catches it, renders the fallback list and raises `error`. Amber banner + toast; the timeline and the grid keep working. |
-| **Fail: block the vendor script** | The walkthrough's proxy block: no vendor object, `error` with phase `init`, the embedded fallback list with the same numbers, footer `WidgetLoadError — vendor-opschart.js · fallback rendered · screen still works`. |
-| **Recover: reload the chart** | The same wrapper, the same API, the chart back with the same data. |
+| Open the page | A stacked bar: Open 38 · On hold 22 · Escalated 12 · Done 28 (the walkthrough's numbers, computed by the service for tenant `fabrikam`). |
+| Click the red **Escalated** slice | Note *SegmentClicked → "escalated" · 12 work orders shown below*; status bar `SegmentClicked("escalated") — named server event · grid filtered server-side`; the grid shows the 12 rows. |
+| Block `/Widgets/vendor-opschart.js` in the browser's developer tools (Network → Block request URL) and reload | The walkthrough's proxy block: no vendor object, `error` with phase `init`, the embedded fallback list with the same numbers, note `WidgetLoadError — vendor-opschart.js · fallback rendered · screen still works`. The timeline is unaffected. |

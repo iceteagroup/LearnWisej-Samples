@@ -12,8 +12,8 @@ namespace OrderDesk.Reporting
     /// session and hand to the browser (PdfViewer or download). A real project would use a
     /// server-safe PDF library; the point here is that the invoice is produced on the server.
     ///
-    /// Module 6 additions over the Module 1 copy: WritePages (explicit page breaks, one invoice per
-    /// page in a batch) and a single-pass byte layout so a 1,204-page batch is written in linear time.
+    /// WritePages writes explicit page breaks (one invoice per page in a batch) with a single-pass
+    /// byte layout, so a 1,204-page batch is written in linear time.
     /// </summary>
     public static class InvoicePdfWriter
     {

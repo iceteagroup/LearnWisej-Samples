@@ -7,24 +7,12 @@ using Wisej.Web;
 
 namespace OrderDesk.Dialogs
 {
-    /// <summary>Raised after every Save attempt with what <see cref="OrderValidator"/> found.</summary>
-    public sealed class ValidationEventArgs : EventArgs
-    {
-        public ValidationEventArgs(ValidationResult result)
-        {
-            Result = result;
-        }
-
-        public ValidationResult Result { get; }
-    }
-
     /// <summary>
     /// The ported edit dialog. Same fields as LegacyOrderDesk.EditOrderDialog plus one editable order
     /// line, but the rule is no longer inside the form: Save collects the order, asks
     /// <see cref="OrderValidator"/> on the server and shows the answer field by field through an
-    /// ErrorProvider (general messages as a Toast). Nothing here runs in the browser; the dialog
-    /// only closes with DialogResult.OK when the server said the order is valid.
-    /// The caller disposes the dialog in its ShowDialog callback.
+    /// ErrorProvider (general messages as a Toast). The dialog only closes with DialogResult.OK when
+    /// the order is valid. The caller disposes the dialog in its ShowDialog callback.
     /// </summary>
     public partial class EditOrderDialog : Form
     {
@@ -32,12 +20,6 @@ namespace OrderDesk.Dialogs
 
         /// <summary>The order being edited (a clone of the original; the caller saves it).</summary>
         public Order Order { get; }
-
-        /// <summary>What the last Save attempt found (null before the first attempt).</summary>
-        public ValidationResult LastResult { get; private set; }
-
-        /// <summary>Fires after every Save attempt, valid or not — the console traces it.</summary>
-        public event EventHandler<ValidationEventArgs> Validated;
 
         public EditOrderDialog(Order order, IList<Customer> customers)
         {
@@ -85,7 +67,7 @@ namespace OrderDesk.Dialogs
             string sku = textSku.Text.Trim();
             if (sku.Length > 0)
             {
-                // A line without a SKU is not a line — that is how "Add at least one order line." is reached.
+                // A line without a SKU is not a line.
                 Order.Lines.Add(new OrderLine
                 {
                     Sku = sku, Description = sku, Quantity = (int)numQuantity.Value, UnitPrice = numUnitPrice.Value
@@ -97,10 +79,7 @@ namespace OrderDesk.Dialogs
         {
             CollectOrder();
 
-            // ✓ the rule runs here, on the server, every time — the browser only sent field values.
             var result = OrderValidator.Validate(Order);
-            LastResult = result;
-            Validated?.Invoke(this, new ValidationEventArgs(result));
 
             errorProvider.Clear();
             if (result.HasErrors)

@@ -15,13 +15,7 @@ statement cannot run without the number, so waiting is justified. Logging the si
 // Controls/SimpleGauge.cs
 public async Task<RenderedSize> GetRenderedSizeAsync()
 {
-    RaiseTrace(TraceDirection.ServerToClient, "CallAsync(\"getRenderedSize\")", "awaiting the browser…");
-    var watch = Stopwatch.StartNew();
-
     dynamic result = await AwaitClient(this.CallAsync("getRenderedSize"), "getRenderedSize");
-
-    watch.Stop();
-    RaiseTrace(TraceDirection.ClientToServer, "result", $"{ToWireJson((object)result)}  ({watch.ElapsedMilliseconds} ms round trip)");
 
     if (result == null)
         throw new InvalidOperationException("getRenderedSize returned null.");
@@ -52,19 +46,16 @@ private async Task<object> AwaitClient(Task<object> call, string what)
 // Window1.cs — an async void event handler owns its try/catch
 private async void buttonReadSize_Click(object sender, EventArgs e)
 {
-    BeginAwait();
     try
     {
         RenderedSize size = await this.gauge.GetRenderedSizeAsync();
 
-        string layout = size.Width >= 400 ? "wide" : "compact";      // the next statement needs the value
-        this.gauge.Caption = $"Boiler 3 · {layout}";
-        ShowResult("RenderedSize ← await CallAsync(\"getRenderedSize\")", SimpleGauge.ToWireJson(size));
-        EndAwait();
+        // The next statement needs the value: choose the caption layout from the rendered width.
+        this.gauge.Caption = size.Width >= 400 ? "Boiler 3 · wide" : "Boiler 3 · compact";
     }
     catch (Exception ex)
     {
-        FailAwait("getRenderedSize", ex);       // trace line + banner; the page keeps working
+        ShowAlarm($"✖ getRenderedSize failed: {ex.Message}", AlarmKind.Error);   // the page keeps working
     }
 }
 ```
@@ -79,38 +70,35 @@ this.getRenderedSize = function () {
 };
 ```
 
-## The EvalAsync variant
+## The EvalAsync alternative
 
-Same mechanism, arbitrary expression, primitive back:
+`EvalAsync` is the same mechanism for an arbitrary JavaScript **expression** evaluated with
+`this` = the wrapper (an expression, not a statement: `"return …;"` fails). The sample does not wire
+it; the equivalent read would be:
 
 ```csharp
-object result = await this.EvalAsync("this.measureWidth()");
-double width = Convert.ToDouble(result, CultureInfo.InvariantCulture);
+object width = await this.EvalAsync("this.getRenderedSize().width");
 ```
 
-## Evidence (what the trace shows)
+## Evidence (what the command trace shows)
 
 ```
-14:02:19.402  → .NET→JS  CallAsync("getRenderedSize")        awaiting the browser…
-14:02:19.431  ← JS→.NET  result                              {"width":480,"height":244}  (29 ms round trip)
-14:02:19.431  → .NET→JS  update(options)                     {"label":"Boiler 3 · wide"}
-14:02:19.431  • server   next statement                      RenderedSize 480×244 → "wide" layout chosen, Caption updated
+14:02:19.402  → .NET→JS  await CallAsync("getRenderedSize")
+14:02:19.431  ← JS→.NET  result {"width":480,"height":244}
 ```
 
-Compare with a one-way command, where all lines share one timestamp and the handler never paused:
+The `←` line arrives on a later timestamp than the `→` line: the handler was suspended until the
+browser replied. Right after it the gauge caption changes to "Boiler 3 · wide". Compare with a
+one-way command, which produces a single line and never pauses the handler:
 
 ```
-14:02:11.318  → .NET→JS  Call("setValue", 72)                one-way · queued · no result
-14:02:11.318  • server   next statement                      runs immediately — nothing was awaited
+14:02:11.318  → .NET→JS  Call("setValue", 72)
 ```
 
-While the handler is suspended the status label reads `● awaiting the browser… (handler suspended)`.
-The result box under the gauge shows the mapped DTO as wire JSON: `{"width":480,"height":244}`.
-
-## Failure paths exercised
+## Failure paths handled
 
 | Path | What happens |
 |---|---|
-| Browser never replies | `ClientReplyTimeout` (5 s) elapses, `TimeoutException`, trace line `timeout getRenderedSize: no reply within 5 s`, red banner, status `fault`. Reproduce by closing the tab mid-call only if the session survives; otherwise read the code path. |
+| Browser never replies | `ClientReplyTimeout` (5 s) elapses, `TimeoutException`, the banner under the gauge shows `✖ getRenderedSize failed: …`. |
 | Result is `null` or `0×0` | `InvalidOperationException` before the value is used; nothing is trusted. |
-| Wrong-case read (`result.Width`) | see the "Camel-case pitfall" button and `DtoContract.md`: `null`, no error, zeros in the DTO. |
+| Wrong-case read (`result.Width`) | `null`, no error, zeros in the DTO; see `DtoContract.md`. The mapping reads `result.width`. |

@@ -23,7 +23,7 @@ namespace OperationsConsole.Shell
             this.btnRefresh = new Wisej.Web.Button();
             this.SuspendLayout();
             //
-            // lblTitle  (private — a consumer sets RecordHeader.Title, never this label)
+            // lblTitle
             //
             this.lblTitle.AutoSize = false;
             this.lblTitle.Font = new System.Drawing.Font("default", 13F, System.Drawing.FontStyle.Bold);
@@ -33,7 +33,7 @@ namespace OperationsConsole.Shell
             this.lblTitle.Text = "Section";
             this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // lblCount  (private — a consumer sets RecordHeader.RecordCount)
+            // lblCount
             //
             this.lblCount.AutoSize = false;
             this.lblCount.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
@@ -44,7 +44,7 @@ namespace OperationsConsole.Shell
             this.lblCount.Text = "0 records";
             this.lblCount.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // lblRefreshed  (private — a consumer sets RecordHeader.LastRefresh)
+            // lblRefreshed
             //
             this.lblRefreshed.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
             this.lblRefreshed.AutoSize = false;
@@ -56,7 +56,7 @@ namespace OperationsConsole.Shell
             this.lblRefreshed.Text = "never refreshed";
             this.lblRefreshed.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
-            // btnRefresh  (private — a consumer handles RecordHeader.RefreshRequested)
+            // btnRefresh
             //
             this.btnRefresh.AccessibleName = "Refresh this section";
             this.btnRefresh.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
@@ -65,7 +65,6 @@ namespace OperationsConsole.Shell
             this.btnRefresh.Size = new System.Drawing.Size(108, 32);
             this.btnRefresh.TabIndex = 1;
             this.btnRefresh.Text = "Refresh";
-            this.btnRefresh.ToolTipText = "Raises RecordHeader.RefreshRequested — the consuming page decides what that means.";
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             //
             // RecordHeader
@@ -83,8 +82,6 @@ namespace OperationsConsole.Shell
 
         #endregion
 
-        // every child control is private: the public surface of this UserControl is
-        // Title, RecordCount, LastRefresh and RefreshRequested — nothing else.
         private Wisej.Web.Label lblTitle;
         private Wisej.Web.Label lblCount;
         private Wisej.Web.Label lblRefreshed;

@@ -95,17 +95,13 @@ moves from `/HealthCheck.json` to `/health`, and the static manifest remains the
 - **Do** check the dependencies whose failure means this node cannot work (database reachable, disk writable).
 - **Do** keep it cheap: a health check that runs a heavy query becomes the outage it was meant to detect.
 - **Don't** put connection strings, internal host names or secrets in the body. `DependencyCheck.Detail` says
-  *"ticket store unreachable"*; the driver's *"timeout connecting to sql01:1433"* stays in the log.
+  *"ticket store unreachable"*; the driver's message stays in the server log.
 - **Don't** return 200 unconditionally — the balancer would keep sending traffic to a dead node.
 
-## Evidence (what the running app shows)
+## Check it in the running app
 
-- **WebSocket row** on the diagnostics page: `connected (server push on)` through a proxy that forwards the upgrade;
+- **WebSocket row** on the diagnostics page: `connected` through a proxy that forwards the upgrade;
   `long-polling fallback` (and `websocket → Degraded`) when it does not.
 - **Sessions row**: open <http://localhost:5112> in a second tab, press **↻ Refresh** in the first — the count climbs
-  (`2 live on this node`). Each tab has its own `AppComposition` graph; the trace of one never shows the other's
-  clicks. That per-node count is what affinity protects and what a restart evicts.
-- **Degrade 'storage'** → `Degraded · HTTP 200 · still serving (6 open tickets loaded)`: a degraded dependency is
-  reported, the node stays in rotation, the app keeps working.
-- **Simulate repository outage** → `Unhealthy · HTTP 503 · out of rotation`: the balancer would stop sending new
-  sessions here; **Recover the repository** → `Healthy · HTTP 200` — back in rotation.
+  (`2 live on this node`). Each tab has its own `AppComposition` graph. That per-node count is what affinity protects
+  and what a restart evicts.

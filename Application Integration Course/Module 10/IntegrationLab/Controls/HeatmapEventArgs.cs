@@ -4,7 +4,7 @@ namespace IntegrationLab.Controls
 {
     /// <summary>
     /// Data for <see cref="HeatmapWidget.CellSelected"/>: the cell the user clicked. <see cref="Value"/> is the
-    /// authoritative server value for that cell; <see cref="ReportedValue"/> is what the browser sent (contract check).
+    /// authoritative server value for that cell; <see cref="ReportedValue"/> is what the browser sent.
     /// </summary>
     public class HeatmapCellEventArgs : EventArgs
     {

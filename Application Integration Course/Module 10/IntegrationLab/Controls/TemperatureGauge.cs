@@ -172,40 +172,7 @@ namespace IntegrationLab.Controls
         [Description("Raised when the client adapter caught a vendor failure.")]
         public event EventHandler<GaugeErrorEventArgs> WidgetError;
 
-        /// <summary>
-        /// Raised for every message that crosses the wire in either direction.
-        /// Used by the lab UI to show the live client/server trace.
-        /// </summary>
-        [Browsable(false)]
-        public event EventHandler<TraceEventArgs> Trace;
-
         #endregion
-
-        /// <summary>
-        /// Deliberately writes a malformed payload straight into Options, bypassing the
-        /// typed Value property. This is the lab's failure path: the client adapter must
-        /// catch the vendor exception and report it as an "error" event.
-        /// </summary>
-        public void CorruptStateForTesting()
-        {
-            dynamic options = this.Options;
-            options.value = "n/a";
-            RaiseTrace(TraceDirection.ServerToClient, "update(options)", "{\"value\":\"n/a\"}  (malformed on purpose)");
-        }
-
-        /// <summary>
-        /// Re-sends the authoritative server state after a failure. The browser never
-        /// holds the truth, so recovery is simply "render the server state again".
-        /// </summary>
-        public void ResyncFromServer()
-        {
-            PushState();
-            RaiseTrace(TraceDirection.ServerToClient, "update(options)", ToJson());
-        }
-
-        /// <summary>Compact JSON of the state this component owns (what the widget receives).</summary>
-        public string ToJson()
-            => $"{{\"value\":{F(_value)},\"min\":{F(_minimum)},\"max\":{F(_maximum)},\"warnAt\":{F(_warnAt)},\"threshold\":{F(_threshold)},\"label\":\"{_label}\",\"units\":\"{_units}\"}}";
 
         /// <summary>
         /// Every event fired by the client wrapper lands here. The server decides what
@@ -220,10 +187,6 @@ namespace IntegrationLab.Controls
                 case "thresholdExceeded":
                     {
                         double reported = ToDouble(data?.value);
-                        RaiseTrace(TraceDirection.ClientToServer, "thresholdExceeded", $"{{\"value\":{F(reported)}}}");
-                        if (Math.Abs(reported - _value) > 0.001)
-                            RaiseTrace(TraceDirection.Server, "contract check",
-                                $"client reported {F(reported)} but server Value is {F(_value)}: server wins");
                         ThresholdExceeded?.Invoke(this, new GaugeEventArgs(_value, "high", reported));
                         break;
                     }
@@ -232,7 +195,6 @@ namespace IntegrationLab.Controls
                         string range = (string)(data?.range ?? "normal");
                         double reported = ToDouble(data?.value);
                         this.CurrentRange = range;
-                        RaiseTrace(TraceDirection.ClientToServer, "rangeChanged", $"{{\"range\":\"{range}\",\"value\":{F(reported)}}}");
                         RangeChanged?.Invoke(this, new GaugeEventArgs(_value, range, reported));
                         break;
                     }
@@ -240,7 +202,6 @@ namespace IntegrationLab.Controls
                     {
                         string phase = (string)(data?.phase ?? "unknown");
                         string message = (string)(data?.message ?? "");
-                        RaiseTrace(TraceDirection.ClientToServer, "error", $"{{\"phase\":\"{phase}\",\"message\":\"{message}\"}}");
                         WidgetError?.Invoke(this, new GaugeErrorEventArgs(phase, message));
                         break;
                     }
@@ -249,10 +210,6 @@ namespace IntegrationLab.Controls
                     break;
             }
         }
-
-        /// <summary>Called by the UI after it sets a property, so the trace shows the compact JSON that went out.</summary>
-        public void TraceStateOut(string what, string json)
-            => RaiseTrace(TraceDirection.ServerToClient, what, json);
 
         private void PushState()
         {
@@ -266,8 +223,6 @@ namespace IntegrationLab.Controls
             options.units = _units;
         }
 
-        private void RaiseTrace(TraceDirection direction, string name, string payload)
-            => Trace?.Invoke(this, new TraceEventArgs(direction, name, payload));
 
         private static string F(double value)
             => value.ToString(System.Globalization.CultureInfo.InvariantCulture);

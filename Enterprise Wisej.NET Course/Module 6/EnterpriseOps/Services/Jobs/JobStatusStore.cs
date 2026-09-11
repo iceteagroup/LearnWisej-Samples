@@ -8,20 +8,18 @@ namespace EnterpriseOps.Services.Jobs
 {
     public sealed class JobChangedEventArgs : EventArgs
     {
-        public JobChangedEventArgs(Guid jobId, bool isMilestone)
+        public JobChangedEventArgs(Guid jobId)
         {
             JobId = jobId;
-            IsMilestone = isMilestone;
         }
 
         public Guid JobId { get; }
-        public bool IsMilestone { get; }
     }
 
     /// <summary>
     /// The job status store: current record + history per job, tenant-scoped reads, and a Changed event
     /// for observers. In production this is a table; here it is an in-memory dictionary that belongs to the
-    /// process, not to any session — which is exactly why a reopened page finds its job again.
+    /// process, not to any session — which is why a new session finds a running job again.
     /// </summary>
     public interface IJobStatusStore
     {
@@ -53,7 +51,7 @@ namespace EnterpriseOps.Services.Jobs
                 record.History.Add(new JobHistoryEntry { AtUtc = record.CreatedUtc, Layer = "Queue:", Status = record.Status, Percent = record.Percent, Message = record.Message ?? "Queued." });
                 _jobs[record.JobId] = record;
             }
-            Changed?.Invoke(this, new JobChangedEventArgs(record.JobId, true));
+            Changed?.Invoke(this, new JobChangedEventArgs(record.JobId));
             return record.Clone();
         }
 
@@ -84,24 +82,19 @@ namespace EnterpriseOps.Services.Jobs
                 if (!_jobs.TryGetValue(progress.JobId, out var record))
                     return;
 
-                if (progress.IsMilestone)
-                {
-                    record.Status = progress.Status;
-                    if (progress.Percent >= 0) record.Percent = progress.Percent;
-                    record.Message = progress.Message;
-                    if (progress.Result != null) record.Result = progress.Result.Clone();
+                record.Status = progress.Status;
+                if (progress.Percent >= 0) record.Percent = progress.Percent;
+                record.Message = progress.Message;
+                if (progress.Result != null) record.Result = progress.Result.Clone();
 
-                    if (progress.Status == JobStatus.Running && record.StartedUtc == null)
-                        record.StartedUtc = DateTime.UtcNow;
-                    if (record.IsFinished && record.FinishedUtc == null)
-                        record.FinishedUtc = DateTime.UtcNow;
+                if (progress.Status == JobStatus.Running && record.StartedUtc == null)
+                    record.StartedUtc = DateTime.UtcNow;
+                if (record.IsFinished && record.FinishedUtc == null)
+                    record.FinishedUtc = DateTime.UtcNow;
 
-                    record.History.Add(new JobHistoryEntry { AtUtc = DateTime.UtcNow, Layer = "Job:", Status = progress.Status, Percent = progress.Percent, Message = progress.Message });
-                }
-                // Row-level events (IsMilestone = false) are deliberately NOT recorded: a thousand rows
-                // do not belong in a status history. They still raise Changed so the flood is visible.
+                record.History.Add(new JobHistoryEntry { AtUtc = DateTime.UtcNow, Layer = "Job:", Status = progress.Status, Percent = progress.Percent, Message = progress.Message });
             }
-            Changed?.Invoke(this, new JobChangedEventArgs(progress.JobId, progress.IsMilestone));
+            Changed?.Invoke(this, new JobChangedEventArgs(progress.JobId));
         }
 
         public void AppendHistory(Guid jobId, string layer, string message)
@@ -112,7 +105,7 @@ namespace EnterpriseOps.Services.Jobs
                     return;
                 record.History.Add(new JobHistoryEntry { AtUtc = DateTime.UtcNow, Layer = layer, Status = record.Status, Percent = record.Percent, Message = message });
             }
-            Changed?.Invoke(this, new JobChangedEventArgs(jobId, true));
+            Changed?.Invoke(this, new JobChangedEventArgs(jobId));
         }
     }
 

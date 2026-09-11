@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using EnterpriseOps.Services.Commands;
@@ -13,11 +12,8 @@ namespace EnterpriseOps.Services
     public interface IWorkOrderQueryService
     {
         Task<PagedResult<WorkQueueRow>> SearchAsync(WorkQueueQuery query, CancellationToken cancellationToken);
-        Task<WorkOrderHeader> GetHeaderAsync(string tenantId, int workOrderId, CancellationToken cancellationToken);
 
         /// <summary>Reading the audit log is a permission: the service decides, the screen renders the answer.</summary>
         Task<AuditQueryResult> GetAuditAsync(CommandContext context, int? workOrderId, int take, CancellationToken cancellationToken);
-
-        Task<List<int>> GetApprovalCandidatesAsync(string tenantId, int take, CancellationToken cancellationToken);
     }
 }

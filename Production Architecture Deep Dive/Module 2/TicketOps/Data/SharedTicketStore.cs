@@ -7,10 +7,10 @@ namespace TicketOps.Data
 {
     /// <summary>
     /// The process-wide ticket store that stands in for the database. It is <b>application scope on
-    /// purpose</b>: a ticket stamped by one session must be visible to every other session of the same
-    /// tenant, exactly like a row in SQL Server would be. Because every session shares it, every member
-    /// is thread-safe (one lock, copies out, never a live reference) — the audit's rule for shared state:
-    /// read-only or thread-safe. Nothing per-user lives here: no "current tenant", no "selected ticket".
+    /// purpose</b>: tickets are business data that every session of the same tenant sees, exactly like rows
+    /// in SQL Server. Because every session shares it, every member is thread-safe (one lock, copies out,
+    /// never a live reference) — the audit's rule for shared state: read-only or thread-safe. Nothing
+    /// per-user lives here: no "current tenant", no "selected ticket".
     /// </summary>
     public sealed class SharedTicketStore
     {
@@ -19,7 +19,6 @@ namespace TicketOps.Data
 
         private readonly object _gate = new object();
         private readonly Dictionary<int, Ticket> _tickets = new Dictionary<int, Ticket>();
-        private int _nextId = 9001;
 
         private SharedTicketStore()
         {
@@ -42,18 +41,6 @@ namespace TicketOps.Data
                     .OrderBy(t => t.Id)
                     .Select(Clone)
                     .ToList();
-            }
-        }
-
-        public Ticket Upsert(Ticket ticket)
-        {
-            if (ticket == null) throw new ArgumentNullException(nameof(ticket));
-            lock (_gate)
-            {
-                if (ticket.Id == 0)
-                    ticket.Id = _nextId++;
-                _tickets[ticket.Id] = Clone(ticket);
-                return Clone(ticket);
             }
         }
 

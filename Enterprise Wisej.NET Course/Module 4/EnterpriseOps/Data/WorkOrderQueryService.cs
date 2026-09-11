@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -77,40 +76,6 @@ namespace EnterpriseOps.Data
             }
         }
 
-        public async Task<WorkOrderHeader> GetHeaderAsync(string tenantId, int workOrderId, CancellationToken cancellationToken)
-        {
-            await _database.Gate.WaitAsync(cancellationToken);
-            var context = _database.CreateContext("Header query");
-            try
-            {
-                var header = await context.WorkOrders.AsNoTracking()
-                    .Where(x => x.TenantId == tenantId && x.Id == workOrderId)
-                    .Select(x => new WorkOrderHeader
-                    {
-                        Id = x.Id,
-                        TenantId = x.TenantId,
-                        Number = x.Number,
-                        Title = x.Title,
-                        Customer = x.Customer,
-                        Site = x.Site,
-                        Status = x.Status,
-                        Priority = x.Priority,
-                        Version = x.Version,
-                    })
-                    .FirstOrDefaultAsync(cancellationToken);
-
-                _trace.Trace(TraceLayer.Data, header == null
-                    ? $"SELECT header WHERE TenantId='{tenantId}' AND Id={workOrderId} → no row"
-                    : $"SELECT header WHERE TenantId='{tenantId}' AND Id={workOrderId} → {header.Number} {header.Status} v{header.Version} (AsNoTracking)");
-                return header;
-            }
-            finally
-            {
-                _database.Release(context);
-                _database.Gate.Release();
-            }
-        }
-
         public async Task<AuditQueryResult> GetAuditAsync(CommandContext context, int? workOrderId, int take, CancellationToken cancellationToken)
         {
             // Server-side, in the service: a screen that forgot to hide the button still cannot read the log.
@@ -151,30 +116,6 @@ namespace EnterpriseOps.Data
             finally
             {
                 _database.Release(dbContext);
-                _database.Gate.Release();
-            }
-        }
-
-        public async Task<List<int>> GetApprovalCandidatesAsync(string tenantId, int take, CancellationToken cancellationToken)
-        {
-            await _database.Gate.WaitAsync(cancellationToken);
-            var context = _database.CreateContext("Batch candidates query");
-            try
-            {
-                // On purpose: InProgress rows (will commit) and OnHold rows (will be rejected) — one transaction each.
-                var ids = await context.WorkOrders.AsNoTracking()
-                    .Where(x => x.TenantId == tenantId && (x.Status == WorkOrderStatus.InProgress || x.Status == WorkOrderStatus.OnHold))
-                    .OrderBy(x => x.Id)
-                    .Take(take)
-                    .Select(x => x.Id)
-                    .ToListAsync(cancellationToken);
-
-                _trace.Trace(TraceLayer.Data, $"SELECT Id WHERE TenantId='{tenantId}' AND Status IN (InProgress, OnHold) → {ids.Count} candidates");
-                return ids;
-            }
-            finally
-            {
-                _database.Release(context);
                 _database.Gate.Release();
             }
         }

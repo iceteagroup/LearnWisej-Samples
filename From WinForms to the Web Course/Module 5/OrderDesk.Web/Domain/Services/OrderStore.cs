@@ -7,7 +7,7 @@ using System.Threading;
 namespace OrderDesk.Domain
 {
     /// <summary>
-    /// The production-like data set of Module 5: 200,000 orders, seeded once per process (lazily,
+    /// The production-like data set: 200,000 orders, seeded once per process (lazily,
     /// thread-safe) so every browser session queries the same store — exactly like a database.
     /// <see cref="InMemoryOrderRepository.Shared"/> (the five walkthrough orders) is left alone.
     /// </summary>
@@ -22,20 +22,7 @@ namespace OrderDesk.Domain
         /// <summary>The big store. The first session that touches it pays the seed time once.</summary>
         public static LargeOrderRepository Large => _large.Value;
 
-        /// <summary>True once a session has seeded the store.</summary>
-        public static bool IsSeeded => _large.IsValueCreated;
-
-        /// <summary>How long the one-time seed took (for the trace).</summary>
-        public static TimeSpan SeedElapsed { get; private set; }
-
-        private static LargeOrderRepository Seed()
-        {
-            var watch = Stopwatch.StartNew();
-            var repository = new LargeOrderRepository(Generate(LargeCount));
-            watch.Stop();
-            SeedElapsed = watch.Elapsed;
-            return repository;
-        }
+        private static LargeOrderRepository Seed() => new LargeOrderRepository(Generate(LargeCount));
 
         // ── the generator ─────────────────────────────────────────────────────────────
 
@@ -110,7 +97,7 @@ namespace OrderDesk.Domain
     }
 
     /// <summary>
-    /// An <see cref="IOrderRepository"/> sized for the Module 5 test. It keeps the same contract as
+    /// An <see cref="IOrderRepository"/> sized for a production-like test. It keeps the same contract as
     /// <see cref="InMemoryOrderRepository"/> (GetAll clones the whole table — that IS the desktop
     /// "SELECT *") and adds what the web grid needs: <see cref="Query"/> and <see cref="Summarize"/>
     /// filter, sort and page under the lock and clone only the rows that leave the store.
@@ -145,7 +132,7 @@ namespace OrderDesk.Domain
 
         // ── IOrderRepository — the contract OrderService already uses ─────────────────
 
-        /// <summary>Every order, cloned. 200,000 clones per call: the cost the naive port pays.</summary>
+        /// <summary>Every order, cloned (200,000 clones per call — never bind this to a grid).</summary>
         public IEnumerable<Order> GetAll()
         {
             lock (_gate) return _orders.Values.Select(o => o.Clone()).ToList();
@@ -180,7 +167,7 @@ namespace OrderDesk.Domain
             lock (_gate) return _orders.Count == 0 ? 1000 : _maxId + 1;
         }
 
-        // ── Module 5: filter, sort and page on the server ─────────────────────────────
+        // ── filter, sort and page on the server ───────────────────────────────────────
 
         /// <summary>One page of the filtered, ordered table. Only <c>query.Take</c> rows are cloned.</summary>
         public PagedResult<Order> Query(OrderQuery query)

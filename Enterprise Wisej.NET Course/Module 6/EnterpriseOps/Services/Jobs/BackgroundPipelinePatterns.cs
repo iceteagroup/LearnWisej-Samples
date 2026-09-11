@@ -25,9 +25,6 @@ namespace EnterpriseOps.Services.Jobs
         Guid JobId, JobStatus Status, int Percent, string Message)
     {
         public JobResultSummary Result { get; init; }
-
-        /// <summary>Milestones are pushed to the UI; row-level detail (the flood anti-pattern) is not.</summary>
-        public bool IsMilestone { get; init; } = true;
     }
 
     public interface IJobProgressSink
@@ -43,11 +40,10 @@ namespace EnterpriseOps.Services.Jobs
             CancellationToken cancellationToken);
     }
 
-    /// <summary>What the UI asks for: which file, and (for the anti-pattern button) whether to publish every row.</summary>
+    /// <summary>What the UI asks for: which file to import.</summary>
     public sealed class ImportJobDefinition
     {
         public string FileName { get; set; }
-        public bool PublishEveryRow { get; set; }
     }
 
     /// <summary>Reads an import file (a fake one in this sample). Terminal file errors throw <see cref="MalformedFileException"/>.</summary>
@@ -64,7 +60,6 @@ namespace EnterpriseOps.Services.Jobs
         public int RowCount { get; set; }
         public int ExpectedTransientRows { get; set; }
         public int ExpectedTerminalRows { get; set; }
-        public bool IsMalformed { get; set; }
     }
 
     public sealed class ImportFile
@@ -154,7 +149,7 @@ namespace EnterpriseOps.Services.Jobs
                         // Rows inside a batch run to completion: CancellationToken.None on purpose
                         // (CancellationPolicy.FinishCurrentBatch).
                         var row = file.Rows[from + r];
-                        await ProcessRowAsync(row, summary, batch, progress);
+                        await ProcessRowAsync(row, summary, batch);
                     }
 
                     // Simulated bulk write + commit for the batch.
@@ -201,7 +196,7 @@ namespace EnterpriseOps.Services.Jobs
         /// is recorded and the job moves on. Writing is idempotent (upsert by ExternalRef) so a retry after a
         /// timeout can never create a duplicate.
         /// </summary>
-        private async Task ProcessRowAsync(ImportRow row, JobResultSummary summary, BatchCounters batch, IJobProgressSink progress)
+        private async Task ProcessRowAsync(ImportRow row, JobResultSummary summary, BatchCounters batch)
         {
             for (int attempt = 1; ; attempt++)
             {
@@ -211,15 +206,6 @@ namespace EnterpriseOps.Services.Jobs
                     summary.Imported++;
                     if (created) { summary.Created++; batch.Created++; } else { summary.Updated++; batch.Updated++; }
                     if (attempt > 1) { summary.Retried++; batch.Retried++; }
-
-                    if (_definition.PublishEveryRow)
-                    {
-                        // ANTI-PATTERN on purpose (the "Anti-pattern: push every row" button): a progress
-                        // event per row. The throttled observer survives it; the unbounded one floods the browser.
-                        await progress.PublishAsync(
-                            new(JobId, JobStatus.Running, -1, $"row {row.LineNumber} {row.ExternalRef} written") { IsMilestone = false },
-                            CancellationToken.None);
-                    }
                     return;
                 }
                 catch (Exception ex) when (_retry.IsTransient(ex) && attempt < _retry.MaxAttempts)

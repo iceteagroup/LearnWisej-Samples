@@ -81,7 +81,7 @@ Three properties worth noting:
 - it takes **no** flag from the screen about what the user is allowed to do;
 - the check runs before a single row is read, so a refusal leaks nothing, not even a row count.
 
-## Failure paths the sample demonstrates
+## Failure paths the services handle
 
 | Path | Where it is refused | Audit row |
 |---|---|---|
@@ -100,10 +100,10 @@ uses `Has(ViewAuditLog)` to choose the **scope** of the query rather than to ref
 
 ## Evidence in the running app
 
-- The **live activity trace** shows the layers in order for every click:
-  `UI → btnExport_Click`, `Service: ExportService.RequestExportAsync — Demand(ExportData…)`,
-  `Security: TenantGuard ok`, `Security: PermissionService.Demand(ExportData) DENIED …`, `Audit: …`.
-- **Break the UI: enable Export** re-enables the hidden buttons by hand. Every later click behaves exactly as
-  before: an enabled button cannot bypass a service rule.
-- Nothing in `UI/AuditLogPage.cs` decides a permission. The only security-shaped lines in the file are the three
-  `Has` calls in `ApplyPermissionsToUi`, and the comment above them says they are a convenience.
+- The server log (`ActivityTrace` → `System.Diagnostics.Trace`) shows the layers in order for every click:
+  `Service: ExportService.RequestExportAsync — Demand(ExportData…)`, `Security: TenantGuard ok`,
+  `Security: PermissionService.Demand(ExportData) DENIED …`.
+- **Export data** is offered to every signed-in user. A Technician's click reaches the same service and is
+  refused, with the denial audited: an enabled button cannot bypass a service rule.
+- Nothing in `UI/AuditLogPage.cs` decides a permission. The only security-shaped lines in the file are the two
+  `Has` calls in `ApplyPermissionsToUi`, and they only hide buttons.

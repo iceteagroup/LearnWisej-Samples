@@ -8,12 +8,10 @@ namespace AdaptiveOps.Shell
     /// <summary>
     /// The ticket details editor as a UserControl (layout in TicketEditor.Designer.cs).
     ///
-    /// Module 6 needs the editor to live in two places without being two controls: docked inside the details
-    /// region on desktop and tablet, or inside <see cref="Dialogs.TicketEditorForm"/> on the phone profiles. The
-    /// page moves this one instance between the two hosts, so whatever the operator has typed survives a profile
-    /// change. The editor does not know the repository: it raises <see cref="SaveRequested"/> and the page saves
-    /// (server-side validation), then reports back through <see cref="ShowMessage"/> so the feedback is visible
-    /// where the editor is — inside the modal on a phone, where the page banner would be hidden behind it.
+    /// The same instance lives docked inside the details region on desktop and tablet, or inside
+    /// <see cref="Dialogs.TicketEditorForm"/> on the phone profiles, so whatever the operator has typed survives a
+    /// profile change. The editor raises <see cref="SaveRequested"/>; the page saves (server-side validation) and
+    /// reports back through <see cref="ShowMessage"/>, so the feedback is visible where the editor is.
     /// </summary>
     public partial class TicketEditor : UserControl
     {
@@ -91,16 +89,7 @@ namespace AdaptiveOps.Shell
             };
         }
 
-        /// <summary>Blanks the title so the next save is rejected by the repository (the lab's failure path).</summary>
-        public void BlankTitle()
-        {
-            this.txtTitle.Text = string.Empty;
-        }
-
-        /// <summary>
-        /// Shows the save outcome inside the editor. Colours come from the status palette the course uses
-        /// until the theme owns them (Module 2 moves them into colour tokens).
-        /// </summary>
+        /// <summary>Shows the save outcome inside the editor, so it is visible in the phone dialog too.</summary>
         public void ShowMessage(string text, bool isError)
         {
             this.lblMessage.Text = text;

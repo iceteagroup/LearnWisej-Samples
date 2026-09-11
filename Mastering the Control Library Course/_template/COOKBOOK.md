@@ -187,31 +187,29 @@ ratingWidget.AccessibleName = "Customer satisfaction rating";
 ## The shell contract (defined in Module 1, kept by every later module)
 
 `MainPage` owns the frame. In Module 1–2 that is four docked panels (`commandPanel` Top, `statusPanel` Bottom with
-`statusLabel`, `navigationPanel` Left, `contentPanel` Fill, added last) plus a right-hand **Event log** card
-(`Panel pnlEventLog`, `Dock = Right`, ~320 px, `ListBox lstEventLog`, docked before `contentPanel`). From Module 3 the frame
-is `ToolBar` (Top) → `StatusBar` (Bottom) → `SplitContainer splitMain` (Fill) with the navigation list in `Panel1` and
-`TabControl tabDetail` in `Panel2`; the Event log card stays. Sections never talk to the shell directly and never to
-each other — they go through two small types in `Shell/` that Module 1 creates and nobody changes afterwards:
+`statusLabel` and the stretch-goal diagnostic labels, `navigationPanel` Left, `contentPanel` Fill, added first in the
+serialised list). From Module 3 the frame is `ToolBar` (Top) → `StatusBar` (Bottom) → `SplitContainer splitMain` (Fill)
+with the navigation list in `Panel1` and `TabControl tabDetail` in `Panel2`. There is no event-log card: the samples
+show only what the lab and the video build. Sections never talk to the shell directly and never to each other — they
+go through small types in `Shell/`:
 
 ```csharp
 // Shell/IConsoleShell.cs — implemented by MainPage (per session: Application.MainPage is this session's page)
 public enum StatusLevel { Ok, Warning, Error }
 public interface IConsoleShell
 {
-    void AddLog(string message);                          // appends "HH:mm:ss  message" to lstEventLog, selects the last item
     void SetStatus(string text, StatusLevel level);       // statusLabel (Module 1–2) / StatusBar panel (Module 3+), coloured by level
     void SetSelectedControl(string controlName);          // diagnostic panel (stretch goal): the control used last
     void SetSelectedRecord(string recordId);              // diagnostic panel: stable ID of the selected record (null/"" → "—")
 }
 
-// Shell/ConsoleLog.cs — what every section, editor and service calls
-public static class ConsoleLog
+// Shell/ShellStatus.cs — what sections, editors and services call
+public static class ShellStatus
 {
     static IConsoleShell Shell => Application.MainPage as IConsoleShell;
-    public static void Add(string message) => Shell?.AddLog(message);
-    public static void Status(string text, StatusLevel level = StatusLevel.Ok) => Shell?.SetStatus(text, level);
-    public static void Control(string controlName) => Shell?.SetSelectedControl(controlName);   // e.g. ConsoleLog.Control(btnSave.Name)
-    public static void Record(string recordId) => Shell?.SetSelectedRecord(recordId);           // e.g. ConsoleLog.Record("DOC-000312")
+    public static void Show(string text, StatusLevel level = StatusLevel.Ok) => Shell?.SetStatus(text, level);
+    public static void Control(string controlName) => Shell?.SetSelectedControl(controlName);   // e.g. ShellStatus.Control(btnSave.Name)
+    public static void Record(string recordId) => Shell?.SetSelectedRecord(recordId);           // e.g. ShellStatus.Record("DOC-000312")
 }
 
 // Shell/ISection.cs — implemented by every Sections/*Page UserControl
@@ -230,16 +228,15 @@ and adds its own folders (e.g. Module 5 rebuilds `Sections/DataGridViewPage` and
 ## UI conventions used by every sample (so the samples feel like one course)
 
 - Light grey page background `Color.FromArgb(238,242,247)`, white cards (`Panel`, `BorderStyle.Solid`), card titles
-  `"default" 12F Bold`, monospace 9F for the event log.
-- **Event log card** (right): every user action, every service call and every decision is logged as
-  `HH:mm:ss  message` through `ConsoleLog.Add(...)`. Select the last item after adding. Module 7 logs the widget messages
-  in both directions (`→ .NET→JS setSaved 4`, `← JS→.NET ratingChanged {"value":4}`) exactly like the Application Integration samples.
+  `"default" 12F Bold`.
+- **No teaching chrome.** A screen shows only what the module's lab guide and walkthrough video build: no caption
+  labels that narrate the lesson, no hint labels naming handlers, no "try it" demo buttons, no event-log card, no
+  ToolTipText explaining code. Module 7's message trace is kept because the video shows it.
 - A status area that changes text and colour: green `Color.FromArgb(31,157,87)` ok, amber `Color.FromArgb(232,161,60)`
   warning, red `Color.FromArgb(224,86,59)` error. In Module 1–2 it is `statusLabel` in `statusPanel`; from Module 3 it is the `StatusBar`.
-- Every section page has a **command row** of buttons that exercise the **success path**, a **progress path** where
-  the module has one (Timer / async job / virtual scroll), at least one **failure path** (validation rejected,
-  simulated service error — a "Simulate service failure" CheckBox or button on the page) and the **recovery**. The
-  lab's "Show every path" step lists exactly which paths; every one of them must be clickable.
+- The lab's "Show every path" step lists the paths each module must show. Success and validation paths are reached
+  through the normal UI; a service failure the lab asks for is reproduced with one "Simulate service failure"
+  CheckBox on the page (the service's `SimulateFailure` flag) — nothing more.
 - Control names exactly as the lab guide asks (`navigationPanel`, `contentPanel`, `statusLabel`, `editorsButton`,
   `txtName`, `cboStatus`, `dtpStartDate`, `numCreditLimit`, `btnSave`, `splitMain`, `tabDetail`, `btnRefresh`,
   `categoryTree`, `documentList`, `ordersGrid`, `ordersSource`, `chartTickets`, `progressCompletion`, `pdfPreview`,

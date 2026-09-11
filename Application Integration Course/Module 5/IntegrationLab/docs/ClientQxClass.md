@@ -86,8 +86,8 @@ may still be being applied (the Module 1 gotcha).
 The class hard-codes no colours. `_readThemeColors()` resolves, through `qx.theme.manager.Color`:
 the appearance's `textColor` (needle and readout), `simplegauge-accent` / `primary` (value arc) and
 `simplegauge-track` / `windowFrame` (track). It re-applies them on `changeTextColor` and on the
-theme manager's `changeTheme`, so **Switch theme** restyles the gauge together with every built-in
-control.
+theme manager's `changeTheme`, so switching the application theme restyles the gauge together with
+every built-in control.
 
 ## Why it must stay free of application logic
 
@@ -100,5 +100,6 @@ keeps the server the only place where state is validated and decisions are made.
 ## Evidence (running app)
 
 - The gauges draw on page load with no per-page script; the browser console shows no errors.
-- Stream live: needles move as `value` applies; the vendor is never re-created.
-- Switch theme: background, border, text and accent of all four gauges change with the theme.
+- The dashboard streams from page load: needles move as `value` applies; the vendor is never re-created.
+- Theme: with `"theme"` in `Default.json` set to `Material-3` or `FluentDark-5` (or after `Application.LoadTheme(...)`),
+  background, border, text and accent of all four gauges change with the theme.

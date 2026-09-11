@@ -22,7 +22,7 @@ namespace EnterpriseOps.Data
     /// <summary>
     /// The database stand-in. In production this is the EF Core DbContext of Module 4; the capstone keeps
     /// a per-session in-memory store so the sample runs with one `dotnet run` and nothing static holds
-    /// tenant data. Seeded deterministically (Random(14)) so the trace lines are reproducible.
+    /// tenant data. Seeded deterministically (Random(14)) so the numbers are reproducible.
     /// </summary>
     public sealed class InMemoryWorkOrderStore
     {
@@ -72,16 +72,6 @@ namespace EnterpriseOps.Data
                 row.CompletedUtc = changed.CompletedUtc;
                 row.Version++;
                 return row.Clone();
-            }
-        }
-
-        /// <summary>Used by the "stale version" failure path: someone else saved the row first.</summary>
-        public void BumpVersionBehindTheScenes(int id)
-        {
-            lock (_gate)
-            {
-                var row = _rows.FirstOrDefault(w => w.Id == id);
-                if (row != null) row.Version++;
             }
         }
 

@@ -12,9 +12,9 @@ namespace TicketOps.Services
     /// The fake (in-memory) implementation of <see cref="ITicketService"/>. "Fake" describes the storage,
     /// not the rules: validation, the close rule and the meaning of every filter chip are the real ones.
     ///
-    /// Notice what is NOT here: no control, no Text property, no profile name. The service does not know
-    /// whether the caller is a desktop grid, a tablet tab or a phone view — that is what lets one screen
-    /// re-arrange itself without duplicating a single decision.
+    /// No control, no Text property, no profile name: the service does not know whether the caller is a
+    /// desktop grid, a tablet tab or a phone view — that is what lets one screen re-arrange itself without
+    /// duplicating a single decision.
     /// </summary>
     public sealed class TicketService : ITicketService
     {
@@ -34,24 +34,18 @@ namespace TicketOps.Services
 
         public async Task<IReadOnlyList<Ticket>> GetOpenTicketsAsync()
         {
-            _log.Info(LogLayer.Service, "TicketService.GetOpenTicketsAsync", "→ ITicketRepository.GetAllAsync()");
             var all = await _repository.GetAllAsync();
-            var open = Sort(all.Where(t => t.Status != TicketStatus.Closed)).ToList();
-            _log.Info(LogLayer.Service, "TicketService.GetOpenTicketsAsync", $"{open.Count} open of {all.Count} tickets");
-            return open;
+            return Sort(all.Where(t => t.Status != TicketStatus.Closed)).ToList();
         }
 
         public async Task<OperationResult<IReadOnlyList<Ticket>>> SearchAsync(TicketFilter filter)
         {
             if (filter == null) throw new ArgumentNullException(nameof(filter));
 
-            _log.Info(LogLayer.Service, "TicketService.SearchAsync", $"validate {filter}");
-
             string text = (filter.Text ?? "").Trim();
             if (text.Length > 0 && text.Length < MinSearchLength)
             {
                 // An expected outcome, not an exception: the screen shows the sentence.
-                _log.Warn(LogLayer.Service, "TicketService.SearchAsync", $"rejected: query \"{text}\" is shorter than {MinSearchLength} characters");
                 return OperationResult<IReadOnlyList<Ticket>>.Fail($"Type at least {MinSearchLength} characters to search.");
             }
 
@@ -70,8 +64,6 @@ namespace TicketOps.Services
             rows = ApplyChip(rows, filter.Chip);
 
             var list = Sort(rows).ToList();
-            string what = filter.IsEmpty ? "no filter" : filter.ToString();
-            _log.Info(LogLayer.Service, "TicketService.SearchAsync", $"{list.Count} of {all.Count} tickets match {what}");
             return OperationResult<IReadOnlyList<Ticket>>.Ok(list, list.Count == 1 ? "1 ticket" : $"{list.Count} tickets");
         }
 
@@ -79,14 +71,9 @@ namespace TicketOps.Services
         {
             if (draft == null) throw new ArgumentNullException(nameof(draft));
 
-            _log.Info(LogLayer.Service, "TicketService.SaveAsync", $"validate {draft}");
-
             var errors = Validate(draft);
             if (errors.Count > 0)
-            {
-                _log.Warn(LogLayer.Service, "TicketService.SaveAsync", $"rejected: {string.Join("; ", errors)}");
                 return OperationResult<Ticket>.Fail(errors[0], errors.ToArray());
-            }
 
             Ticket ticket;
             bool isNew = !draft.Id.HasValue;
@@ -98,10 +85,7 @@ namespace TicketOps.Services
             {
                 ticket = await _repository.FindAsync(draft.Id.Value);
                 if (ticket == null)
-                {
-                    _log.Warn(LogLayer.Service, "TicketService.SaveAsync", $"ticket #{draft.Id} no longer exists");
                     return OperationResult<Ticket>.Fail("The ticket no longer exists. Refresh the list.");
-                }
             }
 
             ticket.Title = draft.Title.Trim();
@@ -112,7 +96,6 @@ namespace TicketOps.Services
             if (ticket.Status == TicketStatus.Open && ticket.HoursLogged > 0)
                 ticket.Status = TicketStatus.InProgress;
 
-            _log.Info(LogLayer.Service, "TicketService.SaveAsync", $"valid → ITicketRepository.UpsertAsync({(isNew ? "new" : "#" + draft.Id)})");
             var saved = await _repository.UpsertAsync(ticket);
 
             await _repository.AppendEventAsync(new TicketEvent
@@ -126,20 +109,15 @@ namespace TicketOps.Services
 
         public async Task<OperationResult<Ticket>> CloseAsync(int ticketId)
         {
-            _log.Info(LogLayer.Service, "TicketService.CloseAsync", $"#{ticketId} → ITicketRepository.FindAsync");
             var ticket = await _repository.FindAsync(ticketId);
             if (ticket == null)
                 return OperationResult<Ticket>.Fail("The ticket no longer exists. Refresh the list.");
 
             // The rule lives on the domain object; the service applies it and persists the outcome.
             if (!ticket.CanClose(out string reason))
-            {
-                _log.Warn(LogLayer.Domain, "Ticket.CanClose", $"#{ticketId} rejected: {reason}");
                 return OperationResult<Ticket>.Fail(reason);
-            }
 
             ticket.Close();
-            _log.Info(LogLayer.Domain, "Ticket.Close", $"#{ticketId} status → Closed");
             await _repository.UpsertAsync(ticket);
             await _repository.AppendEventAsync(new TicketEvent { TicketId = ticketId, Text = $"{_currentUser} closed #{ticketId}" });
             return OperationResult<Ticket>.Ok(ticket, $"Ticket #{ticketId} closed.");
@@ -149,12 +127,8 @@ namespace TicketOps.Services
         {
             string text = (filterText ?? "").Trim();
             if (text.Length > 0 && text.Length < MinSearchLength)
-            {
-                _log.Warn(LogLayer.Service, "TicketService.GetActivityAsync", $"rejected: filter \"{text}\" is shorter than {MinSearchLength} characters");
                 return OperationResult<IReadOnlyList<TicketEvent>>.Fail($"Type at least {MinSearchLength} characters to filter the activity.");
-            }
 
-            _log.Info(LogLayer.Service, "TicketService.GetActivityAsync", text.Length == 0 ? "→ ITicketRepository.GetEventsAsync()" : $"→ GetEventsAsync() filtered by \"{text}\"");
             var events = await _repository.GetEventsAsync();
             IReadOnlyList<TicketEvent> list = text.Length == 0
                 ? events

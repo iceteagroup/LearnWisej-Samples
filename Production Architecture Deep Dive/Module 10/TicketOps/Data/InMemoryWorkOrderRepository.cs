@@ -3,75 +3,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TicketOps.Domain;
-using TicketOps.Infrastructure;
 
 namespace TicketOps.Data
 {
     /// <summary>
-    /// Raised by the data layer when the store is unreachable. Its message is deliberately internal
-    /// (host names, table names): it belongs in the log, and the screen must not show it.
-    /// </summary>
-    public sealed class DataOutageException : Exception
-    {
-        public DataOutageException(string message) : base(message) { }
-    }
-
-    /// <summary>
     /// In-memory repository seeded with the work orders the walkthrough video shows. One instance per session
-    /// (created in AppComposition), so two browser tabs never share a list. <see cref="SimulateOutage"/> lets
-    /// the lab show the error path without a real database. Dates and amounts are stored raw: the culture
-    /// decides how they look, and that decision is made in the screen, never here.
+    /// (created in AppComposition), so two browser tabs never share a list. Dates and amounts are stored raw:
+    /// the culture decides how they look, and that decision is made in the screen, never here.
     /// </summary>
     public sealed class InMemoryWorkOrderRepository : IWorkOrderRepository
     {
-        private readonly ILog _log;
         private readonly Dictionary<int, WorkOrder> _orders = new Dictionary<int, WorkOrder>();
 
-        public bool SimulateOutage { get; set; }
-
-        public InMemoryWorkOrderRepository(ILog log)
+        public InMemoryWorkOrderRepository()
         {
-            _log = log ?? throw new ArgumentNullException(nameof(log));
             foreach (var o in SeedData.WorkOrders())
                 _orders[o.Id] = o;
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository", $"seeded {_orders.Count} work orders (in-memory, per session)");
         }
 
         public Task<IReadOnlyList<WorkOrder>> GetAllAsync()
         {
-            EnsureAvailable("SELECT * FROM WorkOrders");
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.GetAllAsync", $"{_orders.Count} rows");
             IReadOnlyList<WorkOrder> rows = _orders.Values.OrderBy(o => o.Id).Select(Clone).ToList();
             return Task.FromResult(rows);
         }
 
         public Task<WorkOrder> FindAsync(int id)
         {
-            EnsureAvailable($"SELECT * FROM WorkOrders WHERE Id={id}");
             _orders.TryGetValue(id, out var order);
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.FindAsync", order == null ? $"#{id} not found" : $"#{id} found");
             return Task.FromResult(order == null ? null : Clone(order));
         }
 
         public Task<WorkOrder> UpsertAsync(WorkOrder order)
         {
             if (order == null) throw new ArgumentNullException(nameof(order));
-            EnsureAvailable($"UPDATE WorkOrders WHERE Id={order.Id}");
 
             _orders[order.Id] = Clone(order);
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.UpsertAsync", $"#{order.Id} written · status {order.Status}");
             return Task.FromResult(Clone(order));
-        }
-
-        private void EnsureAvailable(string statement)
-        {
-            if (!SimulateOutage)
-                return;
-
-            // What a real driver would say — and exactly what must not reach the user (in any language).
-            _log.Error(LogLayer.Data, "InMemoryWorkOrderRepository", null,
-                $"outage: {statement} failed — timeout connecting to sql01:1433 (TicketOps.dbo.WorkOrders)");
-            throw new DataOutageException("Timeout connecting to sql01:1433 while executing: " + statement);
         }
 
         private static WorkOrder Clone(WorkOrder o) => new WorkOrder

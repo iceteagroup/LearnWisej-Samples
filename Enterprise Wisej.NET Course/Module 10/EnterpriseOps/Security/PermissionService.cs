@@ -83,7 +83,7 @@ namespace EnterpriseOps.Security
 
         /// <summary>
         /// The decision itself: tenant first, then roles. A probe (<c>Has</c>) takes exactly the same path and
-        /// stays silent; a demand narrates itself into the trace so a reviewer can see where the check happened.
+        /// stays silent; a demand also writes a log line.
         /// </summary>
         private void Evaluate(CommandContext context, Permission permission, string resourceTenantId, bool probe)
         {

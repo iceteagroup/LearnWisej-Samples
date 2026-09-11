@@ -19,7 +19,6 @@ namespace EnterpriseOps.Services.Workflow
     ///   2. Integration— OperationsFeed: pull the changes that happened in the field since the last refresh
     ///   3. Data       — IWorkOrderRepository: apply the changes, then query the tenant's incidents
     ///   4. Service    — compute the KPIs and project entities into IncidentRow for the grid
-    /// Every step reports to the ActivityTrace, so the running screen shows which layer decided what.
     ///
     /// A new senior developer finds this class in under a minute: Services/Workflow/&lt;Screen&gt;Workflow.cs.
     /// </summary>

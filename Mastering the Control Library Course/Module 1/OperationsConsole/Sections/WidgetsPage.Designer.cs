@@ -20,28 +20,26 @@ namespace OperationsConsole.Sections
             this.pnlCard = new Wisej.Web.Panel();
             this.lblTitle = new Wisej.Web.Label();
             this.lblModule = new Wisej.Web.Label();
-            this.lblBody = new Wisej.Web.Label();
             this.pnlCard.SuspendLayout();
             this.SuspendLayout();
             //
-            // pnlCard  (white card on the grey content area)
+            // pnlCard
             //
             this.pnlCard.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.pnlCard.BackColor = System.Drawing.Color.White;
             this.pnlCard.BorderStyle = Wisej.Web.BorderStyle.Solid;
             this.pnlCard.Controls.Add(this.lblTitle);
             this.pnlCard.Controls.Add(this.lblModule);
-            this.pnlCard.Controls.Add(this.lblBody);
             this.pnlCard.Location = new System.Drawing.Point(24, 24);
             this.pnlCard.Name = "pnlCard";
-            this.pnlCard.Size = new System.Drawing.Size(692, 170);
+            this.pnlCard.Size = new System.Drawing.Size(692, 90);
             //
-            // lblTitle  (the title label the lab asks for on every placeholder page)
+            // lblTitle
             //
             this.lblTitle.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.lblTitle.AutoSize = false;
             this.lblTitle.Font = new System.Drawing.Font("default", 16F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Location = new System.Drawing.Point(20, 16);
+            this.lblTitle.Location = new System.Drawing.Point(20, 12);
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(652, 34);
             this.lblTitle.Text = "Widgets";
@@ -51,24 +49,12 @@ namespace OperationsConsole.Sections
             //
             this.lblModule.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.lblModule.AutoSize = false;
-            this.lblModule.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
             this.lblModule.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblModule.Location = new System.Drawing.Point(20, 52);
+            this.lblModule.Location = new System.Drawing.Point(20, 50);
             this.lblModule.Name = "lblModule";
-            this.lblModule.Size = new System.Drawing.Size(652, 22);
-            this.lblModule.Text = "PLACEHOLDER · BUILT IN MODULE 7 — CUSTOM WIDGETS, EXTENSIONS, THEMING, AND CAPSTONE";
+            this.lblModule.Size = new System.Drawing.Size(652, 24);
+            this.lblModule.Text = "Module 7 replaces this page";
             this.lblModule.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
-            // lblBody
-            //
-            this.lblBody.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblBody.AutoSize = false;
-            this.lblBody.ForeColor = System.Drawing.Color.FromArgb(58, 77, 99);
-            this.lblBody.Location = new System.Drawing.Point(20, 84);
-            this.lblBody.Name = "lblBody";
-            this.lblBody.Size = new System.Drawing.Size(652, 70);
-            this.lblBody.Text = "This page is a UserControl swapped into contentPanel by MainPage.Navigate(). Module 7 replaces its body with the ratingWidget (Widget + rating.js / rating.css), WidgetEvent to RatingService, CallAsync(\"setSaved\"), theming, capstone.";
-            this.lblBody.TextAlign = System.Drawing.ContentAlignment.TopLeft;
             //
             // WidgetsPage
             //
@@ -85,6 +71,5 @@ namespace OperationsConsole.Sections
         private Wisej.Web.Panel pnlCard;
         private Wisej.Web.Label lblTitle;
         private Wisej.Web.Label lblModule;
-        private Wisej.Web.Label lblBody;
     }
 }

@@ -26,23 +26,14 @@ namespace TicketOps.Services
 
         public async Task<DashboardSnapshot> GetDashboardAsync()
         {
-            _log.Info(LogLayer.Service, "WorkOrderService.GetDashboardAsync", "→ IWorkOrderRepository.GetAllAsync()");
             var orders = await _repository.GetAllAsync();
-            var snapshot = new DashboardSnapshot(orders);
-            _log.Info(LogLayer.Service, "WorkOrderService.GetDashboardAsync",
-                $"{orders.Count} work orders · open {snapshot.CountOf(WorkOrderStatus.Open)} · in progress {snapshot.CountOf(WorkOrderStatus.InProgress)} · blocked {snapshot.CountOf(WorkOrderStatus.Blocked)} · done {snapshot.CountOf(WorkOrderStatus.Done)}");
-            return snapshot;
+            return new DashboardSnapshot(orders);
         }
 
-        public Task<WorkOrder> FindAsync(int id)
-        {
-            _log.Info(LogLayer.Service, "WorkOrderService.FindAsync", $"#{id} → IWorkOrderRepository.FindAsync");
-            return _repository.FindAsync(id);
-        }
+        public Task<WorkOrder> FindAsync(int id) => _repository.FindAsync(id);
 
         public async Task<OperationResult<WorkOrder>> AdvanceStatusAsync(int id)
         {
-            _log.Info(LogLayer.Service, "WorkOrderService.AdvanceStatusAsync", $"#{id} → IWorkOrderRepository.FindAsync");
             var order = await _repository.FindAsync(id);
             if (order == null)
                 return OperationResult<WorkOrder>.Fail(_localization.Text("Rule.WorkOrderMissing"));
@@ -50,13 +41,11 @@ namespace TicketOps.Services
             // The rule lives on the domain object and answers with a resource key; the service turns it into words.
             if (!order.CanAdvance(out string reasonKey))
             {
-                _log.Warn(LogLayer.Domain, "WorkOrder.CanAdvance", $"#{id} rejected: {reasonKey} (resolved for {_localization.Culture.Name})");
+                _log.Warn(LogLayer.Domain, "WorkOrder.CanAdvance", $"#{id} rejected: {reasonKey}");
                 return OperationResult<WorkOrder>.Fail(_localization.Text(reasonKey));
             }
 
-            var before = order.Status;
             order.Advance();
-            _log.Info(LogLayer.Domain, "WorkOrder.Advance", $"#{id} {before} → {order.Status}");
             var saved = await _repository.UpsertAsync(order);
 
             return OperationResult<WorkOrder>.Ok(saved, _localization.Format("Message.StatusAdvanced", saved.Id, _localization.StatusText(saved.Status)));

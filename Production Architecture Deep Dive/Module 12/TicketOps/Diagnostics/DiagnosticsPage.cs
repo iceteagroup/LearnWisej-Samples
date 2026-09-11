@@ -36,17 +36,17 @@ namespace TicketOps.Diagnostics
 
             this.valueServer.Text = snapshot.ServerName;
             this.valuePort.Text = snapshot.ServerPort.ToString();
-            this.valueMode.Text = snapshot.RuntimeMode ? "release (RuntimeMode = true)" : "debug / design (RuntimeMode = false)";
+            this.valueMode.Text = snapshot.RuntimeMode ? "release" : "debug";
             this.valueVersion.Text = snapshot.ProductVersion;
             this.valueFramework.Text = snapshot.Framework;
             this.valueSessions.Text = $"{snapshot.SessionCount} live on this node · this one {snapshot.ShortSessionId}";
-            this.valueWebSocket.Text = snapshot.IsWebSocket ? "connected (server push on)" : "long-polling fallback";
+            this.valueWebSocket.Text = snapshot.IsWebSocket ? "connected" : "long-polling fallback";
             this.valueUptime.Text = $"{DiagnosticsService.FormatUptime(snapshot.Uptime)} · {snapshot.ServerTimeUtc:HH:mm:ss} UTC · {snapshot.TimeZoneId}";
 
             ShowHealth(snapshot.Health);
         }
 
-        /// <summary>data → UI: the health part alone (the "Run health check" path).</summary>
+        /// <summary>data → UI: the health part of the snapshot.</summary>
         public void ShowHealth(HealthReport report)
         {
             if (report == null) throw new ArgumentNullException(nameof(report));
@@ -66,7 +66,7 @@ namespace TicketOps.Diagnostics
             this.labelRefreshed.Text = $"refreshed {DateTime.Now:HH:mm:ss}";
         }
 
-        /// <summary>The Technician path: the page says why, and shows nothing else.</summary>
+        /// <summary>A user without the Supervisor role: the page says why, and shows nothing else.</summary>
         public void ShowAccessDenied(string userName, OperatorRole role, string message)
         {
             this.labelAccess.Text = $"Role required: Supervisor · ✖ {userName} ({role}) — access denied";
@@ -80,23 +80,6 @@ namespace TicketOps.Diagnostics
             this.labelOverall.ForeColor = StatusBanner.ColorFor(StatusKind.Error);
             this.textJson.Text = message;
             this.labelRefreshed.Text = $"refreshed {DateTime.Now:HH:mm:ss}";
-        }
-
-        /// <summary>Progress path: the simulated load test's count climbing.</summary>
-        public void ShowLoad(int open, int target)
-        {
-            this.progressLoad.Maximum = Math.Max(1, target);
-            this.progressLoad.Value = Math.Min(open, target);
-            this.progressLoad.Visible = open < target;
-            this.labelLoad.Text = open >= target
-                ? $"load test: {open} work units opened on this node"
-                : $"load test: {open}/{target} work units open…";
-        }
-
-        public void ResetLoad()
-        {
-            this.progressLoad.Visible = false;
-            this.labelLoad.Text = "load test: idle";
         }
 
         public static StatusKind KindFor(HealthStatus status) => status switch

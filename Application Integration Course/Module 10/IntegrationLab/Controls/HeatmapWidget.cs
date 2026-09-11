@@ -60,24 +60,15 @@ namespace IntegrationLab.Controls
         private readonly Queue<DateTime> _requestTimes = new Queue<DateTime>();
         private bool _fallbackUrlPushed;
         private bool _designSamplePushed;
-        private readonly bool _simulateMissingVendor;
 
-        public HeatmapWidget() : this(false)
+        public HeatmapWidget()
         {
-        }
-
-        private HeatmapWidget(bool simulateMissingVendor)
-        {
-            _simulateMissingVendor = simulateMissingVendor;
-
             // Packages load once per page, in list order: stylesheet first, then the library the adapter needs.
             base.Packages.Add(new Package { Name = "vendor-heatmap-css", Source = VendorStylePath });
-            if (!simulateMissingVendor)
-                base.Packages.Add(new Package { Name = "vendor-heatmap", Source = VendorScriptPath });
+            base.Packages.Add(new Package { Name = "vendor-heatmap", Source = VendorScriptPath });
 
             // The client adapter is embedded in this assembly (see IntegrationLab.csproj) and handed to the wrapper.
-            string adapter = GetResourceString(AdapterResourceName);
-            base.InitScript = simulateMissingVendor ? MissingVendorPreamble + adapter : adapter;
+            base.InitScript = GetResourceString(AdapterResourceName);
 
             // The events this wrapper is allowed to raise: the documented contract. "cellhover" is deliberately absent.
             base.WiredEvents = new[] { "cellSelected", "loaded", "error" };
@@ -192,13 +183,12 @@ namespace IntegrationLab.Controls
             }
         }
 
-        /// <summary>The postback URL the client uses (for the trace); null until the component can compute it.</summary>
+        /// <summary>The postback URL of this widget; null until the component can compute it.</summary>
         [Browsable(false)]
         public string PostbackUrl
         {
             get
             {
-                // (unverified) IWisejHandlerExtension.GetPostbackURL — from the Wisej docs, see COOKBOOK.md.
                 try { return ((IWisejHandler)this).GetPostbackURL(); }
                 catch { return null; }
             }
@@ -251,10 +241,6 @@ namespace IntegrationLab.Controls
         [Description("Raised when the client adapter or the vendor reported a failure.")]
         public event EventHandler<HeatmapErrorEventArgs> LoadFailed;
 
-        /// <summary>Every message that crosses the wire in either direction, for the lab's live trace.</summary>
-        [Browsable(false)]
-        public event EventHandler<TraceEventArgs> Trace;
-
         #endregion
 
         #region Server calls (→ client functions in heatmap-init.js)
@@ -265,22 +251,18 @@ namespace IntegrationLab.Controls
             if (day < 0 || day >= _days) throw new ArgumentOutOfRangeException(nameof(day), day, $"day must be between 0 and {_days - 1}.");
             if (hour < 0 || hour >= _hours) throw new ArgumentOutOfRangeException(nameof(hour), hour, $"hour must be between 0 and {_hours - 1}.");
 
-            // (unverified beyond the docs) Control.Call runs the named wrapper function with these arguments.
             this.Call("highlight", day, hour);
-            RaiseTrace(TraceDirection.ServerToClient, $"Call highlight({day},{hour})", $"[{day},{hour}]");
         }
 
         public void ClearHighlight()
         {
             this.Call("clearHighlight");
-            RaiseTrace(TraceDirection.ServerToClient, "Call clearHighlight()", "[]");
         }
 
-        /// <summary>Tells the client to fetch the postback endpoint again (recovery path: always the good "load" action).</summary>
+        /// <summary>Tells the client to fetch the postback endpoint again (always the "load" action).</summary>
         public void Reload()
         {
             this.Call("reload");
-            RaiseTrace(TraceDirection.ServerToClient, "Call reload()", "[]");
         }
 
         /// <summary>
@@ -300,62 +282,24 @@ namespace IntegrationLab.Controls
             this.IsDataLoaded = true;
             object payload = ToClientCells(cells);
             this.Call("setCells", new object[] { payload });      // one argument: the whole array
-            RaiseTrace(TraceDirection.ServerToClient, "Call setCells(cells)", $"[{cells.Count} cells, peak {F(LoadSampleService.FindPeak(cells).Value)}]");
         }
 
         /// <summary>Asks the client how many cells hold data (round trip with a return value).</summary>
         public async Task<int> GetCellCountAsync()
         {
-            RaiseTrace(TraceDirection.ServerToClient, "CallAsync getCellCount()", "[]");
-            // (unverified beyond the docs) Control.CallAsync returns the function's return value.
             object result = await this.CallAsync("getCellCount");
-            int count = result == null ? 0 : Convert.ToInt32(result, CultureInfo.InvariantCulture);
-            RaiseTrace(TraceDirection.ClientToServer, "getCellCount → return", count.ToString(CultureInfo.InvariantCulture));
-            return count;
+            return result == null ? 0 : Convert.ToInt32(result, CultureInfo.InvariantCulture);
         }
 
         /// <summary>The cell with the highest value in the server's copy of the data.</summary>
         public HeatmapCell FindPeak() => LoadSampleService.FindPeak(_cells);
-
-#if DEBUG
-        /// <summary>
-        /// DEBUG failure path: loads from the postback endpoint with a non-standard action. The endpoint answers
-        /// "corrupt" with invalid JSON, so the vendor throws inside load() and the adapter reports one "error" event.
-        /// </summary>
-        public void LoadWithActionForTesting(string action)
-        {
-            this.Call("loadWithAction", action);
-            RaiseTrace(TraceDirection.ServerToClient, $"Call loadWithAction(\"{action}\")", $"[\"{action}\"]  (failure path on purpose)");
-        }
-
-        /// <summary>
-        /// DEBUG failure path: a wrapper whose Packages omit vendor-heatmap.js. The adapter's guard clause must throw
-        /// "VendorHeatmap not loaded — check Packages order." and report it as an init error instead of a blank widget.
-        /// </summary>
-        public static HeatmapWidget CreateWithMissingVendorScript() => new HeatmapWidget(true);
-
-        /// <summary>
-        /// Wisej.NET caches packages per page and the dashboard has already loaded the library, so "forgetting the
-        /// package" cannot be reproduced literally on the same page. This preamble hides the global for this one
-        /// widget; OperationsPage restores it through window.__restoreVendorHeatmap() once the error has been reported.
-        /// </summary>
-        private const string MissingVendorPreamble =
-            "/* DEBUG simulation: hide the vendor global so the guard clause sees the page as if the package were missing. */\n" +
-            "(function () { if (window.__restoreVendorHeatmap) return; var real = window.VendorHeatmap; window.VendorHeatmap = undefined;\n" +
-            "  window.__restoreVendorHeatmap = function () { window.VendorHeatmap = real; delete window.__restoreVendorHeatmap; }; })();\n";
-#else
-        private const string MissingVendorPreamble = "";
-#endif
-
-        [Browsable(false)]
-        public bool SimulatesMissingVendor => _simulateMissingVendor;
 
         #endregion
 
         #region Postback data endpoint (client: this.getPostbackUrl() + "&action=load")
 
         /// <summary>
-        /// The widget's postback request lands here. (unverified beyond the docs) Widget implements IWisejHandler;
+        /// The widget's postback request lands here. Widget implements IWisejHandler;
         /// the WebRequest event carries the Wisej.Core.HttpRequest / HttpResponse pair.
         /// </summary>
         protected override void OnWebRequest(WebRequestEventArgs e)
@@ -364,22 +308,7 @@ namespace IntegrationLab.Controls
             var response = e.Response;
             string action = request.QueryString["action"] ?? "";
             string daysArg = request.QueryString["days"];
-            RaiseTrace(TraceDirection.ClientToServer, "HTTP GET postback",
-                $"?action={action}{(daysArg != null ? "&days=" + daysArg : "")}");
             RecordRequest();
-
-#if DEBUG
-            if (action == "corrupt")
-            {
-                // Deliberately malformed body with the right content type: the vendor must fail loudly, not blank.
-                const string broken = "{\"cells\": [ {\"day\": 0, \"hour\": 1, \"value\": }";
-                response.ContentType = "application/json";
-                response.Write(broken);
-                RaiseTrace(TraceDirection.ServerToClient, "HTTP 200 application/json", broken + "  (malformed on purpose)");
-                base.OnWebRequest(e);
-                return;
-            }
-#endif
 
             if (!AllowedActions.Contains(action))
             {
@@ -405,17 +334,15 @@ namespace IntegrationLab.Controls
             string json = JsonSerializer.Serialize(new { cells }, JsonOptions);
             response.ContentType = "application/json";
             response.Write(json);
-            RaiseTrace(TraceDirection.ServerToClient, "HTTP 200 application/json", $"{{\"cells\":[…{cells.Count} cells…]}}  ({json.Length} bytes)");
 
             base.OnWebRequest(e);
         }
 
-        private void Reject(Wisej.Core.HttpResponse response, int status, string reason)
+        private static void Reject(Wisej.Core.HttpResponse response, int status, string reason)
         {
             response.StatusCode = status;
             response.ContentType = "text/plain";
             response.Write(reason);
-            RaiseTrace(TraceDirection.ServerToClient, $"HTTP {status} text/plain", reason);
         }
 
         private void RecordRequest()
@@ -478,33 +405,23 @@ namespace IntegrationLab.Controls
                     {
                         int day = ToInt(data?.day), hour = ToInt(data?.hour);
                         double reported = ToDouble(data?.value);
-                        RaiseTrace(TraceDirection.ClientToServer, "cellSelected", $"{{\"day\":{day},\"hour\":{hour},\"value\":{F(reported)}}}");
                         if (day < 0 || day >= _days || hour < 0 || hour >= _hours)
-                        {
-                            RaiseTrace(TraceDirection.Server, "contract check", $"cell ({day},{hour}) is outside the {_days}×{_hours} grid: ignored");
-                            break;
-                        }
-                        double serverValue = ServerValueAt(day, hour, reported);
-                        if (Math.Abs(serverValue - reported) > 0.001)
-                            RaiseTrace(TraceDirection.Server, "contract check", $"client reported {F(reported)} but server has {F(serverValue)}: server wins");
+                            break;      // outside the grid: ignored
+                        double serverValue = ServerValueAt(day, hour, reported);   // the server's copy wins
                         CellSelected?.Invoke(this, new HeatmapCellEventArgs(day, hour, serverValue, reported));
                         break;
                     }
                 case "loaded":
                     {
-                        int count = ToInt(data?.count);
                         this.IsDataLoaded = true;
-                        RaiseTrace(TraceDirection.ClientToServer, "loaded", $"{{\"count\":{count}}}");
-                        DataLoaded?.Invoke(this, new HeatmapLoadedEventArgs(count));
+                        DataLoaded?.Invoke(this, new HeatmapLoadedEventArgs(ToInt(data?.count)));
                         break;
                     }
                 case "error":
                     {
                         string phase = (string)(data?.phase ?? "unknown");
-                        int status = ToInt(data?.status);
                         string message = (string)(data?.message ?? "");
-                        RaiseTrace(TraceDirection.ClientToServer, "error", $"{{\"phase\":\"{phase}\",\"status\":{status},\"message\":\"{message}\"}}");
-                        LoadFailed?.Invoke(this, new HeatmapErrorEventArgs(phase, status, message));
+                        LoadFailed?.Invoke(this, new HeatmapErrorEventArgs(phase, ToInt(data?.status), message));
                         break;
                     }
                 default:
@@ -516,13 +433,6 @@ namespace IntegrationLab.Controls
         #endregion
 
         #region Helpers
-
-        /// <summary>Compact JSON of the state this component owns (what init(options) receives).</summary>
-        public string ToJson()
-            => $"{{\"days\":{_days},\"hours\":{_hours},\"thresholds\":{{\"warn\":{F(_warnAt)},\"high\":{F(_highAt)}}},\"title\":\"{_title}\",\"vendorVersion\":\"{VendorVersion}\"}}";
-
-        /// <summary>Called by the UI after it changes something, so the trace shows what went out.</summary>
-        public void TraceStateOut(string what, string json) => RaiseTrace(TraceDirection.ServerToClient, what, json);
 
         private void PushState()
         {
@@ -551,9 +461,6 @@ namespace IntegrationLab.Controls
                 if (c.Day == day && c.Hour == hour) return c.Value;
             return fallback;
         }
-
-        private void RaiseTrace(TraceDirection direction, string name, string payload)
-            => Trace?.Invoke(this, new TraceEventArgs(direction, name, payload));
 
         private static string F(double value) => value.ToString(CultureInfo.InvariantCulture);
 

@@ -34,7 +34,6 @@ Everything a screen developer sees in the Properties window and in IntelliSense,
 | `SampleMode` | `bool` | `false` | Design-time sample data (see below). |
 | `SetItems(params TimelineItem[])` / `SetItems(IEnumerable<TimelineItem>)` | method | | Replace everything in one call, one render. The walkthrough's API. |
 | `Clear()` / `ClearSelection()` | method | | |
-| `DescribeContract()` | method | | One diagnostic line: how many items it holds and what fields they carry. |
 | `ItemSelected` | `EventHandler<TimelineItemEventArgs>` | | The user clicked an entry. Carries the item and its index. |
 | `SelectionCleared` | `EventHandler` | | The highlight was dropped because the entries were replaced. |
 
@@ -61,15 +60,13 @@ The Designer creates the control with no services and no data. `OnCreateControl`
 `DesignMode` is true, and sample mode renders a fixed four-entry timeline (Created → Assigned → On hold →
 Escalated) plus the amber `DESIGN-TIME SAMPLE` badge. It calls nothing and cannot throw.
 
-`SampleMode` is also a public property, so the running screen can show exactly what the Designer shows —
-that is the **Design-time sample mode** button.
+`SampleMode` is also a public property, so a screen can switch it on at run time to show exactly what the
+Designer shows.
 
 ## Evidence — what the running app shows
 
 | Do this | You should see |
 |---|---|
 | Open `http://localhost:5208` | The left card shows work order 2002 with four entries: grey *Created*, blue *Assigned*, amber *On hold*, red *Escalated* — the four entries the walkthrough video shows. |
-| Click any entry | The row highlights; the trace prints `Client → StatusTimeline.ItemSelected → #3 Escalated at …` followed by `Component: StatusTimeline · 4 TimelineItem(s) {At, Status, Message, Severity} · selected: #3 Escalated`. |
-| Pick another work order | The caption and the entries change; the highlight is dropped (`SelectionCleared`). |
-| Press **Design-time sample mode** | The amber badge appears and the fixed sample renders. The trace shows **no service call** — the components did not query anything. |
-| Pick the last entry in the picker (a work order of tenant `contoso`) | `Security: permission denied — work order 2107 belongs to tenant 'contoso'…`, the timeline is cleared and a red banner explains. The component never decided anything; `AccessPolicy` did. |
+| Click any entry | The row highlights and the status bar shows the entry's status and message (the screen's `ItemSelected` handler). |
+| Open `UI/WorkOrderHistoryPage.cs` in the Wisej Designer | The timeline renders the fixed sample with the amber `DESIGN-TIME SAMPLE` badge; no service is called. |

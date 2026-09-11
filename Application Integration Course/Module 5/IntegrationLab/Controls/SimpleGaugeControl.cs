@@ -43,10 +43,6 @@ namespace IntegrationLab.Controls
         private string _caption = "";
         private string _units = "";
 
-        // ---- render bookkeeping (server-only, never rendered) -----------------
-        private int _renderCount;
-        private string _lastRenderedJson = "";
-
         public SimpleGaugeControl()
         {
             // The appearance key joins the control to the theme system: the theme (or the
@@ -179,14 +175,6 @@ namespace IntegrationLab.Controls
             }
         }
 
-        /// <summary>How many times OnWebRender ran for this instance (server-only diagnostics).</summary>
-        [Browsable(false)]
-        public int RenderCount => _renderCount;
-
-        /// <summary>The compact JSON of the state written onto config by the last OnWebRender.</summary>
-        [Browsable(false)]
-        public string LastRenderedJson => _lastRenderedJson;
-
         /// <summary>True while Value is at or above Threshold.</summary>
         [Browsable(false)]
         public bool IsAlarm => _value >= _threshold;
@@ -198,13 +186,6 @@ namespace IntegrationLab.Controls
         /// <summary>Raised once each time the reading crosses <see cref="Threshold"/> upward (reported by the client class).</summary>
         [Description("Raised once each time the reading crosses Threshold upward.")]
         public event EventHandler<GaugeThresholdEventArgs> ThresholdExceeded;
-
-        /// <summary>
-        /// Raised for every message that crosses the wire in either direction, so the lab UI
-        /// can show the live trace. Not a production feature.
-        /// </summary>
-        [Browsable(false)]
-        public event EventHandler<TraceEventArgs> Trace;
 
         #endregion
 
@@ -235,10 +216,6 @@ namespace IntegrationLab.Controls
 
             // Events the client class may raise; "(Data)" carries e.getData() as e.Parameters.Data.
             AddWiredEvent(config, "thresholdExceeded(Data)");
-
-            _renderCount++;
-            _lastRenderedJson = ToJson(designMode);
-            RaiseTrace(TraceDirection.ServerToClient, $"render #{_renderCount}", _lastRenderedJson, fromRender: true);
         }
 
         /// <summary>
@@ -251,19 +228,8 @@ namespace IntegrationLab.Controls
             {
                 case "thresholdExceeded":
                     {
-                        dynamic parameters = e.Parameters;
-                        dynamic data = parameters?.Data;
-                        double reported = ToDouble(data?.value);
-                        double threshold = ToDouble(data?.threshold);
-
-                        RaiseTrace(TraceDirection.ClientToServer, "thresholdExceeded",
-                            $"{{\"value\":{F(reported)},\"threshold\":{F(threshold)}}}");
-
-                        if (Math.Abs(reported - _value) > 0.001)
-                            RaiseTrace(TraceDirection.Server, "contract check",
-                                $"client reported {F(reported)} but server Value is {F(_value)}: server wins");
-
-                        ThresholdExceeded?.Invoke(this, new GaugeThresholdEventArgs(_value, reported, _threshold));
+                        // the server raises the event with its own authoritative value
+                        ThresholdExceeded?.Invoke(this, new GaugeThresholdEventArgs(_value, _threshold));
                         break;
                     }
 
@@ -281,7 +247,7 @@ namespace IntegrationLab.Controls
         /// True when the control is being rendered by the Wisej Designer. Both checks are used:
         /// the .NET component site (Site.DesignMode) and the Wisej.NET component flag.
         /// </summary>
-        public bool IsDesignMode()
+        private bool IsDesignMode()
         {
             if (this.DesignMode)
                 return true;
@@ -291,26 +257,12 @@ namespace IntegrationLab.Controls
         }
 
         /// <summary>A reading at 62% of the scale: enough to show the needle, the arc and the readout.</summary>
-        public double DesignTimeSampleValue()
+        private double DesignTimeSampleValue()
             => Math.Round(_minimum + (_maximum - _minimum) * 0.62, 1);
-
-        /// <summary>What OnWebRender writes onto config for the Designer (shown by the "Design-time notes" button).</summary>
-        public string GetDesignTimeConfigJson() => ToJson(designMode: true);
 
         #endregion
 
         #region Helpers
-
-        /// <summary>Compact JSON of the state this control renders (what the client class receives).</summary>
-        public string ToJson(bool designMode = false)
-        {
-            double value = designMode ? DesignTimeSampleValue() : _value;
-            string caption = designMode && _caption.Length == 0 ? "SimpleGauge (design)" : _caption;
-            return "{\"className\":\"" + ClientClassName + "\",\"appearance\":\"" + this.AppearanceKey + "\"," +
-                   "\"value\":" + F(value) + ",\"minimum\":" + F(_minimum) + ",\"maximum\":" + F(_maximum) +
-                   ",\"threshold\":" + F(_threshold) + ",\"caption\":\"" + Escape(caption) + "\",\"units\":\"" + Escape(_units) + "\"" +
-                   ",\"wiredEvents\":[\"thresholdExceeded(Data)\"]}";
-        }
 
         private static void AddWiredEvent(dynamic config, string descriptor)
         {
@@ -334,7 +286,6 @@ namespace IntegrationLab.Controls
             double clamped = Math.Max(_minimum, Math.Min(_maximum, _value));
             if (clamped != _value)
             {
-                RaiseTrace(TraceDirection.Server, "clamp", $"Value {F(_value)} clamped to {F(clamped)} after the range changed");
                 _value = clamped;
                 SyncAlarmState();
             }
@@ -355,20 +306,8 @@ namespace IntegrationLab.Controls
             }
         }
 
-        private void RaiseTrace(TraceDirection direction, string name, string payload, bool fromRender = false)
-            => Trace?.Invoke(this, new TraceEventArgs(direction, name, payload, fromRender));
-
         private static string F(double value)
             => value.ToString(CultureInfo.InvariantCulture);
-
-        private static string Escape(string s)
-            => (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
-
-        private static double ToDouble(object value)
-        {
-            try { return value == null ? double.NaN : Convert.ToDouble(value, CultureInfo.InvariantCulture); }
-            catch { return double.NaN; }
-        }
 
         #endregion
     }

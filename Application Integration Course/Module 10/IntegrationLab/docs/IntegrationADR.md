@@ -58,19 +58,17 @@ along the ADR-001 ladder; the typed properties and the documented contract make 
   and a message that names the cause; the page shows it and offers recovery (`Reload()`), never a blank widget.
 - The noisy `cellhover` vendor event is filtered in the adapter and never reaches the server.
 - The postback endpoint is a real HTTP surface: it validates `action` and `days`, returns 400 on anything else, and
-  serialises only `HeatmapCell` records. The DEBUG-only `corrupt` action must not exist in Release (it is `#if DEBUG`).
+  serialises only `HeatmapCell` records.
 - The wrapper cannot be themed from the theme file; palette is an option. Accepted for a data visual.
-- Two DEBUG simulations (missing vendor script, malformed data) are part of the wrapper so the failure paths stay
-  demonstrable after the original author leaves.
 
 ## Evidence from the lab
 
-- Postback: `HTTP GET postback ?action=load` → `HTTP 200 application/json` → `loaded {"count":168}` on first render.
-- Server call with return value: `CallAsync getCellCount()` → `168`.
+- Postback: `GET …&action=load` → `200 application/json` → `loaded {"count":168}` on first render.
+- Server call with return value: `CallAsync("getCellCount")` → `168`.
 - Event: cell click → `cellSelected` → `CellSelected` in C#, banner shows the server value.
-- Background: `Application.StartTask` → `Call setCells` + gauge `setValue` → `Application.Update(page)` per push, bounded to 40.
+- Background: `Application.StartTask` → `Call setCells` + gauge value → `Application.Update(page)` per push, bounded to 40.
 - Create/dispose ×25: `Disposed cleanly 25/25`, vendor instances alive = 1.
-- Failure paths: missing vendor → `error {phase:"init"}` with "VendorHeatmap not loaded — check Packages order."; malformed data → `error {phase:"load", status:200}`; Reload recovers.
+- Failure path: a missing vendor script → `error {phase:"init"}` with "VendorHeatmap not loaded — check Packages order."; the banner and the `Errors` tile show it.
 
 ## Review checklist (instructor focus)
 

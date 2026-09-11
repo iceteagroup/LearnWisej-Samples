@@ -26,7 +26,6 @@ namespace SupportDesk.Web
             this.components = new System.ComponentModel.Container();
             this.labelTitle = new Wisej.Web.Label();
             this.labelExplanation = new Wisej.Web.Label();
-            this.labelPolicy = new Wisej.Web.Label();
             this.conflictGridView = new Wisej.Web.DataGridView();
             this.colField = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colYourValue = new Wisej.Web.DataGridViewTextBoxColumn();
@@ -44,9 +43,9 @@ namespace SupportDesk.Web
             this.labelTitle.Location = new System.Drawing.Point(20, 16);
             this.labelTitle.Name = "labelTitle";
             this.labelTitle.Size = new System.Drawing.Size(560, 26);
-            this.labelTitle.Text = "This ticket changed while you were editing it";
+            this.labelTitle.Text = "This ticket was changed while you were editing it";
             //
-            // labelExplanation  (set from the ConflictSet in the constructor)
+            // labelExplanation
             //
             this.labelExplanation.AutoSize = false;
             this.labelExplanation.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
@@ -56,7 +55,7 @@ namespace SupportDesk.Web
             this.labelExplanation.Text = "";
             this.labelExplanation.TextAlign = System.Drawing.ContentAlignment.TopLeft;
             //
-            // conflictGridView  (the lab control — Field / Your value / Database value / Original value)
+            // conflictGridView
             //
             this.conflictGridView.AllowUserToAddRows = false;
             this.conflictGridView.AllowUserToDeleteRows = false;
@@ -107,43 +106,30 @@ namespace SupportDesk.Web
             this.colOriginalValue.Name = "colOriginalValue";
             this.colOriginalValue.Width = 130;
             //
-            // labelPolicy  (set from ConflictResolution.CanOverwrite in the constructor)
-            //
-            this.labelPolicy.AutoSize = false;
-            this.labelPolicy.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Italic);
-            this.labelPolicy.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelPolicy.Location = new System.Drawing.Point(20, 320);
-            this.labelPolicy.Name = "labelPolicy";
-            this.labelPolicy.Size = new System.Drawing.Size(560, 22);
-            this.labelPolicy.Text = "";
-            //
             // btnCancel
             //
-            this.btnCancel.Location = new System.Drawing.Point(20, 356);
+            this.btnCancel.Location = new System.Drawing.Point(20, 326);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(100, 36);
             this.btnCancel.Text = "Cancel";
-            this.btnCancel.ToolTipText = "Leaves the editor exactly as it is — your edits are still there, nothing is saved.";
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             //
-            // btnReload  (always offered)
+            // btnReload
             //
-            this.btnReload.Location = new System.Drawing.Point(340, 356);
+            this.btnReload.Location = new System.Drawing.Point(340, 326);
             this.btnReload.Name = "btnReload";
             this.btnReload.Size = new System.Drawing.Size(100, 36);
             this.btnReload.Text = "Reload";
-            this.btnReload.ToolTipText = "Discards your edits and loads the ticket fresh — the database's current values and the new RowVersion.";
             this.btnReload.Click += new System.EventHandler(this.btnReload_Click);
             //
-            // btnOverwrite  (visible only when ConflictResolution.CanOverwrite(role) is true)
+            // btnOverwrite
             //
             this.btnOverwrite.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.btnOverwrite.ForeColor = System.Drawing.Color.FromArgb(178, 59, 39);
-            this.btnOverwrite.Location = new System.Drawing.Point(452, 356);
+            this.btnOverwrite.Location = new System.Drawing.Point(452, 326);
             this.btnOverwrite.Name = "btnOverwrite";
             this.btnOverwrite.Size = new System.Drawing.Size(128, 36);
             this.btnOverwrite.Text = "Overwrite";
-            this.btnOverwrite.ToolTipText = "Saves your values anyway: the database's current RowVersion becomes the OriginalValue and SaveChangesAsync runs again. This discards the other operator's change — offered to a Supervisor only.";
             this.btnOverwrite.Click += new System.EventHandler(this.btnOverwrite_Click);
             //
             // ConflictDialog
@@ -153,7 +139,6 @@ namespace SupportDesk.Web
             this.Controls.Add(this.labelTitle);
             this.Controls.Add(this.labelExplanation);
             this.Controls.Add(this.conflictGridView);
-            this.Controls.Add(this.labelPolicy);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnReload);
             this.Controls.Add(this.btnOverwrite);
@@ -162,7 +147,7 @@ namespace SupportDesk.Web
             this.MinimizeBox = false;
             this.Name = "ConflictDialog";
             this.ShowInTaskbar = false;
-            this.Size = new System.Drawing.Size(600, 420);
+            this.Size = new System.Drawing.Size(600, 410);
             this.StartPosition = Wisej.Web.FormStartPosition.CenterParent;
             this.Text = "Conflict";
             this.ResumeLayout(false);
@@ -172,7 +157,6 @@ namespace SupportDesk.Web
 
         private Wisej.Web.Label labelTitle;
         private Wisej.Web.Label labelExplanation;
-        private Wisej.Web.Label labelPolicy;
         private Wisej.Web.DataGridView conflictGridView;
         private Wisej.Web.DataGridViewTextBoxColumn colField;
         private Wisej.Web.DataGridViewTextBoxColumn colYourValue;

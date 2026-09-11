@@ -26,8 +26,8 @@ is one line away. This note says what each choice means so the decision is delib
 it is still `public partial class OrdersForm : Form`, `ClientSize = 716×372`, `MinimumSize`, `StartPosition =
 CenterScreen`, a `MenuBar` docked top, a `StatusBar` docked bottom, the grid and the detail `GroupBox` anchored as before.
 The compiler-driven edits were control substitutions inside the designer and the commented desktop calls (see
-`CompilerErrorLog.md`). The console opens it with `new OrdersForm().Show()`: a **floating window** over the page, with
-a title bar, movable and resizable, closable from its own `File › Exit`.
+`CompilerErrorLog.md`). `Program.Main` opens it with `new OrdersForm().Show()`: a **floating window** in the browser,
+with a title bar, movable and resizable, closable from its own `File › Exit`.
 
 Why keep it a `Form` in Module 2:
 
@@ -74,13 +74,3 @@ Rule of thumb for the course: **keep every ported screen a `Form` until the navi
 `MenuBar` / `ToolBar` shell with three screens), then promote the main screen to a `Page` and leave editors and
 previews as `Form`s. The one-line change is cheap in either direction; the decision that is not cheap is where the
 menu, the status bar and the "current screen" live once there is more than one.
-
-## Evidence (in the running app)
-
-- **Open the ported OrdersForm ↗** shows the `Form` floating over the console; trace `→ .NET→JS OrdersForm.Show()
-  floating window over the page — MenuBar, StatusBar, DataGridView bound to OrderService.Search, same handlers`;
-  a second click traces `→ .NET→JS OrdersForm.BringToFront() already open — one instance per session, brought to front`
-  instead of opening two.
-- `File › Exit` closes it: trace `• server OrdersForm.FormClosed closed and disposed — the Module 3 rule: the caller owns the lifetime`,
-  preceded by the `⚠ boundary RegistrySettings.Save …` line from the original `FormClosing` handler.
-- On load the trace states `• server OrdersForm is still a Form — the port keeps the base class; docs/FormVsPage.md shows the one-line Page variant`.

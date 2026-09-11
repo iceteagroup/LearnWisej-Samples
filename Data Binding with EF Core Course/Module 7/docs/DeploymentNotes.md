@@ -80,7 +80,7 @@ itself the way a SQL Server idempotent script would.
 | `Default` | `Information` | `Warning` |
 | `Microsoft.AspNetCore` | `Warning` | `Warning` |
 | `Microsoft.EntityFrameworkCore` | `Warning` | `Warning` |
-| `Microsoft.EntityFrameworkCore.Database.Command` | (inherits `Microsoft.EntityFrameworkCore` = `Warning`; `QueryTrace` carries the lab's own SQL visibility instead) | `Warning` — SQL text and parameter values never reach the production log at `Information` or below |
+| `Microsoft.EntityFrameworkCore.Database.Command` | (inherits `Microsoft.EntityFrameworkCore` = `Warning`, so SQL is not logged; set it to `Information` in `appsettings.Development.json` to see every statement, as Modules 3 to 6 do) | `Warning` — SQL text and parameter values never reach the production log at `Information` or below |
 | `SupportDesk` (this application's own `ILogger<T>` categories) | (inherits `Default` = `Information`) | `Information` — enough to diagnose a failure without the database chatter |
 
 `appsettings.Production.json`:
@@ -101,16 +101,18 @@ itself the way a SQL Server idempotent script would.
 
 `EnableSensitiveDataLogging()` stays exactly where it always was, inside
 `SupportDeskDataServiceCollectionExtensions.AddSupportDeskData`'s `if (isDevelopment)` block — Module 7 adds
-no second copy of this flag anywhere. What Module 7 adds is *reporting* the decision: `Startup.cs` reads
-`app.Environment.IsDevelopment()` once, writes it into the `StartupDiagnostics` singleton, and prints
+no second copy of this flag anywhere. What Module 7 adds is *reporting* the decision: right after the DI
+bridge, `Startup.cs` prints one line to the server console
 
 ```
 [SupportDesk] environment: Development · sensitive-data logging: ON (Development)
 ```
 
-(or `OFF`, outside Development) to the server console — see `docs/ArchitectureNote.md` for where
-`StartupDiagnostics` sits, and the page's **Environment & diagnostics** panel for the same fact rendered in
-the UI.
+(or `OFF`, outside Development). Outside Development it prints a second line instead of migrating:
+
+```
+[SupportDesk] migrations are not applied at startup outside Development: apply artifacts/sql/supportdesk_migrations.sql as a reviewed release step.
+```
 
 ## Rollback notes
 

@@ -22,7 +22,7 @@ namespace IntegrationLab.Widgets
         /// <summary>Range name reported by the widget: "normal", "warm" or "high".</summary>
         public string Range { get; }
 
-        /// <summary>The value the client widget reported in its payload (for contract checks).</summary>
+        /// <summary>The value the client widget reported in its payload.</summary>
         public double ReportedValue { get; }
     }
 
@@ -42,10 +42,10 @@ namespace IntegrationLab.Widgets
         public string Message { get; }
     }
 
-    public enum TraceDirection { ServerToClient, ClientToServer, Server }
+    public enum TraceDirection { ServerToClient, ClientToServer }
 
     /// <summary>
-    /// One line of the client/server trace shown by the lab UI.
+    /// One message that crossed the wire, for the Sensor Monitor's trace.
     /// </summary>
     public class TraceEventArgs : EventArgs
     {

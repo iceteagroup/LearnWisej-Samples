@@ -11,10 +11,5 @@ namespace TicketOps.Services
     public interface IHealthCheckService
     {
         Task<HealthReport> CheckAsync();
-
-        /// <summary>Lab switch: force what a dependency reports (a degraded disk, say) until <see cref="ClearOverride"/>.</summary>
-        void OverrideDependency(string name, DependencyStatus status, string detail);
-        void ClearOverride(string name);
-        bool IsOverridden(string name);
     }
 }

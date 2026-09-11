@@ -29,10 +29,5 @@ namespace EnterpriseOps.Services.WorkQueues
             Query = new WorkQueueQuery(tenantId, null, "Open", null, "Priority", true, 1, DefaultPageSize),
             SavedViewName = "My critical queue",
         };
-
-        public string Describe() =>
-            $"page {Query.Page}, sort {Query.SortBy} {(Query.Descending ? "desc" : "asc")}, " +
-            $"status {Query.Status ?? "any"}, assigned {Query.AssignedTo ?? "any"}, " +
-            $"search \"{Query.SearchText ?? ""}\", view {(SavedViewName ?? "(custom)")}, {Selected.Count} selected";
     }
 }

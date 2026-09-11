@@ -13,8 +13,8 @@ widget subclass and the page.
 | `WiredEvents = new[] { … }` | constructor: `valueChanged`, `thresholdExceeded`, `error` | the event contract is part of the class, not of a page |
 | initial `Options` pushed by a `PushState()` helper | constructor writes the default options (`value`, `min`, `max`, `threshold`, `warnAt`, `label`, `units`, `animationEnabled`), then calls `OnConfigureOptions(options)` | a fresh instance renders sensibly without any property set |
 | `Label`, `Units`, `WarnAt` typed properties | `Caption` (+ vendor `units`/`warnAt` become wrapper internals) | the public API says what the *application* needs, not what the vendor offers |
-| page-level `Trace` wiring and `CorruptStateForTesting()` | `Trace` stays as a `[Browsable(false)]` diagnostic event; the corrupt-payload helper is gone | a framework class must not carry lab-only escape hatches into production |
-| the page knew option names (`{"value":72}`) to log them | the wrapper reports what it renders through `Trace` | the page knows no option name at all (see `DemoPage.md`) |
+| page-level trace wiring and `CorruptStateForTesting()` | gone | a framework class must not carry lab-only escape hatches into production |
+| the page knew option names (`{"value":72}`) | the page sets typed properties only | the page knows no option name at all (see `DemoPage.md`) |
 
 The class summary (`/// <summary>`) states what the control is for and which vendor library it wraps
 (`VendorGauge 1.0`, `wwwroot/vendor-gauge.js`): the Module 1 decision record (ADR-001) turned into code.
@@ -70,17 +70,15 @@ into their pages belongs in the class.
 | Wrapper (`SimpleGauge` + `gauge-init.js`) | Application (`DemoPage`) |
 |---|---|
 | loads the vendor files, in order | decides which reading each gauge shows |
-| creates the vendor instance in a child element, disposes it | decides what `Threshold` means for Boiler 3 vs Chiller 1 |
+| creates the vendor instance in a child element, disposes it | decides what `Threshold` means for Boiler 3 |
 | translates typed properties to vendor options (`Caption` → `label`, `Threshold` → `threshold` + `warnAt`) | decides what happens when it is crossed (banner, alert, operator) |
 | validates ranges and throws `ArgumentOutOfRangeException` | catches the exception and explains it to the user |
 | forwards vendor events as .NET events with `EventArgs` | handles the .NET events like any Button click |
-| sweep-vs-jump rendering (`AnimationEnabled`) | streams readings with a `Timer` |
+| sweep-vs-jump rendering (`AnimationEnabled`) | decides when a new reading is set |
 
 ## Evidence in the running app
 
-- Page load: the trace shows `simpleGauge1.render → init {…}` and `simpleGauge2.render → init {…}`, two
-  instances of one class rendering with different typed properties, and the server line
-  `page  no InitScript, no Packages, no vendor name in DemoPage.cs`.
-- Both gauges appear with their captions; the vendor library was loaded once (one package name).
-- Every button produces `→ .NET→JS simpleGaugeN.update(options) {…}` lines emitted by the **wrapper**, then
-  `← JS→.NET simpleGaugeN.valueChanged {…}` from the adapter and `• server simpleGaugeN.ValueChanged fired in C#`.
+- The Demo page shows "Boiler 3" rendered by `SimpleGauge` from its typed properties; `DemoPage.cs` has no
+  InitScript, no Packages and no vendor name.
+- Each button lists the typed-property statement it runs; the needle moves and `ValueChanged` comes back as
+  `✓ gauge updated · Value = …` — the wrapper did the Options and client work behind the property.

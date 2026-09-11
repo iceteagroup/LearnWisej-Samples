@@ -23,16 +23,14 @@ namespace TicketOps.Views
 
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.panelScreen = new Wisej.Web.Panel();
             this.labelScreenTitle = new Wisej.Web.Label();
-            this.statusBanner = new TicketOps.Controls.StatusBanner();
             this.labelSummary = new Wisej.Web.Label();
+            this.statusBanner = new TicketOps.Controls.StatusBanner();
             this.labelThemeCaption = new Wisej.Web.Label();
             this.comboTheme = new Wisej.Web.ComboBox();
             this.labelCultureCaption = new Wisej.Web.Label();
             this.comboCulture = new Wisej.Web.ComboBox();
-            this.checkSessionOnly = new Wisej.Web.CheckBox();
             this.panelKpiOpen = new Wisej.Web.Panel();
             this.labelCountOpen = new Wisej.Web.Label();
             this.chipOpen = new TicketOps.Controls.StatusChip();
@@ -59,37 +57,25 @@ namespace TicketOps.Views
             this.labelHoursValue = new Wisej.Web.Label();
             this.buttonOpenDetail = new Wisej.Web.Button();
             this.buttonNextStatus = new Wisej.Web.Button();
-            this.progressWalk = new Wisej.Web.ProgressBar();
             this.labelFooter = new Wisej.Web.Label();
-            this.tracePanel = new TicketOps.Diagnostics.ActivityTracePanel();
-            this.panelActions = new Wisej.Web.Panel();
-            this.buttonRefresh = new Wisej.Web.Button();
-            this.buttonWalk = new Wisej.Web.Button();
-            this.buttonAdvanceDone = new Wisej.Web.Button();
-            this.buttonResourceGap = new Wisej.Web.Button();
-            this.buttonOutage = new Wisej.Web.Button();
-            this.buttonClear = new Wisej.Web.Button();
-            this.timerWalk = new Wisej.Web.Timer(this.components);
             this.panelScreen.SuspendLayout();
             this.panelKpiOpen.SuspendLayout();
             this.panelKpiInProgress.SuspendLayout();
             this.panelKpiBlocked.SuspendLayout();
             this.panelKpiDone.SuspendLayout();
-            this.panelActions.SuspendLayout();
             this.SuspendLayout();
             //
-            // panelScreen  (Operations Dashboard — display and input only; NO BackColor: the theme paints the card)
+            // panelScreen  (NO BackColor: the theme paints the card)
             //
             this.panelScreen.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.panelScreen.BorderStyle = Wisej.Web.BorderStyle.Solid;
             this.panelScreen.Controls.Add(this.labelScreenTitle);
-            this.panelScreen.Controls.Add(this.statusBanner);
             this.panelScreen.Controls.Add(this.labelSummary);
+            this.panelScreen.Controls.Add(this.statusBanner);
             this.panelScreen.Controls.Add(this.labelThemeCaption);
             this.panelScreen.Controls.Add(this.comboTheme);
             this.panelScreen.Controls.Add(this.labelCultureCaption);
             this.panelScreen.Controls.Add(this.comboCulture);
-            this.panelScreen.Controls.Add(this.checkSessionOnly);
             this.panelScreen.Controls.Add(this.panelKpiOpen);
             this.panelScreen.Controls.Add(this.panelKpiInProgress);
             this.panelScreen.Controls.Add(this.panelKpiBlocked);
@@ -103,7 +89,6 @@ namespace TicketOps.Views
             this.panelScreen.Controls.Add(this.labelHoursValue);
             this.panelScreen.Controls.Add(this.buttonOpenDetail);
             this.panelScreen.Controls.Add(this.buttonNextStatus);
-            this.panelScreen.Controls.Add(this.progressWalk);
             this.panelScreen.Controls.Add(this.labelFooter);
             this.panelScreen.Location = new System.Drawing.Point(30, 30);
             this.panelScreen.Name = "panelScreen";
@@ -118,13 +103,6 @@ namespace TicketOps.Views
             this.labelScreenTitle.Size = new System.Drawing.Size(330, 30);
             this.labelScreenTitle.Text = "Operations Dashboard";
             //
-            // statusBanner  (Controls/StatusBanner: "● state" + banner line)
-            //
-            this.statusBanner.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.statusBanner.Location = new System.Drawing.Point(24, 20);
-            this.statusBanner.Name = "statusBanner";
-            this.statusBanner.Size = new System.Drawing.Size(712, 58);
-            //
             // labelSummary
             //
             this.labelSummary.AutoSize = false;
@@ -134,45 +112,42 @@ namespace TicketOps.Views
             this.labelSummary.Size = new System.Drawing.Size(330, 20);
             this.labelSummary.Text = "";
             //
+            // statusBanner  (Controls/StatusBanner: "● state" + banner line)
+            //
+            this.statusBanner.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
+            this.statusBanner.Location = new System.Drawing.Point(24, 20);
+            this.statusBanner.Name = "statusBanner";
+            this.statusBanner.Size = new System.Drawing.Size(712, 58);
+            //
             // header: theme picker
             //
             this.labelThemeCaption.AutoSize = false;
             this.labelThemeCaption.Location = new System.Drawing.Point(24, 92);
             this.labelThemeCaption.Name = "labelThemeCaption";
-            this.labelThemeCaption.Size = new System.Drawing.Size(52, 22);
+            this.labelThemeCaption.Size = new System.Drawing.Size(60, 22);
             this.labelThemeCaption.Text = "Theme";
             this.comboTheme.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.comboTheme.Location = new System.Drawing.Point(78, 88);
+            this.comboTheme.Location = new System.Drawing.Point(86, 88);
             this.comboTheme.Name = "comboTheme";
-            this.comboTheme.Size = new System.Drawing.Size(190, 28);
-            this.comboTheme.ToolTipText = "Success path: ThemeSwitcher.Apply(name) — Application.LoadTheme re-skins every open window; nothing is rebuilt.";
+            this.comboTheme.Size = new System.Drawing.Size(210, 28);
             this.comboTheme.SelectedIndexChanged += new System.EventHandler(this.comboTheme_SelectedIndexChanged);
             //
             // header: culture picker
             //
             this.labelCultureCaption.AutoSize = false;
-            this.labelCultureCaption.Location = new System.Drawing.Point(284, 92);
+            this.labelCultureCaption.Location = new System.Drawing.Point(320, 92);
             this.labelCultureCaption.Name = "labelCultureCaption";
-            this.labelCultureCaption.Size = new System.Drawing.Size(60, 22);
+            this.labelCultureCaption.Size = new System.Drawing.Size(64, 22);
             this.labelCultureCaption.Text = "Culture";
             this.comboCulture.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
             this.comboCulture.Items.AddRange(new object[] {
                 "English (United States)",
                 "Deutsch (Deutschland)",
                 "Italiano (Italia)"});
-            this.comboCulture.Location = new System.Drawing.Point(346, 88);
+            this.comboCulture.Location = new System.Drawing.Point(386, 88);
             this.comboCulture.Name = "comboCulture";
-            this.comboCulture.Size = new System.Drawing.Size(190, 28);
-            this.comboCulture.ToolTipText = "Success path: ILocalizationService.SetCulture + Application.CurrentCulture — captions, dates and currency follow. Italiano is the validation path: not shipped, rejected by the service.";
+            this.comboCulture.Size = new System.Drawing.Size(210, 28);
             this.comboCulture.SelectedIndexChanged += new System.EventHandler(this.comboCulture_SelectedIndexChanged);
-            //
-            // checkSessionOnly
-            //
-            this.checkSessionOnly.Location = new System.Drawing.Point(552, 90);
-            this.checkSessionOnly.Name = "checkSessionOnly";
-            this.checkSessionOnly.Size = new System.Drawing.Size(184, 24);
-            this.checkSessionOnly.Text = "This session only";
-            this.checkSessionOnly.ToolTipText = "Unchecked: Application.LoadTheme(name) — global, every session re-skins. Checked: Application.Theme = ClientTheme.GetInstance(name) — this session only (open a second tab to compare).";
             //
             // KPI cards: one StatusChip each (the same control, set — never styled — per status)
             //
@@ -320,120 +295,41 @@ namespace TicketOps.Views
             this.labelHoursValue.Size = new System.Drawing.Size(170, 22);
             this.labelHoursValue.Text = "";
             //
-            // screen buttons (thin handlers → IWorkOrderService)
+            // buttons
             //
             this.buttonOpenDetail.Location = new System.Drawing.Point(24, 476);
             this.buttonOpenDetail.Name = "buttonOpenDetail";
             this.buttonOpenDetail.Size = new System.Drawing.Size(170, 36);
             this.buttonOpenDetail.Text = "Open detail…";
-            this.buttonOpenDetail.ToolTipText = "Second screen: WorkOrderDetail dialog — same theme, same StatusChip, same resources and culture";
             this.buttonOpenDetail.Click += new System.EventHandler(this.buttonOpenDetail_Click);
             this.buttonNextStatus.Location = new System.Drawing.Point(204, 476);
             this.buttonNextStatus.Name = "buttonNextStatus";
-            this.buttonNextStatus.Size = new System.Drawing.Size(160, 36);
+            this.buttonNextStatus.Size = new System.Drawing.Size(170, 36);
             this.buttonNextStatus.Text = "Next status";
-            this.buttonNextStatus.ToolTipText = "await _workOrders.AdvanceStatusAsync(id): the rule lives in the domain, the colour in the theme, the caption in the resources";
             this.buttonNextStatus.Click += new System.EventHandler(this.buttonNextStatus_Click);
             //
-            // progressWalk
-            //
-            this.progressWalk.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.progressWalk.Location = new System.Drawing.Point(24, 518);
-            this.progressWalk.Maximum = 3;
-            this.progressWalk.Name = "progressWalk";
-            this.progressWalk.Size = new System.Drawing.Size(712, 8);
-            this.progressWalk.Visible = false;
-            //
-            // labelFooter  (the video's status bar line: "Theme: … — applied to every screen." / "Culture: … — labels, dates & currency follow the culture.")
+            // labelFooter  (status line: "Theme: … — applied to every screen." / "Culture: … — labels, dates and currency follow the culture.")
             //
             this.labelFooter.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.labelFooter.AutoSize = false;
             this.labelFooter.Font = new System.Drawing.Font("default", 9F);
-            this.labelFooter.Location = new System.Drawing.Point(24, 530);
+            this.labelFooter.Location = new System.Drawing.Point(24, 524);
             this.labelFooter.Name = "labelFooter";
             this.labelFooter.Size = new System.Drawing.Size(712, 22);
             this.labelFooter.Text = "";
             //
-            // tracePanel  (Diagnostics: the live activity trace)
+            // OperationsDashboard  (NO BackColor: the theme owns every surface)
             //
-            this.tracePanel.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
-            this.tracePanel.Location = new System.Drawing.Point(810, 30);
-            this.tracePanel.Name = "tracePanel";
-            this.tracePanel.Size = new System.Drawing.Size(508, 560);
-            //
-            // panelActions  (bottom bar: success / progress / failures / outage + recovery / clear)
-            //
-            this.panelActions.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.panelActions.Controls.Add(this.buttonRefresh);
-            this.panelActions.Controls.Add(this.buttonWalk);
-            this.panelActions.Controls.Add(this.buttonAdvanceDone);
-            this.panelActions.Controls.Add(this.buttonResourceGap);
-            this.panelActions.Controls.Add(this.buttonOutage);
-            this.panelActions.Controls.Add(this.buttonClear);
-            this.panelActions.Location = new System.Drawing.Point(30, 606);
-            this.panelActions.Name = "panelActions";
-            this.panelActions.Size = new System.Drawing.Size(1288, 44);
-            //
-            // bottom bar buttons
-            //
-            this.buttonRefresh.Location = new System.Drawing.Point(0, 4);
-            this.buttonRefresh.Name = "buttonRefresh";
-            this.buttonRefresh.Size = new System.Drawing.Size(190, 36);
-            this.buttonRefresh.Text = "↻ Refresh dashboard";
-            this.buttonRefresh.ToolTipText = "Success path: IWorkOrderService.GetDashboardAsync → KPI cards, grid and detail strip re-bound and formatted for the current culture";
-            this.buttonRefresh.Click += new System.EventHandler(this.buttonRefresh_Click);
-            this.buttonWalk.Location = new System.Drawing.Point(200, 4);
-            this.buttonWalk.Name = "buttonWalk";
-            this.buttonWalk.Size = new System.Drawing.Size(170, 36);
-            this.buttonWalk.Text = "▶ Walk statuses";
-            this.buttonWalk.ToolTipText = "Progress path: a Timer advances the selected work order Open → In progress → Blocked → Done, one AdvanceStatusAsync per tick; watch the chip re-colour";
-            this.buttonWalk.Click += new System.EventHandler(this.buttonWalk_Click);
-            this.buttonAdvanceDone.Location = new System.Drawing.Point(380, 4);
-            this.buttonAdvanceDone.Name = "buttonAdvanceDone";
-            this.buttonAdvanceDone.Size = new System.Drawing.Size(220, 36);
-            this.buttonAdvanceDone.Text = "Advance a finished order";
-            this.buttonAdvanceDone.ToolTipText = "Failure path 1 (domain rule): WorkOrder.CanAdvance says no for a Done order — the localized reason comes back as a result, nothing throws";
-            this.buttonAdvanceDone.Click += new System.EventHandler(this.buttonAdvanceDone_Click);
-            this.buttonResourceGap.Location = new System.Drawing.Point(610, 4);
-            this.buttonResourceGap.Name = "buttonResourceGap";
-            this.buttonResourceGap.Size = new System.Drawing.Size(170, 36);
-            this.buttonResourceGap.Text = "Resource gaps";
-            this.buttonResourceGap.ToolTipText = "Failure path 2 (resources): a key missing everywhere falls back to \"[key]\"; a key missing only in German falls back to English (switch to Deutsch first) — both traced as ⚠, the screen stays readable";
-            this.buttonResourceGap.Click += new System.EventHandler(this.buttonResourceGap_Click);
-            this.buttonOutage.Location = new System.Drawing.Point(790, 4);
-            this.buttonOutage.Name = "buttonOutage";
-            this.buttonOutage.Size = new System.Drawing.Size(200, 36);
-            this.buttonOutage.Text = "Simulate data outage";
-            this.buttonOutage.ToolTipText = "Error path: the repository throws; the log gets the details, the user gets the localized safe message. Click again to recover.";
-            this.buttonOutage.Click += new System.EventHandler(this.buttonOutage_Click);
-            this.buttonClear.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.buttonClear.Location = new System.Drawing.Point(1148, 4);
-            this.buttonClear.Name = "buttonClear";
-            this.buttonClear.Size = new System.Drawing.Size(140, 36);
-            this.buttonClear.Text = "Clear trace";
-            this.buttonClear.Click += new System.EventHandler(this.buttonClear_Click);
-            //
-            // timerWalk
-            //
-            this.timerWalk.Interval = 800;
-            this.timerWalk.Tick += new System.EventHandler(this.timerWalk_Tick);
-            //
-            // OperationsDashboard  (NO BackColor: the theme owns every surface — white on Bootstrap-4, dark on BootstrapDark-4)
-            //
-            this.ClientSize = new System.Drawing.Size(1348, 680);
+            this.ClientSize = new System.Drawing.Size(820, 620);
             this.Controls.Add(this.panelScreen);
-            this.Controls.Add(this.tracePanel);
-            this.Controls.Add(this.panelActions);
             this.Name = "OperationsDashboard";
-            this.Text = "TicketOps Console — Module 10 · Theming, resources & localization";
+            this.Text = "TicketOps Console";
             this.Load += new System.EventHandler(this.OperationsDashboard_Load);
-            this.FormClosed += new Wisej.Web.FormClosedEventHandler(this.OperationsDashboard_FormClosed);
             this.panelScreen.ResumeLayout(false);
             this.panelKpiOpen.ResumeLayout(false);
             this.panelKpiInProgress.ResumeLayout(false);
             this.panelKpiBlocked.ResumeLayout(false);
             this.panelKpiDone.ResumeLayout(false);
-            this.panelActions.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -441,13 +337,12 @@ namespace TicketOps.Views
 
         private Wisej.Web.Panel panelScreen;
         private Wisej.Web.Label labelScreenTitle;
-        private TicketOps.Controls.StatusBanner statusBanner;
         private Wisej.Web.Label labelSummary;
+        private TicketOps.Controls.StatusBanner statusBanner;
         private Wisej.Web.Label labelThemeCaption;
         private Wisej.Web.ComboBox comboTheme;
         private Wisej.Web.Label labelCultureCaption;
         private Wisej.Web.ComboBox comboCulture;
-        private Wisej.Web.CheckBox checkSessionOnly;
         private Wisej.Web.Panel panelKpiOpen;
         private Wisej.Web.Label labelCountOpen;
         private TicketOps.Controls.StatusChip chipOpen;
@@ -474,16 +369,6 @@ namespace TicketOps.Views
         private Wisej.Web.Label labelHoursValue;
         private Wisej.Web.Button buttonOpenDetail;
         private Wisej.Web.Button buttonNextStatus;
-        private Wisej.Web.ProgressBar progressWalk;
         private Wisej.Web.Label labelFooter;
-        private TicketOps.Diagnostics.ActivityTracePanel tracePanel;
-        private Wisej.Web.Panel panelActions;
-        private Wisej.Web.Button buttonRefresh;
-        private Wisej.Web.Button buttonWalk;
-        private Wisej.Web.Button buttonAdvanceDone;
-        private Wisej.Web.Button buttonResourceGap;
-        private Wisej.Web.Button buttonOutage;
-        private Wisej.Web.Button buttonClear;
-        private Wisej.Web.Timer timerWalk;
     }
 }

@@ -69,35 +69,26 @@ instead of hiding it.
 correlation id. If the provider is still down, the entry stays open and the user is told so — the workflow is
 allowed to finish later, it is not allowed to disappear.
 
-## The counter-example (the video's anti-pattern)
+## The counter-example
 
-`UI/WorkQueuePage.btnAntiPattern_Click` writes the same flow inside the screen:
-
-- the rules are re-invented in the handler (a 10-character reason where the workflow says 20, a 30-day due date
-  that no rule ever looks at);
-- the page talks to `InMemoryEscalationStore`, `InMemoryWorkOrderStore` and the gateway directly;
-- there is no correlation id and no audit entry;
-- and when the notification throws, the `catch` **deletes** the escalation and reverts the work order.
-
-The trace says it plainly:
-
-```
-UI ← anti-pattern: notify failed (smtp timeout after 30s) → the page DELETED ESC-1042 and reverted WO-100234
-UI ← nothing compensated, nothing audited, nothing queued — the escalation simply never happened
-```
-
-Same failure, two outcomes: the workflow keeps a valid escalation and a queued retry; the page loses both.
+The same flow written inside a screen handler would re-invent the rules, talk to the stores and the gateway
+directly, carry no correlation id and write no audit entry — and when the notification throws, its `catch` would
+**delete** the escalation and revert the work order. Same failure, two outcomes: the workflow keeps a valid
+escalation and a queued retry; the page loses both.
 
 ## Evidence in the running app
 
-1. Select a work order → **Fail: notification (SMTP)** → **Escalate work order…** → complete the six steps → **Finish**.
-2. The wizard's orchestration strip ends `✓ validate → ✓ authorize → ✓ persist → ✕ notify + compensation → ✓ audit`,
-   and the amber banner reads *"Escalation created — approver NOT notified."* with
-   `persist ✓ · notify ✕ · CompensationAction: manual-review queued (#1) · audited`.
+The simulated notification failure lives in `FakeNotificationGateway`: its SMTP relay times out on the **first
+e-mail of the session** and delivers every send after that.
+
+1. Select a work order → **Escalate work order…** → complete the six steps (E-mail checked) → **Finish**.
+2. The amber banner reads *"Escalation created — approver NOT notified."* with
+   `persist ✓ · notify ✕ · CompensationAction: manual-review queued (#1) · audited`, and the status strip shows the
+   `WorkflowResult` line.
 3. Close the wizard: the escalation is in the grid (status `Escalated`), and the **manual-review queue** shows
    `#1 OPEN  NotificationOutstanding  ESC-1041  notify ✕ smtp timeout after 30s → manual-review queued…`.
-4. Select it → **Retry notification** → the entry is resolved, the trace shows the retry and the second audit
-   entry, and the status bar reports `Created`.
-5. Now try **Fail: audit after notify** on the next escalation: the notification goes out, the audit write throws,
-   and an `AuditGap` entry appears that **Retry notification** refuses to touch — it can only be resolved manually.
-6. Finally click **Anti-pattern: logic in the page** and compare the trace and the empty manual-review queue.
+4. Select it → **Retry notification** → the entry is resolved, `escalation.notify.retried` is audited, and the
+   banner reports that the approver was notified on retry.
+
+The audit-gap branch (step 5) is ordinary code in `EscalationWorkflow`; nothing in the sample forces the audit
+store to fail, so it is covered by the matrix as a test case rather than clicked in the app.

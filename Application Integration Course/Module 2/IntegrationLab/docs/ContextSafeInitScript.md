@@ -1,8 +1,8 @@
 # Deliverable 2 · Context-safe Wisej.NET InitScript
 
 **File:** `wwwroot/gauge-init.js` (embedded resource `IntegrationLab.wwwroot.gauge-init.js`, assigned to
-`gaugeKnob.InitScript` in `Window1.cs`). The broken twin, kept for the lab, is
-`wwwroot/gauge-init.broken.js` (`gaugeKnobBroken`). The only difference that matters is one line.
+`gaugeKnob.InitScript` in `Window1.cs`). The difference between a broken and a working script is
+one line, shown below.
 
 ## The bug, in one sentence
 
@@ -128,32 +128,20 @@ Notes on the numbered points:
    the vendor.
 10. Wisej.NET calls `_addListener` once per `WiredEvents` entry. This adapter does not need the framework's
     deferred dispatcher because its only user-driven event is fired directly; the empty overrides document
-    that choice. `WiredEvents` on the server still lists `valueChanged` and `error` (and `contextError` on
-    the broken widget) as the documented contract.
+    that choice. `WiredEvents` on the server still lists `valueChanged` and `error` as the documented
+    contract.
 
-## The broken twin (`gauge-init.broken.js`)
-
-Same file, except step (6):
+## The broken version of step (6)
 
 ```js
 this._onKnobChange = function (e) {
-    try {
-        this.fireWidgetEvent("valueChanged", { value: e.detail.value });   // ✕ this = <input>
-    }
-    catch (ex) {
-        var thisWas = Object.prototype.toString.call(this).slice(8, -1);   // "HTMLInputElement"
-        var value = e.detail.value;
-        setTimeout(function () {
-            me.fireWidgetEvent("contextError", { message: ex.message, thisWas: thisWas, value: value });
-        }, 0);
-    }
+    this.fireWidgetEvent("valueChanged", { value: e.detail.value });   // ✕ this = <input>
 };
 ```
 
-The `try/catch` is lab instrumentation: without it the `TypeError` would only appear in the console and
-`.NET` would simply never hear about the value. With it, the server shows a red banner and the trace
-line `← JS→.NET gaugeKnobBroken.contextError {"message":"this.fireWidgetEvent is not a function","thisWas":"HTMLInputElement","value":…}`.
-Note that even the report needs the captured `me` — nothing else in that callback can reach the widget.
+It runs, and fails at the first turn of the knob with `TypeError: this.fireWidgetEvent is not a
+function` in the console; .NET simply never hears about the value. The plain-JS proof page
+(`wwwroot/proof/knob-proof.html`) wires the callback both ways so the difference can be seen.
 
 ## Why `this.container.innerHTML = "<input class='knob'/>"`
 
@@ -175,7 +163,7 @@ everything inside it. The dispose wrapper removes the child again.
 
 ## Load order (Packages)
 
-`Window1.Designer.cs` declares, for both `gaugeKnob` and `gaugeKnobBroken`:
+`Window1.Designer.cs` declares, for `gaugeKnob`:
 
 | # | Package name | Source | Why here |
 |---|---|---|---|
@@ -184,10 +172,10 @@ everything inside it. The dispose wrapper removes the child again.
 | 3 | `vendor-knob` | `wwwroot/vendor-knob.js` | defines `$.fn.vendorKnob`; throws `ReferenceError: jQuery is not defined` if 1 is missing |
 | – | InitScript | `gauge-init.js` | runs last, uses `$` and `$.fn.vendorKnob` |
 
-Wisej.NET loads packages in list order and caches them **by name**, so the second widget does not load
-them again — which is also why the "Wrong package order" widget uses different names (and a
-`hide-jquery.js` first package, because the demo page already has the jQuery global; see the
-README). Checklist from the lesson, applied:
+Wisej.NET loads packages in list order and caches them **by name**, so a second widget listing the same
+names does not load them again. Listing `vendor-knob.js` before `jquery-lite.js` on a fresh page gives
+`ReferenceError: jQuery is not defined` in the console at load time and the adapter's `init` reports
+`error {phase:"init"}`. Checklist from the lesson, applied:
 
 - every file the vendor sample includes is listed, in the order it includes them;
 - jQuery is loaded once for the page (shared package name across widgets);
@@ -196,9 +184,8 @@ README). Checklist from the lesson, applied:
 
 ## Evidence (what the running app shows)
 
-- Turn **gaugeKnob** (left): `← JS→.NET gaugeKnob.valueChanged {"value":…}` followed by
-  `→ .NET→JS update(options) {"value":…}`; status turns green.
-- Turn **gaugeKnobBroken** (right): no `valueChanged`; instead `← JS→.NET gaugeKnobBroken.contextError {…}`,
-  the red banner and status "context lost".
-- **Set 25 / 60 / 85** and **Stream**: `→ .NET→JS update(options) ×2 {"value":…}` — both knobs move, because
-  `update()` is a widget method and is not affected by the callback bug.
+- Turn the knob: `valueChanged {"value":…}` reaches .NET and the status in the card shows the value
+  the server recorded (`● 72 psi`); the server writes it back to `Options.value` and `update()` applies it
+  silently, so there is no echo.
+- A vendor failure caught in `init` / `update` arrives as `error {phase, message}`: red banner, status
+  `● fault`.

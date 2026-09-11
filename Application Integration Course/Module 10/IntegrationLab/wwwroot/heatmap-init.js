@@ -7,8 +7,7 @@
 //   state in  (Options → init/update): days, hours, thresholds {warn, high}, title, palette,
 //                                      vendorVersion, sampleCells (design mode only), postbackUrl (fallback)
 //   calls in  (Call/CallAsync):        highlight(day, hour), clearHighlight(), reload(), setCells(cells),
-//                                      getCellCount() → number, loadWithAction(action) [DEBUG failure path],
-//                                      getDiagnostics() → { created, disposed, vendorInstances }
+//                                      getCellCount() → number, getDiagnostics() → { created, disposed, vendorInstances }
 //   data in   (postback):              GET this.getPostbackUrl() + "&action=load" → { cells: [...] }
 //   events out (WiredEvents):          cellSelected {day, hour, value}
 //                                      loaded       {count}
@@ -208,19 +207,6 @@ this.setCells = function (cells) {
 
 this.getCellCount = function () {
     return this.widget ? this.widget.getCellCount() : 0;
-};
-
-// DEBUG failure path: load from the postback endpoint with a different action (e.g. "corrupt" → invalid JSON).
-this.loadWithAction = function (action) {
-    if (!this.widget) return;
-    var me = this;
-    try {
-        this.widget.setOptions({ dataUrl: this._dataUrl(action) });
-        this.widget.load()
-            .catch(function () { })
-            .then(function () { if (me.widget) me.widget.setOptions({ dataUrl: me._dataUrl("load") }); });
-    }
-    catch (ex) { this._reportError("call", ex.message, 0); }
 };
 
 this.getDiagnostics = function () {

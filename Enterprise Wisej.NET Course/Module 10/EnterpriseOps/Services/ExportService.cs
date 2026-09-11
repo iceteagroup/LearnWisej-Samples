@@ -75,8 +75,12 @@ namespace EnterpriseOps.Services
         private readonly IPermissionService _permissions;
         private readonly IAuditLog _audit;
         private readonly ActivityTrace _trace;
-        private readonly List<ExportApproval> _pending = new List<ExportApproval>();
-        private int _nextId = 3;   // #1 and #2 are in the seeded history
+
+        // Application-scoped on purpose, like AuditLog.Shared: the requester and the approver are two people in
+        // two sessions. Locked on every access, tenant-filtered on read.
+        private static readonly List<ExportApproval> Pending = new List<ExportApproval>();
+        private static readonly object PendingLock = new object();
+        private static int _nextId = 3;   // #1 and #2 are in the seeded history
 
         public ExportService(IWorkOrderRepository repository, IPermissionService permissions, IAuditLog audit, ActivityTrace trace)
         {
@@ -88,7 +92,10 @@ namespace EnterpriseOps.Services
 
         /// <summary>Exports still waiting for a second person, for this tenant.</summary>
         public IReadOnlyList<ExportApproval> PendingFor(string tenantId)
-            => _pending.Where(p => !p.Completed && StringComparer.Ordinal.Equals(p.TenantId, tenantId)).ToList();
+        {
+            lock (PendingLock)
+                return Pending.Where(p => !p.Completed && StringComparer.Ordinal.Equals(p.TenantId, tenantId)).ToList();
+        }
 
         /// <summary>
         /// The walkthrough's path. <c>Demand(ExportData)</c> runs here, where the action executes — so it runs
@@ -115,14 +122,17 @@ namespace EnterpriseOps.Services
             {
                 var approval = new ExportApproval
                 {
-                    Id = _nextId++,
                     TenantId = context.TenantId,
                     RequestedBy = context.UserId,
                     RequestedUtc = DateTime.UtcNow,
                     RowCount = rowCount,
                     Reason = $"{rowCount} rows > {ApprovalThreshold}-row threshold",
                 };
-                _pending.Add(approval);
+                lock (PendingLock)
+                {
+                    approval.Id = _nextId++;
+                    Pending.Add(approval);
+                }
 
                 _audit.Write(context, "ExportData", AuditResult.Pending, $"export #{approval.Id} · {rowCount} rows",
                     $"awaiting a second approver ({approval.Reason})");
@@ -141,7 +151,10 @@ namespace EnterpriseOps.Services
         /// </summary>
         public async Task<ExportResult> ApproveExportAsync(CommandContext context, int approvalId)
         {
-            ExportApproval approval = _pending.FirstOrDefault(p => p.Id == approvalId && !p.Completed);
+            ExportApproval approval;
+            lock (PendingLock)
+                approval = Pending.FirstOrDefault(p => p.Id == approvalId && !p.Completed
+                                                    && StringComparer.Ordinal.Equals(p.TenantId, context.TenantId));
             if (approval == null)
                 return ExportResult.Failed($"Export #{approvalId} is not waiting for approval.", context.CorrelationId);
 
@@ -167,8 +180,14 @@ namespace EnterpriseOps.Services
 
             await Task.Delay(150);
 
-            approval.ApprovedBy = context.UserId;
-            approval.Completed = true;
+            lock (PendingLock)
+            {
+                if (approval.Completed)
+                    return ExportResult.Failed($"Export #{approval.Id} was already released by {approval.ApprovedBy}.", context.CorrelationId);
+
+                approval.ApprovedBy = context.UserId;
+                approval.Completed = true;
+            }
 
             _audit.Write(context, "ApproveExport", AuditResult.Ok, $"export #{approval.Id}",
                 $"released {approval.RowCount} rows requested by {approval.RequestedBy}");

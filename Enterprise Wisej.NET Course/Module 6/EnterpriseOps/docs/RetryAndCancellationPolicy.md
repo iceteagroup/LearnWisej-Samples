@@ -35,9 +35,9 @@ row twice produces one work order (the second time increments `Version`). And th
 raised **before** the write, so a timed-out row leaves nothing half-written — the retry is a plain repeat,
 not a compensation.
 
-Without idempotency, "retry" means "maybe duplicate". The **Re-import (idempotent)** button demonstrates
-the property directly: the same file again reports `0 created, 998 updated` — the same 998 work orders, not
-1,996 of them (the other two rows are still terminal, and still named).
+Without idempotency, "retry" means "maybe duplicate". Importing the same file a second time with
+**+ New import…** shows the property directly: it reports `0 created, 998 updated` — the same 998 work
+orders, not 1,996 of them (the other two rows are still terminal, and still named).
 
 ## The cancellation policy
 
@@ -60,7 +60,7 @@ checked between batches · current batch finishes · result records rows importe
 4. **Cancelled before it started** is a case of its own: the worker sees the flag on a `Queued` job and
    records `"Canceled before it started."` — no thread was ever spent.
 5. **Permission.** `ImportService.CancelJob` allows Managers and Admins to cancel anything, and anyone to
-   cancel their own job. A refusal writes a `Security:` line.
+   cancel their own job. A refusal is logged as a `Security:` line.
 
 ## Partial failure is reported per row
 
@@ -81,7 +81,5 @@ and idempotency means nothing else moves.
   names both bad rows and the retried ones are counted, not listed (they succeeded).
 - **Cancel job** during batch 4 → the bar advances to the end of batch 4 and *then* the status becomes
   `Canceled`, with `Canceled after batch 4 of 10 · 400 rows imported, none half-written.`
-- **Failure: malformed file** → `Failed` at 0 %, banner in red, job detail shows the file-level terminal
-  error and no retry attempts at all.
-- **Re-import (idempotent)** → `0 created, 998 updated`; the 12 flaky rows time out and retry again (the
-  file is generated fresh each time), and the same two rows are terminal again.
+- **+ New import…** with `contoso_q2.csv` a second time → `0 created, 998 updated`; the 12 flaky rows time
+  out and retry again (the file is generated fresh each time), and the same two rows are terminal again.

@@ -11,7 +11,7 @@ namespace TicketOps.Resources
     ///  - the typed properties (<see cref="ActionFailed"/>, …) resolve for the current request thread's UI culture,
     ///    which Wisej.NET sets from Application.CurrentCulture — the same shape every module's handler uses;
     ///  - <see cref="Get(string, CultureInfo)"/> / <see cref="TryGet"/> take an explicit culture and are what
-    ///    ILocalizationService builds on (with the traced fallback for missing keys).
+    ///    ILocalizationService builds on (with the logged fallback for missing keys).
     /// The messages are safe to show: they explain what happened without leaking connection strings or table names.
     /// </summary>
     public static class Strings
@@ -22,7 +22,6 @@ namespace TicketOps.Resources
 
         public static string AppTitle => Get("App.Title");
         public static string ActionFailed => Get("Message.ActionFailed");
-        public static string Saved => Get("Message.Saved");
 
         /// <summary>Resolves a key for the current UI culture; a missing key yields "[key]" so a screen never shows an empty label.</summary>
         public static string Get(string key) => Get(key, CultureInfo.CurrentUICulture);

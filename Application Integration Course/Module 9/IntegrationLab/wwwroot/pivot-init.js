@@ -135,11 +135,4 @@ this._reportError = function (phase, status, message) {
     setTimeout(function () { me.fireWidgetEvent("error", data); }, 0);
 };
 
-// functions the server reaches with Call("reload")
-this.reload = function () {
-    if (!this.widget) { this._reportError("load", 0, "the pivot is not initialized."); return; }
-    try { this.widget.load(); }
-    catch (ex) { this._reportError("load", 0, ex.message); }
-};
-
 //# sourceURL=integrationlab.widgets.WorkOrderPivot.js

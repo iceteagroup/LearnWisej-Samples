@@ -1,6 +1,6 @@
 # Security review notes — the interop boundary
 
-Reviewed: `Interop/`, `Services/ClientCommandService.cs`, `Security/`, and the two `[WebMethod]`s on
+Reviewed: `Interop/`, `Services/ClientCommandService.cs`, `Security/`, and the `[WebMethod]` on
 `UI/CommandCenterShell.cs`. Contract version 1.0.
 
 ---
@@ -16,11 +16,11 @@ Reviewed: `Interop/`, `Services/ClientCommandService.cs`, `Security/`, and the t
 | `correlationId` | no | shape-checked, then used **only** as a log key; it grants nothing |
 | the `Allowed` flag on a catalogue row | no | it is a display hint the server itself sent; the permission is re-checked at gate 3 |
 | the capability report | no | unknown keys dropped, values sanitised and bounded; never consulted for a decision |
-| claimed role / claimed status (anti-pattern endpoint) | **believed — that is the bug being demonstrated** | see §5 |
+| a role or a status | not in the contract | no endpoint accepts them — see §5 |
 
 Identity, role and tenant are read from `SessionContext` on **every** call. `SessionContext` is
-per-session, created in the page constructor, and its setters are only reachable from the header
-combo boxes — never from a payload.
+per-session, created in the page constructor, and its identity is set once when the session starts
+(`ServiceRegistry.CreateSessionContext`) — never from a payload.
 
 ## 2. Which business rules remain server-side?
 
@@ -57,24 +57,17 @@ and "belongs to another tenant" return the **same** code and the same message.
 | whether an id exists in another tenant | no | same answer either way |
 | the payload, echoed back | no | `Message` never quotes what was sent; the trace prints a bounded, control-character-stripped copy |
 
-## 5. The anti-pattern, and why it is in the sample
+## 5. The anti-pattern this boundary avoids
 
-`RunTrustedClientCommand` believes a `claimedRole` and a `claimedStatus` from the payload. Pressing
-**⚠ Trust the client** shows the whole cost in one screen:
-
-* `PermissionService.CheckWithClaimedRole` runs a check that *looks* like security and is not — the
-  role it is checking came from the browser. (It is a separate method so the correct one cannot be
-  called with client data by mistake.)
-* `WorkOrderService` never runs, so there is no state rule, no version bump, no `Save`.
-* The audit row reads `TAMPERED` and carries a **before-snapshot**, which is the only reason the
-  damage is recoverable at all.
-
-Recovery: **Revert tampered** restores the snapshot and appends a `REVERTED` row. In production the
-snapshot would be the difference between "we restored it" and "we do not know what it was".
+An endpoint that took a `claimedRole` or a `claimedStatus` from the payload would run a permission
+check that only *looks* like security — the role it checks would come from the browser — and would
+write the status without `WorkOrderService`: no state rule, no version bump, no `Save`. The project
+has no such method: `RunClientCommand` is the only execution endpoint, and `PermissionService.Check`
+takes the `SessionContext`, not a role.
 
 Review heuristic from the lesson: *what would break if the browser lied?* On the contract path the
-answer is "a wrong-looking palette". On this path the answer is "a wrong approval" — which is exactly
-the signal that the logic is in the wrong place.
+answer is "a wrong-looking palette". On a trusting endpoint it would be "a wrong approval" — which is
+exactly the signal that the logic is in the wrong place.
 
 ## 6. Denial of service and payload bounds
 
@@ -101,7 +94,7 @@ server queues callbacks until `paletteReady`. See `docs/CommandPaletteScript.md`
 
 | # | Finding | Severity | Status |
 | --- | --- | --- | --- |
-| 1 | `RunTrustedClientCommand` accepts a role and a status from the payload | **critical** | intentional teaching artefact — must not ship; delete the method, `ExecuteTrustingClient` and `CheckWithClaimedRole` together |
+| 1 | Could any endpoint accept a role or a status from the payload? | n/a | verified no: `RunClientCommand` is the only execution endpoint and takes three contract fields |
 | 2 | The catalogue row carries `Allowed` to the browser | low | accepted: it is a UX hint, re-checked at gate 3; it discloses only what the user's own role already implies |
 | 3 | The denial message tells the user which action was refused | low | accepted: a user must know what they cannot do; the *reason* stays server-side |
 | 4 | The palette's overlay lives on `document.body` | low | accepted: required for a modal; removed in `dispose()` |
@@ -125,12 +118,13 @@ server queues callbacks until `paletteReady`. See `docs/CommandPaletteScript.md`
 
 ## Evidence — what the running app shows
 
+"Server log" is the `System.Diagnostics.Trace` output of `ActivityTrace`. The session is `ben.tech`
+(Technician) in tenant `contoso`.
+
 | Claim | How to reproduce | What proves it |
 | --- | --- | --- |
-| The role comes from the session | switch the user combo, then **Run approve** | trace `Security: session identity is now ben.tech (Technician) — the payload has no say in this`, then `… role from session … DENIED` |
+| The role comes from the session | Ctrl+K → *approve* → Enter | banner `PERMISSION_DENIED · … the command never ran`; server log `Security: PermissionService ben.tech (Technician, role from session) → WorkOrder.Approve → DENIED` |
 | The command never ran | same | no `Service:` line follows the denial; the work order's status and version are unchanged |
-| Denials are audited | same | audit row `DENIED ben.tech contoso <corr> workorder.approve WO-1040` |
-| Tenancy holds | **Other tenant's WO** | `Data: … Find(tenant=contoso, id=1060) → not found` → `INVALID_TARGET` |
-| The anti-pattern is real | **⚠ Trust the client** | audit `TAMPERED`, banner *the browser just changed a work order's state*, `Version still 1` in the trace |
-| The damage is recoverable | **Revert tampered** | audit `REVERTED`, status back to its previous value |
-| Capabilities grant nothing | **Forged capabilities**, then **Run approve** as `ben.tech` | keys ignored, and the denial is unchanged |
+| Denials are audited | same | server log `Audit: DENIED user=ben.tech tenant=contoso corr=<corr> cmd=workorder.approve entity=WO-1040 …` |
+| Tenancy holds | dev tools: `App.MainPage.RunClientCommandAsync("workorder.escalate", "WO-1060", "0000abcd")` | `Data: … Find(tenant=contoso, id=1060) → not found` → `INVALID_TARGET` |
+| Capabilities grant nothing | whatever the capability panel shows, run *approve* | the denial is unchanged; `ClientCommandService` never references `BrowserCapabilityService` |

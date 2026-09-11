@@ -3,8 +3,8 @@
 Local lab build for **Module 10 · Production Readiness & Capstone**. It follows the walkthrough video: an
 **unfamiliar** third-party widget (VendorHeatmap, a calendar heatmap — not Kendo, not DevExtreme) is integrated as a
 reusable `HeatmapWidget : Wisej.Web.Widget` wrapper with **server calls**, **events**, **postback data loading**,
-**bounded background updates** (`Application.StartTask → Call → Application.Update`), a **create/dispose leak test**
-and **diagnosable failure paths** — all on one "IntegrationLab — Operations Dashboard" page.
+**bounded background updates** (`Application.StartTask → Call → Application.Update`) and a **create/dispose test** —
+all on one "IntegrationLab — Operations Dashboard" page with the Module 1 `TemperatureGauge` beside it.
 
 Nothing here is deployed anywhere; it is a plain Wisej.NET 4 project on this machine.
 
@@ -22,21 +22,20 @@ Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet pac
 
 ## What to try in the Operations Dashboard
 
-| Button | Path | What you should see |
-|---|---|---|
-| (page load) | data loading | `HTTP GET postback ?action=load` → `HTTP 200 application/json` → `loaded {"count":168}`; status `● loaded`; stats **Widgets live 2**, **Requests/min 1** |
-| click a cell | event | `← JS→.NET cellSelected {day,hour,value}` → `CellSelected` in C#; blue banner with the **server** value |
-| ▶ Start / ■ Stop live updates | progress (background task) | `Application.StartTask`, then every 1500 ms `Call setCells` + gauge `setValue` + `Application.Update(page)`; tile **LIVE UPDATES** shows `● running n/40` / `● stopped · reason`; bounded to 40 pushes; stops when the page closes |
-| Highlight peak | server call | the server finds the max cell in **its** copy of the data and calls `highlight(day, hour)`; one cell pulses |
-| Reload data | recovery | `Call reload()` → the client fetches the endpoint again; banner clears |
-| Cell count | server call with return value | `await CallAsync("getCellCount")` → toast "168 cells" |
-| Create/dispose ×25 | leak test | 25 heatmaps created and disposed in the SCRATCH box; `EvalAsync("return window.__integrationLabDisposed;")` → tile **DISPOSED CLEANLY 25/25**, vendor instances alive = 1 |
-| Simulate missing vendor | failure 1 | a second `HeatmapWidget` without the vendor package: the adapter guard throws **"VendorHeatmap not loaded — check Packages order."** → `error {phase:"init"}` → red banner (also visible in DevTools under `integrationlab.controls.HeatmapWidget.js`) |
-| Malformed data | failure 2 | the endpoint answers `action=corrupt` with invalid JSON (DEBUG only): the vendor throws inside `load()`, **one** `error {phase:"load", status:200}` event, page stays alive; **Reload data** recovers |
-| Clear trace | — | empties the right-hand trace |
+The four tiles on top are **Widgets live**, **Requests/min**, **Errors** and **Disposed cleanly**.
 
-The right-hand card is the live client/server trace: every message in both directions, so the JSON can be compared
-with the written contract.
+| Action | What you should see |
+|---|---|
+| (page load) | the heatmap fetches `…&action=load` from its postback endpoint and draws 7 × 24 cells; `Widgets live 2`, `Requests/min 1` |
+| click a cell | `CellSelected` in C#; the banner shows the **server** value for that cell |
+| ▶ Start / ■ Stop live updates | every 1500 ms the background task sends new cells (`Call setCells`) and a new gauge value in one `Application.Update(page)`; bounded to 40 pushes; stops when the page closes |
+| Highlight peak | the server finds the max cell in **its** copy of the data and calls `highlight(day, hour)`; one cell pulses |
+| Reload data | `Call reload()` → the client fetches the endpoint again |
+| Cell count | `await CallAsync("getCellCount")` → toast "The client widget holds 168 cells." |
+| Create/dispose ×25 | 25 heatmaps created and disposed in the Create/dispose test box; `EvalAsync` reads the adapter's counters → tile **Disposed cleanly 25/25**, vendor instances alive = 1 |
+
+Any adapter or vendor failure arrives as one `error` event: the banner names it and the **Errors** tile counts it.
+The adapter's guard clause turns a missing vendor script into "VendorHeatmap not loaded — check Packages order."
 
 ## Deliverables
 
@@ -45,7 +44,7 @@ with the written contract.
 | Capstone implementation | the project itself + [`IntegrationLab/docs/CapstoneImplementation.md`](IntegrationLab/docs/CapstoneImplementation.md) (wrapper API, lifecycle, contract tables for options / calls / events / endpoint) |
 | Integration ADR | [`IntegrationLab/docs/IntegrationADR.md`](IntegrationLab/docs/IntegrationADR.md) (ADR-002: Widget wrapper vs custom Control, and why) |
 | Resource and security checklist | [`IntegrationLab/docs/ResourceAndSecurityChecklist.md`](IntegrationLab/docs/ResourceAndSecurityChecklist.md) (resources, versioning, security, performance, design time — each item with its evidence) |
-| Demo script and troubleshooting notes | [`IntegrationLab/docs/DemoScriptAndTroubleshooting.md`](IntegrationLab/docs/DemoScriptAndTroubleshooting.md) (step-by-step with expected trace lines; symptom → cause → fix; vendor-vs-infrastructure procedure) |
+| Demo script and troubleshooting notes | [`IntegrationLab/docs/DemoScriptAndTroubleshooting.md`](IntegrationLab/docs/DemoScriptAndTroubleshooting.md) (step-by-step with what to expect on screen and in DevTools; symptom → cause → fix; vendor-vs-infrastructure procedure) |
 
 ## Where things live
 
@@ -55,7 +54,7 @@ IntegrationLab/
 │  ├─ HeatmapWidget.cs         the capstone wrapper: typed properties, postback endpoint, calls, events, pinned versions
 │  ├─ HeatmapEventArgs.cs      CellSelected / DataLoaded / LoadFailed payloads (data, never behavior)
 │  ├─ TemperatureGauge.cs      the Module 1 wrapper, reused on the dashboard (fed by the same background task)
-│  └─ GaugeEventArgs.cs        gauge payloads + the shared TraceEventArgs
+│  └─ GaugeEventArgs.cs        gauge payloads
 ├─ Data/
 │  ├─ HeatmapCell.cs           the only shape that crosses the wire
 │  └─ LoadSampleService.cs     deterministic load data: endpoint page, live batches, design-time sample
@@ -84,8 +83,8 @@ IntegrationLab/
 - **What should be cleaned up when a widget is disposed?**
   The vendor instance (`destroy()`), every event handler attached to it, observers and timers (`ResizeObserver`,
   intervals), DOM nodes the adapter created (the host element), and the references that would keep them alive
-  (`this.widget = null`, `this.host = null`, handler maps cleared). The leak test proves it: 25 created, 25 disposed,
-  one vendor instance left (the dashboard heatmap).
+  (`this.widget = null`, `this.host = null`, handler maps cleared). The create/dispose test proves it: 25 created,
+  25 disposed, one vendor instance left (the dashboard heatmap).
 - **What belongs in a production integration checklist?**
   Resources (application paths or embedded resources, pinned versions, no CDN, deterministic order, loud failure);
   versioning (vendor + wrapper versions, breaking-change notes, an upgrade test page); security (every endpoint

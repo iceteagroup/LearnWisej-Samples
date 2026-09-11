@@ -12,6 +12,5 @@ namespace TicketOps.Data
     public interface ITicketRepository
     {
         Task<IReadOnlyList<Ticket>> GetByTenantAsync(string tenant);
-        Task<Ticket> UpsertAsync(Ticket ticket);
     }
 }

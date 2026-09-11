@@ -26,15 +26,9 @@ namespace EnterpriseOps.Services
         public static SessionContext CreateDefault() => CreateFor(Tenants.Contoso, KnownUsers.AnaOps);
 
         public Tenant Tenant { get; }
-        public UserIdentity User { get; private set; }
+        public UserIdentity User { get; }
         public DateTime SessionStartedUtc { get; }
         public CommandContext CurrentCommand { get; private set; }
-
-        /// <summary>Simulated sign-in switch (the lab's "refresh as ben.tech" path). Real authentication arrives in Module 7.</summary>
-        public void SignInAs(UserIdentity user)
-        {
-            User = user ?? throw new ArgumentNullException(nameof(user));
-        }
 
         /// <summary>Starts a new unit of work: same tenant and user, new correlation id.</summary>
         public CommandContext BeginCommand()

@@ -48,11 +48,8 @@ namespace IntegrationLab.Widgets
             // The events the wrapper may raise: the documented contract.
             this.WiredEvents = new[] { "cellClick", "rowUpdated", "error" };
 
-            // -----------------------------------------------------------------------------
-            // POSTBACK ENTRY POINT (implemented per the cookbook; runtime not yet verified).
             // Subscribing to WebRequest is what makes Wisej render the wrapper's "postbackUrl"
             // property, which grid-init.js reads with this.getPostbackUrl().
-            // -----------------------------------------------------------------------------
             this.WebRequest += this.HandleWebRequest;
 
             this.Size = new System.Drawing.Size(640, 280);
@@ -169,52 +166,9 @@ namespace IntegrationLab.Widgets
         /// <summary>The client adapter caught a vendor/transport failure: error { phase, status, message }.</summary>
         public event EventHandler<DataWidgetErrorEventArgs> WidgetError;
 
-        /// <summary>Every message that crosses the wire, in either direction (for the lab trace).</summary>
+        /// <summary>Raised for every operation and event the grid sends to the server.</summary>
         [Browsable(false)]
         public event EventHandler<TraceEventArgs> Trace;
-
-        #endregion
-
-        #region Server-driven commands (Call → functions defined in grid-init.js)
-
-        public void Reload()
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "call reload()", "{}");
-            this.Call("reload");
-        }
-
-        public void NextPage()
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "call nextPage()", "{}");
-            this.Call("nextPage");
-        }
-
-        /// <summary>Inserts through the vendor (which POSTs to &amp;action=create) so the grid refreshes itself.</summary>
-        public void InsertRow(object values)
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "call insertRow(values)", JsonCodec.Serialize(values));
-            this.Call("insertRow", values);
-        }
-
-        public void DeleteSelected()
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "call deleteSelected()", "{}");
-            this.Call("deleteSelected");
-        }
-
-        /// <summary>Asks the vendor to update a row by key; an unknown key comes back as a 404 error event.</summary>
-        public void UpdateRow(string rowKey, object changes)
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "call updateRow(key, changes)", "{\"rowKey\":\"" + rowKey + "\",\"changes\":" + JsonCodec.Serialize(changes) + "}");
-            this.Call("updateRow", rowKey, changes);
-        }
-
-        /// <summary>Forces a raw read with the given paging (the lab uses take=1000 to show the 400 path).</summary>
-        public void LoadWith(int skip, int take)
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "call loadWith(paging)", "{\"skip\":" + skip + ",\"take\":" + take + "}");
-            this.Call("loadWith", new { skip, take });
-        }
 
         #endregion
 
@@ -222,10 +176,8 @@ namespace IntegrationLab.Widgets
 
         /// <summary>
         /// One HTTP request from the vendor's transport. The URL is this control's postback
-        /// URL plus &amp;action=…; GET carries skip/take/sort/filter, POST carries a JSON body.
-        /// Verified against the assembly: WebRequestEventArgs.Request/Response are
-        /// Wisej.Core.HttpRequest/HttpResponse (QueryString, RequestType, InputStream;
-        /// StatusCode, ContentType, Write). Runtime behaviour still to be confirmed in the browser.
+        /// URL plus &amp;action=…; loads carry skip/take/sort/filter, modify operations carry
+        /// their JSON document in &amp;payload=… (WebRequest is raised for GET only).
         /// </summary>
         private void HandleWebRequest(object sender, WebRequestEventArgs e)
         {
@@ -255,12 +207,6 @@ namespace IntegrationLab.Widgets
                 }
                 if (string.IsNullOrWhiteSpace(body))
                     body = e.Request.QueryString["payload"];
-                // VERIFIED (Wisej-4 4.1.0): the postback endpoint raises WebRequest for GET only. A POST to
-                // postback.wx is consumed by the framework's own request pipeline and answers [{"type":0}],
-                // so the vendor adapter sends the operation document as a GET query parameter
-                // (payload=<url-encoded JSON>). The POST branch above stays for hosts where the body arrives.
-                if (string.IsNullOrWhiteSpace(body))
-                    body = e.Request.QueryString["payload"];
 
                 result = this.DataController.Handle(action, e.Request.QueryString, body);
             }
@@ -274,8 +220,8 @@ namespace IntegrationLab.Widgets
             RaiseTrace(TraceDirection.ClientToServer, action, DescribeRequest(action, e, body) + " → " + result.Status + " " + result.Summary);
 
             // This ran on the postback thread, outside the normal Wisej request/response cycle:
-            // push the pending UI changes (the trace lines) to the browser now. If the push is not
-            // possible the trace simply shows up with the next regular round trip, so never let it
+            // push the pending UI changes (the operation line) to the browser now. If the push is not
+            // possible the line simply shows up with the next regular round trip, so never let it
             // break the data response that was already written.
             try { Application.Update(this); } catch (Exception) { }
         }
@@ -285,7 +231,7 @@ namespace IntegrationLab.Widgets
             if (action == "load")
                 return GridDataController.ParseLoadArgumentsSafe(e.Request.QueryString);
             if (string.IsNullOrWhiteSpace(body)) return "{}";
-            // compact the body for the trace: drop whitespace, cap the length.
+            // compact the body: drop whitespace, cap the length.
             string compact = body.Replace("\r", "").Replace("\n", "").Replace("  ", "");
             return compact.Length > 90 ? compact.Substring(0, 87) + "..." : compact;
         }
@@ -306,10 +252,7 @@ namespace IntegrationLab.Widgets
                         object value = JsonCodec.NormalizeValue((object)data?.value);
                         RaiseTrace(TraceDirection.ClientToServer, "cellClick", $"{{rowKey:\"{rowKey}\",field:\"{field}\",value:{JsonCodec.Serialize(value)}}}");
                         if (!IsValidKey(rowKey) || !WorkOrderStore.QueryableFields.Contains(field.ToLowerInvariant()))
-                        {
-                            RaiseTrace(TraceDirection.Server, "contract check", "cellClick payload rejected (bad rowKey or field)");
-                            return;
-                        }
+                            return;   // payload outside the contract: dropped
                         CellClick?.Invoke(this, new CellClickEventArgs(rowKey, field, value));
                         break;
                     }
@@ -319,10 +262,7 @@ namespace IntegrationLab.Widgets
                         var changes = JsonCodec.ToDictionary((object)data?.changes);
                         RaiseTrace(TraceDirection.ClientToServer, "rowUpdated", $"{{rowKey:\"{rowKey}\",changes:{JsonCodec.DictionaryToTrace(changes)}}}");
                         if (!IsValidKey(rowKey) || changes.Count == 0 || changes.Keys.Any(k => !WorkOrderStore.EditableFields.Contains(k.ToLowerInvariant())))
-                        {
-                            RaiseTrace(TraceDirection.Server, "contract check", "rowUpdated payload rejected (bad rowKey or non-editable field)");
-                            return;
-                        }
+                            return;   // payload outside the contract: dropped
                         RowUpdated?.Invoke(this, new RowUpdatedEventArgs(rowKey, changes));
                         break;
                     }

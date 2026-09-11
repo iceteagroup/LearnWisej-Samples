@@ -122,15 +122,5 @@ namespace EnterpriseOps.Services
             _trace.Write($"Data: {matching.Count} work orders in '{groupKey}' for tenant '{context.TenantId}' → {rows.Length} rows projected (WorkQueueRow, no entity)");
             return CommandResult<PagedResult<WorkQueueRow>>.Ok(correlationId, new PagedResult<WorkQueueRow>(rows, matching.Count, page, pageSize));
         }
-
-        /// <summary>The work orders the picker offers (tenant's first few, plus one foreign one to show the denied path).</summary>
-        public IReadOnlyList<WorkOrder> PickerWorkOrders(SessionContext context)
-        {
-            var own = _store.ForTenant(context.TenantId).Take(8).ToList();
-            var foreign = _store.ForTenant("contoso").Skip(6).FirstOrDefault();   // 2107
-            if (foreign != null)
-                own.Add(foreign);
-            return own;
-        }
     }
 }

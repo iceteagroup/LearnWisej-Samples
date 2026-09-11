@@ -5,7 +5,7 @@ using Wisej.Web;
 
 namespace EnterpriseOps.Hybrid
 {
-    /// <summary>The shape the screen lays itself out for. Detected, or forced by the Simulate switch.</summary>
+    /// <summary>The shape the screen lays itself out for, detected from the client.</summary>
     public enum DeviceProfile { Phone, Tablet, Desktop }
 
     /// <summary>
@@ -24,9 +24,6 @@ namespace EnterpriseOps.Hybrid
         public string OperatingSystem { get; set; }
         public int ScreenWidth { get; set; }
         public int ScreenHeight { get; set; }
-
-        /// <summary>True when the Simulate switch overrode the detected profile.</summary>
-        public bool Simulated { get; set; }
 
         /// <summary>The width the field card is laid out at for this shape — the device-aware part of the layout.</summary>
         public int FieldWidth
@@ -52,7 +49,7 @@ namespace EnterpriseOps.Hybrid
         public bool ShowsContextColumns => Profile != DeviceProfile.Phone;
 
         public override string ToString()
-            => $"{Profile}{(Simulated ? " (simulated)" : "")} · reported \"{ReportedDevice}\" · {BrowserType} on {OperatingSystem} · screen {ScreenWidth}×{ScreenHeight}";
+            => $"{Profile} · reported \"{ReportedDevice}\" · {BrowserType} on {OperatingSystem} · screen {ScreenWidth}×{ScreenHeight}";
     }
 
     /// <summary>
@@ -79,7 +76,6 @@ namespace EnterpriseOps.Hybrid
 
         private readonly IActivityTrace _trace;
         private int _scanIndex = -1;
-        private DeviceProfile? _simulated;
         private bool _online = true;
 
         public BrowserDeviceServices(IActivityTrace trace)
@@ -96,19 +92,6 @@ namespace EnterpriseOps.Hybrid
             _trace.Log(TraceLayer.Device, online
                 ? "shell reports connectivity RESTORED (network callback)"
                 : "shell reports connectivity LOST — the app keeps running, the server is unreachable");
-        }
-
-        /// <summary>Forces a shape, as the Simulate phone / tablet / desktop switch does.</summary>
-        public void Simulate(DeviceProfile profile)
-        {
-            _simulated = profile;
-            _trace.Log(TraceLayer.Device, $"simulate switch → {profile}: the screen re-lays out, no screen code changes");
-        }
-
-        public void StopSimulating()
-        {
-            _simulated = null;
-            _trace.Log(TraceLayer.Device, "simulate switch cleared → back to the detected device");
         }
 
         /// <summary>
@@ -145,8 +128,8 @@ namespace EnterpriseOps.Hybrid
                 _trace.Log(TraceLayer.Device, $"Application.Browser unavailable ({ex.GetType().Name}) — assuming Desktop");
             }
 
-            info.Profile = _simulated ?? ProfileFrom(info.ReportedDevice, info.ScreenWidth);
-            info.Simulated = _simulated.HasValue;
+            info.Profile = ProfileFrom(info.ReportedDevice, info.ScreenWidth);
+            _trace.Log(TraceLayer.Device, $"device detected → {info}");
             return info;
         }
 

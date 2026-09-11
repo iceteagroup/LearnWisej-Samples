@@ -7,7 +7,7 @@
   <!-- UI layer -->
   <rect x="32" y="92" width="600" height="96" rx="10" fill="#ffffff" stroke="#1565d8" stroke-width="2"/>
   <text x="48" y="118" font-size="15" font-weight="700" fill="#1565d8">EnterpriseOps.UI</text>
-  <text x="48" y="140" font-size="12.5" fill="#46586a">CommandCenterDashboard.cs + .Designer.cs — layout, tiles, grid, banner, trace list.</text>
+  <text x="48" y="140" font-size="12.5" fill="#46586a">CommandCenterDashboard.cs + .Designer.cs — layout, tiles, grid, banner, status bar.</text>
   <text x="48" y="160" font-size="12.5" fill="#46586a">UI state only. Every handler: try { await _workflow.XAsync(ctx); ShowResult(r); } catch { log; generic }</text>
   <text x="48" y="180" font-size="12" fill="#7a8a99" font-style="italic">Stays designable — the Designer never loads a repository or an integration.</text>
 
@@ -45,13 +45,13 @@
   <text x="48" y="416" font-size="14" font-weight="700" fill="#3a4d63">Security</text>
   <text x="48" y="438" font-size="12" fill="#46586a">UserIdentity · UserRole</text>
   <text x="48" y="456" font-size="12" fill="#46586a">DashboardPolicy</text>
-  <text x="48" y="474" font-size="11.5" fill="#b9770e">failure path 2 — denied</text>
+  <text x="48" y="474" font-size="11.5" fill="#7a8a99">decides first</text>
 
   <rect x="272" y="392" width="228" height="92" rx="10" fill="#ffffff" stroke="#8aa0b8" stroke-width="1.5"/>
   <text x="288" y="416" font-size="14" font-weight="700" fill="#3a4d63">Integrations</text>
   <text x="288" y="438" font-size="12" fill="#46586a">OperationsFeed</text>
   <text x="288" y="456" font-size="12" fill="#46586a">ReleaseCalendar</text>
-  <text x="288" y="474" font-size="11.5" fill="#c0392b">failure path 1 — outage</text>
+  <text x="288" y="474" font-size="11.5" fill="#7a8a99">behind fakes</text>
 
   <rect x="512" y="392" width="228" height="92" rx="10" fill="#ffffff" stroke="#8aa0b8" stroke-width="1.5"/>
   <text x="528" y="416" font-size="14" font-weight="700" fill="#3a4d63">Data</text>
@@ -80,7 +80,7 @@
   <path d="M850 518 L850 344" stroke="#9fc0e8" stroke-width="1.6" stroke-dasharray="5 4" fill="none"/>
 
   <rect x="32" y="600" width="916" height="40" rx="10" fill="#ffffff" stroke="#e8a13c" stroke-width="2"/>
-  <text x="48" y="626" font-size="13" fill="#8a5a12"><tspan font-weight="700">Architecture/</tspan> — ADR-001 · ArchitectureGovernancePatterns (ReviewGate) · ReviewGateService · Samples/OrderEntryLegacy.cs.txt (74 lines, 0 service calls → blocked)</text>
+  <text x="48" y="626" font-size="13" fill="#8a5a12"><tspan font-weight="700">Architecture/</tspan> — ADR-001 · ArchitectureGovernancePatterns (ReviewGate) · Samples/OrderEntryLegacy.cs.txt (74 lines, 0 service calls → blocked)</text>
 
   <defs>
     <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">

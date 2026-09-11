@@ -23,7 +23,6 @@ namespace TicketOps.Views
 
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             this.panelScreen = new Wisej.Web.Panel();
             this.labelScreenTitle = new Wisej.Web.Label();
             this.statusBanner = new TicketOps.Controls.StatusBanner();
@@ -45,20 +44,10 @@ namespace TicketOps.Views
             this.buttonClose = new Wisej.Web.Button();
             this.buttonNew = new Wisej.Web.Button();
             this.buttonRefresh = new Wisej.Web.Button();
-            this.progressBulk = new Wisej.Web.ProgressBar();
-            this.tracePanel = new TicketOps.Diagnostics.ActivityTracePanel();
-            this.panelActions = new Wisej.Web.Panel();
-            this.buttonBulk = new Wisej.Web.Button();
-            this.buttonSaveEmpty = new Wisej.Web.Button();
-            this.buttonCloseNoHours = new Wisej.Web.Button();
-            this.buttonOutage = new Wisej.Web.Button();
-            this.buttonClear = new Wisej.Web.Button();
-            this.timerBulk = new Wisej.Web.Timer(this.components);
             this.panelScreen.SuspendLayout();
-            this.panelActions.SuspendLayout();
             this.SuspendLayout();
             //
-            // panelScreen  (Open Tickets: grid + editor — display and input only)
+            // panelScreen
             //
             this.panelScreen.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.panelScreen.BackColor = System.Drawing.Color.White;
@@ -78,10 +67,9 @@ namespace TicketOps.Views
             this.panelScreen.Controls.Add(this.buttonClose);
             this.panelScreen.Controls.Add(this.buttonNew);
             this.panelScreen.Controls.Add(this.buttonRefresh);
-            this.panelScreen.Controls.Add(this.progressBulk);
             this.panelScreen.Location = new System.Drawing.Point(30, 30);
             this.panelScreen.Name = "panelScreen";
-            this.panelScreen.Size = new System.Drawing.Size(760, 560);
+            this.panelScreen.Size = new System.Drawing.Size(760, 492);
             //
             // labelScreenTitle
             //
@@ -92,7 +80,7 @@ namespace TicketOps.Views
             this.labelScreenTitle.Size = new System.Drawing.Size(300, 30);
             this.labelScreenTitle.Text = "Open Tickets";
             //
-            // statusBanner  (Controls/StatusBanner: "● state" + banner line)
+            // statusBanner
             //
             this.statusBanner.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.statusBanner.Location = new System.Drawing.Point(24, 20);
@@ -196,109 +184,47 @@ namespace TicketOps.Views
             this.numericHours.Name = "numericHours";
             this.numericHours.Size = new System.Drawing.Size(130, 30);
             //
-            // screen buttons (thin handlers → ITicketService)
+            // buttonSave
             //
             this.buttonSave.Location = new System.Drawing.Point(24, 432);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(150, 36);
             this.buttonSave.Text = "Save ticket";
-            this.buttonSave.ToolTipText = "ReadDraftFromForm() → await _tickets.SaveAsync(draft) → ShowResult(result)";
             this.buttonSave.Click += new System.EventHandler(this.buttonSave_Click);
+            //
+            // buttonClose
+            //
             this.buttonClose.Location = new System.Drawing.Point(184, 432);
             this.buttonClose.Name = "buttonClose";
             this.buttonClose.Size = new System.Drawing.Size(150, 36);
             this.buttonClose.Text = "Close ticket";
-            this.buttonClose.ToolTipText = "await _tickets.CloseAsync(id): the rule \"log hours before closing\" lives in the domain, not here";
             this.buttonClose.Click += new System.EventHandler(this.buttonClose_Click);
+            //
+            // buttonNew
+            //
             this.buttonNew.Location = new System.Drawing.Point(344, 432);
             this.buttonNew.Name = "buttonNew";
             this.buttonNew.Size = new System.Drawing.Size(120, 36);
             this.buttonNew.Text = "New";
             this.buttonNew.Click += new System.EventHandler(this.buttonNew_Click);
+            //
+            // buttonRefresh
+            //
             this.buttonRefresh.Location = new System.Drawing.Point(474, 432);
             this.buttonRefresh.Name = "buttonRefresh";
             this.buttonRefresh.Size = new System.Drawing.Size(120, 36);
             this.buttonRefresh.Text = "↻ Refresh";
             this.buttonRefresh.Click += new System.EventHandler(this.buttonRefresh_Click);
             //
-            // progressBulk
-            //
-            this.progressBulk.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.progressBulk.Location = new System.Drawing.Point(24, 496);
-            this.progressBulk.Maximum = 200;
-            this.progressBulk.Name = "progressBulk";
-            this.progressBulk.Size = new System.Drawing.Size(712, 18);
-            this.progressBulk.Visible = false;
-            //
-            // tracePanel  (Diagnostics: the live activity trace)
-            //
-            this.tracePanel.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
-            this.tracePanel.Location = new System.Drawing.Point(810, 30);
-            this.tracePanel.Name = "tracePanel";
-            this.tracePanel.Size = new System.Drawing.Size(508, 560);
-            //
-            // panelActions  (bottom bar: progress / failures / outage + recovery / clear)
-            //
-            this.panelActions.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.panelActions.Controls.Add(this.buttonBulk);
-            this.panelActions.Controls.Add(this.buttonSaveEmpty);
-            this.panelActions.Controls.Add(this.buttonCloseNoHours);
-            this.panelActions.Controls.Add(this.buttonOutage);
-            this.panelActions.Controls.Add(this.buttonClear);
-            this.panelActions.Location = new System.Drawing.Point(30, 606);
-            this.panelActions.Name = "panelActions";
-            this.panelActions.Size = new System.Drawing.Size(1288, 44);
-            //
-            // bottom bar buttons
-            //
-            this.buttonBulk.Location = new System.Drawing.Point(0, 4);
-            this.buttonBulk.Name = "buttonBulk";
-            this.buttonBulk.Size = new System.Drawing.Size(180, 36);
-            this.buttonBulk.Text = "▶ Load 200 tickets";
-            this.buttonBulk.ToolTipText = "Progress path: a Timer saves 10 generated tickets per tick through ITicketService.SaveAsync";
-            this.buttonBulk.Click += new System.EventHandler(this.buttonBulk_Click);
-            this.buttonSaveEmpty.Location = new System.Drawing.Point(190, 4);
-            this.buttonSaveEmpty.Name = "buttonSaveEmpty";
-            this.buttonSaveEmpty.Size = new System.Drawing.Size(190, 36);
-            this.buttonSaveEmpty.Text = "Save without a title";
-            this.buttonSaveEmpty.ToolTipText = "Failure path 1: the service rejects the draft (validation) — nothing is persisted";
-            this.buttonSaveEmpty.Click += new System.EventHandler(this.buttonSaveEmpty_Click);
-            this.buttonCloseNoHours.Location = new System.Drawing.Point(390, 4);
-            this.buttonCloseNoHours.Name = "buttonCloseNoHours";
-            this.buttonCloseNoHours.Size = new System.Drawing.Size(220, 36);
-            this.buttonCloseNoHours.Text = "Close #1042 without hours";
-            this.buttonCloseNoHours.ToolTipText = "Failure path 2: Ticket.CanClose (domain rule) says no — the handler never knew the rule";
-            this.buttonCloseNoHours.Click += new System.EventHandler(this.buttonCloseNoHours_Click);
-            this.buttonOutage.Location = new System.Drawing.Point(620, 4);
-            this.buttonOutage.Name = "buttonOutage";
-            this.buttonOutage.Size = new System.Drawing.Size(200, 36);
-            this.buttonOutage.Text = "Simulate data outage";
-            this.buttonOutage.ToolTipText = "Error path: the repository throws; the log gets the details, the user gets a safe message. Click again to recover.";
-            this.buttonOutage.Click += new System.EventHandler(this.buttonOutage_Click);
-            this.buttonClear.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.buttonClear.Location = new System.Drawing.Point(1148, 4);
-            this.buttonClear.Name = "buttonClear";
-            this.buttonClear.Size = new System.Drawing.Size(140, 36);
-            this.buttonClear.Text = "Clear trace";
-            this.buttonClear.Click += new System.EventHandler(this.buttonClear_Click);
-            //
-            // timerBulk
-            //
-            this.timerBulk.Interval = 120;
-            this.timerBulk.Tick += new System.EventHandler(this.timerBulk_Tick);
-            //
             // TicketEditor
             //
             this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
-            this.ClientSize = new System.Drawing.Size(1348, 680);
+            this.ClientSize = new System.Drawing.Size(820, 552);
             this.Controls.Add(this.panelScreen);
-            this.Controls.Add(this.tracePanel);
-            this.Controls.Add(this.panelActions);
             this.Name = "TicketEditor";
-            this.Text = "TicketOps Console — Module 1 · Production architecture";
+            this.Text = "TicketOps Console";
             this.Load += new System.EventHandler(this.TicketEditor_Load);
             this.panelScreen.ResumeLayout(false);
-            this.panelActions.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -325,14 +251,5 @@ namespace TicketOps.Views
         private Wisej.Web.Button buttonClose;
         private Wisej.Web.Button buttonNew;
         private Wisej.Web.Button buttonRefresh;
-        private Wisej.Web.ProgressBar progressBulk;
-        private TicketOps.Diagnostics.ActivityTracePanel tracePanel;
-        private Wisej.Web.Panel panelActions;
-        private Wisej.Web.Button buttonBulk;
-        private Wisej.Web.Button buttonSaveEmpty;
-        private Wisej.Web.Button buttonCloseNoHours;
-        private Wisej.Web.Button buttonOutage;
-        private Wisej.Web.Button buttonClear;
-        private Wisej.Web.Timer timerBulk;
     }
 }

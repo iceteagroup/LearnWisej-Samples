@@ -22,16 +22,4 @@ public sealed class TicketQueryService
         await using var db = await _dbFactory.CreateDbContextAsync(token);
         return await db.Tickets.CountAsync(token);
     }
-
-    /// <summary>
-    /// Lab prop: the same count with an artificial delay, so the loading guard in the page can be
-    /// watched (a busy server, a slow network). The delay sits inside the unit of work on purpose:
-    /// the context stays alive for the whole operation and is still disposed at the end.
-    /// </summary>
-    public async Task<int> CountTicketsSlowlyAsync(TimeSpan latency, CancellationToken token = default)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        await Task.Delay(latency, token);
-        return await db.Tickets.CountAsync(token);
-    }
 }

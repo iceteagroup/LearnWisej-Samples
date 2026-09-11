@@ -59,7 +59,8 @@ namespace EnterpriseOps.Hybrid
     ///
     /// Two production behaviours it reproduces deliberately: the store reports that it is encrypted at rest
     /// (a real build would open the SQLite file with a device-bound key), and <see cref="Wipe"/> throws
-    /// everything away on logout or after a lock-out period, so a stolen device holds nothing replayable.
+    /// everything away on logout or after a lock-out period, so a stolen device holds nothing replayable
+    /// (the prototype has no logout, so nothing calls it yet).
     /// </summary>
     public class LocalStore
     {
@@ -142,8 +143,8 @@ namespace EnterpriseOps.Hybrid
         }
 
         /// <summary>
-        /// Logout / lock-out: nothing of the tenant's data survives on the device. Also the sample's
-        /// recovery path — a device whose local state is doubted is wiped and re-downloaded, never repaired.
+        /// Logout / lock-out: nothing of the tenant's data survives on the device. A device whose local
+        /// state is doubted is wiped and re-downloaded, never repaired.
         /// </summary>
         public void Wipe()
         {
@@ -160,7 +161,7 @@ namespace EnterpriseOps.Hybrid
             _trace.Log(TraceLayer.Device, $"local store WIPED: {rows} cached work orders and {commands} commands destroyed, permission snapshot discarded");
         }
 
-        /// <summary>A rough "how much of the tenant's data is on this device" number for the trace.</summary>
+        /// <summary>A rough "how much of the tenant's data is on this device" number for the server log.</summary>
         public int ApproximateSizeBytes()
         {
             lock (_gate)

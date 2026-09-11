@@ -7,22 +7,22 @@
 | Check | Result | Evidence |
 |---|---|---|
 | Each container runs one layout engine, chosen by intent | ✔ | `docs/ResponsiveLayoutNotes.md` table; `TicketWorkspace.Designer.cs` has no `Location` inside a resizable region |
-| Profile changes toggle existing panels; nothing is rebuilt | ✔ | `ApplyResponsiveProfile` → `ShowAllPanels` / `CollapseActivityToTab` / `ShowSingleTaskView` only set `Visible`, `Dock`, `Width`, `Padding`, fill weights and `Parent`; the trace prints the preserved state before each switch |
-| The handler is thin | ✔ | one `switch`, three named methods, a `default` that falls back and reports |
-| Profiles are defined in one file and documented | ✔ | `ClientProfiles.json` (Phone ≤ 600, Tablet 601–1024, Desktop ≥ 1025), copied to `/bin` for both targets; `ClientProfileCatalog` reads it back for the strip and the unknown-name check |
+| Profile changes toggle existing panels; nothing is rebuilt | ✔ | `ApplyResponsiveProfile` → `ShowAllPanels` / `CollapseActivityToTab` / `ShowSingleTaskView` only set `Visible`, `Dock`, `Width`, `Padding`, fill weights and `Parent` |
+| The handler is thin | ✔ | one `switch`, three named methods, a `default` that falls back to the desktop layout |
+| Profiles are defined in one file and documented | ✔ | `ClientProfiles.json` (Phone ≤ 600, Tablet 601–1024, Desktop ≥ 1025), copied to `/bin` for both targets |
 | Repeated UI is a UserControl with a small public surface | ✔ | `Controls/SearchBar`: `Query`, `Placeholder`, `ButtonText`, `SearchRequested`, `Clear()`; two instances (`searchTickets`, `searchActivity`); the inner TextBox/Button are private |
 | The service knows nothing about profiles or controls | ✔ | `Services/TicketService.cs` takes no Wisej.NET type; desktop, tablet and phone call the same `SearchAsync`, `SaveAsync`, `CloseAsync`, `GetActivityAsync` |
-| Every path is visible without leaking internals | ✔ | success (preview / save / search), progress (tour), validation (1-character search), rule (unknown profile → fallback), error + recovery (data outage); `Strings.*` in the UI, details in the trace |
-| No per-user state in statics | ✔ | `AppComposition` per session; the only statics are constants, `SeedData`, `OperationResult.Ok/Fail`, `StatusBanner.ColorFor` and `ClientProfileCatalog.Load/Parse` (pure) |
-| Session-level events are released | ✔ | `Application.ResponsiveProfileChanged` / `BrowserSizeChanged` unsubscribed in `Dispose(bool)` of `MainPage` and `TicketWorkspace` |
-| Designer-friendly | ✔ | every Form/Page/UserControl has a parameterless constructor and a `.Designer.cs` with the whole layout in `InitializeComponent()`; the workspace receives its services through `Attach(...)` (like `ActivityTracePanel.Attach`) or its real constructor |
+| Every path is visible without leaking internals | ✔ | success (save, search, chips), validation (a 1-character search, a blank title), rule (close without hours), unexpected failure (details to `ILog`, `Strings.ActionFailed` on screen) |
+| No per-user state in statics | ✔ | `AppComposition` per session; the only statics are constants, `SeedData`, `OperationResult.Ok/Fail` and `StatusBanner.ColorFor` |
+| Session-level events are released | ✔ | `Application.ResponsiveProfileChanged` unsubscribed in `Dispose(bool)` of `TicketWorkspace` |
+| Designer-friendly | ✔ | every Page/UserControl has a parameterless constructor and a `.Designer.cs` with the whole layout in `InitializeComponent()`; the workspace receives its services through `Attach(...)` or its real constructor |
 
 ## Before shipping
 
-1. **Confirm the profile events at runtime** (this sample was built, not run): resize across 600 / 1024 px
-   and check that `Application.ResponsiveProfileChanged` fires with the names from `ClientProfiles.json`
-   and not the framework's `Small Desktop`; if `Small Desktop` appears, add an entry with that name to the
-   JSON so the override wins, or map it to `Tablet` in the switch.
+1. **Confirm the profile events at runtime**: resize across 600 / 1024 px and check that
+   `Application.ResponsiveProfileChanged` fires with the names from `ClientProfiles.json` and not the
+   framework's `Small Desktop`; if `Small Desktop` appears, add an entry with that name to the JSON so the
+   override wins, or map it to `Tablet` in the switch.
 2. **Real devices**: test a phone in portrait and landscape (the built-in `Phone (Landscape)` profile is
    overridden only if the JSON defines it) and a tablet with an external keyboard.
 3. **Minimum sizes**: `MinimumSize` is set on the cards so the flex panels stop shrinking them; verify no
@@ -39,9 +39,7 @@
 
 ## Evidence
 
-Bottom bar, in order: **Preview as tablet** → **Preview as phone** → **Live** (success), **▶ Tour all
-profiles** (progress), **Search 1 character** (`[SVC] ⚠ rejected: query "x" is shorter than 2 characters`,
-orange banner, no `[DATA]` line), **Apply profile "Kiosk"** (`[UI] ⚠ … not defined in ClientProfiles.json →
-desktop layout as the safe fallback`, orange banner), **Simulate data outage** (`[DATA] ✖ outage: SELECT * FROM
-Tickets failed — timeout connecting to sql01:1433 …` in the trace only; red banner with the safe sentence),
-**Recover the data store** (grid and feed reload, status **● ready**).
+Resize the browser across 1024 px and 600 px: the status bar reads `Active profile: Tablet` / `Phone` and
+the layout changes as described in `ProfileNotes.md`. Type one character in the ticket SearchBar and press
+Enter: orange banner **Type at least 2 characters to search.**, the grid is unchanged. Select #1002 (no
+hours logged) and press **Close**: orange banner **Log hours before closing.**

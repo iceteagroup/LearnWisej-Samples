@@ -82,22 +82,5 @@ namespace EnterpriseOps.Security
                 };
             }
         }
-
-        /// <summary>Failure-path helper: an admin revokes a permission while the technician is offline.</summary>
-        public void Revoke(string user, string permission)
-        {
-            lock (_gate)
-                if (_grants.TryGetValue(user, out var set)) set.Remove(permission);
-        }
-
-        public void Grant(string user, string permission)
-        {
-            lock (_gate)
-            {
-                if (!_grants.TryGetValue(user, out var set))
-                    _grants[user] = set = new HashSet<string>();
-                set.Add(permission);
-            }
-        }
     }
 }

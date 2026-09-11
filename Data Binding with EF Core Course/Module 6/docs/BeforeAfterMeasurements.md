@@ -117,23 +117,6 @@ exist.
 
 Full remarks and the SQL for each in `docs/RelatedDataDecisions.md`.
 
-## The background job
-
-`TicketQueryService.CountTicketsPerStatusAsync`, run with the real 312-ticket seed:
-
-```
-1/5 Open: 93
-2/5 In Progress: 69
-3/5 Waiting: 32
-4/5 Resolved: 65
-5/5 Closed: 53
-```
-
-5 statements (one `COUNT` per status), **1 context created** for the whole job — not one per step
-(`SupportDesk.Tests/TicketDetailServiceTests.cs`, `CountTicketsPerStatusAsync_creates_exactly_one_context_for_the_whole_job`).
-93 + 69 + 32 + 65 + 53 = 312, matching the seeded total exactly
-(`CountTicketsPerStatusAsync_reports_every_status_once_in_order_and_the_counts_sum_to_the_total`).
-
 ## How to reproduce these numbers
 
 A minimal repro (not part of the shipped solution — the pattern used to produce every number on this page):

@@ -3,7 +3,7 @@
 ## Part A — Smoke test checklist
 
 Run after every deployment, in every environment, against the **real** deployed instance.
-Seven checks, minutes not hours. Implemented in `Services/SmokeTestService.cs`; press **Run smoke tests**.
+Seven checks, minutes not hours. Implemented in `Services/SmokeTestService.cs`, run by runbook step 4 and after a rollback.
 
 | # | Check | Blocking | Passes when | Fails because |
 |---|---|---|---|---|
@@ -58,7 +58,6 @@ They keep answering on the old node until they end or the drain window closes; t
 
 | Action | What you see |
 |---|---|
-| **Run smoke tests** | Seven `Health: smoke n. …: PASS` lines in the trace and a green banner with the elapsed time. |
-| **Fail: node B health check** → the deploy runs | Check 3 and check 4 fail on `app-node-B`; the banner names the failing step and says step 8 is armed. |
+| First **Deploy…** | Check 3 and check 4 fail on `app-node-B`; the banner names the failing step and says step 8 is armed. |
 | **Rollback…** | Node B goes to `2.4.1`, the checklist re-runs green, the chip turns `↩`, banner: *"Users never saw a broken node."* |
-| **Sign in as ben.tech** then **Rollback…** | Refused before anything moves: `Security: ben.tech (Technician) may NOT roll back — rule: Manager or Admin`. |
+| A Technician presses **Rollback…** | Refused server-side by `ReleaseAuthorization` before anything moves. |

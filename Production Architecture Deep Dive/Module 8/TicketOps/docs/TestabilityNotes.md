@@ -43,10 +43,10 @@ Every interface has a fake in `Services/Fake*.cs`. Two of them are deliberately 
 The fakes are what the **fake registration profile** hands to the running app too, which is why the tests and the screen exercise
 the same code path.
 
-## The tests (Diagnostics/PresenterTestRunner.cs — "▶ Run presenter tests")
+## The tests (Diagnostics/PresenterTestRunner.cs)
 
-Each test builds a fresh fixture by constructor — `new FakeTicketService(log, health)`, `new FakeUserService(log)`,
-`new FakePermissionService(users, log)`, `new FakeNotificationService(log)`, `new FakeAuditLogService()`,
+Each test builds a fresh fixture by constructor — `new FakeTicketService(log)`, `new FakeUserService()`,
+`new FakePermissionService(users)`, `new FakeNotificationService(log)`, `new FakeAuditLogService()`,
 `new TicketWorkflowPresenter(...)` — calls one presenter method and asserts. No container, no Form, no session.
 
 | # | Test | Asserts |
@@ -58,31 +58,19 @@ Each test builds a fresh fixture by constructor — `new FakeTicketService(log, 
 | 5 | `Close_without_a_reason_never_reaches_a_service` | `Invalid`; ticket untouched; no side effects |
 | 6 | `Close_of_an_unknown_ticket_reports_not_found` | `NotFound` |
 | 7 | `Assign_to_me_notifies_the_new_assignee` | `Ok`; assignee = operator 1; notification + `assign` audit entry |
-| 8 | `Data_outage_surfaces_as_an_exception_not_a_result` | `DataOutageException` propagates; nothing audited |
+| 8 | `Data_outage_surfaces_as_an_exception_not_a_result` | with a ticket-service double whose store is down, the exception propagates; nothing audited |
 
-In a real solution these eight methods move to a test project under `[Test]`/`[Fact]` unchanged — the in-app runner exists so the
-lab can show them without a test runner installed. The `Assert` helper throws `InvalidOperationException`; the runner turns it
-into a ✖ line in the trace and a failed count in the status.
+In a real solution these eight methods move to a test project under `[Test]`/`[Fact]` unchanged. The `Assert` helper throws
+`InvalidOperationException`; `RunAsync(index)` turns it into a failed `PresenterTestResult`.
 
 ## What is *not* tested here, on purpose
 
-- Whether `[Inject]` fills the properties: that is framework behaviour, verified by running the app (the trace prints which path
-  ran — automatic injection or an explicit `Application.Services.Inject(this)`).
+- Whether `[Inject]` fills the properties: that is framework behaviour, verified by running the app.
 - Layout, colours, the Designer file.
 - The production-shaped services: they are stand-ins; a real `SqlTicketService` would get integration tests against a database.
 
 ## Keeping the container out of the logic
 
 Neither the presenter nor any service calls `Application.Services`. Only three places touch the container: `Program.Main`
-(pick a profile), `ServiceRegistration` (the registrations), and `Diagnostics/ServiceProbe` + the Form's `EnsureInjected` /
-profile-switch handler (diagnostics and the fallback `Inject(this)`). A service that fetched its own dependencies mid-method would
-hide them from the constructor — and from the tests.
-
-## Evidence
-
-- **▶ Run presenter tests** → the progress bar advances 8 steps; the trace shows `[INFRA] PresenterTests — ✔ 1/8 …` through
-  `✔ 8/8 …` interleaved with the `[SVC]`/`[DOMAIN]`/`[DATA]` lines the fakes wrote; status **● 8/8 tests passed**; green banner.
-- **Close ticket** on #1041 with a reason → the same `[SVC] TicketWorkflowPresenter.CloseAsync` lines appear as in test 1, now
-  driven by the injected services instead of the fixture.
-- **Switch to production** → the same handlers produce `[DATA] SqlTicketService … would run: UPDATE dbo.Tickets …` — the Form and
-  the presenter did not change.
+(pick a profile), `ServiceRegistration` (the registrations) and the Form's `EnsureInjected` (the fallback `Inject(this)`).
+A service that fetched its own dependencies mid-method would hide them from the constructor — and from the tests.

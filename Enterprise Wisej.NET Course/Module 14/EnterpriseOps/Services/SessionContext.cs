@@ -8,7 +8,7 @@ namespace EnterpriseOps.Services
 {
     /// <summary>
     /// Everything that belongs to one browser session: the tenant, the signed-in user, the services built for
-    /// them, the shared activity trace — and nothing at all in a static field.
+    /// them, the session's server log — and nothing at all in a static field.
     ///
     /// This is the answer to the first question an architecture review asks about the capstone: <b>where does
     /// state live?</b> One instance is created in <see cref="Program"/>, parked in <c>Application.Session</c>,
@@ -37,25 +37,15 @@ namespace EnterpriseOps.Services
 
         public Tenant Tenant { get; }
 
-        public UserIdentity User { get; private set; }
+        public UserIdentity User { get; }
 
         public DateTime SessionStartedUtc { get; }
 
         /// <summary>The per-session services. Created once, shared by both screens of the session.</summary>
         public ServiceRegistry Services { get; }
 
-        /// <summary>The command running right now — the correlation id the header and the audit lines show.</summary>
+        /// <summary>The command running right now — the correlation id the audit lines and error messages quote.</summary>
         public CommandContext CurrentCommand { get; private set; }
-
-        /// <summary>
-        /// The lab's "review as ben.tech" switch. Real authentication arrives in Module 7; what matters here
-        /// is that the identity lives in the session and every service re-reads it from the CommandContext.
-        /// </summary>
-        public void SignInAs(UserIdentity user)
-        {
-            User = user ?? throw new ArgumentNullException(nameof(user));
-            Services.Trace.Security($"signed in as {User}");
-        }
 
         /// <summary>Starts a new unit of work: same tenant and user, a fresh correlation id.</summary>
         public CommandContext BeginCommand()

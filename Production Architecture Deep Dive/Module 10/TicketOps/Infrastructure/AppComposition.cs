@@ -20,27 +20,20 @@ namespace TicketOps.Infrastructure
         public ActivityLog Log { get; } = new ActivityLog();
         public SessionContext Session { get; }
         public ILocalizationService Localization { get; }
-        public InMemoryWorkOrderRepository Repository { get; }
         public IWorkOrderService WorkOrders { get; }
         public ThemeSwitcher Themes { get; }
 
         public AppComposition()
         {
-            Log.Info(LogLayer.Infrastructure, "AppComposition", "composing the session object graph (nothing static)");
-
             Session = new SessionContext { SessionId = Application.SessionId };
             Localization = new LocalizationService(Session, Log);
-            Repository = new InMemoryWorkOrderRepository(Log);
-            WorkOrders = new WorkOrderService(Repository, Localization, Log);
+            WorkOrders = new WorkOrderService(new InMemoryWorkOrderRepository(), Localization, Log);
             Themes = new ThemeSwitcher(Session, Log);
-
-            Log.Info(LogLayer.Infrastructure, "AppComposition",
-                "ILocalizationService → LocalizationService(SessionContext) · IWorkOrderService → WorkOrderService(InMemoryWorkOrderRepository, ILocalizationService) · ThemeSwitcher(SessionContext)");
         }
 
         public OperationsDashboard CreateMainView()
         {
-            return new OperationsDashboard(WorkOrders, Localization, Themes, Repository, Log);
+            return new OperationsDashboard(WorkOrders, Localization, Themes, Log);
         }
     }
 }

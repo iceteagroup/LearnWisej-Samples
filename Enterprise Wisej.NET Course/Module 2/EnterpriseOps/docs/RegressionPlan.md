@@ -74,7 +74,7 @@ Job:      regression harness: PASS — 10/10 flows
   or red; the dark footer carries the verdict the video prints:
   `Regression harness: FAIL — 7/10 flows, 3 theme flows broken` · then
   `Regression harness: PASS — 10/10 flows · Migration path complete — 7/7 steps passed, 7/7 dossier rows proven`.
-- Flows 2–5 can also be run by hand on `WorkOrdersPage`: the three tab buttons, **+ New work order**,
-  **Fail: new work order, blank title** and **Fail: approve with stale version**.
+- Flows 2–3 can also be checked by hand on `WorkOrdersPage` with the three tab buttons; **+ New work order** goes
+  through the same `WorkOrderService.Save` validation that flow 4 asserts.
 - Flows 6–8 are visible rather than described: open `WorkOrdersPage` before mapping the mixin and the app bar is
   grey, the tabs are square and the priority column is monochrome.

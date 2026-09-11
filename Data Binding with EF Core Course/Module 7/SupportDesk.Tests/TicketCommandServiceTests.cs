@@ -18,12 +18,11 @@ public sealed class TicketCommandServiceTests : IDisposable
 {
     private readonly SqliteTestFactory _factory = new();
     private readonly ConflictResolution _conflictResolution = new();
-    private readonly TransactionFailureSwitch _transactionFailure = new();
     private readonly TicketCommandService _commands;
 
     public TicketCommandServiceTests()
     {
-        _commands = new TicketCommandService(_factory, _conflictResolution, _transactionFailure);
+        _commands = new TicketCommandService(_factory, _conflictResolution);
     }
 
     private Task<SeedResult> SeedAsync() => new DevelopmentSeeder(_factory).SeedDevelopmentDataAsync();

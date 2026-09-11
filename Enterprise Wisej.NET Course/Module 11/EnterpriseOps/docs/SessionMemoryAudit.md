@@ -1,7 +1,7 @@
 # Deliverable 5 — Memory / session audit notes
 
-**Code:** `Diagnostics/SessionMemoryAudit.cs` · `Services/ReportCacheService.cs` ·
-`UI/DiagnosticsPage.RegisterRetainedState` · `UI/DiagnosticsPage_Disposed`
+**Code:** `Diagnostics/SessionMemoryAudit.cs` · `UI/DiagnosticsPage.RegisterRetainedState` ·
+`UI/DiagnosticsPage_Disposed`
 
 ## Why a session, not a request
 
@@ -30,31 +30,22 @@ generated rather than remembered:
 |---|---|---|---|---|---|
 | `InMemoryWorkOrderStore._rows` | the work-order table this session queries | yes — fixed at 150 rows | ≈ 0.05 MB | whole session | `ok` |
 | `StructuredLog._entries` | the session's structured log, read by this page | yes — ring buffer, cap 200 | ≤ 0.09 MB | whole session, oldest dropped | `ok` |
-| `DiagnosticsPage.lstTrace.Items` | the on-screen activity trace | yes — trimmed to 400 lines | ≤ 0.05 MB | whole session | `ok` |
-| `ReportCacheService._cached` | *"cache the big report so the second open is instant"* | **no** | **≈ 11.4 MB** when filled | **whole session — never cleared** | `REVIEW` empty · `OVER BUDGET` filled |
+| `DiagnosticsPage.lstStructuredLog.Items` | the log lines shown on the page | yes — trimmed to 60 lines | ≤ 0.02 MB | whole session | `ok` |
 
-The last row is the deliberate mistake, and it is the shape almost every real leak takes: a well-meant
-cache, a collection in a field, filled once, cleared never.
-
-```csharp
-// Services/ReportCacheService.cs — DELIBERATELY LEAKY
-private List<WorkQueueRow> _cached;   // 50,000 rows ≈ 11.4 MB, for the whole session
-```
-
-`ReportCacheService.Retain` measures the damage rather than estimating it: `GC.GetTotalMemory(true)` before
-and after, and the audit reports the larger of the model estimate and the measured growth.
-
-The fix is one line — `_cached = null;` in `Release()` — called both by the **Release cache** button and by
-the page's `Disposed` handler.
+What the review challenges is the shape almost every real leak takes: a well-meant cache — "keep the big
+report so the second open is instant" — as a collection in a field, filled once, cleared never. A
+50,000-row report held that way is ≈ 11 MB per session; registered with the audit it would be flagged
+`OVER BUDGET` with the advice *"unbounded and large — release it after use, or do not retain it at all"*.
+If a report really must be cached, cache the *page* the user is looking at (50 rows), give it an expiry,
+and clear it when the screen that needed it closes.
 
 ## Question 2 — which timers, subscriptions and tasks does this form start, and where are they stopped?
 
 | Started | Where | Stopped |
 |---|---|---|
-| `timerLive` (1 s `Wisej.Web.Timer`) | `btnLive_Click` | `btnLive_Click` (toggle) **and** `DiagnosticsPage_Disposed` |
+| `timerLive` (1 s `Wisej.Web.Timer`) | `DiagnosticsPage_Load` | `DiagnosticsPage_Disposed` |
 | `StructuredLog.EntryWritten` handler | `DiagnosticsPage` constructor | `DiagnosticsPage_Disposed` (`-=`) |
 | `CancellationTokenSource _cts` | each `RunSearchAsync` | disposed on the next search and in `DiagnosticsPage_Disposed` |
-| `ReportCacheService._cached` | `btnLeakSession_Click` | `btnReleaseLeak_Click` **and** `DiagnosticsPage_Disposed` |
 
 ```csharp
 private void DiagnosticsPage_Disposed(object sender, EventArgs e)
@@ -63,7 +54,6 @@ private void DiagnosticsPage_Disposed(object sender, EventArgs e)
     _log.EntryWritten -= Log_EntryWritten;    // a live handler holds a reference to a disposed control
     _cts?.Dispose();
     _cts = null;
-    _reportCache.Release();                   // drop the retained report
 }
 ```
 
@@ -89,25 +79,11 @@ The four classic disposal mistakes, and where each one is avoided here:
 | `SessionContext` (user, tenant, correlation factory) | **yes** | it *is* the session's identity; it holds no collections |
 | `InMemoryWorkOrderStore` | yes, in this lab | it stands in for the database; bounded at 150 rows |
 | `StructuredLog` | yes | the diagnostics page reads it; bounded at 200 entries |
-| trace `ListBox` items | yes | it is the screen; trimmed at 400 lines |
-| `ReportCacheService._cached` | **no** | a convenience cache; it should be scoped to the report screen, capped, or not held at all |
-
-The honest answer for the fourth row is that it should not be a session field. If the report really must be
-cached, cache the *page* the user is looking at (50 rows), give it an expiry, and clear it when the screen
-that needed it closes.
+| structured log `ListBox` items | yes | it is the screen; trimmed at 60 lines |
 
 ## Evidence — what the running app shows
 
-1. Click **Leak: cache 50k rows**. The trace prints the audit line by line:
-   `Diagnostics:   [OVER BUDGET] ReportCacheService._cached ≈11.4 MB · whole session — never cleared → unbounded and large — release it after use, or do not retain it at all`,
-   the `managed heap` figure on the Session & health card jumps by roughly the same amount, a red banner
-   appears, and the structured log gains a `RetainReport` warning entry with `heapBeforeBytes`,
-   `heapAfterBytes` and `growthBytes`.
-2. Click **Health check** while it is retained → the health chip goes `DEGRADED`, with
-   `session memory — 1 over budget: ReportCacheService._cached ≈11.4 MB` in its tooltip.
-3. Click **Release cache** → the trace shows `Service: ReportCacheService.Release() → 50,000 rows dropped;
-   the GC can reclaim them`, the audit re-runs and passes (`ReportCacheService._cached` drops to `REVIEW`,
-   because the *design* is still unbounded), the heap figure falls back, and the banner turns green.
-4. Click **▶ Live refresh**, then run the audit again → the timer probe reports
-   `timer timerLive (1 s) · RUNNING · stopped in btnLive_Click (toggle) and DiagnosticsPage_Disposed`.
-   Stop it and the same line reads `stopped`.
+- **Hover the health chip** → the `session memory` check reads
+  `healthy — 3 holders, ≈0.1 MB retained (budget 8.0 MB)`, and `live refresh job` reads
+  `running every 1000 ms`.
+- The **Session & health** card shows the managed heap and working set, refreshed every second.

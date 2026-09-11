@@ -1,8 +1,5 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 
 namespace EnterpriseOps.Widgets
 {
@@ -69,9 +66,8 @@ namespace EnterpriseOps.Widgets
     ///
     /// <para>
     /// <b>Why the first two are also on disk under <c>Widgets/</c>:</b> a Widget package is fetched by the
-    /// browser over HTTP, so a served copy has to exist somewhere. The embedded copy is the source of truth
-    /// and <see cref="Verify"/> compares the two, so a stale hand-edited file on disk is reported instead of
-    /// silently shipping. Upgrading the vendor means changing one folder and this one list.
+    /// browser over HTTP, so a served copy has to exist somewhere. The embedded copy is the source of truth.
+    /// Upgrading the vendor means changing one folder and this one list.
     /// </para>
     /// </summary>
     public static class ComponentResourcePackage
@@ -107,84 +103,5 @@ namespace EnterpriseOps.Widgets
         /// <summary>The client adapter entry.</summary>
         public static ComponentResource Adapter
             => _all.First(r => r.Kind == ComponentResourceKind.Adapter);
-
-        /// <summary>Reads one embedded resource as text, or null when it was not compiled in.</summary>
-        public static string Read(string embeddedName)
-        {
-            using (Stream stream = typeof(ComponentResourcePackage).Assembly.GetManifestResourceStream(embeddedName))
-            {
-                if (stream == null)
-                    return null;
-
-                using (var reader = new StreamReader(stream))
-                    return reader.ReadToEnd();
-            }
-        }
-
-        /// <summary>The size in bytes of the embedded copy, or -1 when it was not compiled in.</summary>
-        public static int SizeOf(string embeddedName)
-        {
-            using (Stream stream = typeof(ComponentResourcePackage).Assembly.GetManifestResourceStream(embeddedName))
-                return stream == null ? -1 : (int)stream.Length;
-        }
-
-        /// <summary>
-        /// The manifest a reviewer reads: what is in the package, in which order, how big the embedded copy
-        /// is, and whether the served copy still matches it.
-        /// </summary>
-        public static IEnumerable<string> Describe()
-        {
-            yield return $"{PackageName} {PackageVersion} · vendor EnterpriseOpsChart {VendorVersion} · assembly {typeof(ComponentResourcePackage).Assembly.GetName().Name}";
-
-            foreach (ComponentResource resource in _all.OrderBy(r => r.Order))
-            {
-                int size = SizeOf(resource.EmbeddedName);
-                string state = size < 0 ? "MISSING from the assembly" : $"{size} bytes embedded";
-                string delivery = resource.Kind == ComponentResourceKind.Adapter
-                    ? "InitScript (never served)"
-                    : $"package '{resource.Name}' → /{resource.Source}";
-
-                yield return $"  {resource.Order}. {resource.Kind} {Path.GetFileName(resource.EmbeddedName.Replace("EnterpriseOps.Widgets.", ""))} v{resource.Version} · {delivery} · {state}";
-            }
-        }
-
-        /// <summary>
-        /// Compares the embedded copy of every served resource with the file on disk under
-        /// <paramref name="applicationRoot"/>. Returns one line per problem; an empty result means the
-        /// package is intact.
-        /// </summary>
-        public static IReadOnlyList<string> Verify(string applicationRoot)
-        {
-            var problems = new List<string>();
-
-            foreach (ComponentResource resource in _all.OrderBy(r => r.Order))
-            {
-                string embedded = Read(resource.EmbeddedName);
-                if (embedded == null)
-                {
-                    problems.Add($"{resource.EmbeddedName} is declared in the package but is not an EmbeddedResource in the csproj.");
-                    continue;
-                }
-
-                if (resource.Source == null)
-                    continue;                       // the adapter is never served: nothing to compare
-
-                string path = Path.Combine(applicationRoot ?? ".", resource.Source.Replace('/', Path.DirectorySeparatorChar));
-                if (!File.Exists(path))
-                {
-                    problems.Add($"{resource.Source} is registered as a package but no file is served from there (the browser would get a 404).");
-                    continue;
-                }
-
-                string served = File.ReadAllText(path);
-                if (Normalize(served) != Normalize(embedded))
-                    problems.Add($"{resource.Source} on disk differs from the copy embedded in the assembly — the served file was edited by hand.");
-            }
-
-            return problems;
-        }
-
-        private static string Normalize(string text)
-            => (text ?? "").Replace("\r\n", "\n").TrimEnd();
     }
 }

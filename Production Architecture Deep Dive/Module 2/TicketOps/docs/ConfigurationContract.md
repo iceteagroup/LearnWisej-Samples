@@ -20,7 +20,7 @@ they live on `SessionContext` and are never written back to a file.
 | `DefaultTenant` | string | `Contoso` | Tenant a new session starts in until the operator switches | deployer |
 | `AvailableThemes` | string[] | `Bootstrap-4, Material-3, FluentDark-5` | Themes an operator may select for their session (`SessionService.SelectTheme` rejects others) | deployer |
 
-A missing or unreadable file does not stop the app: defaults apply and the trace says `from (defaults)`.
+A missing or unreadable file does not stop the app: defaults apply.
 
 ## `Default.json` — Wisej.NET's own configuration, read through `Application.Configuration`
 
@@ -54,7 +54,6 @@ source control and inject it at deploy time.
 
 Open the app: the **Application** panel lists *Environment / build*, *Dispatch API base URL*, *Upload limit*,
 *Logging level* (from `appsettings.json`) and *Idle session timeout (Default.json)*, *Default theme (Default.json)*
-(from `Application.Configuration`). Open a second tab: the same values, and the trace says
-`[INFRA] ProcessScope.Settings — AppSettings reused (loaded once per process at HH:mm:ss from …appsettings.json)`.
+(from `Application.Configuration`). Open a second tab: the same values, read once per process.
 Change `UploadLimitMB` in `appsettings.json`, restart the process: the value changes for everyone at once —
 which is exactly what "application scope" means.

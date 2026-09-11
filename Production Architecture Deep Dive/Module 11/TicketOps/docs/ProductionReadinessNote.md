@@ -4,8 +4,8 @@
 
 ## Proven in code (keep as is)
 
-- Authorization is enforced **inside `TicketService`**, per action, from the session identity; the UI only hides.
-  Both bypass buttons end in an audited denial. (`docs/PermissionMatrix.md`, `docs/ThreatNotes.md` §1–2)
+- Authorization is enforced **inside `TicketService`**, per action, from the session identity; the UI only
+  disables. A force-enabled Delete still ends in an audited denial. (`docs/PermissionMatrix.md`, `docs/ThreatNotes.md` §1–2)
 - Authentication is a separate step at a **login gate**; the console has no screen before it. (`Views/LoginView`)
 - User text is rendered as text by default; the one `AllowHtml = true` surface is allow-listed and commented. (`docs/SafeHtmlPolicy.md`)
 - Errors and denials show `Strings.*` only; internals stay in the log. Sign-in failure is one neutral message.
@@ -15,8 +15,8 @@
 
 | Fake | Replace with | What else changes |
 |---|---|---|
-| `Data/InMemoryUserStore` (three accounts, password `"demo"`) + `Security/AuthenticationService` (fixed-time compare of a constant) | An identity provider: OpenID Connect (Entra ID, Keycloak, …) or Windows authentication on the host; roles/groups from its claims | `AuthenticationService` becomes an adapter that turns claims into `UserContext`; **nothing else** — screens and services depend on `IUserSession`, `IUserContext`, `IPermissionService` only |
-| `Infrastructure/AuditLog` (in-memory list + trace lines) | A durable, append-only sink: audit table with insert-only rights, or a SIEM forwarder | Same `IAuditService`; add retention and access rules for the audit data |
+| `Data/InMemoryUserStore` (three accounts, password `secret123`) + `Security/AuthenticationService` (fixed-time compare of a constant) | An identity provider: OpenID Connect (Entra ID, Keycloak, …) or Windows authentication on the host; roles/groups from its claims | `AuthenticationService` becomes an adapter that turns claims into `UserContext`; **nothing else** — screens and services depend on `IUserSession`, `IUserContext`, `IPermissionService` only |
+| `Infrastructure/AuditLog` (in-memory list + log lines) | A durable, append-only sink: audit table with insert-only rights, or a SIEM forwarder | Same `IAuditService`; add retention and access rules for the audit data |
 | `Data/InMemoryTicketRepository` | The real repository (Module 4/12) | none — the repository never checks permissions; the service already did |
 | Audit list shown to every role | Gate it with `Permission.ViewAuditTrail` (already in the matrix) | `WorkOrdersView.ApplyPermissionsToControls` hides the list; a dedicated audit screen for Supervisors/Admins |
 
@@ -24,7 +24,7 @@
 
 | Item | Setting | Why |
 |---|---|---|
-| Transport | HTTPS everywhere; WebSocket over WSS; HSTS | `Application.IsSecure` must read `True` in the trace at load |
+| Transport | HTTPS everywhere; WebSocket over WSS; HSTS | `Application.IsSecure` must be `True` on the host |
 | Session cookie | `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict`), set by the host/reverse proxy | blunts theft via XSS and cross-site replay (`ThreatNotes.md` §4) |
 | Session timeout | `Default.json` → `sessionTimeout` (seconds) sized for the desk workflow (e.g. 20 min); handle `Application.SessionTimeout` to warn | idle sessions expire; the identity dies with the session |
 | Content Security Policy | `Content-Security-Policy: default-src 'self'; script-src 'self' …; object-src 'none'; frame-ancestors 'none'` — test against the Wisej.NET client bundle first (it uses inline styles; start with `report-only`) | second layer against injected script |
@@ -37,13 +37,11 @@
 ## Wisej.NET APIs used for security in this module (verify on the deployment host)
 
 `Application.User` (get/set `IPrincipal`), `Application.IsAuthenticated`, `Application.IsSecure`,
-`Application.SessionId`, `Label.AllowHtml` (default `false`), `TextBox.PasswordChar`, `Form.AcceptButton`.
-They come from the Wisej.Framework 4.1.0 XML documentation; the sample logs their values at load and on
-sign-in so a reviewer can confirm them in the trace.
+`Label.AllowHtml` (default `false`), `TextBox.PasswordChar`, `Form.AcceptButton`.
 
 ## Sign-off questions (from the lesson)
 
 1. Where is authorization actually enforced? → `TicketService.Authorize`, on the server, per action.
 2. Which controls allow HTML, and is user content sanitized before them? → one label, allow-listed; everything else text.
-3. If someone called a sensitive service method directly, would they be stopped? → yes, and audited (*Call DeleteAsync directly*).
-4. What sensitive data could end up in a log or a user message? → none: passwords are never logged, notes are encoded and audited by length, users see `Strings.*`.
+3. If someone called a sensitive service method directly, would they be stopped? → yes, and audited (force-enable Delete as a Technician).
+4. What sensitive data could end up in a log or a user message? → none: passwords and note bodies are never logged or audited, users see `Strings.*`.

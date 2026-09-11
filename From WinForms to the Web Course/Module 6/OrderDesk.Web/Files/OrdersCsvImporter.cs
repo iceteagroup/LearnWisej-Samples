@@ -18,7 +18,7 @@ namespace OrderDesk.Files
     }
 
     /// <summary>
-    /// ✓ The migrated "Import orders": parses a CSV that arrived through the Upload control and
+    /// The migrated "Import orders": parses a CSV that arrived through the Upload control and
     /// saves orders through the reused business logic (CustomerService.FindByName + OrderService.Save,
     /// which computes the total). The importer never knows where the file came from — a stream is
     /// a stream — which is exactly what the desktop version (File.ReadAllLines(@"C:\Orders\in.csv"))
@@ -26,7 +26,7 @@ namespace OrderDesk.Files
     ///
     /// Two layouts are accepted:
     ///   Customer,PO,Sku,Qty,UnitPrice          one line per order line; rows with the same Customer + PO form one order
-    ///   Order,Customer,Owner,PO,Status,Total   the CsvExport layout; one order per row with a single "imported total" line
+    ///   Order,Customer,Owner,PO,Status,Total   the export layout; one order per row with a single "imported total" line
     /// </summary>
     public static class OrdersCsvImporter
     {
@@ -139,7 +139,7 @@ namespace OrderDesk.Files
             }
 
             foreach (var order in sequence)
-                result.Saved.Add(orders.Save(order));       // ✓ CalculateOrderTotal + NextId — the reused business rule
+                result.Saved.Add(orders.Save(order));       // CalculateOrderTotal + NextId — the reused business rule
         }
 
         // ── Order,Customer,Owner,PO,Status,Total ─────────────────────────────────────────────────

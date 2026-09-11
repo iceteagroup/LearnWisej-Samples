@@ -4,34 +4,27 @@ using System.Globalization;
 namespace EnterpriseOps.Diagnostics
 {
     /// <summary>
-    /// The live activity trace: every layer reports the decision it took, tagged with the layer name, so a
-    /// reviewer can prove from the screen alone that the handler was thin and the service decided.
+    /// Server-side diagnostic log: every layer writes the decision it took, tagged with the layer name, to
+    /// <see cref="System.Diagnostics.Trace"/> as <c>HH:mm:ss.fff  Layer: message</c>.
     ///
-    /// One instance per session (created by the page, handed to every service). The page subscribes to
-    /// <see cref="EntryAdded"/> and appends each line to lstTrace; nothing in this class knows about controls.
+    /// One instance per session, created in <c>Program.Main</c> and handed to every service.
     ///
-    /// Security note for the module: the trace is a log. It names users, tenants and permissions — never a
-    /// password, a token, a claim value that identifies a person beyond the subject id, or a full record.
-    /// The hardening checklist has an item for exactly this.
+    /// Security note: this is a log. It names users, tenants and permissions — never a password, a token, a claim
+    /// value that identifies a person beyond the subject id, or a full record. The hardening checklist has an item
+    /// for exactly this.
     /// </summary>
     public sealed class ActivityTrace
     {
-        public event Action<string> EntryAdded;
+        public void Service(string message) => Write("Service:  ", message);
+        public void Data(string message) => Write("Data:     ", message);
+        public void Security(string message) => Write("Security: ", message);
+        public void Identity(string message) => Write("Identity: ", message);
+        public void Audit(string message) => Write("Audit:    ", message);
 
-        public void Ui(string message) => Add("UI →       ", message);
-        public void UiResult(string message) => Add("UI ←       ", message);
-        public void Service(string message) => Add("Service:   ", message);
-        public void Data(string message) => Add("Data:      ", message);
-        public void Security(string message) => Add("Security:  ", message);
-        public void Identity(string message) => Add("Identity:  ", message);
-        public void Audit(string message) => Add("Audit:     ", message);
-
-        public void Clear() => EntryAdded?.Invoke(null);
-
-        private void Add(string layer, string message)
+        private static void Write(string layer, string message)
         {
             string time = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
-            EntryAdded?.Invoke($"{time}  {layer} {message}");
+            System.Diagnostics.Trace.WriteLine($"{time}  {layer} {message}");
         }
     }
 }

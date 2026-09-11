@@ -48,7 +48,7 @@ namespace EnterpriseOps.UI
             this.pnlCompare.SuspendLayout();
             this.SuspendLayout();
             //
-            // lblIcon  (the amber "!" from the walkthrough — a warning, not an error: nothing was lost)
+            // lblIcon
             //
             this.lblIcon.AutoSize = false;
             this.lblIcon.BackColor = System.Drawing.Color.FromArgb(255, 244, 227);
@@ -70,7 +70,7 @@ namespace EnterpriseOps.UI
             this.lblHeadline.Size = new System.Drawing.Size(740, 26);
             this.lblHeadline.Text = "This work order changed while you were editing";
             //
-            // lblExplain  (what happened, in the user's words — no exception text, no version numbers yet)
+            // lblExplain
             //
             this.lblExplain.AutoSize = false;
             this.lblExplain.Font = new System.Drawing.Font("default", 9F);
@@ -80,7 +80,7 @@ namespace EnterpriseOps.UI
             this.lblExplain.Size = new System.Drawing.Size(740, 44);
             this.lblExplain.Text = "Another session saved a newer version. Your edit is based on a stale copy — nothing has been overwritten.";
             //
-            // dgvVersions  (two rows: YOUR EDIT vs CURRENT — bound to ConflictSummaryRow, built by the service)
+            // dgvVersions
             //
             this.dgvVersions.AllowUserToAddRows = false;
             this.dgvVersions.AllowUserToDeleteRows = false;
@@ -132,7 +132,7 @@ namespace EnterpriseOps.UI
             this.colVersion.Name = "colVersion";
             this.colVersion.ReadOnly = true;
             //
-            // pnlActions  (the three honest paths — Reload · Compare · Cancel)
+            // pnlActions
             //
             this.pnlActions.Controls.Add(this.btnReload);
             this.pnlActions.Controls.Add(this.btnCompare);
@@ -141,7 +141,7 @@ namespace EnterpriseOps.UI
             this.pnlActions.Name = "pnlActions";
             this.pnlActions.Size = new System.Drawing.Size(620, 48);
             //
-            // btnReload  (the recovery: discard the local edits, show the current record)
+            // btnReload
             //
             this.btnReload.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.btnReload.Location = new System.Drawing.Point(0, 0);
@@ -149,10 +149,9 @@ namespace EnterpriseOps.UI
             this.btnReload.Name = "btnReload";
             this.btnReload.Size = new System.Drawing.Size(180, 40);
             this.btnReload.Text = "Reload latest";
-            this.btnReload.ToolTipText = "Discards the local edits and shows the current record. Recorded in the audit trail with the correlation id.";
             this.btnReload.Click += new System.EventHandler(this.btnReload_Click);
             //
-            // btnCompare  (shows both versions field by field so the edit can be merged — the dialog stays open)
+            // btnCompare
             //
             this.btnCompare.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.btnCompare.Location = new System.Drawing.Point(192, 0);
@@ -160,19 +159,17 @@ namespace EnterpriseOps.UI
             this.btnCompare.Name = "btnCompare";
             this.btnCompare.Size = new System.Drawing.Size(200, 40);
             this.btnCompare.Text = "Compare changes";
-            this.btnCompare.ToolTipText = "Shows your edit and the current record field by field. Nothing is saved by comparing.";
             this.btnCompare.Click += new System.EventHandler(this.btnCompare_Click);
             //
-            // btnCancel  (leave the screen as it is and decide later)
+            // btnCancel
             //
             this.btnCancel.Location = new System.Drawing.Point(404, 0);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(140, 40);
             this.btnCancel.Text = "Cancel";
-            this.btnCancel.ToolTipText = "Leaves the screen as it is — nothing saved, nothing lost. Your edit stays on the stale version.";
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             //
-            // lblFootnote  ("correlation 8f3a21c4 — expected v7, found v8")
+            // lblFootnote
             //
             this.lblFootnote.AutoSize = false;
             this.lblFootnote.Font = new System.Drawing.Font("monospace", 9F);
@@ -182,7 +179,7 @@ namespace EnterpriseOps.UI
             this.lblFootnote.Size = new System.Drawing.Size(800, 22);
             this.lblFootnote.Text = "correlation — expected —, found —";
             //
-            // pnlCompare  (hidden until "Compare changes" is clicked)
+            // pnlCompare
             //
             this.pnlCompare.BackColor = System.Drawing.Color.White;
             this.pnlCompare.BorderStyle = Wisej.Web.BorderStyle.Solid;

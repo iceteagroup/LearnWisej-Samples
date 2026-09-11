@@ -10,7 +10,7 @@ public sealed record SeedResult(bool Seeded, int Customers, int Agents, int Cate
 {
     public string Describe() => Seeded
         ? $"seeded {Customers} customers, {Agents} agents, {Categories} categories, {Tickets} tickets, {Comments} comments in {ElapsedMs:0} ms"
-        : $"nothing to seed: {ExistingTickets} tickets already exist — Tickets.AnyAsync() was true, so the seeder returned before AddRange";
+        : $"nothing to seed: {ExistingTickets} tickets already exist";
 }
 
 /// <summary>
@@ -61,25 +61,6 @@ public sealed class DevelopmentSeeder
         await db.SaveChangesAsync(token);
 
         return new SeedResult(true, customers.Count, agents.Count, categories.Count, tickets.Count, comments, 0, watch.Elapsed.TotalMilliseconds);
-    }
-
-    /// <summary>
-    /// Lab prop: empties every table (in foreign-key order) so the delete demos can be run again, then seeds.
-    /// Two operations, two contexts. Development only — nothing in production ever bulk-deletes tickets.
-    /// </summary>
-    public async Task<SeedResult> ResetDevelopmentDataAsync(CancellationToken token = default)
-    {
-        await using (var db = await _dbFactory.CreateDbContextAsync(token))
-        {
-            QueryTrace.Note("ExecuteDeleteAsync on TicketComments, Tickets, Customers, Agents, Categories (children first)");
-            await db.TicketComments.ExecuteDeleteAsync(token);
-            await db.Tickets.ExecuteDeleteAsync(token);
-            await db.Customers.ExecuteDeleteAsync(token);
-            await db.Agents.ExecuteDeleteAsync(token);
-            await db.Categories.ExecuteDeleteAsync(token);
-        }
-
-        return await SeedDevelopmentDataAsync(token);
     }
 }
 

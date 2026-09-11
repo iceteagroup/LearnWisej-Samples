@@ -10,7 +10,7 @@ namespace SupportDesk.Services;
 /// </summary>
 public static class FriendlyDatabaseErrors
 {
-    /// <summary>Shown when <c>SaveChangesAsync</c> throws <c>DbUpdateException</c> while saving a ticket (the duplicate-number lab prop, or any other constraint the database refuses).</summary>
+    /// <summary>Shown when <c>SaveChangesAsync</c> throws <c>DbUpdateException</c> while saving a ticket (a duplicate ticket number, or any other constraint the database refuses).</summary>
     public const string TicketSaveRejected =
         "The ticket could not be saved because the database rejected the change. Please verify required fields and lookup values.";
 

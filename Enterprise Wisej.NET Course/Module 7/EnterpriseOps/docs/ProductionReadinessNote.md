@@ -33,8 +33,8 @@ are abandoned; `CompensationLog` becomes a durable queue with a retry schedule a
 
 ## Failure behaviour
 
-Every cell of [`FailurePathMatrix.md`](FailurePathMatrix.md) has a demonstrated path in the app. The two that
-matter most in review:
+Every cell of [`FailurePathMatrix.md`](FailurePathMatrix.md) is a designed path; the app demonstrates the lab's
+case (notify fails after persist) and its retry. The two that matter most in review:
 
 - **notify fails after persist** → the escalation is kept and a compensation is queued (never a false rollback).
 - **audit fails after notify** → the gap is recorded and alerted, because a sent notification cannot be unsent.
@@ -44,7 +44,7 @@ matter most in review:
 | Sample | Production |
 |---|---|
 | In-memory stores, no database, no transaction | a real `DbContext` with a transaction around persist + audit-intent, and the outbox pattern for the notification |
-| `FakeNotificationGateway` / `FakeApproverDirectory` with `FailNextSend` / `HangNextLookup` switches | real providers behind the same interfaces, with retry/back-off and circuit breakers |
+| `FakeNotificationGateway` / `FakeApproverDirectory` (the fake SMTP relay times out on the first e-mail of the session) | real providers behind the same interfaces, with retry/back-off and circuit breakers |
 | The manual-review queue is a `List<CompensationEntry>` in memory | a durable queue + a scheduled retry job, alerting on entries older than the SLA |
 | 5 s directory timeout, 150–400 ms simulated latencies | timeouts from configuration, measured against real p95s |
 | Attachments are four sample file names | real uploads, virus scanning, size limits, blob storage with a staging TTL |
@@ -53,7 +53,7 @@ matter most in review:
 ## Ready / not ready
 
 **Ready:** the transition has one owner, the command and result are typed, every failure path is designed and
-demonstrated, the audit trail explains its own gaps, and the workflow is callable — and testable — without the UI.
+the lab's notification failure is demonstrated, the audit trail explains its own gaps, and the workflow is callable — and testable — without the UI.
 
 **Not ready without the production column above:** durability (drafts, compensations, audit) and the real
 integrations. Nothing in the screen or the workflow has to change for that; only `Data/`, `Integrations/` and the

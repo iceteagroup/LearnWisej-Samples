@@ -17,7 +17,7 @@ namespace IntegrationLab.Controls
         /// <summary>The authoritative server value at the time the event was raised.</summary>
         public double Value { get; }
 
-        /// <summary>The value the client adapter reported in its payload (for contract checks).</summary>
+        /// <summary>The value the client adapter reported in its payload (what the browser rendered).</summary>
         public double ReportedValue { get; }
     }
 
@@ -52,24 +52,5 @@ namespace IntegrationLab.Controls
         public string Phase { get; }
 
         public string Message { get; }
-    }
-
-    public enum TraceDirection { ServerToClient, ClientToServer, Server }
-
-    /// <summary>
-    /// One line of the client/server trace (diagnostics; see <see cref="SimpleGauge.Trace"/>).
-    /// </summary>
-    public class TraceEventArgs : EventArgs
-    {
-        public TraceEventArgs(TraceDirection direction, string name, string payload)
-        {
-            this.Direction = direction;
-            this.Name = name;
-            this.Payload = payload;
-        }
-
-        public TraceDirection Direction { get; }
-        public string Name { get; }
-        public string Payload { get; }
     }
 }

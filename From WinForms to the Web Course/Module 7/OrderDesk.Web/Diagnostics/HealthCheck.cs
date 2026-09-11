@@ -19,9 +19,9 @@ namespace OrderDesk.Diagnostics
     }
 
     /// <summary>
-    /// What a load balancer or an operator needs to know about this instance. Two callers:
-    ///   the /health endpoint in Startup.cs — no Wisej session, so only process-level facts (Report(false));
-    ///   the console's "Health check" button — inside a session, so it adds sessions, theme and profile.
+    /// What a load balancer or an operator needs to know about this instance. The /health endpoint in
+    /// Startup.cs has no Wisej session, so it reports only process-level facts (Report(false)); called from
+    /// inside a session, Report(true) adds sessions, theme and profile.
     /// Every item is read inside its own try/catch: a health check that throws is worse than one that says ✕.
     /// </summary>
     public static class HealthCheck

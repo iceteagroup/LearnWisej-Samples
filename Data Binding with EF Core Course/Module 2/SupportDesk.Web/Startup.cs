@@ -29,7 +29,6 @@ builder.Services.AddTransient<TicketQueryService>();
 builder.Services.AddTransient<SchemaInfoService>();
 builder.Services.AddTransient<DevelopmentSeeder>();
 builder.Services.AddTransient<ModelDemoService>();
-builder.Services.AddTransient<SharedContextAntiPattern>();
 
 var app = builder.Build();
 

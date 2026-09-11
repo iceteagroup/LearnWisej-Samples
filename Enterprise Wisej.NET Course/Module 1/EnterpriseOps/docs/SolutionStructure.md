@@ -45,15 +45,15 @@ Module 1/
    │  └─ SeedData.cs                           ~40 deterministic work orders across three tenants
    │
    ├─ Integrations/                  EnterpriseOps.Integrations    ← external systems, behind fakes
-   │  ├─ OperationsFeed.cs                     field changes + the outage switch (failure path 1)
+   │  ├─ OperationsFeed.cs                     field changes pulled on Refresh
    │  └─ ReleaseCalendar.cs                    the "Deployments today" number
    │
    ├─ Security/                      EnterpriseOps.Security        ← identity, roles, policies
    │  ├─ UserIdentity.cs · UserRole.cs         ana.ops · ben.tech · cara.admin
-   │  └─ DashboardPolicy.cs                    CanViewCommandCenter → PolicyDecision (failure path 2)
+   │  └─ DashboardPolicy.cs                    CanViewCommandCenter → PolicyDecision
    │
-   ├─ Diagnostics/                   EnterpriseOps.Diagnostics     ← what the reviewer reads
-   │  ├─ ActivityTrace.cs                      one line per layer decision → lstTrace
+   ├─ Diagnostics/                   EnterpriseOps.Diagnostics     ← logging
+   │  ├─ ActivityTrace.cs                      one log line per layer decision → System.Diagnostics.Trace
    │  └─ ErrorLog.cs                           the `_log.Error(ex)` of the handler shape
    │
    ├─ Resources/                     EnterpriseOps.Resources       ← user-facing strings
@@ -62,8 +62,6 @@ Module 1/
    ├─ Architecture/                  EnterpriseOps.Architecture    ← governance. ADRs live HERE.
    │  ├─ ADR-001-SolutionStructure.md          the decision record (this folder is the ADR folder)
    │  ├─ ArchitectureGovernancePatterns.cs     ArchitectureDecision · IWorkflowScreen · ReviewGate (lesson code)
-   │  ├─ DecisionLog.cs                        the ADRs as data, so a screen can list them with review dates
-   │  ├─ ReviewGateService.cs                  runs ReviewGate over a real .cs file (failure path 3 + recovery)
    │  └─ Samples/OrderEntryLegacy.cs.txt       the 74-line handler the gate rejects (not compiled)
    │
    ├─ Deployment/                                                   ← deployment assets
@@ -89,9 +87,9 @@ Module 1/
 | `Data/` | `EnterpriseOps.Data` | persistence | Domain, Diagnostics |
 | `Integrations/` | `EnterpriseOps.Integrations` | external systems | Domain, Diagnostics |
 | `Security/` | `EnterpriseOps.Security` | identity and permission decisions | Domain, Services (contexts), Diagnostics |
-| `Diagnostics/` | `EnterpriseOps.Diagnostics` | the trace and the error log | nothing |
+| `Diagnostics/` | `EnterpriseOps.Diagnostics` | the activity log and the error log | nothing |
 | `Resources/` | `EnterpriseOps.Resources` | user-facing strings | nothing |
-| `Architecture/` | `EnterpriseOps.Architecture` | ADRs, governance patterns, the review gate | Services, Diagnostics |
+| `Architecture/` | `EnterpriseOps.Architecture` | ADRs, governance patterns, the review gate | nothing |
 | `Deployment/` | — (assets, not code) | launch profiles, env config, later Dockerfile | — |
 
 The one deliberate exception: `UI/CommandCenterDashboard`'s **constructor** news up the repository, the feed,
@@ -106,13 +104,3 @@ inside one web project, so the whole module runs with a single `dotnet run`. Bec
 the project names, promoting a folder to a project later is a move-files-and-add-a-reference change, not a
 redesign. ADR-001 records that trade-off, its cost (the boundary is enforced by review, not by the compiler)
 and the date the team revisits it.
-
-## Evidence in the running app
-
-- The header of every trace line names the layer that decided: `UI →`, `Security:`, `Integration:`, `Data:`,
-  `Service:`, `Diagnostics:`, `Architecture:`, `UI ←`. Click **Refresh** and read the trace top to bottom: the
-  order is exactly the order of this tree's dependency arrows.
-- On load, the first trace line is `Architecture: ADR-001 Solution structure — accepted … · review 2027-03-09`
-  (from `DecisionLog`), so the decision is visible in the product, not only in a document.
-- **Review gate: legacy handler** proves the boundary is checkable: `Architecture/Samples/OrderEntryLegacy.cs.txt`
-  fails on 74 lines and no service call. **Review gate: this screen** passes on `UI/CommandCenterDashboard.cs`.

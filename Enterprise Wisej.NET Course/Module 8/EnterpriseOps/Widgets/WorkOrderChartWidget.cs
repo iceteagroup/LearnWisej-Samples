@@ -29,9 +29,8 @@ namespace EnterpriseOps.Widgets
     ///
     /// <para>
     /// <b>Hidden</b>: <c>Packages</c>, <c>InitScript</c>, <c>WiredEvents</c>, the raw <c>Options</c> object
-    /// and <c>Call</c>/<c>CallAsync</c>. They are what a leaky screen edits on every page (see
-    /// <c>Controls/Samples/LeakyChartScreen.cs.txt</c>); once this class owns the setup, letting a screen
-    /// change them on one instance is a bug waiting to happen.
+    /// and <c>Call</c>/<c>CallAsync</c>. Once this class owns the setup, letting a screen change them on one
+    /// instance is a bug waiting to happen.
     /// </para>
     ///
     /// <para>
@@ -74,7 +73,6 @@ namespace EnterpriseOps.Widgets
         private bool _showLegend = DefaultShowLegend;
         private bool _sampleMode;
         private string _selectedKey;
-        private bool _vendorBlocked;
         private bool _fallbackShown;
 
         public WorkOrderChartWidget()
@@ -106,8 +104,6 @@ namespace EnterpriseOps.Widgets
             options.showLegend = _showLegend;
             options.badge = "";
             options.selectedKey = "";
-            options.simulateBlockedVendor = false;
-            options.simulateVendorFailure = false;
 
             _segments.AddRange(SampleSegments());
         }
@@ -130,7 +126,6 @@ namespace EnterpriseOps.Widgets
                 _caption = caption;
                 dynamic options = base.Options;
                 options.caption = caption;
-                RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)", $"{{\"caption\":\"{caption}\"}}");
             }
         }
 
@@ -146,14 +141,10 @@ namespace EnterpriseOps.Widgets
             get => _palette;
             set
             {
-                // The bad option never reaches the browser. This is the module's server-side rejection:
-                // an option the component does not support is a programming error, and it fails here,
-                // loudly, with the list of what is supported.
+                // An option the component does not support is a programming error: it fails here, on the
+                // server, with the list of what is supported — the bad value never reaches the browser.
                 if (value == null || !KnownPalettes.Contains(value, StringComparer.Ordinal))
                 {
-                    RaiseTrace(ComponentTraceDirection.Server, "rejected",
-                        $"palette '{value ?? "(null)"}' is not one of {string.Join(", ", KnownPalettes)} — nothing rendered");
-
                     throw new ArgumentOutOfRangeException(nameof(Palette), value,
                         $"Unknown palette '{value ?? "(null)"}'. Known palettes: {string.Join(", ", KnownPalettes)}.");
                 }
@@ -164,7 +155,6 @@ namespace EnterpriseOps.Widgets
                 _palette = value;
                 dynamic options = base.Options;
                 options.palette = value;
-                RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)", $"{{\"palette\":\"{value}\"}}");
             }
         }
 
@@ -183,7 +173,6 @@ namespace EnterpriseOps.Widgets
                 _showLegend = value;
                 dynamic options = base.Options;
                 options.showLegend = value;
-                RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)", $"{{\"showLegend\":{(value ? "true" : "false")}}}");
             }
         }
 
@@ -209,9 +198,7 @@ namespace EnterpriseOps.Widgets
                 options.badge = value ? "DESIGN-TIME SAMPLE" : "";
 
                 if (value)
-                    ApplySegments(SampleSegments(), "sample mode");
-                else
-                    RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)", "{\"badge\":\"\"}");
+                    ApplySegments(SampleSegments());
             }
         }
 
@@ -231,51 +218,11 @@ namespace EnterpriseOps.Widgets
 
         #endregion
 
-        #region Diagnostics-only switches (the lab's failure paths)
-
-        /// <summary>
-        /// Diagnostics: pretend the vendor package never arrived (a proxy, a CSP rule, a 404). The adapter
-        /// takes exactly the same path it takes when the script really is missing: no vendor object, an
-        /// <c>error</c> event, and the embedded fallback rendered.
-        /// </summary>
-        [Browsable(false)]
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [Description("Diagnostics only: simulate the vendor package being blocked before it could load.")]
-        public bool SimulateBlockedVendor
-        {
-            get => _vendorBlocked;
-            set
-            {
-                if (_vendorBlocked == value)
-                    return;
-
-                _vendorBlocked = value;
-                dynamic options = base.Options;
-                options.simulateBlockedVendor = value;
-                RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)",
-                    $"{{\"simulateBlockedVendor\":{(value ? "true" : "false")}}}");
-            }
-        }
-
-        /// <summary>
-        /// Diagnostics: make the next client update hand the vendor an option it rejects, so the vendor
-        /// throws inside the adapter. Cleared as soon as the wrapper has reported the resulting error.
-        /// </summary>
-        [EditorBrowsable(EditorBrowsableState.Advanced)]
-        public void SimulateVendorFailure()
-        {
-            dynamic options = base.Options;
-            options.simulateVendorFailure = true;
-            RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)", "{\"simulateVendorFailure\":true}");
-        }
-
-        #endregion
-
         #region Methods — named after what the application wants
 
         /// <summary>
-        /// Replaces the whole breakdown. The walkthrough's call: <c>chartWorkOrders.SetSegments(segments)</c>.
-        /// The wrapper validates first, converts to the vendor's shape itself, and renders once.
+        /// Replaces the whole breakdown: <c>chartWorkOrders.SetSegments(segments)</c>. The wrapper validates
+        /// first, converts to the vendor's shape itself, and renders once.
         /// </summary>
         public void SetSegments(params ChartSegment[] segments)
             => SetSegments((IEnumerable<ChartSegment>)segments);
@@ -305,7 +252,7 @@ namespace EnterpriseOps.Widgets
             dynamic options = base.Options;
             options.badge = "";
 
-            ApplySegments(list, "SetSegments");
+            ApplySegments(list);
         }
 
         /// <summary>
@@ -320,21 +267,6 @@ namespace EnterpriseOps.Widgets
             _selectedKey = key ?? "";
             dynamic options = base.Options;
             options.selectedKey = _selectedKey;
-            RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)", $"{{\"selectedKey\":\"{_selectedKey}\"}}");
-        }
-
-        /// <summary>
-        /// Exactly what this wrapper would send to the browser right now — the lab screen prints it to
-        /// answer "what data crosses from server to client?" without anybody opening the network tab.
-        /// </summary>
-        public string DescribeWirePayload()
-        {
-            string segments = string.Join(",", _segments.Select(s =>
-                $"{{\"key\":\"{s.Key}\",\"label\":\"{Escape(s.Label)}\",\"value\":{s.Value}}}"));
-
-            return "{\"segments\":[" + segments + "]," +
-                   $"\"palette\":\"{_palette}\",\"caption\":\"{Escape(_caption)}\"," +
-                   $"\"showLegend\":{(_showLegend ? "true" : "false")},\"selectedKey\":\"{SelectedKey}\"}}";
         }
 
         #endregion
@@ -357,10 +289,6 @@ namespace EnterpriseOps.Widgets
         [Description("Raised when the client adapter reports a vendor failure. The fallback is already on screen.")]
         public event EventHandler<WidgetErrorEventArgs> WidgetError;
 
-        /// <summary>Diagnostics only: every option rendered to the client and every event received from it.</summary>
-        [Browsable(false)]
-        public event EventHandler<ComponentTraceEventArgs> Trace;
-
         protected virtual void OnSegmentClicked(ChartSegmentEventArgs e) => SegmentClicked?.Invoke(this, e);
 
         protected virtual void OnWidgetError(WidgetErrorEventArgs e) => WidgetError?.Invoke(this, e);
@@ -382,17 +310,10 @@ namespace EnterpriseOps.Widgets
                         int value = ToInt(data?.value);
                         int percent = ToInt(data?.percent);
 
-                        RaiseTrace(ComponentTraceDirection.ClientToServer, "pointSelected",
-                            $"{{\"key\":\"{key}\",\"label\":\"{Escape(label)}\",\"value\":{value},\"percent\":{percent}}}");
-
                         // The browser may send anything. A key the server never rendered is dropped here,
                         // in the wrapper, so no screen ever has to remember to check.
                         if (!_segments.Any(s => s.Key == key))
-                        {
-                            RaiseTrace(ComponentTraceDirection.Server, "rejected",
-                                $"'{key}' is not a segment this widget rendered — event not raised");
                             break;
-                        }
 
                         _selectedKey = key;
                         _fallbackShown = false;
@@ -405,15 +326,7 @@ namespace EnterpriseOps.Widgets
                         string phase = ToText(data?.phase);
                         string message = ToText(data?.message);
 
-                        RaiseTrace(ComponentTraceDirection.ClientToServer, "error",
-                            $"{{\"phase\":\"{phase}\",\"message\":\"{Escape(message)}\"}}");
-
                         _fallbackShown = true;
-
-                        // A one-shot simulation has done its job: clear it so the next update is normal.
-                        dynamic options = base.Options;
-                        options.simulateVendorFailure = false;
-
                         OnWidgetError(new WidgetErrorEventArgs(phase, message) { FallbackRendered = true });
                         break;
                     }
@@ -453,10 +366,9 @@ namespace EnterpriseOps.Widgets
 
         #region Hidden escape hatches (see docs/WidgetWrapper.md)
 
-        // These are exactly what the leaky prototype edits on every page. Once the class owns the setup,
-        // letting a screen change them on one instance breaks that instance only — the worst kind of bug.
-        // They are shadowed read-only and hidden from the Properties window, IntelliSense and designer
-        // serialization. The class itself always goes through "base.".
+        // Once the class owns the setup, letting a screen change these on one instance breaks that instance
+        // only — the worst kind of bug. They are shadowed read-only and hidden from the Properties window,
+        // IntelliSense and designer serialization. The class itself always goes through "base.".
 
         /// <summary>Hidden. Packages come from <see cref="ComponentResourcePackage"/>.</summary>
         [Browsable(false)]
@@ -494,7 +406,7 @@ namespace EnterpriseOps.Widgets
 
         #region Internals
 
-        private void ApplySegments(IEnumerable<ChartSegment> segments, string because)
+        private void ApplySegments(IEnumerable<ChartSegment> segments)
         {
             _segments.Clear();
             _segments.AddRange(segments);
@@ -505,25 +417,15 @@ namespace EnterpriseOps.Widgets
             dynamic options = base.Options;
             options.segments = ToWire(_segments);       // replacing the array is a first-level change → update()
             options.selectedKey = SelectedKey;
-
-            RaiseTrace(ComponentTraceDirection.ServerToClient, "update(options)",
-                $"{because} → {{\"segments\":[{_segments.Count} × {{key,label,value}}]}}");
         }
 
         /// <summary>
-        /// The only place the domain becomes wire data. Verified 2026-09-10: Wisej.NET camel-cases the
-        /// first-level Options fields, but objects nested inside an Options array keep their C# names —
-        /// <c>new { Key, Label, Value }</c> reached the browser as <c>Key/Label/Value</c> and the vendor threw.
-        /// So the wire names are spelled out in the vendor's shape here, once.
+        /// The only place the domain becomes wire data. Wisej.NET camel-cases the first-level Options
+        /// fields, but objects nested inside an Options array keep their C# names — so the wire names are
+        /// spelled out in the vendor's shape here, once.
         /// </summary>
         private static object[] ToWire(IEnumerable<ChartSegment> segments)
             => segments.Select(s => (object)new { key = s.Key, label = s.Label, value = s.Value }).ToArray();
-
-        private void RaiseTrace(ComponentTraceDirection direction, string name, string payload)
-            => Trace?.Invoke(this, new ComponentTraceEventArgs(direction, name, payload));
-
-        private static string Escape(string text)
-            => (text ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
 
         private static string ToText(object value)
             => value == null ? "" : Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);

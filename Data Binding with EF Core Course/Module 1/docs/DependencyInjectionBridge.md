@@ -31,8 +31,7 @@ public partial class TicketBrowserPage : Page
 
 Wisej.NET injects the property while the Page is constructed (`Wisej.Web.Page..ctor` →
 `ServiceProvider.Inject`). The page never constructs a context, never sees the factory; it calls
-`TicketQueries.CountTicketsAsync()` and the service does the unit of work. The trace's first line records
-the outcome: `TicketQueryService through [Inject] → resolved from Microsoft DI`.
+`TicketQueries.CountTicketsAsync()` and the service does the unit of work.
 
 `Application.Services.GetService<TicketQueryService>()` is the explicit alternative for objects that are not
 top-level containers (a helper class, a dialog created in code); `Application.Services.Inject(target)`
@@ -57,7 +56,7 @@ no per-session Microsoft scope, so:
 | Lifetime | Works through `[Inject]`? | Use it for |
 |---|---|---|
 | Transient | yes | stateless services that hold only the factory — `TicketQueryService`, validators, command services |
-| Singleton | yes | the factory itself, options, immutable reference data, the lab's outage switch |
+| Singleton | yes | the factory itself, options, immutable reference data |
 | Scoped | **no** in Development (root-provider validation); silently root-scoped in Production | nothing — a "scope" would be the whole application |
 
 Transient is the right answer anyway: the services own no state, so a new instance per page costs one

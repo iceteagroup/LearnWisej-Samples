@@ -9,8 +9,8 @@ namespace EnterpriseOps.Services
 {
     /// <summary>
     /// Reference data: the customers this deployment serves. Application-scoped, immutable after start-up and
-    /// therefore one of the few things a static may legitimately hold — the audit says so out loud rather than
-    /// leaving a reader to guess. Which tenants a given <b>user</b> may pick is not in here: that is a claim on
+    /// therefore one of the few things a static may legitimately hold — <c>[SharedState]</c> says so out loud
+    /// rather than leaving a reader to guess. Which tenants a given <b>user</b> may pick is not in here: that is a claim on
     /// the identity, and it is the session context that answers it.
     /// </summary>
     public static class TenantDirectory

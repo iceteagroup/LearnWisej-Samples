@@ -6,22 +6,18 @@ namespace OperationsConsole.Shell
     public enum StatusLevel { Ok, Warning, Error }
 
     /// <summary>
-    /// The shell contract every section, editor and service talks to (through <see cref="ConsoleLog"/>).
+    /// The shell contract sections and services talk to (through <see cref="ShellStatus"/>).
     /// Implemented by <c>MainPage</c>; per session, <c>Application.MainPage</c> is this session's page.
-    /// Defined in Module 1 and never changed afterwards.
     /// </summary>
     public interface IConsoleShell
     {
-        /// <summary>Appends "HH:mm:ss  message" to the Event log (<c>lstEventLog</c>) and selects the last item.</summary>
-        void AddLog(string message);
-
-        /// <summary>Sets the status text (<c>statusLabel</c> in Module 1–2, the StatusBar panel from Module 3) coloured by level.</summary>
+        /// <summary>Sets the status text, coloured by level.</summary>
         void SetStatus(string text, StatusLevel level);
 
-        /// <summary>Diagnostic panel (lab stretch goal): the name of the control the user used last.</summary>
+        /// <summary>Diagnostic panel: the name of the control the user used last.</summary>
         void SetSelectedControl(string controlName);
 
-        /// <summary>Diagnostic panel (lab stretch goal): the stable ID of the selected record ("—" when nothing is selected).</summary>
+        /// <summary>Diagnostic panel: the stable ID of the selected record ("—" when nothing is selected).</summary>
         void SetSelectedRecord(string recordId);
     }
 }

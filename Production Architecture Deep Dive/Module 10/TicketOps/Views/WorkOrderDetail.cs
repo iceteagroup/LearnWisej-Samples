@@ -10,9 +10,8 @@ namespace TicketOps.Views
     /// <summary>
     /// The second screen the modernization checklist is applied to: one work order in a modal dialog.
     /// Header = title from resources + the same StatusChip as the dashboard; the values are the SAME raw
-    /// DateTime/decimal/double the grid shows, formatted here for the session's culture (6/14/2026 · $1,850.00
-    /// vs 14.06.2026 · 1.850,00 €). It re-skins with the theme like every other window — there is no colour,
-    /// pattern or literal caption in this file either.
+    /// DateTime/decimal/double the grid shows, formatted here for the session's culture. It re-skins with the
+    /// theme like every other window — there is no colour, pattern or literal caption in this file either.
     /// </summary>
     public partial class WorkOrderDetail : Form
     {
@@ -45,8 +44,6 @@ namespace TicketOps.Views
 
                 ApplyLocalizedText();
                 Bind();
-                _log.Info(LogLayer.UI, "WorkOrderDetail.Load",
-                    $"#{_order.Id} shown · formatted for {_localization.Culture.Name}: {_localization.FormatDate(_order.DueOn)} · {_localization.FormatCurrency(_order.LaborCost)} · theme \"{Application.Theme?.Name}\" (no code of this dialog knows either)");
             }
             catch (Exception ex)
             {
@@ -62,7 +59,6 @@ namespace TicketOps.Views
             this.labelDueCaption.Text = T("Detail.Due");
             this.labelCostCaption.Text = T("Detail.Cost");
             this.labelHoursCaption.Text = T("Detail.Hours");
-            this.labelHint.Text = _localization.Format("Detail.Hint", _localization.Culture.NativeName);
             this.buttonNextStatus.Text = T("Button.NextStatus");
             this.buttonClose.Text = T("Button.Close");
         }
@@ -83,17 +79,14 @@ namespace TicketOps.Views
         {
             try
             {
-                _log.Info(LogLayer.UI, "WorkOrderDetail.buttonNextStatus_Click", $"→ IWorkOrderService.AdvanceStatusAsync(#{_order.Id})");
                 var result = await _workOrders.AdvanceStatusAsync(_order.Id);
                 if (result.Succeeded)
                 {
                     _order = result.Value;
                     Bind();
-                    _log.Info(LogLayer.UI, "WorkOrderDetail.ShowResult", $"OK · {result.Message}");
                 }
                 else
                 {
-                    _log.Warn(LogLayer.UI, "WorkOrderDetail.ShowResult", $"FAIL · {result.Message}");
                     AlertBox.Show(result.Message, MessageBoxIcon.Warning,
                         alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
                 }
@@ -112,7 +105,7 @@ namespace TicketOps.Views
 
         private void ReportFailure(string source, Exception ex)
         {
-            _log.Error(LogLayer.UI, source, ex, $"caught {ex.GetType().Name} — user sees the safe message");
+            _log.Error(LogLayer.UI, source, ex);
             AlertBox.Show(Strings.ActionFailed, MessageBoxIcon.Error,
                 alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
         }

@@ -34,7 +34,6 @@ namespace OrderDesk.Dialogs
             this.numUnitPrice = new Wisej.Web.NumericUpDown();
             this.labelTotal = new Wisej.Web.Label();
             this.labelTotalValue = new Wisej.Web.Label();
-            this.labelHint = new Wisej.Web.Label();
             this.buttonCancel = new Wisej.Web.Button();
             this.buttonSave = new Wisej.Web.Button();
             this.SuspendLayout();
@@ -83,7 +82,7 @@ namespace OrderDesk.Dialogs
             this.comboStatus.Name = "comboStatus";
             this.comboStatus.Size = new System.Drawing.Size(280, 26);
             //
-            // the order line  (new in Module 5 so the quantity / price / total rules have something to check)
+            // the order line
             //
             this.labelLine.AutoSize = false;
             this.labelLine.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
@@ -101,7 +100,7 @@ namespace OrderDesk.Dialogs
             this.textSku.Location = new System.Drawing.Point(116, 196);
             this.textSku.Name = "textSku";
             this.textSku.Size = new System.Drawing.Size(280, 26);
-            this.textSku.Watermark = "clear it to see \"Add at least one order line.\"";
+            this.textSku.Watermark = "e.g. WJ-DEV-SEAT";
             this.labelQuantity.AutoSize = false;
             this.labelQuantity.Location = new System.Drawing.Point(20, 232);
             this.labelQuantity.Name = "labelQuantity";
@@ -122,7 +121,7 @@ namespace OrderDesk.Dialogs
             this.labelUnitPrice.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.numUnitPrice.DecimalPlaces = 2;
             this.numUnitPrice.Location = new System.Drawing.Point(302, 232);
-            this.numUnitPrice.Minimum = new decimal(new int[] { 1000000, 0, 0, -2147483648 });   // -1,000,000: negatives are allowed so the rule can fire
+            this.numUnitPrice.Minimum = new decimal(new int[] { 1000000, 0, 0, -2147483648 });
             this.numUnitPrice.Maximum = new decimal(new int[] { 10000000, 0, 0, 0 });
             this.numUnitPrice.Name = "numUnitPrice";
             this.numUnitPrice.Size = new System.Drawing.Size(94, 26);
@@ -141,24 +140,14 @@ namespace OrderDesk.Dialogs
             this.labelTotalValue.Text = "0.00";
             this.labelTotalValue.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
-            // labelHint  (where the rule runs)
-            //
-            this.labelHint.AutoSize = false;
-            this.labelHint.Font = new System.Drawing.Font("default", 9F);
-            this.labelHint.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelHint.Location = new System.Drawing.Point(20, 304);
-            this.labelHint.Name = "labelHint";
-            this.labelHint.Size = new System.Drawing.Size(376, 22);
-            this.labelHint.Text = "Save runs OrderValidator on the server; field messages appear next to the control.";
-            //
             // buttons
             //
-            this.buttonCancel.Location = new System.Drawing.Point(230, 336);
+            this.buttonCancel.Location = new System.Drawing.Point(230, 308);
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(80, 30);
             this.buttonCancel.Text = "Cancel";
             this.buttonCancel.Click += new System.EventHandler(this.buttonCancel_Click);
-            this.buttonSave.Location = new System.Drawing.Point(316, 336);
+            this.buttonSave.Location = new System.Drawing.Point(316, 308);
             this.buttonSave.Name = "buttonSave";
             this.buttonSave.Size = new System.Drawing.Size(80, 30);
             this.buttonSave.Text = "Save";
@@ -185,14 +174,13 @@ namespace OrderDesk.Dialogs
             this.Controls.Add(this.numUnitPrice);
             this.Controls.Add(this.labelTotal);
             this.Controls.Add(this.labelTotalValue);
-            this.Controls.Add(this.labelHint);
             this.Controls.Add(this.buttonCancel);
             this.Controls.Add(this.buttonSave);
             this.FormBorderStyle = Wisej.Web.FormBorderStyle.Fixed;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "EditOrderDialog";
-            this.Size = new System.Drawing.Size(420, 420);
+            this.Size = new System.Drawing.Size(420, 392);
             this.StartPosition = Wisej.Web.FormStartPosition.CenterParent;
             this.Text = "Edit Order";
             this.ResumeLayout(false);
@@ -218,7 +206,6 @@ namespace OrderDesk.Dialogs
         private Wisej.Web.NumericUpDown numUnitPrice;
         private Wisej.Web.Label labelTotal;
         private Wisej.Web.Label labelTotalValue;
-        private Wisej.Web.Label labelHint;
         private Wisej.Web.Button buttonCancel;
         private Wisej.Web.Button buttonSave;
     }

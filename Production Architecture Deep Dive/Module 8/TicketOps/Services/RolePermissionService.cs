@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using TicketOps.Domain;
-using TicketOps.Infrastructure;
 
 namespace TicketOps.Services
 {
@@ -23,31 +22,23 @@ namespace TicketOps.Services
         };
 
         private readonly IUserService _users;
-        private readonly ILog _log;
 
-        public RolePermissionService(IUserService users, ILog log)
+        public RolePermissionService(IUserService users)
         {
             _users = users ?? throw new ArgumentNullException(nameof(users));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         public bool CanClose(Ticket ticket)
         {
             var user = _users.Current;
-            bool allowed = Has(user.Role, CloseAction)
+            return Has(user.Role, CloseAction)
                 && (user.Role == OperatorRole.Manager || ticket.AssigneeId == user.Id || !ticket.IsAssigned);
-            _log.Info(LogLayer.Service, "RolePermissionService.CanClose",
-                $"policy[{user.Role}] ∋ {CloseAction}? {Has(user.Role, CloseAction)} · assignee check → {(allowed ? "allowed" : "denied")}");
-            return allowed;
         }
 
         public bool CanAssign(Ticket ticket, int toOperatorId)
         {
             var user = _users.Current;
-            bool allowed = Has(user.Role, AssignAnyAction) || (Has(user.Role, AssignSelfAction) && toOperatorId == user.Id);
-            _log.Info(LogLayer.Service, "RolePermissionService.CanAssign",
-                $"policy[{user.Role}] for operator {toOperatorId} → {(allowed ? "allowed" : "denied")}");
-            return allowed;
+            return Has(user.Role, AssignAnyAction) || (Has(user.Role, AssignSelfAction) && toOperatorId == user.Id);
         }
 
         private static bool Has(OperatorRole role, string action) => Array.IndexOf(Matrix[role], action) >= 0;

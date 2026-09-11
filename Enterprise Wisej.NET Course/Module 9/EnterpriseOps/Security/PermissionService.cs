@@ -42,18 +42,8 @@ namespace EnterpriseOps.Security
 
         public PermissionDecision Check(SessionContext session, Permission permission)
         {
-            return Decide(session.UserName, session.Role, permission, "session");
-        }
-
-        /// <summary>
-        /// Used ONLY by the anti-pattern path: the role is whatever the browser claimed.
-        /// Kept separate so the correct method cannot be called with client data by mistake.
-        /// </summary>
-        public PermissionDecision CheckWithClaimedRole(string userName, Role claimedRole)
-            => Decide(userName, claimedRole, Permission.WorkOrderApprove, "payload ⚠");
-
-        private PermissionDecision Decide(string userName, Role role, Permission permission, string roleSource)
-        {
+            string userName = session.UserName;
+            Role role = session.Role;
             bool allowed = Matrix.TryGetValue(role, out Permission[] granted) && granted.Contains(permission);
             string name = PermissionNames.Of(permission);
             string requires = string.Join(" or ", Matrix.Where(kv => kv.Value.Contains(permission)).Select(kv => kv.Key.ToString()));
@@ -66,7 +56,7 @@ namespace EnterpriseOps.Security
                 Reason = allowed ? $"{role} holds {name}" : $"{name} requires {requires}; {userName} is {role}",
             };
 
-            _trace.Security($"PermissionService {userName} ({role}, role from {roleSource}) → {name} → {(allowed ? "ALLOWED" : "DENIED")} · {decision.Reason}");
+            _trace.Security($"PermissionService {userName} ({role}, role from session) → {name} → {(allowed ? "ALLOWED" : "DENIED")} · {decision.Reason}");
             return decision;
         }
 

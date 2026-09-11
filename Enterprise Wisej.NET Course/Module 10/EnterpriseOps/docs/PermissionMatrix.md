@@ -70,11 +70,14 @@ walkthrough's technician can watch their own denial land in the grid while never
 
 ## Evidence in the running app
 
+**Export data** is offered to every signed-in user; `ExportService` decides. **Approve** and **Approve pending
+export** are shown only when `Has` says yes.
+
 | Signed in as | Buttons the screen offers | What the services do |
 |---|---|---|
-| `l.romero` (Technician) | none of the three | **Break the UI: enable Export** → **Export data** → `Missing permission: ExportData`, audited DENIED |
+| `l.romero` (Technician) | Export data | **Export data** → `Missing permission: ExportData`, audited DENIED |
 | `m.weber` (Manager) | Approve · Export data | Export → 36 rows > 25 → export #3 held for a second person |
-| `d.singh` (Admin) | Approve · Export data · Approve pending export | approving their own export → refused, separation of duties, audited DENIED |
-| `j.kim` (Auditor) | Approve pending export only | releases someone else's export; cannot request one |
-| `svc.import` (ServiceAccount) | none | can view and edit only — a service account with `ExportData` is a breach waiting for a mis-configured job |
-| `t.novak` (no mapped group) | none | every `Demand` refuses; the queue never loads |
+| `d.singh` (Admin) | Approve · Approve pending export · Export data | approving their own export → refused, separation of duties, audited DENIED |
+| `j.kim` (Auditor) | Approve pending export · Export data | releases someone else's export; a request of their own is refused |
+| `svc.import` (ServiceAccount) | Export data | can view and edit only — a service account with `ExportData` is a breach waiting for a mis-configured job |
+| `t.novak` (no mapped group) | Export data | every `Demand` refuses; the queue never loads |

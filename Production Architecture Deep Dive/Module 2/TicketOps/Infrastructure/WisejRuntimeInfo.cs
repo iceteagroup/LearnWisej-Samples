@@ -57,16 +57,6 @@ namespace TicketOps.Infrastructure
             }
         }
 
-        public bool? SessionBagHolds(SessionContext ctx)
-        {
-            try
-            {
-                object parked = Application.Session.SessionContext;
-                return ReferenceEquals(parked, ctx);
-            }
-            catch (Exception) { return null; }
-        }
-
         /// <summary>The values AppComposition copies into a brand-new SessionContext when a session starts.</summary>
         public static string ReadSessionId()
         {

@@ -8,8 +8,8 @@ namespace TicketOps.Data
     /// Persistence contract. The services depend on this, never on SqlConnection or a DbContext, so the
     /// store can change (or be faked) without touching a screen or a rule.
     ///
-    /// Module 7 contract addition: implementations must be safe to call from two threads at once — the
-    /// import task writes while the session's request thread reads (the "Refresh list" click).
+    /// Implementations must be safe to call from two threads at once — the import task writes while the
+    /// session's request thread reads (the "Refresh list" click).
     /// </summary>
     public interface ITicketRepository
     {
@@ -24,8 +24,5 @@ namespace TicketOps.Data
         Task<bool> InsertAsync(Ticket ticket);
 
         Task<int> CountAsync();
-
-        /// <summary>Drops every imported ticket and re-seeds the demo data (the lab's "start again" switch).</summary>
-        Task ResetAsync();
     }
 }

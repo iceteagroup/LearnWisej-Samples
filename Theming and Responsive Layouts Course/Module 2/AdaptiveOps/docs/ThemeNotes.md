@@ -69,13 +69,13 @@ appearance
 |---|---|---|---|
 | `brandPrimary` | `#2454A6` | the brand; the one line marketing changes | `action-button` [default], `panel/captionbar`, `metric-strip` [default], `tabview/page/button` [checked] text, `button` [checked] |
 | `brandAccent` | `#F59E0B` | the accent; kept for highlights | `table-header-cell` [sorted] text (sort a grid column); Module 3 reuses it in the CssClass layer |
-| `surface` | `#FFFFFF` | card / editor background | `metric-card`, `tabview/page`, `textbox`, table rows, `tooltip/atom` text, `trace-list` |
+| `surface` | `#FFFFFF` | card / editor background | `metric-card`, `tabview/page`, `textbox`, table rows, `tooltip/atom` text |
 | `surfaceAlt` | `#F6F7FB` | the page and every secondary surface | `page`, `button` face, tab bar buttons, `table-header-cell`, odd table rows |
 | `textMain` | `#222222` | body text | `root`, `page`, `button` text, `heading-label`, `card-title`, `tooltip/atom` background |
 | `textMuted` | `#677085` | secondary text | `muted-label`, `overline-label`, `mono-label`, tab button text, `table-header-cell` text, `status-label` [default] |
-| `danger` | `#B42318` | errors | `textbox` [invalid] border, `banner-label`, `metric-strip` [danger], `status-label` [error], `tooltip-error/atom` |
-| `warning` | `#B54708` | warnings | `metric-strip` [warning], `status-label` [warn] |
-| `success` | `#027A48` | success | `metric-strip` [success], `status-label` [ok] |
+| `danger` | `#B42318` | errors | `textbox` [invalid] border, `metric-strip` [danger], `tooltip-error/atom` |
+| `warning` | `#B54708` | warnings | `metric-strip` [warning] |
+| `success` | `#027A48` | success | `metric-strip` [success] |
 | `focusFrame` | `#2454A6` | the focus border | `textbox` / `combobox` / `list` [focused] border, tab button [focused] inner border |
 | `brandPrimaryHover` | `#1F4A92` | derived shade, defined once | `action-button` [hovered] |
 | `brandPrimaryPressed` | `#183B75` | derived shade, defined once | `action-button` [pressed] |
@@ -97,8 +97,8 @@ allowed (no token existed for them), but the derived shades here are tokens so a
 |---|---|---|
 | `default` | `{ "size": 13, "family": ["Segoe UI","Roboto","Helvetica Neue","Arial"], "bold": false }` | `root` — every widget without its own font |
 | `heading` | `{ "size": 18, "family": [same], "bold": true }` | `heading-label`: application title, the four metric values |
-| `mono` | `{ "size": 12, "family": ["Consolas","Menlo","monospace"], "bold": false }` | `trace-list` (the live trace), `mono-label` (browser size) |
-| `defaultBold` | kept from Bootstrap-4 (13, bold) | `panel/captionbar`, `card-title`, `overline-label`, `status-label`, `banner-label` |
+| `mono` | `{ "size": 12, "family": ["Consolas","Menlo","monospace"], "bold": false }` | `mono-label` (the width label) |
+| `defaultBold` | kept from Bootstrap-4 (13, bold) | `panel/captionbar`, `card-title`, `overline-label`, `status-label` |
 
 Web fonts: the families above are system stacks, so nothing has to be deployed. A real web font would be referenced
 from `Default.html` (or a `@font-face` in the theme `stylesheet`) and must ship with the application; a font the
@@ -157,13 +157,13 @@ secondary toolbar commands use this appearance untouched by code.
 
 - `inherit: button` copies the whole button appearance (states *and* the `arrow`/`icon` components).
 - Only **default, hovered, pressed** are listed. **focused** (the `focusShadow` ring) and **disabled** (opacity 0.5)
-  are not mentioned, so they come from `button` unchanged — the state walk in the app proves it:
+  are not mentioned, so they come from `button` unchanged:
   `GetColor("action-button","shadowColor","focused")` = `focusShadow`, `GetProperty<double>("action-button","opacity","disabled")` = 0.5,
   `height` = 36.
 - `textColor` sits under `properties`, where the framework keeps it (the lesson's snippet shows it under `styles`;
   Bootstrap-4 itself uses `properties.textColor`, so the file follows the framework).
-- A control gets the variant with `btnSave.AppearanceKey = "action-button"` (done in `btnApplyTheme_Click` and on
-  Reset). No `BackColor` anywhere.
+- A control gets the variant with `btnSave.AppearanceKey = "action-button"` (done in `ApplyTheme()`, called from
+  `MainPage_Load` and `btnApplyTheme_Click`). No `BackColor` anywhere.
 
 ### `panel` and its `captionbar` component
 
@@ -179,8 +179,8 @@ secondary toolbar commands use this appearance untouched by code.
 }
 ```
 
-The trace card and the details card are Panels with `ShowHeader = true`, so `panel/captionbar` is visible in the
-console (Last Clicked on the caption bar in the Theme Builder reports exactly that path).
+The details card is a Panel with `ShowHeader = true`, so `panel/captionbar` is visible in the console (Last Clicked
+on the caption bar in the Theme Builder reports exactly that path).
 
 ### `metric-card` and `metric-strip` — the console's own panel variants
 
@@ -194,10 +194,10 @@ console (Last Clicked on the caption bar in the Theme Builder reports exactly th
                               "success": { "styles": { "backgroundColor": "success" } } } }
 ```
 
-Every card (toolbar, navigation, four metrics, trace, details, status) is `AppearanceKey = "metric-card"`: Module 1's
+Every card (toolbar, navigation, four metrics, details, status) is `AppearanceKey = "metric-card"`: Module 1's
 `BackColor = White` is gone. The 4 px strip on each metric card is a `metric-strip` whose colour is a **custom state**
-set from code with `Control.States` (`stripOverdue.States = { "danger" }`): the accent is a token, chosen by state, not
-a `BackColor`.
+set with `Control.States` (`stripOverdue.States = { "danger" }`): the accent is a token, chosen by state, not a
+`BackColor`.
 
 ### `tabview` — tab buttons and page
 
@@ -215,8 +215,8 @@ a `BackColor`.
                 "barTop": {…}, … } } } } } }
 ```
 
-The workspace is a TabControl (Tickets · Token inspector), so the tab restyle is visible: muted tabs on `surfaceAlt`,
-the selected tab on `surface` with `brandPrimary` text.
+The ticket grid sits on a TabControl page, so the tab restyle is visible: the selected tab on `surface` with
+`brandPrimary` text, unselected tabs muted on `surfaceAlt`.
 
 ### `table` and the `table-header-cell` component (the grid header)
 
@@ -232,7 +232,7 @@ the selected tab on `surface` with `brandPrimary` text.
     "sorted-sortedAscending": {…}, "borderNone": {…}, … } }
 ```
 
-Both grids (tickets, token inspector) share it. Bootstrap-4's hovered header was the literal-valued `buttonHighlight`.
+The ticket grid uses it. Bootstrap-4's hovered header was the literal-valued `buttonHighlight`.
 
 ### `textbox` — the invalid state (the editor)
 
@@ -261,9 +261,9 @@ shows in the `tooltip-error` appearance, whose `atom` already uses `danger`.
                              "arrow": {…} } }
 ```
 
-Every toolbar button, the tab pages, the Title editor and Save carry `ToolTipText`, so the tooltip is one hover away.
+Save carries `ToolTipText`, so the tooltip is one hover away.
 
-### Label variants, the trace list, page and root
+### Label variants, page and root
 
 ```json
 "heading-label":  { "inherit": "textlabel", "states": { "default": { "properties": { "opacity": 1, "font": "heading",     "textColor": "textMain"  } } } },
@@ -271,23 +271,14 @@ Every toolbar button, the tab pages, the Title editor and Save carry `ToolTipTex
 "overline-label": { "inherit": "textlabel", "states": { "default": { "properties": { "opacity": 1, "font": "defaultBold", "textColor": "textMuted" } } } },
 "muted-label":    { "inherit": "textlabel", "states": { "default": { "properties": { "opacity": 1, "font": "default",     "textColor": "textMuted" } } } },
 "mono-label":     { "inherit": "textlabel", "states": { "default": { "properties": { "opacity": 1, "font": "mono",        "textColor": "textMuted" } } } },
-"status-label":   { "inherit": "textlabel", "states": {
-                      "default": { "properties": { "opacity": 1, "font": "defaultBold", "textColor": "textMuted" } },
-                      "ok":      { "properties": { "textColor": "success" } },
-                      "warn":    { "properties": { "textColor": "warning" } },
-                      "error":   { "properties": { "textColor": "danger" } } } },
-"banner-label":   { "inherit": "textlabel", "states": { "default": { "styles": { "backgroundColor": "danger", "radius": "$borderRadius" },
-                                                                    "properties": { "opacity": 1, "font": "defaultBold", "textColor": "white" } } } },
-"trace-list":     { "inherit": "list", "states": { "default": { "styles": { "width": 1, "style": "solid", "color": "windowFrame", "radius": "$borderRadius" },
-                                                                "properties": { "opacity": 1, "backgroundColor": "surface", "textColor": "textMain", "font": "mono", "itemHeight": 22 } } } },
+"status-label":   { "inherit": "textlabel", "states": { "default": { "properties": { "opacity": 1, "font": "defaultBold", "textColor": "textMuted" } } } },
 "page":           { "states": { "default": { "properties": { "backgroundColor": "surfaceAlt", "textColor": "textMain" } } }, … },
 "root":           { "states": { "default": { "properties": { "font": "default", "textColor": "textMain" } } } }
 ```
 
-`textlabel` is the appearance key of `Wisej.Web.Label` (read from the framework), `list` the key of `ListBox`. These
-variants replace every `Font` and `ForeColor` Module 1 set in the Designer: the status label's three colours are now
-three **custom states** (`lblStatus.States = { "error" }`), the banner's red is a theme style, the metric values use
-the `heading` font, the trace the `mono` font.
+`textlabel` is the appearance key of `Wisej.Web.Label` (read from the framework). These variants replace every `Font`
+and `ForeColor` Module 1 set in the Designer: the metric values use the `heading` font, the width label the `mono`
+font, captions the muted text colour.
 
 ## 5. Inheritance — what "inherit" copies and what you override
 
@@ -316,7 +307,6 @@ list order, so the lowest matching block decides.
 | `action-button` | default › hovered › pressed | `pressed` below `hovered`: while the mouse is held both match and `brandPrimaryPressed` + `translate(1px,1px)` win. Drag `pressed` above `hovered` in the Theme Builder tree and the user sees `brandPrimaryHover` while pressing — same colours, different behaviour |
 | `textbox` | default › hovered › focused › disabled › multiline › border* › celleditor › invalid | `invalid` last: a focused invalid editor shows the `danger` border, not `focusFrame`. Move `invalid` above `focused` and the red border disappears the moment the user clicks into the field |
 | `metric-strip` | default › danger › warning › success | only one custom state is set per strip, so order does not matter here; `default` first is still the rule |
-| `status-label` | default › ok › warn › error | one custom state at a time (`lblStatus.States = {…}`), `default` first |
 
 Rule from the lesson, kept everywhere: **`default` is the first state in every appearance.**
 
@@ -326,7 +316,7 @@ Rule from the lesson, kept everywhere: **`default` is the first state in every a
 |---|---|---|
 | identity of standard controls (buttons, tabs, grid header, editors, tooltips, panels) | the theme file | `BackColor`/`ForeColor`/`Font` per control, CSS against `.qx-*` DOM |
 | a semantic variant (the primary command) | `AppearanceKey = "action-button"` with `inherit: button` | a second Button subclass, a `BackColor` |
-| the four metric accent colours, the three status colours | custom theme states + tokens (`metric-strip`, `status-label`) | `Color.FromArgb` in `SetStatus` (Module 1 did this and said so) |
+| the four metric accent colours | custom theme states + tokens (`metric-strip`) | `BackColor` on each strip (Module 1 did this) |
 | the invalid editor | the `invalid` state of `textbox` + `Invalid = true` | a red `BackColor` when validation fails |
 | a rebrand | edit `colors` (brandPrimary + the tokens that equal it: `focusFrame`, `primary`, `highlight`…) | search-and-replace across Designer files |
 | where things are and how big | Dock / Anchor / Padding in `MainPage.Designer.cs` (Module 1) | the theme (it owns look, not layout) |
@@ -336,8 +326,8 @@ Rule from the lesson, kept everywhere: **`default` is the first state in every a
 
 1. An **application property** on the control overrides the theme — `BackColor`, `ForeColor`, `Font`, `CssStyle`,
    `CssClass`. (This project: none.)
-2. The **AppearanceKey** — is it the appearance you edited? `Base theme ⇄` shows what a key the theme does not define
-   looks like: `GetColor("action-button", …)` = `Color.Empty` on Bootstrap-4 and Save renders as a bare widget.
+2. The **AppearanceKey** — is it the appearance you edited? A key the theme does not define renders bare: on
+   Bootstrap-4, `GetColor("action-button", …)` = `Color.Empty` and Save renders as a plain widget.
 3. The **state order** — and is the state actually set (`Invalid = true`, `States = {…}`)?
 4. Did the running app **load the theme you edited** — `Default.json` `"theme"`, `Web.config`,
    `Application.Theme.Name` in the status bar? Editing the theme shown in the Visual Studio designer changes nothing
@@ -353,20 +343,12 @@ control; with `inherit: button` and those two states unlisted, focused and disab
 
 ## Evidence (what the running console shows)
 
-- **Startup:** status bar right label `theme: AdaptiveOps (Themes/AdaptiveOps.theme · Default.json)`; status label
-  `● theme AdaptiveOps` in the `success` colour (custom state `ok`); trace lines
-  `• server Application.Theme.Name = "AdaptiveOps" (page load)` and the two `theme file … ✓` lines. The page background
-  is `surfaceAlt`, cards are white with `windowFrame` borders and 6 px radius, the two headered cards show
-  `brandPrimary` caption bars, metric values are 18 px bold, the trace is monospaced.
-- **Apply theme:** Save and Apply theme turn `brandPrimary` with white text; hover = `#1F4A92`, hold = `#183B75` and
-  a 1 px shift; Tab to Save = the shared focus ring; the Token inspector tab lists 18 tokens with *Defined as* =
-  *Resolved* for every colour (e.g. `brandPrimary · #2454A6 · #2454A6 (@brandPrimary)`).
-- **Walk states:** 22 trace lines, e.g. `→ theme action-button / shadowColor [focused] = #2454A6 α89 (@focusShadow)
-  ← INHERITED from button — not overridden` and `→ theme textbox / color [invalid] = #B42318 (@danger)`.
-- **Invalid ticket:** the Title editor gets a `danger` border and the error tooltip; banner in `danger`; status
-  `● validation error` in `danger` (state `error`). Reset clears all three.
-- **Missing theme:** trace shows what `Application.LoadTheme("Missing-Theme")` did (exception or no-op — logged
-  either way), `GetColor("brandPrimry") = Color.Empty`, the console keeps running; Reset reloads AdaptiveOps.
-- **Base theme ⇄:** the whole console flips to Bootstrap-4 (blue `#007AFF` caption bars, grey `#D1E0E5` button hover,
-  4 px radius); every control that names a custom appearance (`action-button`, `metric-card`, the label variants)
-  renders bare because Bootstrap-4 does not define them — the trace says so. Click again to return.
+- **Startup:** the status label reads `Theme: AdaptiveOps`. The page background is `surfaceAlt`, cards are white with
+  `windowFrame` borders and 6 px radius, the details card shows a `brandPrimary` caption bar, metric values are 18 px
+  bold, the width label is monospaced.
+- **Save:** `brandPrimary` with white text; hover = `#1F4A92`, hold = `#183B75` and a 1 px shift; Tab to Save = the
+  shared focus ring.
+- **Save with an empty Title:** the Title editor gets a `danger` border and the error tooltip; the status label says
+  why. Selecting another ticket clears the state.
+- **Theme not found:** with a theme name in `Default.json` that has no file in `Themes/`, the framework falls back and
+  the status label reads `Theme "AdaptiveOps" was not found in the Themes folder; running "…"`.

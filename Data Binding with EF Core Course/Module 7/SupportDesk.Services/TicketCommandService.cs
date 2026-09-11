@@ -15,7 +15,7 @@ public sealed record EditorLookups(
 /// <summary>An existing ticket's edit model plus the ticket number, which the model itself never carries.</summary>
 public sealed record TicketEditData(TicketEditModel Model, string Number);
 
-/// <summary>What <c>SaveAsync</c> wrote: the id and number the editor needs to update <c>lblNumber</c> and its title bar.</summary>
+/// <summary>What <c>SaveAsync</c> wrote: the id and number of the saved ticket.</summary>
 public sealed record SaveTicketResult(int Id, string Number);
 
 public enum DeleteOutcome
@@ -29,13 +29,9 @@ public enum DeleteOutcome
 
 public sealed record DeleteTicketResult(DeleteOutcome Outcome, string? Number, string? Reason);
 
-/// <summary>What <c>CloseTicketWithCommentAsync</c> wrote, for the trace: the ticket and the comment id.</summary>
-public sealed record CloseWithCommentResult(int TicketId, string Number, int CommentId);
-
 /// <summary>
-/// Thrown by <see cref="TicketCommandService.SaveAsync(TicketEditModel, TimeSpan, CancellationToken)"/>
-/// when the ticket being edited no longer exists — the editor was open on a row someone else (or the
-/// page's "Simulate: another operator deletes it" button) removed in the meantime.
+/// Thrown by <see cref="TicketCommandService.SaveAsync(TicketEditModel, CancellationToken)"/> when the ticket being edited
+/// no longer exists: the editor was open on a row another session removed in the meantime.
 /// </summary>
 public sealed class TicketNotFoundException : Exception
 {
@@ -54,7 +50,7 @@ public sealed class TicketNotFoundException : Exception
 /// state — so a fresh <c>DbContext</c> is created for every operation and disposed before the method
 /// returns. Module 4's habit in code: load for <i>display</i> with <c>AsNoTracking</c>
 /// (<see cref="LoadEditModelAsync"/>), load for a <i>write</i> as a tracked entity inside the very method
-/// that is about to change it (<see cref="SaveAsync(TicketEditModel, TimeSpan, CancellationToken)"/>,
+/// that is about to change it (<see cref="SaveAsync(TicketEditModel, CancellationToken)"/>,
 /// <see cref="DeleteAsync"/>) — the two never share a context, and the tracked read is never held longer
 /// than the save it belongs to.
 /// </summary>
@@ -74,13 +70,11 @@ public sealed class TicketCommandService
 
     private readonly IDbContextFactory<SupportDeskContext> _dbFactory;
     private readonly ConflictResolution _conflictResolution;
-    private readonly TransactionFailureSwitch _transactionFailure;
 
-    public TicketCommandService(IDbContextFactory<SupportDeskContext> dbFactory, ConflictResolution conflictResolution, TransactionFailureSwitch transactionFailure)
+    public TicketCommandService(IDbContextFactory<SupportDeskContext> dbFactory, ConflictResolution conflictResolution)
     {
         _dbFactory = dbFactory;
         _conflictResolution = conflictResolution;
-        _transactionFailure = transactionFailure;
     }
 
     #region Load — for display, never for a write
@@ -125,13 +119,10 @@ public sealed class TicketCommandService
 
     #region Save — a fresh, tracked context for exactly this write
 
-    /// <summary>No simulated latency, no lab-prop duplicate number — the ordinary path.</summary>
+    /// <summary>The ordinary path.</summary>
     public Task<SaveTicketResult> SaveAsync(TicketEditModel model, CancellationToken token = default)
-        => SaveAsync(model, TimeSpan.Zero, forceDuplicateNumber: false, token);
+        => SaveAsync(model, forceDuplicateNumber: false, token);
 
-    /// <summary>No lab-prop duplicate number — the ordinary path with an optional simulated delay.</summary>
-    public Task<SaveTicketResult> SaveAsync(TicketEditModel model, TimeSpan latency, CancellationToken token = default)
-        => SaveAsync(model, latency, forceDuplicateNumber: false, token);
 
     /// <summary>
     /// Creates or updates one ticket from the approved fields of <paramref name="model"/> and disposes the
@@ -141,13 +132,8 @@ public sealed class TicketCommandService
     /// display it — and its fields are overwritten. <c>UpdatedAt</c> and <c>RowVersion</c> are stamped by
     /// <c>SupportDeskContext.SaveChanges(Async)</c>, not here.
     /// </summary>
-    /// <param name="latency">
-    /// Lab prop, like <see cref="TicketQueryService.SearchTicketsSlowlyAsync"/>: an artificial delay
-    /// <b>inside</b> the unit of work (the context is already open, the ticket already mapped) so the
-    /// editor's saving guard and disabled Save button can be watched. Zero in the ordinary path.
-    /// </param>
     /// <param name="forceDuplicateNumber">
-    /// Module 5 lab prop, development only: for a new ticket (<paramref name="model"/>.<c>Id</c> == 0),
+    /// Test hook: for a new ticket (<paramref name="model"/>.<c>Id</c> == 0),
     /// reuse an existing ticket's <see cref="Ticket.Number"/> instead of calling <see cref="NextNumberAsync"/>,
     /// so the unique index <c>IX_Tickets_Number</c> refuses the <c>INSERT</c> and <c>SaveChangesAsync</c>
     /// throws <see cref="Microsoft.EntityFrameworkCore.DbUpdateException"/> with an inner <c>SqliteException</c>
@@ -155,14 +141,13 @@ public sealed class TicketCommandService
     /// advance, because uniqueness can only be guaranteed by the database. False in the ordinary path.
     /// </param>
     /// <exception cref="TicketNotFoundException">
-    /// <paramref name="model"/>.<c>Id</c> names a ticket that no longer exists — someone else (or the
-    /// page's "Simulate: another operator deletes it" button) removed it after the editor loaded it.
+    /// <paramref name="model"/>.<c>Id</c> names a ticket that no longer exists — another session removed it after the editor loaded it.
     /// </exception>
-    public Task<SaveTicketResult> SaveAsync(TicketEditModel model, TimeSpan latency, bool forceDuplicateNumber, CancellationToken token = default)
-        => SaveAsync(model, latency, forceDuplicateNumber, overwriteOriginalRowVersion: null, token);
+    public Task<SaveTicketResult> SaveAsync(TicketEditModel model, bool forceDuplicateNumber, CancellationToken token = default)
+        => SaveAsync(model, forceDuplicateNumber, overwriteOriginalRowVersion: null, token);
 
     /// <summary>
-    /// The Overwrite path from the Module 7 conflict dialog: identical to the four-argument overload except
+    /// The Overwrite path from the Module 7 conflict dialog: identical to the three-argument overload except
     /// that, for an existing ticket, <paramref name="overwriteOriginalRowVersion"/> — the token
     /// <see cref="ConflictSet.DatabaseRowVersion"/> reported as current when the conflict was built —
     /// replaces <paramref name="model"/>.<see cref="TicketEditModel.RowVersion"/> as the tracked entity's
@@ -171,7 +156,7 @@ public sealed class TicketCommandService
     /// discard) instead of the stale version the editor loaded, so this save is expected to succeed even
     /// though someone else changed the row in between.
     /// </summary>
-    public async Task<SaveTicketResult> SaveAsync(TicketEditModel model, TimeSpan latency, bool forceDuplicateNumber, byte[]? overwriteOriginalRowVersion, CancellationToken token = default)
+    public async Task<SaveTicketResult> SaveAsync(TicketEditModel model, bool forceDuplicateNumber, byte[]? overwriteOriginalRowVersion, CancellationToken token = default)
     {
         await using var db = await _dbFactory.CreateDbContextAsync(token);
 
@@ -182,7 +167,7 @@ public sealed class TicketCommandService
             if (forceDuplicateNumber)
             {
                 number = await db.Tickets.OrderBy(t => t.Id).Select(t => t.Number).FirstAsync(token);
-                QueryTrace.Note($"SaveAsync: lab prop — reusing existing number {number} to reproduce the UNIQUE constraint on Tickets.Number");
+                QueryTrace.Note($"SaveAsync: reusing existing number {number} to reproduce the UNIQUE constraint on Tickets.Number");
             }
             else
             {
@@ -229,12 +214,6 @@ public sealed class TicketCommandService
         // place. UpdatedAt and RowVersion are stamped by SupportDeskContext.SaveChanges(Async) below (see
         // StampTickets) — this method does not set either one by hand.
 
-        if (latency > TimeSpan.Zero)
-        {
-            QueryTrace.Note($"simulated latency of {latency.TotalSeconds:0.#} s inside the unit of work — the context is already open and Save is guarded");
-            await Task.Delay(latency, token);
-        }
-
         try
         {
             await db.SaveChangesAsync(token);
@@ -257,95 +236,6 @@ public sealed class TicketCommandService
 
     #endregion
 
-    #region Close with comment — one multi-operation unit, explicit transaction (Module 7)
-
-    /// <summary>
-    /// Closes a ticket and records why in one atomic unit: the status update and the closing comment insert
-    /// either both land or neither does. A single <c>SaveChangesAsync</c> call is already transactional for
-    /// everything it writes (see <c>docs/TransactionsAndRetries.md</c>) — an <b>explicit</b> transaction is
-    /// only needed here because this method deliberately issues two separate <c>SaveChangesAsync</c> calls
-    /// (one per write) so <see cref="TransactionFailureSwitch.FailAfterFirstWrite"/> can fail the unit
-    /// <i>between</i> them and prove the first write alone is rolled back — a realistic stand-in for "the
-    /// second half of a multi-step business operation threw".
-    /// </summary>
-    /// <exception cref="TicketNotFoundException">The ticket no longer exists.</exception>
-    /// <exception cref="SimulatedTransactionFailureException">The lab prop fired after the status write — the transaction is rolled back before this method returns.</exception>
-    public async Task<CloseWithCommentResult> CloseTicketWithCommentAsync(int ticketId, string comment, CancellationToken token = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(comment);
-
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        await using var tx = await db.Database.BeginTransactionAsync(token);
-        QueryTrace.Note($"CloseTicketWithCommentAsync(#{ticketId}): BeginTransactionAsync — status update and comment insert share one transaction");
-
-        try
-        {
-            var ticket = await db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId, token)
-                ?? throw new TicketNotFoundException(ticketId);
-
-            ticket.Status = TicketStatuses.Closed;
-            await db.SaveChangesAsync(token);
-            QueryTrace.Note($"CloseTicketWithCommentAsync(#{ticketId} / {ticket.Number}): write 1 of 2 done — Status = Closed, SaveChangesAsync");
-
-            if (_transactionFailure.FailAfterFirstWrite)
-            {
-                _transactionFailure.FailAfterFirstWrite = false;   // fires once — the next click runs the ordinary path
-                QueryTrace.Note("CloseTicketWithCommentAsync: TransactionFailureSwitch armed — throwing before the comment is written");
-                throw new SimulatedTransactionFailureException();
-            }
-
-            var ticketComment = new TicketComment
-            {
-                TicketId = ticket.Id,
-                Author = "system",
-                Body = comment.Trim(),
-                CreatedAt = DateTime.UtcNow
-            };
-            db.TicketComments.Add(ticketComment);
-            await db.SaveChangesAsync(token);
-            QueryTrace.Note($"CloseTicketWithCommentAsync(#{ticketId} / {ticket.Number}): write 2 of 2 done — comment inserted, SaveChangesAsync");
-
-            await tx.CommitAsync(token);
-            QueryTrace.Note($"CloseTicketWithCommentAsync(#{ticketId} / {ticket.Number}): transaction committed — both writes are durable");
-            return new CloseWithCommentResult(ticket.Id, ticket.Number, ticketComment.Id);
-        }
-        catch (Exception)
-        {
-            await tx.RollbackAsync(token);
-            QueryTrace.Note($"CloseTicketWithCommentAsync(#{ticketId}): transaction rolled back — the comment was not written and the status is unchanged");
-            throw;
-        }
-    }
-
-    #endregion
-
-    #region Simulate another operator — reproduces the concurrency conflict without a second browser session
-
-    /// <summary>
-    /// Module 7 lab prop: updates the ticket's <see cref="Ticket.Status"/> and <see cref="Ticket.Priority"/>
-    /// through a brand-new <see cref="SupportDeskContext"/>, exactly as if a second operator had opened it,
-    /// changed it and saved — while the page's own editor may already be open on the same row with the
-    /// <b>old</b> <see cref="TicketEditModel.RowVersion"/> in hand. <see cref="SupportDeskContext.SaveChanges(bool)"/>
-    /// stamps a fresh <see cref="Ticket.RowVersion"/> here, so the editor's next Save now carries a stale
-    /// token and reliably reproduces <see cref="DbUpdateConcurrencyException"/> — the one-session alternative
-    /// to the two-browser-tab walkthrough in <c>docs/ConcurrencyResolution.md</c>.
-    /// </summary>
-    public async Task<SaveTicketResult> SimulateAnotherOperatorChangeAsync(int ticketId, CancellationToken token = default)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        var ticket = await db.Tickets.SingleOrDefaultAsync(t => t.Id == ticketId, token)
-            ?? throw new TicketNotFoundException(ticketId);
-
-        ticket.Status = TicketStatuses.Closed;
-        ticket.Priority = TicketPriorities.High;
-        await db.SaveChangesAsync(token);
-
-        QueryTrace.Note($"SimulateAnotherOperatorChangeAsync(#{ticketId} / {ticket.Number}): Status = Closed, Priority = High — a fresh RowVersion is now on the row; any editor still holding the old token will conflict on Save");
-        return new SaveTicketResult(ticket.Id, ticket.Number);
-    }
-
-    #endregion
-
     #region Delete — confirm first, then a fresh load by key
 
     /// <summary>
@@ -354,8 +244,7 @@ public sealed class TicketCommandService
     /// two expected ones:
     /// <list type="bullet">
     /// <item><see cref="DeleteOutcome.Deleted"/> — removed and saved.</item>
-    /// <item><see cref="DeleteOutcome.NotFound"/> — the row is already gone (another session deleted it, or
-    /// the page's "Simulate" button did). The caller should still treat this as "close and refresh": the
+    /// <item><see cref="DeleteOutcome.NotFound"/> — the row is already gone (another session deleted it). The caller should still treat this as "close and refresh": the
     /// grid is stale and a search will fix it.</item>
     /// <item><see cref="DeleteOutcome.Refused"/> — the row exists but <see cref="ClosedCannotBeDeletedMessage"/> applies.</item>
     /// </list>

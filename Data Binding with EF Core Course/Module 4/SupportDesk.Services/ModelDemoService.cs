@@ -93,8 +93,8 @@ public sealed class ModelDemoService
         var unassignedBefore = await db.Tickets.CountAsync(t => t.AgentId == null, token);
         if (target is null)
         {
-            QueryTrace.Note("no agent has tickets left — nothing to delete (Reset & reseed brings the three agents back)");
-            return new ModelDemoResult("—", unassignedBefore, unassignedBefore, "no agent has tickets left — use Reset & reseed");
+            QueryTrace.Note("no agent has tickets left — nothing to delete");
+            return new ModelDemoResult("—", unassignedBefore, unassignedBefore, "no agent has tickets left");
         }
 
         QueryTrace.Note($"agent #{target.Agent.Id} '{target.Agent.DisplayName}' owns {target.TicketCount} tickets · {unassignedBefore} tickets unassigned before — DELETE goes to the database, ON DELETE SET NULL decides");
@@ -124,8 +124,8 @@ public sealed class ModelDemoService
         var commentsBefore = await db.TicketComments.CountAsync(token);
         if (target is null)
         {
-            QueryTrace.Note("no ticket has comments left — nothing to delete (Reset & reseed brings them back)");
-            return new ModelDemoResult("—", commentsBefore, commentsBefore, "no ticket has comments left — use Reset & reseed");
+            QueryTrace.Note("no ticket has comments left — nothing to delete");
+            return new ModelDemoResult("—", commentsBefore, commentsBefore, "no ticket has comments left");
         }
 
         QueryTrace.Note($"ticket {target.Ticket.Number} '{target.Ticket.Title}' has {target.CommentCount} comments · {commentsBefore} comments in total — DELETE goes to the database (WHERE Id AND RowVersion), ON DELETE CASCADE decides");

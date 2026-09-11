@@ -5,8 +5,7 @@
 ## `validationSummaryLabel`
 
 A `Wisej.Web.Label` (`TicketEditorForm.Designer.cs`), positioned under the due-date row and above the
-button row, red-ish (`ForeColor` `178,59,39` on `BackColor` `253,236,234`, the same failure palette
-`labelBanner` uses elsewhere in this course) when it is carrying messages. `ShowValidation` joins *every*
+button row, red-ish (`ForeColor` `178,59,39` on `BackColor` `253,236,234`) when it is carrying messages. `ShowValidation` joins *every*
 message — field-level and the cross-field rule alike — into it:
 
 ```csharp
@@ -32,9 +31,8 @@ this.validationSummaryLabel.ForeColor = /* neutral grey */;
 this.validationSummaryLabel.BackColor = this.BackColor;
 ```
 
-Editing an existing ticket (which is expected to already be valid) or a lab-scenario preset that happens to be
-valid (the duplicate-number scenario: every annotation passes, only the database will object) shows no label
-at all until Save is pressed or a field changes. The `_wireLiveValidation` field is what enforces the rule
+Editing an existing ticket (which is expected to already be valid) shows no label at all until Save is pressed
+or a field changes. The `_wireLiveValidation` field is what enforces the rule
 "never paint before Load has finished" — see [`ValidationLayers.md`](ValidationLayers.md) and the
 `TicketEditorForm` class remarks for the full reasoning.
 

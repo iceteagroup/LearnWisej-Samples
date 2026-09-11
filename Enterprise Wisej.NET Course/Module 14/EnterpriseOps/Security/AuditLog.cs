@@ -21,7 +21,7 @@ namespace EnterpriseOps.Security
 
     /// <summary>
     /// Append-only audit trail. In production this is a table written in the same transaction as the
-    /// command (Module 10); here it is a per-session list so the trace can show the line being written.
+    /// command (Module 10); here it is a per-session list.
     /// </summary>
     public sealed class AuditLog
     {

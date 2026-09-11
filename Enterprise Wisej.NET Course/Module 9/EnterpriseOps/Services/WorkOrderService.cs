@@ -22,9 +22,9 @@ namespace EnterpriseOps.Services
     }
 
     /// <summary>
-    /// The business rules of the module's commands. Everything here is reachable from a button
-    /// AND from the palette; both go through the same methods, so there is no "JavaScript path"
-    /// with weaker rules. State transitions, the version bump and the tenant scope live here —
+    /// The business rules of the module's commands. The palette reaches them only through
+    /// ClientCommandService, so there is no "JavaScript path" with weaker rules.
+    /// State transitions, the version bump and the tenant scope live here —
     /// which is exactly what would be bypassed if a script were allowed to set Status directly.
     /// </summary>
     public sealed class WorkOrderService
@@ -125,24 +125,6 @@ namespace EnterpriseOps.Services
         {
             _trace.Service("WorkOrderService.OpenDiagnostics → diagnostics snapshot requested");
             return CommandResult.Ok(context.CorrelationId, "Diagnostics snapshot opened.");
-        }
-
-        /// <summary>
-        /// Recovery path: put an entity back the way the audit log says it was. Used to undo the
-        /// state change the anti-pattern let a forged payload make.
-        /// </summary>
-        public CommandResult RestoreSnapshot(CommandContext context, WorkOrder before)
-        {
-            WorkOrder current = _repository.Find(before.TenantId, before.Id);
-            if (current == null)
-                return CommandResult.Fail(context.CorrelationId, ResultCodes.InvalidTarget, "The work order is no longer in the store.");
-
-            current.Status = before.Status;
-            current.AssignedTo = before.AssignedTo;
-            current.Priority = before.Priority;
-            _repository.Save(current);
-            _trace.Service($"WorkOrderService.RestoreSnapshot → {Interop.InteropContract.ToEntityId(current.Id)} back to {current.Status} (v{current.Version})");
-            return CommandResult.Ok(context.CorrelationId, $"Reverted to {current.Status} (v{current.Version}).");
         }
 
         public static WorkQueueRow Project(WorkOrder order) => new WorkQueueRow

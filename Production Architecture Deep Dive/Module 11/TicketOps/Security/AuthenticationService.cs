@@ -38,25 +38,18 @@ namespace TicketOps.Security
             password = password ?? string.Empty;
 
             // The password itself is never logged — not here, not in the audit trail.
-            _log.Info(LogLayer.Service, "AuthenticationService.SignInAsync", $"→ IUserStore.FindAsync(\"{HtmlPolicy.Encode(userName)}\") · password: {password.Length} chars, not logged");
-
             if (userName.Length == 0 || password.Length == 0)
-            {
-                _log.Warn(LogLayer.Service, "AuthenticationService.SignInAsync", "rejected: empty user name or password");
                 return OperationResult<IUserContext>.Fail(Strings.SignInFailed);
-            }
 
             var record = await _users.FindAsync(userName);
             if (record == null || !PasswordMatches(record, password))
             {
                 // One neutral message for both cases: the response must not tell an attacker which half was right.
                 string why = record == null ? "unknown user" : "wrong password";
-                _log.Warn(LogLayer.Service, "AuthenticationService.SignInAsync", $"rejected: {why} → the user sees the same neutral message either way");
+                _log.Warn(LogLayer.Service, "AuthenticationService.SignInAsync", $"rejected: {why}");
                 _audit.Denied(null, "SignIn", HtmlPolicy.Encode(userName), why);
                 return OperationResult<IUserContext>.Fail(Strings.SignInFailed);
             }
-
-            _log.Info(LogLayer.Service, "AuthenticationService.SignInAsync", "password compared on the server (fixed-time) → match");
 
             var user = new UserContext(record.UserName, record.DisplayName, record.Roles);
             _session.SignIn(user);                                   // identity → server session (the browser cannot forge this)
@@ -68,7 +61,6 @@ namespace TicketOps.Security
         public void SignOut()
         {
             var user = _session.User;
-            _log.Info(LogLayer.Service, "AuthenticationService.SignOut", user == null ? "nobody signed in" : $"→ IUserSession.SignOut ({user.UserName})");
             _session.SignOut();
             if (user != null)
                 _audit.Success(user, "SignOut", "session", "session identity cleared");

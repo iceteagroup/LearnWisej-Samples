@@ -39,15 +39,9 @@ namespace IntegrationLab.Widgets
         /// <summary>The client adapter caught a vendor/WebMethod failure: error { phase, status, message }.</summary>
         public event EventHandler<DataWidgetErrorEventArgs> WidgetError;
 
+        /// <summary>Raised for every event the pivot sends to the server.</summary>
         [Browsable(false)]
         public event EventHandler<TraceEventArgs> Trace;
-
-        /// <summary>Asks the vendor to call store.load() again with the current options.</summary>
-        public void Reload()
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "call reload()", "{}");
-            this.Call("reload");
-        }
 
         protected override void OnWidgetEvent(WidgetEventArgs e)
         {
@@ -61,19 +55,14 @@ namespace IntegrationLab.Widgets
                         double value = ToDouble((object)data?.value);
                         RaiseTrace(TraceDirection.ClientToServer, "cellClick", $"{{rowKey:\"{rowKey}\",columnKey:\"{columnKey}\",value:{value.ToString(System.Globalization.CultureInfo.InvariantCulture)}}}");
                         if (rowKey.Length == 0 || columnKey.Length == 0 || double.IsNaN(value))
-                        {
-                            RaiseTrace(TraceDirection.Server, "contract check", "pivot cellClick payload rejected");
-                            return;
-                        }
+                            return;   // payload outside the contract: dropped
                         CellClick?.Invoke(this, new PivotCellClickEventArgs(rowKey, columnKey, value));
                         break;
                     }
                 case "dataLoaded":
-                    {
-                        RaiseTrace(TraceDirection.ClientToServer, "dataLoaded", $"{{rows:{(object)data?.rows ?? 0},columns:{(object)data?.columns ?? 0},cells:{(object)data?.cells ?? 0}}}");
-                        DataLoaded?.Invoke(this, EventArgs.Empty);
-                        break;
-                    }
+                    DataLoaded?.Invoke(this, EventArgs.Empty);
+                    break;
+
                 case "error":
                     {
                         string phase = (string)(data?.phase ?? "unknown");

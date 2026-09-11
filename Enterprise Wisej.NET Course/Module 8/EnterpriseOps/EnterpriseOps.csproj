@@ -21,8 +21,7 @@
     The embedded resource package of the component library (Widgets/ComponentResourcePackage.cs).
     The assembly is the source of truth: referencing it brings the vendor library, the component
     stylesheet and the client adapter with it. The first two are ALSO served from Widgets/ because a
-    Widget package is fetched over HTTP; ComponentResourcePackage.Verify() compares the two copies so
-    a hand-edited served file is reported instead of silently shipping.
+    Widget package is fetched over HTTP.
   -->
   <ItemGroup>
     <None Remove="Widgets\vendor-opschart.js" />

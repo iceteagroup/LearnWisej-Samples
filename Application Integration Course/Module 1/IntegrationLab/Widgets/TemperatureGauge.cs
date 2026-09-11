@@ -221,9 +221,6 @@ namespace IntegrationLab.Widgets
                     {
                         double reported = ToDouble(data?.value);
                         RaiseTrace(TraceDirection.ClientToServer, "thresholdExceeded", $"{{\"value\":{F(reported)}}}");
-                        if (Math.Abs(reported - _value) > 0.001)
-                            RaiseTrace(TraceDirection.Server, "contract check",
-                                $"client reported {F(reported)} but server Value is {F(_value)}: server wins");
                         ThresholdExceeded?.Invoke(this, new GaugeEventArgs(_value, "high", reported));
                         break;
                     }

@@ -35,4 +35,3 @@
 //   Data/WorkOrderRepository.cs             load/save the aggregate by tenant + id
 //   Data/WorkOrderQueryService.cs           read-only projections for screens
 //   Data/ErrorMap.cs                        database exception → result code + user message + audit line
-//   Data/SessionLongContextAntiPattern.cs   the wrong lifetime, kept so the failure can be shown

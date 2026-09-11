@@ -31,7 +31,7 @@ if (failed != null)
                    + $"\"{failed.FallbackPoint}\" before re-running. Never fix forward on a broken build.", failed);
 ```
 
-Steps `n+1 … 7` are never started. The trace says so explicitly:
+Steps `n+1 … 7` are never started. The server log says so explicitly:
 `Job:  step 4/7 Check themes → FAILED — path halted at fallback point "theme folder copy" (steps 5–7 not started)`.
 
 **2. Never fix forward on a broken build.**
@@ -71,16 +71,15 @@ Security: MapThemeMixin for ben.tech (Technician) → DENIED (requires Manager o
 
 ## Rollback of the whole migration
 
-`MigrationWorkflow.Reset()` is the "abandon the attempt" path: seven steps pending, flows not run, dossier rows
-open, theme back to unmapped — the state right after the package upgrade. In a real project that is
-`git checkout pre-fx` plus a redeploy of the previous package; nothing downstream of step 1 has shipped.
+Abandoning the attempt means going back to the state right after the package upgrade: seven steps pending, flows
+not run, dossier rows open, theme unmapped. In a real project that is `git checkout pre-fx` plus a redeploy of the
+previous package; nothing downstream of step 1 has shipped.
 
 ## Evidence — what the running app shows
 
 1. **Run migration path** → steps 1–3 `✓`, step 4 `✕`, steps 5–7 still `·` (pending, never started).
 2. **Map theme mixin** now → amber banner: *Step 4 is in the Failed state — roll back to "theme folder copy" first.*
-3. **Roll back failed step** → step 4 becomes `↶ rolled back to "theme folder copy" — fix, then re-run`; the trace
-   prints `Data: ThemeStore → Themes/Blue-2019 restored from the pre-step copy; migrated (unmapped) theme discarded`.
-4. **Fail: map theme as ben.tech** → server-side denial in the banner, nothing changes.
-5. **Map theme mixin** as `ana.ops` → `Theme mixin mapped — 3/3 tokens match the 3.5 baseline.`
-6. **Run migration path** again → it resumes at step 4 and finishes 7/7.
+3. **Roll back failed step** → step 4 becomes `↶ rolled back to "theme folder copy" — fix, then re-run`; the server
+   log records `Data: ThemeStore → Themes/Blue-2019 restored from the pre-step copy; migrated (unmapped) theme discarded`.
+4. **Map theme mixin** → `Theme mixin mapped — 3/3 tokens match the 3.5 baseline.`
+5. **Run migration path** again → it resumes at step 4 and finishes 7/7.

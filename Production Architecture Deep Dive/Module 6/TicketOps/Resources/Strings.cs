@@ -17,7 +17,6 @@ namespace TicketOps.Resources
         public const string WorkOrderMissing = "The work order no longer exists. Refresh the list.";
         public const string DialogOpen = "Approval dialog open — work order {0} untouched.";
         public const string DialogCancelled = "Approval canceled — work order {0} unchanged.";
-        public const string ValidationBlocked = "Validation failed — nothing was sent to the service.";
         public const string DecisionApplied = "Work order {0} {1}.";
     }
 }

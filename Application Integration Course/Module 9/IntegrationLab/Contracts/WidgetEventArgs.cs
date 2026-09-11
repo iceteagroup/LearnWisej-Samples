@@ -75,9 +75,9 @@ namespace IntegrationLab.Contracts
         public string Message { get; }
     }
 
-    public enum TraceDirection { ServerToClient, ClientToServer, Server }
+    public enum TraceDirection { ServerToClient, ClientToServer }
 
-    /// <summary>One line of the client/server trace shown by the lab UI.</summary>
+    /// <summary>One line of the page's Remote operations list.</summary>
     public sealed class TraceEventArgs : EventArgs
     {
         public TraceEventArgs(TraceDirection direction, string name, string payload)

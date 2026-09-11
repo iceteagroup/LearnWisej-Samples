@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Wisej.Web;                       // ✓ was: using System.Windows.Forms;
+using Wisej.Web;
 using OrderDesk.Domain;
 
-namespace OrderDesk.Dialogs            // ✓ was: namespace LegacyOrderDesk
+namespace OrderDesk.Dialogs
 {
     /// <summary>
     /// The modal edit dialog: customer, owner, status, PO. Returns DialogResult.OK on Save.
-    /// Ported from LegacyOrderDesk/EditOrderDialog.cs by the namespace swap alone — not one line of
-    /// this file changed. What changed is the CALLER: on the web the result arrives in the
-    /// ShowDialog callback instead of the return value (see OrdersForm.ordersGrid_CellDoubleClick).
+    /// Ported from LegacyOrderDesk/EditOrderDialog.cs by the namespace swap alone.
     /// </summary>
     public partial class EditOrderDialog : Form
     {

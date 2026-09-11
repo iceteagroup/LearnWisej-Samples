@@ -22,8 +22,8 @@ public static class AppState
 ```
 
 `LoginForm.okButton_Click` wrote `AppState.CurrentUser`; `OrdersForm` read and wrote `CurrentCustomer` and
-`CurrentFilter`. That code is correct on the desktop (one process, one user) and wrong on the server — see
-`TwoSessionTest.md` for the live corruption.
+`CurrentFilter`. That code is correct on the desktop (one process, one user) and wrong on the server: the second
+sign-in overwrites the one slot for every session.
 
 ## The quick fix, and why it is only a quick fix
 
@@ -90,11 +90,10 @@ public static class SessionContext
 ```
 
 Callers write `SessionContext.Current.CurrentFilter = filter` exactly as they used to write
-`AppState.CurrentFilter = filter` — the edit is mechanical (`MainPage.WriteSignIn`, `WriteFilter`, `WriteCustomer`
-show the ✕ and ✓ lines side by side):
+`AppState.CurrentFilter = filter` — the edit is mechanical:
 
 ```csharp
-// MainPage.WriteSignIn — the ✓ branch
+// MainPage.SignIn
 var context = SessionContext.Current;
 context.UserName = user;
 context.DisplayName = char.ToUpperInvariant(user[0]) + user.Substring(1);
@@ -119,8 +118,7 @@ context.SignedInAt = DateTime.Now;
 | `AppState.Countries` | stays a `static readonly` array | kept (immutable, user-independent) |
 | `InMemoryOrderRepository.Shared` | stays static | kept (plays the database; one store for all sessions is the point) |
 
-`Legacy/AppState.cs` stays in the project marked ✕ so the console can run the Orders screen on the old store and show
-the corruption live; nothing on the migrated path reads it.
+`AppState` is not part of the web project any more; nothing on the migrated path reads a per-user static.
 
 ## Why the store is invisible to callers
 
@@ -138,19 +136,12 @@ the corruption live; nothing on the migrated path reads it.
 ## `Reset()` on logout — and only this session
 
 `SessionCleanup.Run` (see `SessionCleanup.md`) ends with `SessionContext.Reset()`. The next `Current` access creates a
-fresh, anonymous context. Compare the legacy store: the console's *Sign out* in **Legacy statics** mode has to blank
-`AppState.*`, and the trace says why that is a bug in itself —
-`⚠ boundary AppState cleared  ✕ the statics are one slot — this sign-out signed out EVERY session on the server`.
+fresh, anonymous context. With the legacy statics a sign-out had to blank `AppState.*` — which signed out every
+session on the server.
 
 ## Evidence (in the running app)
 
-* Card B runs the Orders screen on either store: **Legacy statics** (`radioLegacy`) or **UserContext (session)**
-  (`radioContext`). The trace announces the switch:
-  `← JS→.NET mode  UserContext — the screen reads/writes SessionContext.Current  (✓ one context per browser session)`.
-* *Sign in as kelly* on the context store logs
-  `• server UserContext.Current  → session xxxxxxxx · kelly · Acme · Northwind Traders · filter Open · culture en-US   ← only this session`,
-  versus `• server AppState.CurrentUser (static)  = kelly   ← one slot: EVERY session on the server now reads kelly` on the
-  legacy store.
-* The **stores** label shows `static AppState (one slot per server)` and `UserContext.Current (session xxxxxxxx)` side by
-  side, plus `this page last wrote`, so the difference is visible without a second tab — and provable with one
-  (`TwoSessionTest.md`).
+* *Sign in as kelly* fills this session's context; the **Session** card shows `kelly · Northwind Traders · Open · Acme`
+  and the grid is filtered by it.
+* The same two clicks in a second tab (*Sign in as sam*) leave the first tab's context untouched — see
+  `TwoSessionTest.md`.

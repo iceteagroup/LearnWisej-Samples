@@ -30,7 +30,7 @@ namespace EnterpriseOps.Diagnostics
                 : $"[{correlationId}] {ex.GetType().Name}: {ex.Message}";
 
             _entries.Add(line);
-            _trace?.Write("Diagnostics: ErrorLog ← " + line + " (details stay server-side; the user sees a generic message)");
+            _trace?.Write("Error: " + line);
         }
     }
 }

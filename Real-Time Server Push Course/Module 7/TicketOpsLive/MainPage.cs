@@ -12,24 +12,13 @@ using Wisej.Web;
 
 namespace TicketOpsLive
 {
-    public enum TraceDirection { Push, Request, Server }
-
     /// <summary>
-    /// TicketOps Live — Module 7 · Production Review (the capstone).
+    /// TicketOps Live: status strip, import monitor, live ticket board fed by the global TicketHub, update
+    /// cadence, session diagnostics, and the real-time health and configuration review.
     ///
-    /// Everything the course built, in one session, on one page:
-    ///   status strip   M01 · heartbeat on a task, pushed once per second
-    ///   Import monitor M03 · 200 records, push every 10, cancel, fail at 87, UI restored in finally
-    ///   Ticket board   M05 + M06 · a session-owned bound list fed by the GLOBAL TicketHub, tenant-filtered
-    ///   Cadence        M04 · 50 ms model, dirty flag, one UI refresh per timer tick, polling fallback
-    ///   Session        M02 · Application.Session vs the static trap, Application.Current, live session registry
-    ///   Health         M07 · RealtimeHealthSnapshot + RenderHealth, effective configuration, the checklist
-    ///
-    /// The architectural rules the capstone is graded on are enforced in ONE place each:
-    ///   - every loop has a stop condition and an IsDisposed guard;
-    ///   - every subscription is removed by the single idempotent <see cref="Cleanup"/>;
-    ///   - every push is counted, so the health panel reports a measured update rate;
-    ///   - no page, control or context is ever handed to a global service.
+    /// Every loop has a stop condition and an IsDisposed guard; every subscription is removed by the single
+    /// idempotent <see cref="Cleanup"/>; every push is counted for the health panel; no page, control or
+    /// context is ever handed to a global service.
     /// </summary>
     public partial class MainPage : Page
     {
@@ -40,49 +29,44 @@ namespace TicketOpsLive
         private const int MinCadenceMs = 250;
         private const int SimulatedTickets = 10;
 
-        // ── Per-session state: instance fields of THIS page (one MainPage per browser tab) ────────────────
+        // Per-session state: instance fields of this page (one MainPage per browser tab).
         private IWisejComponent _context;          // captured on Load for out-of-bound code
-        private string _sessionId = "";            // the registry / hub key: SessionId is the tab, ClientId is the browser
+        private string _sessionId = "";            // SessionId is the tab, ClientId is the browser
         private string _clientId = "";
 
-        // M01 heartbeat
+        // Heartbeat
         private volatile bool _heartbeatRunning;
         private int _heartbeat;
 
-        // M03 import
+        // Import
         private CancellationTokenSource _importCts;
         private volatile bool _importRunning;
         private ImportJob _currentJob;
-        private int _completed, _cancelled, _failed;
 
-        // M05/M06 board
+        // Ticket board
         private readonly List<Ticket> _allTickets = new List<Ticket>();
         private readonly BindingList<Ticket> _tickets = new BindingList<Ticket>();
         private readonly BindingSource _ticketsBindingSource = new BindingSource();
         private string _tenant = TicketHub.Tenants[0];
         private bool _subscribedToHub;
-        private bool _restoringSelection;
-        private int _notificationCount, _filteredOut, _eventsApplied;
+        private int _notificationCount;
         private volatile bool _feedRunning;
 
-        // M04 cadence
+        // Cadence
         private readonly DashboardModel _model = new DashboardModel(Environment.TickCount);
         private DashboardSimulator _simulator;
         private volatile bool _dashboardDirty;
         private bool _refreshInProgress;
         private bool _liveMode;
         private int _cadenceMs = 1000;
-        private int _eventsReceived, _updatesApplied, _ticksRefused;
-        private bool _wiringDone;                  // handlers are wired after the initial fills
+        private int _eventsReceived, _updatesApplied;
 
-        // M02 session
-        private static int _sharedCounter;         // THE TRAP, kept on purpose: shared by every session of this server
+        // Session
         private bool _registered;
 
-        // M07 delivery + health
+        // Delivery and health
         private int _pushers;                      // out-of-bound work in flight
         private bool _polling;
-        private int _pushes;
         private readonly Queue<DateTime> _pushTimes = new Queue<DateTime>();
         private DateTime? _lastPushUtc;
         private bool _cleanedUp;
@@ -93,20 +77,20 @@ namespace TicketOpsLive
 
             _simulator = new DashboardSimulator(_model, SimulatedModelChanged, () => this.IsDisposed, SimulatorFailed);
 
-            // Closing the tab is a stop condition for every loop and the last chance to unsubscribe.
-            this.Disposed += (s, e) => Cleanup("Disposed");
+            // Closing the tab stops every loop and removes every subscription.
+            this.Disposed += (s, e) => Cleanup();
         }
 
         private void MainPage_Load(object sender, EventArgs e)
         {
             Application.Title = "TicketOps Live";
 
-            // The context of THIS session, captured while we are in it. Out-of-bound code (the hub fan-out and
-            // the registry both run on thread-pool threads) has no context of its own and would not know which
-            // browser to update; Application.Update(_context, …) restores this one.
             _context = Application.Current;
             _clientId = Application.ClientId ?? "";
             _sessionId = Application.SessionId ?? "";
+
+            if (Application.Session.Counter == null)
+                Application.Session.Counter = 0;
 
             BuildTicketGrid();
             FillTenants();
@@ -116,54 +100,39 @@ namespace TicketOpsLive
             // Register first, then subscribe: the session must not receive its own "joined" event mid-Load.
             _registered = SessionRegistry.Instance.Register(_sessionId);
             SessionRegistry.Instance.SessionsChanged += Registry_SessionsChanged;
-            SubscribeToHub("page load");
+            SubscribeToHub();
             Application.ApplicationExit += Application_ApplicationExit;
             Application.SessionTimeout += Application_SessionTimeout;
 
-            LoadSnapshot("page load");
+            LoadSnapshot();
             LoadConfiguration();
 
-            // The handlers are wired only now: filling the combos and the list above must not look like user input.
+            // Wired after the initial fills, so filling the combos does not look like user input.
             tenantComboBox.SelectedIndexChanged += new EventHandler(this.tenantComboBox_SelectedIndexChanged);
             cadenceComboBox.SelectedIndexChanged += new EventHandler(this.cadenceComboBox_SelectedIndexChanged);
             escalatedOnlyCheckBox.CheckedChanged += new EventHandler(this.escalatedOnlyCheckBox_CheckedChanged);
             liveModeCheckBox.CheckedChanged += new EventHandler(this.liveModeCheckBox_CheckedChanged);
-            ticketsGrid.SelectionChanged += new EventHandler(this.ticketsGrid_SelectionChanged);
-            checklistBox.AfterItemCheck += new ItemCheckEventHandler(this.checklistBox_AfterItemCheck);
-            _wiringDone = true;
 
             healthTimer.Start();
 
-            LifecycleLog("Page loaded for this session.");
-            AddTrace(TraceDirection.Request, "MainPage_Load", $"session {Short(_sessionId)} of client {Short(_clientId)} · IsWebSocket={Low(Application.IsWebSocket)} (the socket opens after this response)");
-            AddTrace(TraceDirection.Server, "wiring", "registry registered · hub subscribed · ApplicationExit + SessionTimeout armed · healthTimer started (2 s)");
-            SetStatus("capstone ready · every feature is one tab away", StatusKind.Normal);
-            RenderInspector("request thread (MainPage_Load)");
+            LifecycleLog("Page loaded");
+            RenderInspector();
             RenderLiveSessions();
-            RenderBoardCounters();
+            RenderNotificationCount();
             RenderHealth(BuildHealthSnapshot());
-            UpdateState();
         }
 
-        #region M01 — the heartbeat (status strip)
+        #region Heartbeat (status strip)
 
         private void startButton_Click(object sender, EventArgs e)
         {
             if (_heartbeatRunning)
-            {
-                AddTrace(TraceDirection.Server, "startButton_Click", "refused — the heartbeat is already running (_heartbeatRunning == true)");
-                ShowBanner("⚠ Heartbeat already running — a second click must not start a competing loop.", BannerKind.Warn);
                 return;
-            }
 
             _heartbeatRunning = true;
             startButton.Enabled = false;
             stopButton.Enabled = true;
-            HideBanner();
             activityLabel.Text = "Heartbeat starting…";
-            AddTrace(TraceDirection.Request, "startButton_Click", "the handler returns immediately; the loop runs on a task");
-            AddTrace(TraceDirection.Server, "Application.StartTask", "heartbeat: one push per second while _heartbeatRunning && !IsDisposed");
-            SetStatus("heartbeat running", StatusKind.Normal);
             BeginPush();
 
             Application.StartTask(HeartbeatLoop);
@@ -173,15 +142,12 @@ namespace TicketOpsLive
         {
             _heartbeatRunning = false;
             stopButton.Enabled = false;
-            activityLabel.Text = "Heartbeat stopping… (ends within one second)";
-            AddTrace(TraceDirection.Request, "stopButton_Click", "_heartbeatRunning = false → the loop exits at its next check");
+            activityLabel.Text = "Heartbeat stopping…";
         }
 
-        /// <summary>Compute off the request thread, then apply and push in ONE flush. finally always restores the UI.</summary>
         private void HeartbeatLoop()
         {
             var random = new Random();
-            string reason = "stopped by operator";
             bool faulted = false;
 
             try
@@ -197,22 +163,17 @@ namespace TicketOpsLive
                         clockLabel.Text = now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
                         serverLoadBar.Value = load;
                         loadValueLabel.Text = load + " %";
-                        activityLabel.Text = $"Heartbeat #{n} · load {load}% · pushed {now:HH:mm:ss.fff}";
+                        activityLabel.Text = $"Heartbeat #{n} · load {load}%";
                         NotePush();
                         RenderConnection();
-                        AddTrace(TraceDirection.Push, "Application.Update(this, …)", $"heartbeat #{n}: clock, load {load}%, activity — one flush");
-                        UpdateState();
                     });
 
-                    Thread.Sleep(1000);      // cadence: once per second is plenty for a status strip
+                    Thread.Sleep(1000);
                 }
-
-                if (this.IsDisposed) reason = "page disposed";
             }
             catch (Exception ex)
             {
                 faulted = true;
-                reason = "fault: " + ex.Message;
                 LogError("heartbeat", ex);
             }
             finally
@@ -226,99 +187,74 @@ namespace TicketOpsLive
                         {
                             startButton.Enabled = true;
                             stopButton.Enabled = false;
-                            activityLabel.Text = faulted ? "Heartbeat stopped after a fault" : "Heartbeat stopped";
-                            if (faulted)
-                            {
-                                ShowBanner($"✖ Heartbeat failed. See the server log for session {Short(_sessionId)}. Click ▶ Start heartbeat to recover.", BannerKind.Error);
-                                SetStatus("heartbeat fault — UI restored in finally", StatusKind.Error);
-                            }
-                            else
-                            {
-                                SetStatus("heartbeat stopped", StatusKind.Normal);
-                            }
+                            activityLabel.Text = faulted ? "Heartbeat failed. See the server log." : "Heartbeat stopped";
                             NotePush();
                             EndPush();
-                            AddTrace(TraceDirection.Push, "Application.Update(this, …)", $"heartbeat stopped — {reason} after {_heartbeat} beats (finally block)");
-                            UpdateState();
                         });
                     }
-                    catch (ObjectDisposedException) { /* the page went away between the check and the push */ }
+                    catch (ObjectDisposedException) { }
                 }
             }
         }
 
         #endregion
 
-        #region M03 — the background import monitor
+        #region Import monitor
 
         private void startImportButton_Click(object sender, EventArgs e)
         {
-            AddTrace(TraceDirection.Request, "startImportButton_Click", "the browser sent the click");
+            StartImport(failAt87: false);
+        }
 
+        private void failAt87Button_Click(object sender, EventArgs e)
+        {
+            StartImport(failAt87: true);
+        }
+
+        private void StartImport(bool failAt87)
+        {
             if (_importRunning)
-            {
-                AddTrace(TraceDirection.Server, "startImportButton_Click", $"refused — job {_currentJob?.JobId} is still running");
-                ShowBanner($"⚠ Import {_currentJob?.JobId} is still running — a second click must not start a competing job.", BannerKind.Warn);
                 return;
-            }
 
-            bool failAt87 = failAt87CheckBox.Checked;
-            var job = new ImportJob(TotalRecords, "background");
+            var job = new ImportJob(TotalRecords);
             _currentJob = job;
             _importRunning = true;
 
-            // 1 — adjust the UI (these changes ride back on the click's own response).
             startImportButton.Enabled = false;
+            failAt87Button.Enabled = false;
             cancelImportButton.Enabled = true;
-            failAt87CheckBox.Enabled = false;
             importProgressBar.Value = 0;
-            recordsImportedLabel.Text = "0";
-            jobIdLabel.Text = "Job " + job.JobId + (failAt87 ? "  ·  will throw at record 87" : "");
-            elapsedLabel.Text = "elapsed 0.00 s";
+            recordsImportedLabel.Text = $"0/{TotalRecords}";
+            elapsedLabel.Text = "Elapsed 0.00 s";
             importStatusLabel.Text = "Starting import…";
-            HideBanner();
-            SetStatus($"import {job.JobId} running", StatusKind.Normal);
-            ImportLog(job, failAt87 ? "Started (simulated failure armed at record 87)" : "Started");
+            ImportLog(job, "Import started");
 
-            // 2 — cancellation state, per session, never static.
             _importCts = new CancellationTokenSource();
             CancellationToken token = _importCts.Token;
-
-            AddTrace(TraceDirection.Server, "Application.StartTask", $"job {job.JobId}: {TotalRecords} records × {RecordMilliseconds} ms, push every {PushEvery} · the handler returns now");
-            UpdateState();
             BeginPush();
 
-            // 3 — start in the session context.
-            Application.StartTask(() => RunImport(token, failAt87));
+            Application.StartTask(() => RunImport(job, token, failAt87));
         }
 
         private void cancelImportButton_Click(object sender, EventArgs e)
         {
-            AddTrace(TraceDirection.Request, "cancelImportButton_Click", $"_importCts.Cancel() → job {_currentJob?.JobId} sees the token at its next record (≤ {RecordMilliseconds} ms)");
             cancelImportButton.Enabled = false;
             importStatusLabel.Text = "Cancelling…";
-            RequestImportCancel("user");
+            RequestImportCancel();
         }
 
-        private void RequestImportCancel(string who)
+        private void RequestImportCancel()
         {
-            var cts = _importCts;
-            if (cts == null)
-                return;
             try
             {
-                cts.Cancel();
-                if (_currentJob != null && !this.IsDisposed)
-                    ImportLog(_currentJob, "Cancel requested by " + who);
+                _importCts?.Cancel();
             }
-            catch (ObjectDisposedException) { /* the job finished between the check and the call */ }
+            catch (ObjectDisposedException) { }
         }
 
         /// <summary>200 records, the token checked between records, progress pushed every tenth, UI restored in finally.</summary>
-        private void RunImport(CancellationToken token, bool failAt87)
+        private void RunImport(ImportJob job, CancellationToken token, bool failAt87)
         {
-            ImportJob job = _currentJob;
-
             try
             {
                 for (int i = 1; i <= TotalRecords; i++)
@@ -327,46 +263,40 @@ namespace TicketOpsLive
                     Thread.Sleep(RecordMilliseconds);
 
                     if (failAt87 && i == 87)
-                        throw new InvalidOperationException($"Simulated malformed record #{i}: field 'priority' has value 'urgentish' (job {job.JobId}).");
+                        throw new InvalidOperationException($"Simulated malformed record #{i} (job {job.JobId}).");
 
                     job.RecordsImported = i;
-                    recordsImportedLabel.Text = i.ToString(CultureInfo.InvariantCulture);
+                    recordsImportedLabel.Text = $"{i}/{TotalRecords}";
                     importProgressBar.Value = i / 2;
-                    importStatusLabel.Text = $"Importing… {i}/{TotalRecords}";
-                    elapsedLabel.Text = "elapsed " + job.ElapsedText;
+                    importStatusLabel.Text = $"Importing records… {i}/{TotalRecords}";
+                    elapsedLabel.Text = "Elapsed " + job.ElapsedText;
 
                     if (i % LogEvery == 0)
                         ImportLog(job, $"Imported {i} records");
 
                     if (i % PushEvery == 0)
                     {
-                        job.Pushes++;
                         NotePush();
-                        AddTrace(TraceDirection.Push, "Application.Update(this)", $"job {job.JobId} · {i}/{TotalRecords} · {i / 2}% · {job.ElapsedText}");
-                        UpdateState();
                         Application.Update(this);
                     }
                 }
 
                 job.Complete();
                 importStatusLabel.Text = "Import completed successfully.";
-                ImportLog(job, "Completed");
-                AddTrace(TraceDirection.Server, "import", $"job {job.JobId} completed — {job.RecordsImported} records");
+                ImportLog(job, "Import completed");
             }
             catch (OperationCanceledException)
             {
                 job.Cancel();
                 importStatusLabel.Text = "Import cancelled by user.";
                 ImportLog(job, $"Cancelled after record {job.RecordsImported}");
-                AddTrace(TraceDirection.Server, "import", $"job {job.JobId} cancelled after record {job.RecordsImported} (OperationCanceledException caught inside the task)");
             }
             catch (Exception ex)
             {
-                job.Fail(ex);
+                job.Fail();
                 LogError($"import job {job.JobId}", ex);
                 importStatusLabel.Text = "Import failed. Review the server log.";
                 ImportLog(job, $"Failed on record {job.RecordsImported + 1}");
-                AddTrace(TraceDirection.Server, "import", $"job {job.JobId} FAILED on record {job.RecordsImported + 1}: {ex.GetType().Name} caught inside the task → server log, safe message");
             }
             finally
             {
@@ -374,12 +304,6 @@ namespace TicketOpsLive
                 _importCts = null;
                 cts?.Dispose();
                 _importRunning = false;
-                switch (job.Outcome)
-                {
-                    case ImportOutcome.Completed: _completed++; break;
-                    case ImportOutcome.Cancelled: _cancelled++; break;
-                    case ImportOutcome.Failed: _failed++; break;
-                }
                 if (ReferenceEquals(_currentJob, job))
                     _currentJob = null;
 
@@ -390,44 +314,23 @@ namespace TicketOpsLive
                         Application.Update(this, () =>
                         {
                             startImportButton.Enabled = true;
+                            failAt87Button.Enabled = true;
                             cancelImportButton.Enabled = false;
-                            failAt87CheckBox.Enabled = true;
-                            elapsedLabel.Text = "elapsed " + job.ElapsedText;
-                            jobIdLabel.Text = "Job " + job.JobId + " · " + job.OutcomeText;
+                            elapsedLabel.Text = "Elapsed " + job.ElapsedText;
                             ImportLog(job, job.Summary);
-
-                            switch (job.Outcome)
-                            {
-                                case ImportOutcome.Failed:
-                                    ShowBanner($"✖ {job.Summary}. The detail is in the server log under job {job.JobId}. Click ▶ Start import to recover.", BannerKind.Error);
-                                    SetStatus("import failed — UI restored in finally", StatusKind.Error);
-                                    break;
-                                case ImportOutcome.Cancelled:
-                                    ShowBanner($"ⓘ {job.Summary}. Records 1–{job.RecordsImported} are in; nothing was half-written.", BannerKind.Info);
-                                    SetStatus("import cancelled — UI restored in finally", StatusKind.Warn);
-                                    break;
-                                default:
-                                    SetStatus("import completed", StatusKind.Normal);
-                                    break;
-                            }
-
-                            job.Pushes++;
                             NotePush();
                             EndPush();
-                            AddTrace(TraceDirection.Push, "Application.Update(this, …)", $"{job.Summary} · {job.Pushes} pushes (final state, finally block)");
-                            UpdateState();
                         });
                     }
-                    catch (ObjectDisposedException) { /* the page went away */ }
+                    catch (ObjectDisposedException) { }
                 }
             }
         }
 
         #endregion
 
-        #region M05 + M06 — the live ticket board fed by the global TicketHub
+        #region Ticket board fed by the global TicketHub
 
-        /// <summary>Columns in code so the file stays readable; the binding itself is set up once, on Load.</summary>
         private void BuildTicketGrid()
         {
             _ticketsBindingSource.DataSource = _tickets;
@@ -439,10 +342,10 @@ namespace TicketOpsLive
             ticketsGrid.AllowUserToAddRows = false;
             ticketsGrid.AllowUserToDeleteRows = false;
 
-            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colId", DataPropertyName = "Id", HeaderText = "Id", Width = 64 });
-            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTenant", DataPropertyName = "TenantId", HeaderText = "Tenant", Width = 92 });
-            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTitle", DataPropertyName = "Title", HeaderText = "Title", Width = 230 });
-            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colOwner", DataPropertyName = "Owner", HeaderText = "Owner", Width = 110 });
+            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colId", DataPropertyName = "Id", HeaderText = "Id", Width = 60 });
+            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTenant", DataPropertyName = "TenantId", HeaderText = "Tenant", Width = 84 });
+            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTitle", DataPropertyName = "Title", HeaderText = "Title", Width = 200 });
+            ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colOwner", DataPropertyName = "Owner", HeaderText = "Owner", Width = 100 });
             ticketsGrid.Columns.Add(new DataGridViewTextBoxColumn { Name = "colStatus", DataPropertyName = "Status", HeaderText = "Status", Width = 90 });
 
             var updated = new DataGridViewTextBoxColumn { Name = "colUpdated", DataPropertyName = "UpdatedAt", HeaderText = "Updated", Width = 80 };
@@ -460,20 +363,17 @@ namespace TicketOpsLive
             _tenant = TicketHub.Tenants[0];
         }
 
-        /// <summary>Loads THIS session's list from the hub's snapshot (clones, never the hub's instances).</summary>
-        private void LoadSnapshot(string why)
+        /// <summary>Loads this session's list from the hub's snapshot (clones, never the hub's instances).</summary>
+        private void LoadSnapshot()
         {
-            var snapshot = TicketHub.Instance.GetSnapshot();
             _allTickets.Clear();
-            foreach (Ticket ticket in snapshot)
-                _allTickets.Add(ticket);       // GetSnapshot already handed out clones
+            _allTickets.AddRange(TicketHub.Instance.GetSnapshot());
 
             ApplyFilter();
             ResetBindingsQuietly();
-            AddTrace(TraceDirection.Server, "hub.GetSnapshot()", $"{snapshot.Count} ticket(s) in the hub → {_tickets.Count} shown for tenant \"{_tenant}\" ({why})");
         }
 
-        private void SubscribeToHub(string why)
+        private void SubscribeToHub()
         {
             if (_subscribedToHub)
                 return;
@@ -481,10 +381,9 @@ namespace TicketOpsLive
             _subscribedToHub = true;
             subscribeButton.Enabled = false;
             unsubscribeButton.Enabled = true;
-            AddTrace(TraceDirection.Server, "hub.TicketChanged +=", $"subscribed ({why}) · hub subscribers = {TicketHub.Instance.SubscriberCount}");
         }
 
-        private void UnsubscribeFromHub(string why)
+        private void UnsubscribeFromHub()
         {
             if (!_subscribedToHub)
                 return;
@@ -494,64 +393,41 @@ namespace TicketOpsLive
             {
                 subscribeButton.Enabled = true;
                 unsubscribeButton.Enabled = false;
-                AddTrace(TraceDirection.Server, "hub.TicketChanged -=", $"unsubscribed ({why}) · hub subscribers = {TicketHub.Instance.SubscriberCount} · this session now receives nothing");
             }
         }
 
         private void subscribeButton_Click(object sender, EventArgs e)
         {
-            AddTrace(TraceDirection.Request, "subscribeButton_Click", "the browser sent the click");
-            SubscribeToHub("operator");
-            LoadSnapshot("re-subscribe");
-            RenderBoardCounters();
-            SetStatus("subscribed to the hub", StatusKind.Normal);
-            UpdateState();
+            SubscribeToHub();
+            LoadSnapshot();
         }
 
         private void unsubscribeButton_Click(object sender, EventArgs e)
         {
-            AddTrace(TraceDirection.Request, "unsubscribeButton_Click", "the browser sent the click");
-            UnsubscribeFromHub("operator");
-            RenderBoardCounters();
-            SetStatus("unsubscribed — this session receives no hub events", StatusKind.Warn);
-            UpdateState();
+            UnsubscribeFromHub();
         }
 
-        private void publishButton_Click(object sender, EventArgs e) => Publish(_tenant, "the browser sent the click");
-
-        private void publishOtherButton_Click(object sender, EventArgs e)
+        private void publishButton_Click(object sender, EventArgs e)
         {
-            string other = string.Equals(_tenant, TicketHub.Tenants[0], StringComparison.Ordinal) ? TicketHub.Tenants[1] : TicketHub.Tenants[0];
-            Publish(other, $"target tenant \"{other}\" (NOT this session's)");
-        }
-
-        private void Publish(string tenant, string why)
-        {
-            AddTrace(TraceDirection.Request, "publish", why);
             try
             {
-                Ticket ticket = NewTicketFor(tenant);
-                var published = TicketHub.Instance.AddOrUpdate(ticket, _sessionId);
-                AddTrace(TraceDirection.Server, "hub.AddOrUpdate", $"#{ticket.Id} → TicketChanged (tenant {tenant}, subscribers {TicketHub.Instance.SubscriberCount}) · event {published.EventId} · fanned out on a thread-pool thread");
-                SetStatus($"published #{ticket.Id} for {tenant}", StatusKind.Normal);
+                TicketHub.Instance.AddOrUpdate(NewTicketFor(_tenant));
             }
             catch (ArgumentException ex)
             {
                 LogError("hub.AddOrUpdate", ex);
-                ShowBanner($"✖ The hub rejected the publish: {ex.Message} Nothing was stored and no session was notified.", BannerKind.Error);
-                SetStatus("publish rejected by the hub — state unchanged", StatusKind.Error);
-                AddTrace(TraceDirection.Server, "ArgumentException", "validated BEFORE the lock → the hub's list and its subscribers were never touched");
+                AlertBox.Show("The ticket could not be published. See the server log.", MessageBoxIcon.Error,
+                    alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
             }
-            UpdateState();
         }
 
         private void escalateButton_Click(object sender, EventArgs e)
         {
-            AddTrace(TraceDirection.Request, "escalateButton_Click", "the browser sent the click");
             Ticket selected = ticketsGrid.CurrentRow?.DataBoundItem as Ticket;
             if (selected == null)
             {
-                ShowBanner("ⓘ Select a ticket first — escalation is the one event type that also pops a toast.", BannerKind.Info);
+                AlertBox.Show("Select a ticket to escalate.", MessageBoxIcon.Information,
+                    alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 3000);
                 return;
             }
 
@@ -559,42 +435,31 @@ namespace TicketOpsLive
             copy.Status = TicketStatus.Escalated;
             copy.Owner = "escalation-desk";
             copy.UpdatedAt = DateTime.Now;
-            var published = TicketHub.Instance.AddOrUpdate(copy, _sessionId, "Escalated");
-            AddTrace(TraceDirection.Server, "hub.AddOrUpdate", $"#{copy.Id} → TicketChanged (Escalated, tenant {copy.TenantId}, subscribers {TicketHub.Instance.SubscriberCount}) · event {published.EventId}");
-            SetStatus($"escalated #{copy.Id}", StatusKind.Warn);
-            UpdateState();
+            TicketHub.Instance.AddOrUpdate(copy, "Escalated");
         }
 
         private void newTicketsButton_Click(object sender, EventArgs e)
         {
             if (_feedRunning)
-            {
-                AddTrace(TraceDirection.Server, "newTicketsButton_Click", "refused — the simulated feed is already running");
-                ShowBanner("⚠ The feed is already running — one loop per session.", BannerKind.Warn);
                 return;
-            }
 
             _feedRunning = true;
             newTicketsButton.Enabled = false;
-            AddTrace(TraceDirection.Request, "newTicketsButton_Click", $"the handler returns now; {SimulatedTickets} tickets are published from a task, one per second");
             BeginPush();
 
             Application.StartTask(() =>
             {
-                int published = 0;
                 try
                 {
                     for (int i = 0; i < SimulatedTickets && _feedRunning && !this.IsDisposed; i++)
                     {
-                        Ticket ticket = NewTicketFor(_tenant);
-                        TicketHub.Instance.AddOrUpdate(ticket, _sessionId, "Added");
-                        published++;
-                        Thread.Sleep(1000);      // cadence belongs to the publisher
+                        TicketHub.Instance.AddOrUpdate(NewTicketFor(_tenant), "Added");
+                        Thread.Sleep(1000);      // the publisher owns the cadence
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogError("simulated feed", ex);
+                    LogError("ticket feed", ex);
                 }
                 finally
                 {
@@ -608,8 +473,6 @@ namespace TicketOpsLive
                                 newTicketsButton.Enabled = true;
                                 NotePush();
                                 EndPush();
-                                AddTrace(TraceDirection.Push, "Application.Update(this, …)", $"simulated feed finished — {published} ticket(s) published through the hub (finally block)");
-                                UpdateState();
                             });
                         }
                         catch (ObjectDisposedException) { }
@@ -626,7 +489,7 @@ namespace TicketOpsLive
                 "Two-factor SMS never arrives", "Dashboard tiles blank after update", "Badge reader offline in B2",
             };
             string[] customers = { "Contoso Manufacturing", "Northwind Logistics", "Litware Insurance", "Proseware Health", "Tailspin Toys" };
-            var random = new Random(Environment.TickCount + _pushes);
+            var random = new Random(Environment.TickCount + _notificationCount);
             return new Ticket
             {
                 Id = TicketHub.Instance.NextTicketId(tenant),
@@ -640,8 +503,8 @@ namespace TicketOpsLive
         }
 
         /// <summary>
-        /// Runs on a thread-pool thread (the hub fans out with Task.Run so no session context leaks into another
-        /// session's response). Guard, filter, then re-enter THIS session with Application.Update(_context, …).
+        /// Runs on a thread-pool thread (the hub fans out with Task.Run). Guard, filter by tenant, then re-enter
+        /// this session with Application.Update(_context, …).
         /// </summary>
         private void Hub_TicketChanged(object sender, TicketChangedEventArgs e)
         {
@@ -649,16 +512,7 @@ namespace TicketOpsLive
                 return;
 
             if (!string.Equals(e.TenantId, _tenant, StringComparison.Ordinal))
-            {
-                SafeUpdate(() =>
-                {
-                    _filteredOut++;
-                    AddTrace(TraceDirection.Server, "filtered out", $"(tenant {e.TenantId} ≠ this session's {_tenant}) event {e.EventId} ticket {e.Ticket?.Id} — dropped, nothing rendered");
-                    RenderBoardCounters();
-                    UpdateState();
-                });
                 return;
-            }
 
             SafeUpdate(() =>
             {
@@ -669,30 +523,22 @@ namespace TicketOpsLive
                     notificationsList.Items.RemoveAt(notificationsList.Items.Count - 1);
 
                 _notificationCount++;
+                RenderNotificationCount();
                 NotePush();
 
                 if (string.Equals(e.ChangeType, "Escalated", StringComparison.Ordinal))
                 {
                     AlertBox.Show($"Ticket {e.Ticket?.Id} escalated — {e.Ticket?.Title}", MessageBoxIcon.Warning,
                         alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
-                    AddTrace(TraceDirection.Server, "event type filter", "ChangeType=Escalated → AlertBox toast (Added/Updated do not pop)");
                 }
-
-                bool mine = string.Equals(e.PublishedBy, _sessionId, StringComparison.Ordinal);
-                AddTrace(TraceDirection.Push, "Application.Update(_context)", $"event {e.EventId} · {e.ChangeType} #{e.Ticket?.Id} · published by {(mine ? "THIS session" : "another session " + Short(e.PublishedBy))} — applied here");
-                RenderBoardCounters();
-                UpdateState();
             });
         }
 
-        /// <summary>Applies one event to the session's own list, keeping the operator's selected row.</summary>
+        /// <summary>Applies one event to the session's own list, keeping the selected row.</summary>
         private void ApplyTicketEvent(TicketChangedEventArgs e)
         {
-            if (e?.Ticket == null || e.Ticket.Id <= 0)
-            {
-                AddTrace(TraceDirection.Server, "ApplyTicketEvent", "REJECTED — malformed event · the bound list was not touched");
+            if (e?.Ticket == null)
                 return;
-            }
 
             int? selectedId = ticketsGrid.CurrentRow?.DataBoundItem is Ticket selected ? selected.Id : (int?)null;
 
@@ -702,62 +548,37 @@ namespace TicketOpsLive
                 if (_allTickets[i].Id == e.Ticket.Id) { existing = _allTickets[i]; break; }
             }
 
-            bool added = existing == null;
-            if (added)
-                _allTickets.Insert(0, e.Ticket.Clone());     // new rows sort to the top
+            if (existing == null)
+                _allTickets.Insert(0, e.Ticket.Clone());     // new rows go to the top
             else
-                existing.CopyFrom(e.Ticket);                 // existing rows change in place, keeping their position
+                existing.CopyFrom(e.Ticket);                 // existing rows change in place
 
             ApplyFilter();
             ResetBindingsQuietly();
-            bool kept = selectedId.HasValue && RestoreSelection(selectedId.Value);
-            _eventsApplied++;
-            RenderSelection();
-
-            if (selectedId.HasValue && !kept)
-                AddTrace(TraceDirection.Server, "selection", $"#{selectedId.Value} is not in the filtered view any more");
+            if (selectedId.HasValue)
+                RestoreSelection(selectedId.Value);
         }
 
-        /// <summary>
-        /// ResetBindings(false) makes the grid re-evaluate its current row and raises SelectionChanged
-        /// synchronously — that is not a user action, so the handler is muted for the duration.
-        /// </summary>
         private void ResetBindingsQuietly()
         {
-            _restoringSelection = true;
-            try
-            {
-                _ticketsBindingSource.ResetBindings(false);
-            }
-            finally
-            {
-                _restoringSelection = false;
-            }
+            _ticketsBindingSource.ResetBindings(false);
         }
 
         private bool RestoreSelection(int id)
         {
-            _restoringSelection = true;
-            try
+            for (int i = 0; i < ticketsGrid.Rows.Count; i++)
             {
-                for (int i = 0; i < ticketsGrid.Rows.Count; i++)
+                if (ticketsGrid.Rows[i].DataBoundItem is Ticket ticket && ticket.Id == id)
                 {
-                    if (ticketsGrid.Rows[i].DataBoundItem is Ticket ticket && ticket.Id == id)
-                    {
-                        ticketsGrid.Rows[i].Selected = true;
-                        ticketsGrid.CurrentCell = ticketsGrid.Rows[i].Cells[0];
-                        return true;
-                    }
+                    ticketsGrid.Rows[i].Selected = true;
+                    ticketsGrid.CurrentCell = ticketsGrid.Rows[i].Cells[0];
+                    return true;
                 }
-                return false;
             }
-            finally
-            {
-                _restoringSelection = false;
-            }
+            return false;
         }
 
-        /// <summary>Rebuilds the bound list from the master list (tenant + Escalated filter). Session-owned, always.</summary>
+        /// <summary>Rebuilds the bound list from the master list (tenant + Escalated filter).</summary>
         private void ApplyFilter()
         {
             bool escalatedOnly = escalatedOnlyCheckBox.Checked;
@@ -780,11 +601,6 @@ namespace TicketOpsLive
             _tenant = tenantComboBox.SelectedItem as string ?? TicketHub.Tenants[0];
             ApplyFilter();
             ResetBindingsQuietly();
-            RenderSelection();
-            RenderBoardCounters();
-            AddTrace(TraceDirection.Request, "tenantComboBox_SelectedIndexChanged", $"this session now watches \"{_tenant}\" · {_tickets.Count} row(s) · the filter lives in the SESSION, not in the hub");
-            SetStatus($"tenant {_tenant}", StatusKind.Normal);
-            UpdateState();
         }
 
         private void escalatedOnlyCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -792,38 +608,18 @@ namespace TicketOpsLive
             int? selectedId = ticketsGrid.CurrentRow?.DataBoundItem is Ticket t ? t.Id : (int?)null;
             ApplyFilter();
             ResetBindingsQuietly();
-            bool kept = selectedId.HasValue && RestoreSelection(selectedId.Value);
-            RenderSelection();
-            AddTrace(TraceDirection.Request, "escalatedOnlyCheckBox_CheckedChanged", $"filter {(escalatedOnlyCheckBox.Checked ? "ON (Escalated only)" : "OFF")} · {_tickets.Count} row(s) shown · {(selectedId.HasValue ? (kept ? "selection kept" : "selection filtered out") : "no selection")}");
-            UpdateState();
+            if (selectedId.HasValue)
+                RestoreSelection(selectedId.Value);
         }
 
-        private void ticketsGrid_SelectionChanged(object sender, EventArgs e)
-        {
-            RenderSelection();
-            if (_restoringSelection)
-                return;
-            AddTrace(TraceDirection.Request, "ticketsGrid_SelectionChanged", "the user selected a row — the state every update has to protect");
-        }
-
-        private void RenderSelection()
-        {
-            Ticket ticket = ticketsGrid.CurrentRow?.DataBoundItem as Ticket;
-            selectedLabel.Text = ticket == null
-                ? "selected: none — click a row, then publish or escalate"
-                : $"selected: #{ticket.Id} · {ticket.TenantId} · {ticket.Status} · {ticket.Owner} · updated {ticket.UpdatedAt.ToString("HH:mm:ss", CultureInfo.InvariantCulture)}";
-        }
-
-        private void RenderBoardCounters()
+        private void RenderNotificationCount()
         {
             notificationCountLabel.Text = _notificationCount == 1 ? "1 notification in this session" : $"{_notificationCount} notifications in this session";
-            filteredOutLabel.Text = $"filtered out (wrong tenant): {_filteredOut}";
-            subscribersLabel.Text = $"hub subscribers: {TicketHub.Instance.SubscriberCount} · hub tickets: {TicketHub.Instance.TicketCount} · hub events: {TicketHub.Instance.EventsPublished}";
         }
 
         #endregion
 
-        #region M04 — update cadence
+        #region Update cadence
 
         private void FillCadences()
         {
@@ -839,49 +635,34 @@ namespace TicketOpsLive
             if (liveModeCheckBox.Checked)
             {
                 _liveMode = true;
-                AddTrace(TraceDirection.Request, "liveModeCheckBox_CheckedChanged", "live mode ON — the browser sent the click");
 
-                // The polling fallback belongs where out-of-bound work starts, not in Load: during Load
-                // IsWebSocket is still false and StartPolling would poll forever.
+                // Polling is requested only when there is no WebSocket, and never in Load.
                 if (!Application.IsWebSocket && !_polling)
                 {
                     Application.StartPolling(1000);
                     _polling = true;
-                    AddTrace(TraceDirection.Server, "Application.StartPolling(1000)", "no WebSocket → fallback polling ON while live mode runs");
-                }
-                else
-                {
-                    AddTrace(TraceDirection.Server, "polling fallback", "not requested — IsWebSocket=true, the live channel is already there");
                 }
 
                 refreshTimer.Interval = _cadenceMs;
                 refreshTimer.Start();
                 _simulator.Start();
-                AddTrace(TraceDirection.Server, "refreshTimer.Start()", $"UI cadence: one tick every {CadenceText(_cadenceMs)} · the page owns this timer");
-                AddTrace(TraceDirection.Server, "DashboardSimulator.Start()", $"model cadence: one change every {DashboardSimulator.IntervalMs} ms on a task · it never calls Application.Update");
-                SetStatus($"live · model {DashboardSimulator.IntervalMs} ms · UI {CadenceText(_cadenceMs)}", StatusKind.Normal);
             }
             else
             {
                 _liveMode = false;
                 _simulator.Stop();
                 refreshTimer.Stop();
-                AddTrace(TraceDirection.Request, "liveModeCheckBox_CheckedChanged", "live mode OFF");
-                AddTrace(TraceDirection.Server, "stop", "DashboardSimulator.Stop() + refreshTimer.Stop() — a timer nobody stops keeps a session busy forever");
-                if (_polling)
+                if (_polling && _pushers == 0)
                 {
                     Application.EndPolling();
                     _polling = false;
-                    AddTrace(TraceDirection.Server, "Application.EndPolling()", "live mode off → fallback polling OFF");
                 }
-                SetStatus("live mode off · timer and simulator stopped", StatusKind.Normal);
             }
-            UpdateState();
+            RenderConnection();
         }
 
         private void cadenceComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            int previous = _cadenceMs;
             switch (cadenceComboBox.SelectedIndex)
             {
                 case 0: _cadenceMs = 250; break;
@@ -890,12 +671,10 @@ namespace TicketOpsLive
             }
             if (_cadenceMs < MinCadenceMs) _cadenceMs = MinCadenceMs;
 
-            refreshTimer.Interval = _cadenceMs;    // reprograms the RUNNING timer; no second timer is created
-            AddTrace(TraceDirection.Request, "cadenceComboBox_SelectedIndexChanged", $"UI cadence {CadenceText(previous)} → {CadenceText(_cadenceMs)} · refreshTimer.Interval reprogrammed on the running timer");
-            UpdateState();
+            refreshTimer.Interval = _cadenceMs;    // reprograms the running timer; no second timer is created
         }
 
-        /// <summary>Called by the simulator task ~20×/s. It counts and marks dirty — it never touches a control.</summary>
+        /// <summary>Called by the simulator task about 20 times per second. It counts and marks dirty, never touches a control.</summary>
         private void SimulatedModelChanged()
         {
             Interlocked.Increment(ref _eventsReceived);
@@ -909,30 +688,18 @@ namespace TicketOpsLive
                 return;
             SafeUpdate(() =>
             {
-                _liveMode = false;
                 liveModeCheckBox.Checked = false;
-                refreshTimer.Stop();
                 NotePush();
-                ShowBanner("✖ The dashboard simulator failed. Live mode was switched off; see the server log.", BannerKind.Error);
-                SetStatus("simulator fault — live mode off", StatusKind.Error);
-                UpdateState();
+                AlertBox.Show("The dashboard simulator failed. See the server log.", MessageBoxIcon.Error,
+                    alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
             });
         }
 
-        /// <summary>
-        /// The UI cadence. A timer tick IS a browser request, so whatever it changes travels back with that
-        /// request — no Application.Update() here. One snapshot per tick, however many model events arrived.
-        /// </summary>
+        // A timer tick is a browser request: its changes ride back with the response, no Application.Update().
         private void refreshTimer_Tick(object sender, EventArgs e)
         {
-            if (_refreshInProgress)
-            {
-                _ticksRefused++;
-                AddTrace(TraceDirection.Server, "refreshTimer_Tick", "refused — a refresh is still in progress (no overlapping ticks)");
+            if (_refreshInProgress || !_dashboardDirty)
                 return;
-            }
-            if (!_dashboardDirty)
-                return;                              // nothing changed: no work, no traffic
 
             try
             {
@@ -944,13 +711,9 @@ namespace TicketOpsLive
                 openTicketsLabel.Text = snapshot.OpenTickets.ToString(CultureInfo.InvariantCulture);
                 queueDepthLabel.Text = snapshot.QueueDepth.ToString(CultureInfo.InvariantCulture);
                 avgWaitLabel.Text = snapshot.AvgWaitMinutes.ToString("0.0", CultureInfo.InvariantCulture) + " min";
-                eventsReceivedLabel.Text = _eventsReceived.ToString(CultureInfo.InvariantCulture);
+                eventsReceivedLabel.Text = Volatile.Read(ref _eventsReceived).ToString(CultureInfo.InvariantCulture);
                 updatesAppliedLabel.Text = _updatesApplied.ToString(CultureInfo.InvariantCulture);
-                skippedTicksLabel.Text = _ticksRefused.ToString(CultureInfo.InvariantCulture);
                 lastAppliedLabel.Text = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
-
-                AddTrace(TraceDirection.Request, "refreshTimer_Tick", $"applied model v{snapshot.Version} · {_eventsReceived} event(s) coalesced into {_updatesApplied} update(s) → the changes ride back with THIS timer request");
-                UpdateState();
             }
             finally
             {
@@ -958,30 +721,22 @@ namespace TicketOpsLive
             }
         }
 
-        private static string CadenceText(int ms) => ms >= 1000 ? (ms / 1000) + " s" : ms + " ms";
-
         #endregion
 
-        #region M02 — session inspector and lifecycle
+        #region Session diagnostics
 
         private void incrementButton_Click(object sender, EventArgs e)
         {
-            if (Application.Session.Counter == null)
-                Application.Session.Counter = 0;
             Application.Session.Counter = (int)Application.Session.Counter + 1;
-            _sharedCounter++;                       // the trap, on purpose: one field for the whole server
-
-            AddTrace(TraceDirection.Request, "incrementButton_Click", $"Application.Session.Counter = {Application.Session.Counter} (this session) · static _sharedCounter = {_sharedCounter} (EVERY session)");
-            LifecycleLog($"Session counter → {Application.Session.Counter}; static counter → {_sharedCounter}");
-            RenderInspector("request thread (incrementButton_Click)");
-            UpdateState();
+            LifecycleLog($"Counter → {Application.Session.Counter}");
+            RenderInspector();
         }
 
         private void backgroundButton_Click(object sender, EventArgs e)
         {
-            var context = Application.Current;      // captured IN context, used from the task
+            var context = Application.Current;
             backgroundButton.Enabled = false;
-            AddTrace(TraceDirection.Request, "backgroundButton_Click", "the handler returns now; the work continues on a task");
+            LifecycleLog("Background update started");
             BeginPush();
 
             Application.StartTask(() =>
@@ -991,11 +746,11 @@ namespace TicketOpsLive
                     Thread.Sleep(1500);
                     Application.Update(context, () =>
                     {
+                        if (this.IsDisposed)
+                            return;
                         LifecycleLog("Background update at " + DateTime.Now.ToString(CultureInfo.CurrentCulture));
                         NotePush();
-                        AddTrace(TraceDirection.Push, "Application.Update(context, …)", $"delivered to session {Short(_sessionId)} — out-of-bound, no click");
-                        RenderInspector("task thread (background update)");
-                        UpdateState();
+                        RenderInspector();
                     });
                 }
                 catch (Exception ex)
@@ -1013,8 +768,6 @@ namespace TicketOpsLive
                                 backgroundButton.Enabled = true;
                                 NotePush();
                                 EndPush();
-                                AddTrace(TraceDirection.Push, "Application.Update(context, …)", "background update finished — button re-enabled in finally");
-                                UpdateState();
                             });
                         }
                         catch (ObjectDisposedException) { }
@@ -1023,56 +776,10 @@ namespace TicketOpsLive
             });
         }
 
-        private void faultButton_Click(object sender, EventArgs e)
+        private void openSessionButton_Click(object sender, EventArgs e)
         {
-            var context = Application.Current;
-            faultButton.Enabled = false;
-            AddTrace(TraceDirection.Request, "faultButton_Click", "the task will throw after 500 ms — the exception is caught INSIDE the task");
-            BeginPush();
-
-            Application.StartTask(() =>
-            {
-                try
-                {
-                    Thread.Sleep(500);
-                    throw new InvalidOperationException($"Simulated failure in the background job of session {_sessionId}.");
-                }
-                catch (Exception ex)
-                {
-                    LogError("background job", ex);
-                    try
-                    {
-                        Application.Update(context, () =>
-                        {
-                            LifecycleLog("Background job failed. See the server log.");
-                            ShowBanner($"✖ The background job failed. The detail is in the server log for session {Short(_sessionId)}. Click “Background update” to run a healthy one.", BannerKind.Error);
-                            SetStatus("background job failed — UI recovered", StatusKind.Error);
-                            NotePush();
-                            AddTrace(TraceDirection.Push, "Application.Update(context, …)", $"{ex.GetType().Name} caught inside the task → server log + safe message");
-                            UpdateState();
-                        });
-                    }
-                    catch (ObjectDisposedException) { }
-                }
-                finally
-                {
-                    if (!this.IsDisposed)
-                    {
-                        try
-                        {
-                            Application.Update(context, () =>
-                            {
-                                faultButton.Enabled = true;
-                                NotePush();
-                                EndPush();
-                                AddTrace(TraceDirection.Push, "Application.Update(context, …)", "background fault handled — button re-enabled in finally");
-                                UpdateState();
-                            });
-                        }
-                        catch (ObjectDisposedException) { }
-                    }
-                }
-            });
+            // Same browser, second tab: a new session with its own page, counters and subscriptions.
+            Application.Navigate("/", "_blank");
         }
 
         /// <summary>Raised by the global registry on a thread-pool thread: no context of its own, so restore ours.</summary>
@@ -1087,22 +794,20 @@ namespace TicketOpsLive
                 LifecycleLog($"Session {Short(e.SessionId)} {verb} · {e.Count} live session(s)");
                 NotePush();
                 RenderLiveSessions();
-                AddTrace(TraceDirection.Push, "Application.Update(_context, …)", $"SessionRegistry: {Short(e.SessionId)} {verb} → {e.Count} live · pushed into session {Short(_sessionId)} from a thread-pool thread");
-                RenderInspector("thread-pool thread (SessionRegistry.SessionsChanged)");
-                UpdateState();
+                RenderInspector();
             });
         }
 
-        private void RenderInspector(string threadKind)
+        private void RenderInspector()
         {
-            timeLabel.Text = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " (server time)";
+            timeLabel.Text = DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
             clientIdLabel.Text = _clientId;
             sessionIdLabel.Text = _sessionId;
             browserLabel.Text = DescribeBrowser();
-            threadLabel.Text = $"#{Environment.CurrentManagedThreadId} · {threadKind} — reused, not owned";
+            threadLabel.Text = "#" + Environment.CurrentManagedThreadId.ToString(CultureInfo.InvariantCulture);
             object counter = null;
             try { counter = Application.Session.Counter; } catch (Exception) { /* not in context */ }
-            counterLabel.Text = $"{counter ?? 0} ← Application.Session.Counter (this session)   ·   static int = {_sharedCounter} ← EVERY session";
+            counterLabel.Text = (counter ?? 0).ToString();
         }
 
         private static string DescribeBrowser()
@@ -1111,12 +816,12 @@ namespace TicketOpsLive
             {
                 var browser = Application.Browser;
                 if (browser == null)
-                    return "n/a";
+                    return "(not available)";
                 return $"{browser.Type} {browser.Version} · {browser.OS} · {browser.Device}";
             }
             catch (Exception)
             {
-                return "n/a (not available on this thread)";
+                return "(not available)";
             }
         }
 
@@ -1124,17 +829,15 @@ namespace TicketOpsLive
         {
             SessionInfo[] sessions = SessionRegistry.Instance.GetSnapshot();
             var text = new StringBuilder();
-            text.Append("live sessions: ").Append(sessions.Length.ToString(CultureInfo.InvariantCulture)).Append("  ·  ");
+            text.Append("Live sessions: ").Append(sessions.Length.ToString(CultureInfo.InvariantCulture));
             for (int i = 0; i < sessions.Length && i < 6; i++)
             {
-                if (i > 0) text.Append("  ");
-                text.Append(Short(sessions[i].SessionId));
+                text.Append(i == 0 ? " — " : ", ").Append(Short(sessions[i].SessionId));
                 if (string.Equals(sessions[i].SessionId, _sessionId, StringComparison.Ordinal))
-                    text.Append(" (this one)");
-                text.Append('@').Append(sessions[i].StartedAt.ToString("HH:mm:ss", CultureInfo.InvariantCulture));
+                    text.Append(" (this tab)");
             }
             if (sessions.Length > 6)
-                text.Append("  +").Append(sessions.Length - 6);
+                text.Append(" …");
             liveSessionsLabel.Text = text.ToString();
         }
 
@@ -1147,19 +850,16 @@ namespace TicketOpsLive
 
         #endregion
 
-        #region M07 — real-time health, configuration and the checklist
+        #region Real-time health, configuration and the production checklist
 
         private void healthTimer_Tick(object sender, EventArgs e)
         {
             RenderHealth(BuildHealthSnapshot());
-            RenderBoardCounters();
-            UpdateState();
         }
 
-        /// <summary>Everything an operator needs, measured rather than guessed. Cheap on purpose.</summary>
         private RealtimeHealthSnapshot BuildHealthSnapshot()
         {
-            // Prune the push window first: updates/min is a measurement, not an estimate.
+            // updates/min is measured over the last 60 seconds.
             DateTime cutoff = DateTime.UtcNow.AddSeconds(-60);
             while (_pushTimes.Count > 0 && _pushTimes.Peek() < cutoff)
                 _pushTimes.Dequeue();
@@ -1169,7 +869,7 @@ namespace TicketOpsLive
             if (_importRunning) loops.Add("import " + (_currentJob?.JobId ?? ""));
             if (_simulator.IsRunning) loops.Add("dashboard simulator");
             if (_feedRunning) loops.Add("ticket feed");
-            if (refreshTimer.Enabled) loops.Add("refreshTimer @ " + CadenceText(_cadenceMs));
+            if (refreshTimer.Enabled) loops.Add("refreshTimer @ " + (_cadenceMs >= 1000 ? (_cadenceMs / 1000) + " s" : _cadenceMs + " ms"));
 
             return new RealtimeHealthSnapshot
             {
@@ -1183,10 +883,9 @@ namespace TicketOpsLive
             };
         }
 
-        /// <summary>The walkthrough's RenderHealth: one snapshot in, four labels out.</summary>
         private void RenderHealth(RealtimeHealthSnapshot h)
         {
-            websocketModeLabel.Text = h.WebSocketExpected ? "● Push expected (WebSocket)" : "○ Fallback mode (no WebSocket)";
+            websocketModeLabel.Text = h.WebSocketExpected ? "● Push expected (WebSocket)" : "○ Fallback mode";
             websocketModeLabel.ForeColor = h.WebSocketExpected
                 ? System.Drawing.Color.FromArgb(31, 157, 87)
                 : System.Drawing.Color.FromArgb(232, 161, 60);
@@ -1196,30 +895,29 @@ namespace TicketOpsLive
                 ? System.Drawing.Color.FromArgb(146, 64, 14)
                 : System.Drawing.Color.FromArgb(90, 107, 125);
 
-            subscriptionCountLabel.Text = $"active subscriptions: {h.ActiveSubscriptions}  (hub {TicketHub.Instance.SubscriberCount} + sessions {SessionRegistry.Instance.Count})";
-            updateRateLabel.Text = $"{h.UpdatesPerMinute} updates/min · last {(h.SecondsSinceLastEvent < 0 ? "—" : h.SecondsSinceLastEvent + " s ago")} · loops: {h.RunningLoopNames}";
+            subscriptionCountLabel.Text = $"Active subscriptions: {h.ActiveSubscriptions}";
+            updateRateLabel.Text = $"{h.UpdatesPerMinute} updates/min · last {(h.SecondsSinceLastEvent < 0 ? "—" : h.SecondsSinceLastEvent + " s ago")} · running: {h.RunningLoopNames}";
 
             RenderConnection();
         }
 
         /// <summary>
-        /// The effective configuration of this application. Read through Application.Configuration so the panel
-        /// shows what the SERVER resolved, not what the file says; each read is guarded because a member that
-        /// does not exist in a given build must not take the page down.
+        /// The effective configuration, read through Application.Configuration so the panel shows what the server
+        /// resolved. Each read is guarded: a member missing from a given build must not take the page down.
         /// </summary>
         private void LoadConfiguration()
         {
             configListBox.Items.Clear();
-            configListBox.Items.Add("Default.json — the values this session actually runs with");
-            AddConfig("sessionTimeout", () => Application.Configuration.SessionTimeout.ToString(CultureInfo.InvariantCulture), "how long an idle session survives (seconds)");
-            AddConfig("pollingInterval", () => Application.Configuration.PollingInterval.ToString(CultureInfo.InvariantCulture), "fallback poll rate when WebSocket is unavailable");
-            AddConfig("enableWebSocket", () => Application.Configuration.EnableWebSocket.ToString(), "set false to rehearse the fallback path");
-            AddConfig("debug", () => Application.Configuration.Debug.ToString(), "must be FALSE in production (bundled/minified client)");
-            AddConfig("maxSessions", () => Application.Configuration.MaxSessions.ToString(CultureInfo.InvariantCulture), "-1 or 0 = unbounded; bound it before a load balancer does");
+            configListBox.Items.Add("Default.json");
+            AddConfig("sessionTimeout", () => Application.Configuration.SessionTimeout.ToString(CultureInfo.InvariantCulture), "idle session lifetime (seconds)");
+            AddConfig("pollingInterval", () => Application.Configuration.PollingInterval.ToString(CultureInfo.InvariantCulture), "fallback poll rate without WebSocket");
+            AddConfig("enableWebSocket", () => Application.Configuration.EnableWebSocket.ToString(), "false rehearses the fallback path");
+            AddConfig("debug", () => Application.Configuration.Debug.ToString(), "must be false in production");
+            AddConfig("maxSessions", () => Application.Configuration.MaxSessions.ToString(CultureInfo.InvariantCulture), "-1 or 0 = unbounded");
             AddConfig("theme", () => Application.Configuration.ThemeName ?? "n/a", "client theme");
 
             configListBox.Items.Add("");
-            configListBox.Items.Add("HealthCheck.json — what a load balancer reads to drain a hot instance");
+            configListBox.Items.Add("HealthCheck.json");
             try
             {
                 string path = Path.Combine(Application.StartupPath ?? ".", "HealthCheck.json");
@@ -1234,7 +932,7 @@ namespace TicketOpsLive
                 }
                 else
                 {
-                    configListBox.Items.Add("  (not found next to the executable — it ships with the project folder)");
+                    configListBox.Items.Add("  (not found next to the application)");
                 }
             }
             catch (Exception ex)
@@ -1243,7 +941,7 @@ namespace TicketOpsLive
             }
 
             configListBox.Items.Add("");
-            configListBox.Items.Add("Deployment: sticky sessions REQUIRED — server-side session state lives in one process.");
+            configListBox.Items.Add("Deployment: sticky sessions required — session state lives in one process.");
             configListBox.Items.Add("Reverse proxy must forward the WebSocket upgrade (Connection/Upgrade headers).");
         }
 
@@ -1251,52 +949,41 @@ namespace TicketOpsLive
         {
             string value;
             try { value = read() ?? "n/a"; }
-            catch (Exception) { value = "n/a (not exposed by this build)"; }
+            catch (Exception) { value = "n/a"; }
             configListBox.Items.Add($"  {key,-18} {value,-12} {why}");
         }
 
-        /// <summary>The lesson's performance checklist — each item says where THIS app satisfies it.</summary>
         private void BuildChecklist()
         {
             string[] items =
             {
-                "Every background loop has a stop condition — _heartbeatRunning / _feedRunning / token / IsDisposed",
-                "Every global subscription unsubscribes — Cleanup(): hub and SessionRegistry, from Exit and Disposed",
-                "UI updates are batched or throttled — import pushes every 10 records, heartbeat once per second",
-                "High-frequency model events are coalesced — 50 ms model, dirty flag, one refresh per timer tick",
-                "Bound collections are updated in the session context — Application.Update(_context) in Hub_TicketChanged",
-                "Static fields hold global state only — TicketHub/SessionRegistry; _sharedCounter is the labelled trap",
-                "Counters, filters and selection are per session — instance fields; tenant + Escalated filter",
-                "Exceptions are caught and logged inside tasks — try/catch/finally in every loop, safe UI message",
-                "The app degrades when WebSocket is gone — StartPolling only while work runs, EndPolling after",
-                "The load balancer keeps a session on one instance — sticky sessions, see ConfigurationReview.md",
+                "Every background loop has a stop condition",
+                "Every global subscription unsubscribes",
+                "UI updates are batched or throttled",
+                "High-frequency model events are coalesced",
+                "Bound collections are updated in the session context",
+                "Static fields hold global state only",
+                "Counters, filters and selections are per session",
+                "Background tasks catch and log exceptions",
+                "The app behaves when WebSocket is unavailable",
+                "The load balancer keeps a session on one instance",
             };
             foreach (string item in items)
                 checklistBox.Items.Add(item);
         }
 
-        private void checklistBox_AfterItemCheck(object sender, ItemCheckEventArgs e)
-        {
-            if (!_wiringDone)
-                return;
-            string item = e.Index >= 0 && e.Index < checklistBox.Items.Count ? Convert.ToString(checklistBox.Items[e.Index], CultureInfo.InvariantCulture) : "";
-            AddTrace(TraceDirection.Request, "checklist", $"{(e.NewValue == CheckState.Checked ? "✔" : "✖")} {item}");
-            SetStatus($"checklist {checklistBox.CheckedItems.Count}/{checklistBox.Items.Count}", StatusKind.Normal);
-        }
-
         private void featureTabs_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string name = featureTabs.SelectedTab?.Text ?? "";
-            AddTrace(TraceDirection.Request, "featureTabs_SelectedIndexChanged", $"showing \"{name}\" — every tab is the same session, the same context and the same trace");
+            // A tab's controls are created when it is first shown: refresh what it displays.
             if (featureTabs.SelectedTab == tabHealth)
                 RenderHealth(BuildHealthSnapshot());
             if (featureTabs.SelectedTab == tabSession)
-                RenderInspector("request thread (tab switch)");
+                RenderInspector();
         }
 
         #endregion
 
-        #region Delivery: WebSocket push, or the polling fallback while a task needs it
+        #region Delivery: WebSocket push, or polling while work runs
 
         private void BeginPush()
         {
@@ -1306,24 +993,21 @@ namespace TicketOpsLive
 
             Application.StartPolling(1000);
             _polling = true;
-            AddTrace(TraceDirection.Server, "Application.StartPolling(1000)", "no WebSocket when the task started → fallback polling ON until the work ends");
         }
 
         private void EndPush()
         {
             if (_pushers > 0) _pushers--;
             if (_pushers > 0 || !_polling || _liveMode)
-                return;                              // live mode owns the fallback while it is on
+                return;                              // live mode keeps the fallback while it is on
 
             Application.EndPolling();
             _polling = false;
-            AddTrace(TraceDirection.Server, "Application.EndPolling()", "the last task ended → fallback polling OFF");
         }
 
         /// <summary>Counts one push for the health panel (updates/min) and stamps the last server event.</summary>
         private void NotePush()
         {
-            _pushes++;
             _lastPushUtc = DateTime.UtcNow;
             _pushTimes.Enqueue(_lastPushUtc.Value);
             while (_pushTimes.Count > 600)
@@ -1339,32 +1023,29 @@ namespace TicketOpsLive
             {
                 Application.Update(_context, action);
             }
-            catch (ObjectDisposedException) { /* the session went away between the guard and the push */ }
+            catch (ObjectDisposedException) { }
             catch (Exception ex) { LogError("Application.Update(context)", ex); }
         }
 
         #endregion
 
-        #region Lifecycle: ONE cleanup, called from ApplicationExit and from Disposed
+        #region Lifecycle: one cleanup, called from ApplicationExit and from Disposed
 
         private void Application_ApplicationExit(object sender, EventArgs e)
         {
             // Replace with your logging framework in production.
             Console.Error.WriteLine($"TicketOps session exited: {_sessionId} (client {_clientId})");
-            Cleanup("ApplicationExit");
+            Cleanup();
         }
 
         private void Application_SessionTimeout(object sender, HandledEventArgs e)
         {
-            Console.Error.WriteLine($"[TicketOpsLive] {DateTime.Now:HH:mm:ss.fff} session {_sessionId} is about to time out (Handled={e.Handled}).");
-            // e.Handled stays false: the built-in "prolong the session?" dialog is the right default for a console.
+            // e.Handled stays false: Wisej.NET shows its default dialog offering to prolong the session.
+            Console.Error.WriteLine($"[TicketOpsLive] {DateTime.Now:HH:mm:ss.fff} session {_sessionId} is about to time out.");
         }
 
-        /// <summary>
-        /// Idempotent. Stops every loop this session owns and removes every subscription it made. Both
-        /// ApplicationExit and Disposed call it, and whichever runs first does the work.
-        /// </summary>
-        private void Cleanup(string why)
+        /// <summary>Idempotent: stops every loop this session owns and removes every subscription it made.</summary>
+        private void Cleanup()
         {
             if (_cleanedUp)
                 return;
@@ -1374,7 +1055,7 @@ namespace TicketOpsLive
             _feedRunning = false;
             _liveMode = false;
             try { _simulator?.Stop(); } catch (Exception) { }
-            try { RequestImportCancel(why); } catch (Exception) { }
+            try { RequestImportCancel(); } catch (Exception) { }
 
             try { TicketHub.Instance.TicketChanged -= Hub_TicketChanged; } catch (Exception) { }
             _subscribedToHub = false;
@@ -1386,117 +1067,29 @@ namespace TicketOpsLive
             }
             try { Application.ApplicationExit -= Application_ApplicationExit; } catch (Exception) { }
             try { Application.SessionTimeout -= Application_SessionTimeout; } catch (Exception) { }
-
-            Console.Error.WriteLine($"[TicketOpsLive] {DateTime.Now:HH:mm:ss.fff} cleanup ({why}) for session {_sessionId}: loops stopped, hub and registry unsubscribed.");
-        }
-
-        private void exitButton_Click(object sender, EventArgs e)
-        {
-            AddTrace(TraceDirection.Request, "exitButton_Click", "Application.Exit() → ApplicationExit runs the single cleanup");
-            LifecycleLog("Application.Exit() requested by the operator.");
-            Application.Exit();
-        }
-
-        private void openSessionButton_Click(object sender, EventArgs e)
-        {
-            AddTrace(TraceDirection.Request, "openSessionButton_Click", "a second tab: same ClientId (the browser), a new SessionId, its own page and counters");
-            Application.Navigate("/", "_blank");
         }
 
         #endregion
 
-        #region UI helpers
-
-        private enum StatusKind { Normal, Warn, Error }
-        private enum BannerKind { Info, Warn, Error }
-
-        private void AddTrace(TraceDirection direction, string name, string payload)
-        {
-            string prefix = direction switch
-            {
-                TraceDirection.Push => "→ push    ",
-                TraceDirection.Request => "← request ",
-                _ => "• server  ",
-            };
-            string time = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
-            listTrace.Items.Add($"{time}  {prefix} {name,-32} {payload}");
-            while (listTrace.Items.Count > 400)
-                listTrace.Items.RemoveAt(0);
-            listTrace.SelectedIndex = listTrace.Items.Count - 1;
-        }
+        #region Helpers
 
         private void ImportLog(ImportJob job, string message)
         {
-            string time = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
+            string time = DateTime.Now.ToString("HH:mm:ss", CultureInfo.InvariantCulture);
             importLogListBox.Items.Insert(0, $"{time}  [{job.JobId}] {message}");
             while (importLogListBox.Items.Count > 200)
                 importLogListBox.Items.RemoveAt(importLogListBox.Items.Count - 1);
-        }
-
-        private void clearButton_Click(object sender, EventArgs e)
-        {
-            listTrace.Items.Clear();
-            AddTrace(TraceDirection.Request, "clearButton_Click", "trace cleared — the counters keep counting");
         }
 
         private void RenderConnection()
         {
             bool ws = Application.IsWebSocket;
             connectionLabel.Text = ws
-                ? "● WebSocket connected — Application.Update pushes out-of-bound"
-                : "○ HTTP only — pushes wait for a poll or the next request";
+                ? "● WebSocket connected"
+                : _polling ? "○ No WebSocket — polling every second" : "○ No WebSocket";
             connectionLabel.ForeColor = ws
                 ? System.Drawing.Color.FromArgb(31, 157, 87)
                 : System.Drawing.Color.FromArgb(232, 161, 60);
-        }
-
-        private void SetStatus(string text, StatusKind kind)
-        {
-            labelStatus.Text = "● " + text;
-            labelStatus.ForeColor = kind switch
-            {
-                StatusKind.Error => System.Drawing.Color.FromArgb(224, 86, 59),
-                StatusKind.Warn => System.Drawing.Color.FromArgb(232, 161, 60),
-                _ => System.Drawing.Color.FromArgb(31, 157, 87),
-            };
-        }
-
-        private void ShowBanner(string text, BannerKind kind)
-        {
-            labelBanner.Text = text;
-            switch (kind)
-            {
-                case BannerKind.Error:
-                    labelBanner.BackColor = System.Drawing.Color.FromArgb(253, 236, 234);
-                    labelBanner.ForeColor = System.Drawing.Color.FromArgb(178, 59, 39);
-                    break;
-                case BannerKind.Warn:
-                    labelBanner.BackColor = System.Drawing.Color.FromArgb(255, 244, 229);
-                    labelBanner.ForeColor = System.Drawing.Color.FromArgb(146, 64, 14);
-                    break;
-                default:
-                    labelBanner.BackColor = System.Drawing.Color.FromArgb(230, 240, 251);
-                    labelBanner.ForeColor = System.Drawing.Color.FromArgb(21, 79, 143);
-                    break;
-            }
-            labelBanner.Visible = true;
-        }
-
-        private void HideBanner()
-        {
-            labelBanner.Visible = false;
-        }
-
-        private void UpdateState()
-        {
-            RealtimeHealthSnapshot h = BuildHealthSnapshot();
-            labelState.Text =
-                $"SERVER STATE (this session only, except the hub line)\n" +
-                $"heartbeat={Low(_heartbeatRunning)} import={(_importRunning ? _currentJob?.JobId : "idle")} live={Low(_liveMode)} feed={Low(_feedRunning)} loops={h.RunningLoopNames}\n" +
-                $"pushes={_pushes} ({h.UpdatesPerMinute}/min) tasks={_pushers} polling={Low(_polling)} jobs ✓{_completed} ⃠{_cancelled} ✖{_failed}\n" +
-                $"tenant={_tenant} subscribed={Low(_subscribedToHub)} shown={_tickets.Count}/{_allTickets.Count} notif={_notificationCount} filtered={_filteredOut} applied={_eventsApplied}\n" +
-                $"cadence={CadenceText(_cadenceMs)} events={_eventsReceived} updates={_updatesApplied} refused={_ticksRefused} · hub: {TicketHub.Instance.TicketCount} tickets, {TicketHub.Instance.EventsPublished} events, {TicketHub.Instance.SubscriberCount} subscribers\n" +
-                $"IsWebSocket={Low(Application.IsWebSocket)} ClientId={Short(_clientId)} (browser) SessionId={Short(_sessionId)} (tab) · sessions={SessionRegistry.Instance.Count}";
         }
 
         private static void LogError(string operation, Exception ex)
@@ -1505,8 +1098,6 @@ namespace TicketOpsLive
         }
 
         private static string Short(string id) => string.IsNullOrEmpty(id) ? "—" : (id.Length <= 8 ? id : id.Substring(0, 8));
-
-        private static string Low(bool value) => value ? "true" : "false";
 
         #endregion
     }

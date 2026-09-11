@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>VendorKnob — plain JavaScript proof (Module 2)</title>
+  <title>VendorKnob — plain JavaScript proof</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!--
@@ -48,7 +48,7 @@
   </style>
 </head>
 <body>
-  <header>IntegrationLab — plain JavaScript proof <span>Module 2 · no Wisej.NET on this page: three files, one &lt;input&gt;, one plugin</span></header>
+  <header>IntegrationLab — plain JavaScript proof <span>no Wisej.NET on this page: three files, one &lt;input&gt;, one plugin</span></header>
 
   <main>
     <!-- ───────── 1. the knob ───────── -->
@@ -82,7 +82,7 @@
       <p>Then reload. The knob never appears (the raw dashed <code>&lt;input&gt;</code> stays visible) and the console shows, at load time, before any code of yours runs:</p>
 <pre><span class="bad">Uncaught ReferenceError: jQuery is not defined — vendor-knob.js must be loaded after jQuery.</span>
     at vendor-knob.js:19</pre>
-      <p>Later, <code>$(input).vendorKnob(...)</code> fails too: <code>$.fn.vendorKnob</code> was never registered, so <em>TypeError: $(...).vendorKnob is not a function</em>. The first error names an undefined symbol from the <strong>vendor</strong> library, not anything you wrote — that is the signature of a load-order bug. In Wisej.NET the same thing happens when <code>Packages</code> lists the plugin before jQuery; the "Wrong package order" button in the Knob Demo reproduces it.</p>
+      <p>Later, <code>$(input).vendorKnob(...)</code> fails too: <code>$.fn.vendorKnob</code> was never registered, so <em>TypeError: $(...).vendorKnob is not a function</em>. The first error names an undefined symbol from the <strong>vendor</strong> library, not anything you wrote — that is the signature of a load-order bug. In Wisej.NET the same thing happens when <code>Packages</code> lists the plugin before jQuery.</p>
     </section>
 
     <!-- ───────── 3. context: broken vs fixed ───────── -->

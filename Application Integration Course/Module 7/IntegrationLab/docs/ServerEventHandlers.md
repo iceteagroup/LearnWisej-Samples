@@ -19,7 +19,7 @@ protected override void OnWidgetEvent(WidgetEventArgs e)
     switch (e.Type)
     {
         case "thresholdCrossed": HandleThresholdCrossed(e.Data); break;
-        case "error":            /* trace the vendor failure */   break;
+        case "error":            /* log the vendor failure */     break;
         default:                 base.OnWidgetEvent(e);            break;   // not ours: still reaches WidgetEvent subscribers
     }
 }
@@ -76,7 +76,7 @@ protected override void OnWebEvent(WisejEventArgs e)
 {
     if (e.Type == "widgetEvent" && TryReadWidgetEvent(e, out string type, out object data) && type == "pointClicked")
     {
-        HandlePointClicked(data, "OnWebEvent");
+        HandlePointClicked(data);
         return;                                    // handled: do not raise WidgetEvent a second time for it
     }
     base.OnWebEvent(e);                            // focus, resize, pointer, widget events we do not own → the framework
@@ -94,14 +94,12 @@ here too, provided the server config wires the event name. Two rules follow:
    `fireDataEvent("widgetEvent", { type, data })`, and the framework wires it as `widgetEvent(Event)`,
    so the object arrives as `e.Parameters.Event = { type, data }` (`TryReadWidgetEvent` also accepts a
    flat `{ type, data }`). If the shape is not recognised the event goes to `base`, which raises
-   `OnWidgetEvent` — overridden here as a **fallback** with the same validation — so nothing is lost
-   and the log line says which path ran (`raised via OnWebEvent` / `raised via OnWidgetEvent (fallback)`).
+   `OnWidgetEvent` — overridden here as a **fallback** with the same validation — so nothing is lost.
 
 Validation in `HandlePointClicked`: `index` must be an integer within `0..Labels.Length-1`
-(`{ index: -1 }` from the "Bad payload" button is rejected with `rejected: index out of range`),
+(a payload such as `{ index: -1 }` is rejected with `rejected: index out of range`),
 `label` must be a string, `value` a finite number. The **index is a lookup key**: `Label` and `Value`
-in `ChartPointEventArgs` come from the server arrays, the client copies are only compared and logged
-("server wins").
+in `ChartPointEventArgs` come from the server arrays; the client copies are never trusted.
 
 ## `WidgetEvent` vs `OnWebEvent` — the self-check
 
@@ -116,7 +114,11 @@ in `ChartPointEventArgs` come from the server arrays, the client copies are only
 
 ## Evidence
 
-- Log after **Gauge 104**: `← JS→.NET thresholdCrossed e.Data = {"value":104,"level":"high"}` then `• .NET ThresholdCrossed raised via OnWidgetEvent → GaugeThresholdEventArgs { Value=104, Level=high }`, banner and toast.
-- Log after **Knob +10** or a drag: `← JS→.NET valueChanged e.Data = {…}` then `• .NET OnValueChanged page-level WidgetEvent switch → KnobValueEventArgs {…}`; the dial pulses on a user change.
-- Log after a point click: `← JS→.NET pointClicked e.Data = {"index":3,"label":"Apr","value":68}` then `• .NET PointClicked raised via OnWebEvent → ChartPointEventArgs {…}`.
-- Log after **Bad payload**: `→ .NET→JS Call("fireBadPayload")`, `← JS→.NET pointClicked e.Data = {"index":-1}`, `✖ rejected pointClicked rejected: index out of range (-1; 0..5)` — no .NET event, the page stays alive.
+- Gauge crossing (live readings): `← JS→.NET thresholdCrossed e.Data = {"value":102,"level":"high"}`, then
+  the "operator notified" toast raised by the page's `ThresholdCrossed` handler.
+- Knob drag: `← JS→.NET valueChanged e.Data = {…,"source":"user"}`; the page commits the value and the
+  dial pulses (`Call("pulse")`).
+- Point click: `← JS→.NET pointClicked e.Data = {"index":3,"label":"Apr","value":68}`, then the drill-down
+  toast raised by the page's `PointClicked` handler.
+- A payload that fails validation produces a `✖ rejected …` line with the reason and no .NET event;
+  the page stays alive.

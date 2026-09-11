@@ -142,15 +142,5 @@ namespace EnterpriseOps.Services
 
             return ApproveResult.Approved(ctx.CorrelationId, saved.Id, saved.Version, entry.ToString(), saved.CompletedUtc.Value);
         }
-
-        /// <summary>
-        /// The "somebody else saved it first" failure path: bump the row's version behind the screen's back,
-        /// so the next approve carries a stale token. In production this is a second user, not a button.
-        /// </summary>
-        public void SimulateConcurrentEdit(int workOrderId)
-        {
-            _store.BumpVersionBehindTheScenes(workOrderId);
-            _trace.Data($"another session saved work order #{workOrderId} — its version moved on");
-        }
     }
 }

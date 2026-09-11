@@ -44,7 +44,6 @@ namespace TicketOps.Services
             var next = _roster.FirstOrDefault(o => o.Id == operatorId)
                        ?? throw new ArgumentException($"Unknown operator {operatorId}", nameof(operatorId));
             _current = next;
-            _log.Info(LogLayer.Session, "DirectoryUserService.SignInAs", $"impersonation for the lab → {next} (this session only)");
             return next;
         }
     }

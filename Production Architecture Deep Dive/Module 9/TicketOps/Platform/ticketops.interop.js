@@ -1,4 +1,4 @@
-// ticketops.interop.js — the only JavaScript in the TicketOps Console (Module 9).
+// ticketops.interop.js — the only JavaScript in the TicketOps Console.
 //
 // Packaging: this file is an embedded resource under /Platform and the assembly carries
 // [assembly: Wisej.Core.WisejResources], so Wisej.NET bundles it into the client and `window.ticketOps`
@@ -10,9 +10,9 @@
     var ticketOps = global.ticketOps = global.ticketOps || {};
 
     var SHORTCUTS = [
-        { keys: "Ctrl+K", what: "Focus the global search (the server is told through ReportShortcut)" },
-        { keys: "Esc", what: "Clear the search box while it has the focus (the server sees a normal TextChanged)" },
-        { keys: "?", what: "Show / hide this list — browser only, no round trip" }
+        { keys: "Ctrl+K", what: "Focus the global search" },
+        { keys: "Esc", what: "Clear the search box" },
+        { keys: "?", what: "Show or hide this list" }
     ];
 
     function isCtrlK(ev) {
@@ -24,8 +24,8 @@
         return tag === "input" || tag === "textarea" || tag === "select" || (el && el.isContentEditable === true);
     }
 
-    // ── Interop point 1: Ctrl+K (client-side key handling) ───────────────────────────────────────────
-    // Called by the Wisej JavaScript extender attached to GlobalSearchBox; `widget` is the qooxdoo widget
+    // ── Ctrl+K (client-side key handling) ────────────────────────────────────────────────────────────
+    // Called by the Wisej JavaScript extender attached to GlobalSearchBox; `widget` is the widget
     // (`this` in the extender script), so the handler is registered only once the widget exists.
     // Idempotent: a refresh re-runs the extender, and the previous listener is removed first.
     ticketOps.attachSearchShortcuts = function (widget) {
@@ -41,11 +41,11 @@
             if (isCtrlK(ev)) {
                 ev.preventDefault();                 // keep the browser's own Ctrl+K (address-bar search) out of the way
                 ev.stopPropagation();
-                widget.focus();                      // the browser-only part: focus
+                widget.focus();
                 if (typeof widget.selectAllText === "function") {
                     try { widget.selectAllText(); } catch (ignored) { /* selection is a nicety */ }
                 }
-                ticketOps._reportShortcut(widget, "ctrl+k");   // the server is told (interop point 2)
+                ticketOps._reportShortcut(widget, "ctrl+k");   // the server is told
                 return;
             }
 
@@ -54,14 +54,14 @@
                 var focused = typeof widget.hasState === "function" && widget.hasState("focused");
                 if (focused && typeof widget.getValue === "function" && widget.getValue()) {
                     ev.preventDefault();
-                    widget.setValue("");             // qooxdoo fires changeValue → Wisej raises TextChanged on the server
+                    widget.setValue("");             // fires changeValue → Wisej raises TextChanged on the server
                 }
                 return;
             }
 
             if (ev.key === "?" && !ev.ctrlKey && !ev.metaKey && !ev.altKey && !isTypingTarget(ev.target)) {
                 ev.preventDefault();
-                ticketOps.toggleShortcutList();      // pure presentation: the server never hears about it
+                ticketOps.toggleShortcutList();
             }
         };
 
@@ -70,7 +70,7 @@
         return true;
     };
 
-    // ── Interop point 2: client → server callback ────────────────────────────────────────────────────
+    // ── client → server callback ─────────────────────────────────────────────────────────────────────
     // GlobalSearchBox.ReportShortcut is a [WebMethod] registered on the widget by Wisej.NET
     // (RegisterWebMethods). Two shapes exist: NameAsync(args) → Promise, or Name(args, callback).
     ticketOps._reportShortcut = function (widget, name) {
@@ -92,20 +92,15 @@
         }
     };
 
-    // ── Interop point 3: clipboard (server → browser → server) ──────────────────────────────────────
+    // ── clipboard (server → browser → server) ────────────────────────────────────────────────────────
     // Invoked by BrowserApi.CopyToClipboardAsync through Application.EvalAsync. `text` is the finished,
     // server-built link (this code never assembles a URL). Returns a Promise that ALWAYS resolves to
     // { ok: true } or { ok: false, reason, detail } — it never rejects, so the server always gets an answer.
-    // options.simulateDenied makes the write reject like a browser that denied clipboard permission.
-    ticketOps.copyToClipboard = function (text, options) {
-        options = options || {};
+    ticketOps.copyToClipboard = function (text) {
         var value = String(text);
 
         var write;
-        if (options.simulateDenied) {
-            write = function () { return Promise.reject(new DOMException("Write permission denied (simulated).", "NotAllowedError")); };
-        }
-        else if (global.navigator && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+        if (global.navigator && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
             write = function () { return navigator.clipboard.writeText(value); };
         }
         else {
@@ -130,8 +125,7 @@
         });
     };
 
-    // ── Client-only polish: the shortcut list ────────────────────────────────────────────────────────
-    // No server involvement at all — which is the point of showing it next to the two round trips.
+    // ── the shortcut list (browser only) ─────────────────────────────────────────────────────────────
     var listElement = null;
 
     ticketOps.toggleShortcutList = function () {
@@ -139,7 +133,7 @@
 
         var box = document.createElement("div");
         box.setAttribute("role", "dialog");
-        box.style.cssText = "position:fixed;right:24px;bottom:72px;z-index:100000;min-width:300px;padding:14px 18px;" +
+        box.style.cssText = "position:fixed;right:24px;bottom:72px;z-index:100000;min-width:260px;padding:14px 18px;" +
             "background:#0d1b2a;color:#d6e4f3;border:1px solid rgba(90,160,255,.5);border-radius:10px;" +
             "font:13px/1.5 system-ui,Segoe UI,sans-serif;box-shadow:0 14px 36px rgba(0,0,0,.4);";
 
@@ -159,11 +153,6 @@
             row.appendChild(what);
             box.appendChild(row);
         }
-
-        var hint = document.createElement("div");
-        hint.textContent = "Press ? or Esc to close. Nothing here talks to the server.";
-        hint.style.cssText = "margin-top:8px;color:#8fa6c0;font-size:12px;";
-        box.appendChild(hint);
 
         document.body.appendChild(box);
         listElement = box;

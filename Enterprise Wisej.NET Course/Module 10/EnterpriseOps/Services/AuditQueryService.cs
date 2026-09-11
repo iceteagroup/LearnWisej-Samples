@@ -49,10 +49,6 @@ namespace EnterpriseOps.Services
 
         public int TotalBeforeFilter { get; }
 
-        public string ScopeLabel => WholeTenant
-            ? "every user of this tenant"
-            : "your own entries only — ViewAuditLog is not held";
-
         public static AuditQueryResult Loaded(IReadOnlyList<AuditRow> rows, bool wholeTenant, int total, string correlationId)
             => new AuditQueryResult(true, $"{rows.Count} of {total} entries", correlationId, null, rows, wholeTenant, total);
     }

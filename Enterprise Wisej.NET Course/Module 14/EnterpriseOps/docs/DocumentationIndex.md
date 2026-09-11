@@ -53,9 +53,8 @@ of the readiness statement:
 |---|---|---|
 | `docs/SecurityReviewSignOff.md` | not written — the review happened, the signed record did not | ana.ops |
 
-**Fail: missing document** on the Capstone Review screen adds exactly that entry to the index so a reviewer
-can see what an incomplete index costs: the path stops resolving, the endpoint would answer 404, and the
-package verification refuses to pass.
+It is not listed in `index.json` until it exists: an entry whose path does not resolve means the endpoint
+would answer 404, and the package verification refuses to pass.
 
 ## Keeping it true
 
@@ -67,6 +66,4 @@ package verification refuses to pass.
 ## Evidence
 
 Capstone Review → **Documentation index**: `docs/index.json` read back with every field above, and a
-**Resolves** column that says whether the file is really there. The trace line
-`Docs: resources/list → {"resources":[…]}` is the answer a documentation MCP endpoint would return for this
-project, printed so the shape can be checked rather than assumed.
+**Resolves** column that says whether the file is really there.

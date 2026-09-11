@@ -61,8 +61,8 @@ this.update = function (options, old) {
 
 Why the comparison matters:
 
-- **cheap** — the Timer stream changes only `value` / `level`; the bands are not re-sent to the
-  vendor, no legend is redrawn, no animation restarts for an unrelated option;
+- **cheap** — Set "High" changes only `value` / `level`; the bands are not re-sent to the vendor, no
+  legend is redrawn, no animation restarts for an unrelated option;
 - **nested objects compare as whole values** — `_same` is a JSON comparison, so replacing the
   `bands` array (Set "Peak" / Set "Idle") re-syncs the bands even if one color changed, exactly
   as the lesson describes; that is why the frequently changing reading sits at the top level;
@@ -86,34 +86,32 @@ in the constructor and has no re-parent / `setElement` API — `resize()` only r
 element it was given. So the adapter makes the vendor's limitation explicit:
 
 ```js
-this._recreate = function (options, reason) {
+this._recreate = function (options) {
     disconnect the ResizeObserver; this.widget.destroy(); remove the old frame;
     this._buildHost(options.style);
     this.widget = new VendorGauge(this.host, this._toVendorOptions(options));   // built from the FULL options
     this._renderBands(options.bands);
-    re-observe; this._raise("recreated", { style: options.style, reason: reason });
+    re-observe;
 };
 ```
 
-The **Destroy & recreate** button toggles the style; the trace shows
-`← JS→.NET recreated {"style":"compact","reason":"style changed \"card\" → \"compact\""}` and the
-banner confirms all other options were re-applied from the full `options` object.
+The dashboard renders the gauge with `style = "card"` (set in `DashboardPage.Designer.cs`); assigning
+`gauge.Options.style = "compact"` from the server rebuilds the gauge inside a dark, padded host, with
+every other option re-applied from the full `options` object.
 
 ## Nested options: the notify rule
 
 The `Widget` detects changes to **first-level fields only**. `Options.bands[0].color = "#1a86ff"`
-changes the server copy but renders nothing — the client never gets `update()`. The
-**Change nested (no notify)** button does exactly that and the legend stays green; the banner and
-the state label (`[nested change NOT sent]`) say why. **Notify / Update()** calls `gauge.Update()`,
-which re-renders the Options; the client's `update(options, old)` finds the changed band with its
-`_same` comparison and redraws the legend. `((dynamic)Options).Notify("bands")` is the targeted
-alternative the Wisej.NET docs offer.
+changes the server copy but renders nothing — the client never gets `update()`. That is why the
+server buttons replace the whole `bands` array instead of editing a band in place. When a nested
+change is unavoidable, `gauge.Update()` re-renders the Options (the client's `_same` comparison then
+finds the changed band), and `((dynamic)Options).Notify("bands")` is the targeted alternative the
+Wisej.NET docs offer.
 
 ## Events and errors
 
-- `WiredEvents` lists what each adapter may raise: gauge `initialized`, `recreated`, `error`;
-  knob `valueChanged`, `error`. Every one lands in `widget.WidgetEvent` on the server
-  (`e.Type`, `e.Data`).
+- `WiredEvents` lists what each adapter may raise: gauge `error`; knob `valueChanged`, `error`.
+  Every one lands in `widget.WidgetEvent` on the server (`e.Type`, `e.Data`).
 - Adapter-raised events go through the framework handler registered by `_addListener` when one
   exists (it defers the round trip), otherwise through `setTimeout(fireWidgetEvent, 0)` — an event
   fired synchronously while the framework is still applying a server render is dropped.
@@ -124,10 +122,8 @@ alternative the Wisej.NET docs offer.
 
 | Action | Trace shows |
 |---|---|
-| page load | `→ .NET→JS gauge render → init(options) {"value":72,"range":{"minValue":0,"maxValue":120},"bands":[…],"label":{…},"style":"card"}` then `← JS→.NET initialized {"keys":["value","range","bands","label","style"],"rangeKeys":["minValue","maxValue"],"bandKeys":["from","to","color"]}` |
+| page load | `→ .NET→JS gauge init(options) {"value":72,"range":{"minValue":0,"maxValue":120},"bands":[…],"label":{…},"style":"card"}` and the same for the knob |
 | Set "High" | one `update()` per widget; gauge needle moves to 88, knob to 78, legend untouched |
 | Set "Peak" | bands array replaced → legend redrawn (95–120 red), needle at 104 |
-| ▶ Stream | 17 `update()` calls per widget, only `value` / `level` travel |
-| Change nested | nothing renders; `[nested change NOT sent]` in the state label |
-| Notify / Update() | `→ .NET→JS gauge.Update()` and the legend chip turns blue |
-| Destroy & recreate | `← JS→.NET recreated {"style":"compact"…}`; the gauge is rebuilt inside a dark host |
+| Set "Idle" | default bands back, needle at 64, knob at 40 |
+| drag the knob | `← JS→.NET knob.valueChanged {"value":63}`; the server writes the value back to `Options.level` |

@@ -2,35 +2,31 @@
 
 ## Opening the editor
 
-`TicketBrowserPage` opens `TicketEditorForm` from three places — `btnAdd_Click`, `btnEdit_Click`, and
-`ticketsDataGridView_CellDoubleClick` — all through one helper:
+`TicketBrowserPage` opens `TicketEditorForm` from two buttons — `btnAdd_Click` (*Add Ticket*) and
+`btnEdit_Click` (*Edit Ticket*, on the selected grid row) — both through one helper:
 
 ```csharp
-private async Task OpenEditorAsync(int? ticketId, string label)
+private async Task OpenEditorAsync(int? ticketId)
 {
-    if (_loading) { /* guard, same as every other page operation */ return; }
-
-    var latency = _slowSaveOn ? TimeSpan.FromSeconds(2.5) : TimeSpan.Zero;
-    AddTrace(Glyph.Server, "dialog", $"{label}: opening TicketEditorForm" + ...);
+    if (_loading)
+        return;                          // guard, same as every other page operation
 
     DialogResult result;
-    using (var editor = new TicketEditorForm(ticketId, latency, AddTraceRaw))
+    using (var editor = new TicketEditorForm(ticketId))
     {
         result = await editor.ShowDialogAsync();
     }
 
     if (result == DialogResult.OK)
     {
-        AddTrace(Glyph.Server, "dialog", $"{label} → OK → grid refreshed");
         _pageIndex = 0;
-        await LoadTicketsAsync("dialog OK → refresh");
-    }
-    else
-    {
-        AddTrace(Glyph.Server, "dialog", $"{label} → Cancel → nothing persisted, grid untouched");
+        await LoadTicketsAsync();        // re-run the search only when something was written
     }
 }
 ```
+
+(Module 7 also passes the page's selected role to the editor, which decides whether the conflict dialog
+offers Overwrite.)
 
 `await editor.ShowDialogAsync()` — the cookbook's verified pattern for an awaitable modal — returns the
 `DialogResult` the dialog was closed with. The `using` block disposes the form afterward: the Wisej.NET XML
@@ -54,7 +50,6 @@ looking at page 4 would refresh page 4, not the page the new row is actually on.
 ```csharp
 private void btnCancel_Click(object sender, EventArgs e)
 {
-    _trace('•', "editor", "Cancel: DialogResult.Cancel — no context created, nothing written");
     this.DialogResult = DialogResult.Cancel;
     Close();
 }
@@ -66,13 +61,11 @@ back — there is simply nothing left to undo.
 
 ## Evidence
 
-- `dotnet build` / `dotnet test` — 0 warnings, 0 errors, 52 passed. `OpenEditorAsync`,
-  `btnAdd_Click`/`btnEdit_Click`/`ticketsDataGridView_CellDoubleClick`, and the `DialogResult` branch all
-  compile against the real Wisej.NET `Form.ShowDialogAsync`/`DialogResult` API (confirmed in the Wisej-4
-  4.1.0 XML docs, not guessed).
-- The trace vocabulary the page emits around a dialog — `• dialog Edit ticket SD-1042 → OK → grid refreshed`
-  / `• dialog Edit ticket SD-1042 → Cancel → nothing persisted, grid untouched` — matches the shape given in
-  this module's build instructions and is produced by `OpenEditorAsync` verbatim.
+- `OpenEditorAsync`, `btnAdd_Click`/`btnEdit_Click` and the `DialogResult` branch compile against the real
+  Wisej.NET `Form.ShowDialogAsync`/`DialogResult` API (confirmed in the Wisej-4 4.1.0 XML docs, not
+  guessed).
+- In the browser: after **Save** the grid re-runs the search and the saved ticket is the first row of page
+  1; after **Cancel** the grid is left as it was, with no search.
 - `TicketCommandServiceTests` cover every outcome `OpenEditorAsync` has to branch on
   (`SaveAsync` returning a result, `SaveAsync` throwing `TicketNotFoundException`, `DeleteAsync` returning
   each of the three outcomes) — what the *service* does after a save or a delete is proved by tests; what

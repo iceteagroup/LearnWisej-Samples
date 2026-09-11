@@ -31,8 +31,5 @@ namespace TicketOps.Services
 
         /// <summary>Rolls the object back to its last saved values (IsDirty → false). Nothing is persisted.</summary>
         OperationResult<WorkOrder> Discard(WorkOrder order);
-
-        /// <summary>Creates and persists a batch of generated work orders (the progress path); returns the new objects.</summary>
-        Task<IReadOnlyList<WorkOrder>> ImportBatchAsync(int firstNumber, int count);
     }
 }

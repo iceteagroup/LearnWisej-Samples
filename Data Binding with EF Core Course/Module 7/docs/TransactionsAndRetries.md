@@ -5,31 +5,26 @@
 `TicketCommandService.SaveAsync` and `DeleteAsync` each call `SaveChangesAsync` exactly once, after making
 every change the method intends (mapping every field, or one `Remove`). EF Core wraps a single
 `SaveChangesAsync` call in a database transaction automatically: every INSERT/UPDATE/DELETE it generates for
-that call either all commit or all roll back together. Nothing in this module needed an explicit
-`BeginTransactionAsync` for those methods, and adding one would have been redundant ceremony around
-something EF Core already guarantees.
+that call either all commit or all roll back together. Nothing in this module needs an explicit
+`BeginTransactionAsync` for those methods, and adding one would be redundant ceremony around something EF
+Core already guarantees.
 
-## Why `CloseTicketWithCommentAsync` needed an explicit one
+## When an explicit transaction is needed
 
-`CloseTicketWithCommentAsync` is different on purpose: it performs **two** separate writes — the ticket's
-status, then a closing `TicketComment` — as **two separate `SaveChangesAsync` calls**, so the lab's failure
-switch (`TransactionFailureSwitch.FailAfterFirstWrite`) can fail the unit *between* them and prove the first
-write alone rolls back. That needs an explicit transaction spanning both calls:
+An explicit transaction is for a unit of work that spans **more than one** `SaveChangesAsync` call (or a
+`SaveChangesAsync` plus raw SQL, or two contexts sharing one connection). A typical Support Desk example is
+"close a ticket with a closing comment" done as two separate writes: the ticket's status, then a new
+`TicketComment`. If the second write fails, the first must not stay applied on its own. The shape:
 
 ```csharp
+await using var db = await _dbFactory.CreateDbContextAsync(token);
 await using var tx = await db.Database.BeginTransactionAsync(token);
 try
 {
     ticket.Status = TicketStatuses.Closed;
     await db.SaveChangesAsync(token);                      // write 1
 
-    if (_transactionFailure.FailAfterFirstWrite)
-    {
-        _transactionFailure.FailAfterFirstWrite = false;   // fires once
-        throw new SimulatedTransactionFailureException();
-    }
-
-    db.TicketComments.Add(ticketComment);
+    db.TicketComments.Add(closingComment);
     await db.SaveChangesAsync(token);                      // write 2
 
     await tx.CommitAsync(token);
@@ -41,11 +36,12 @@ catch (Exception)
 }
 ```
 
-A real, non-simulated version of "the second half threw" is exactly the shape a multi-step business
-operation takes in production: update a status, then a downstream call fails (a queue is unreachable, a
-second table's constraint is violated, a network hiccup) — the transaction is what stops the first write
-from being left half-applied. The switch resets itself the moment it fires, so the next click — with or
-without re-arming it — runs the ordinary, successful path.
+This is the shape a multi-step business operation takes in production: update a status, then a second step
+fails (a second table's constraint is violated, a downstream call is unreachable) and the transaction is what
+stops the first write from being left half-applied. This solution ships no such operation: every write it
+performs is one `SaveChangesAsync`, which is why the snippet above is illustration, not code from the
+solution. When the two changes can be staged on one context and saved together, one `SaveChangesAsync` is
+simpler and gives the same guarantee.
 
 ## `EnableRetryOnFailure` and execution strategies — why SQLite has none
 
@@ -69,34 +65,20 @@ await strategy.ExecuteAsync(async () =>
 
 **SQLite has no retrying execution strategy.** `Microsoft.EntityFrameworkCore.Sqlite` does not ship one, and
 this module does not add a custom one, or fake the behaviour by wrapping calls in a manual retry loop — a
-manual loop around a transaction that is not idempotent-safe would be worse than no retry at all
-(`CloseTicketWithCommentAsync`'s two `SaveChangesAsync` calls are not automatically safe to replay: a retried
-first write, for instance, would try to set `Status = Closed` again, which is harmless, but a retried second
-write could insert the closing comment twice if the failure happened after the INSERT reached the server but
-before the confirmation came back). `SupportDeskDataServiceCollectionExtensions.AddSupportDeskData` does not
-call `EnableRetryOnFailure`, and none of this module's connection handling pretends otherwise — the local
-SQLite file either opens or it does not (see `DevelopmentOutageSwitch`'s "Break the database" demo), and
-there is no transient-failure class to retry against the way there is against a networked server.
+manual loop around a unit that is not safe to replay would be worse than no retry at all (in the two-write
+example above, a retried first write would set `Status = Closed` again, which is harmless, but a retried
+second write could insert the closing comment twice if the failure happened after the INSERT reached the
+database but before the confirmation came back). `SupportDeskDataServiceCollectionExtensions.AddSupportDeskData`
+does not call `EnableRetryOnFailure`, and none of this module's connection handling pretends otherwise — the
+local SQLite file either opens or it does not, and a failure is caught by the handler, shown as one friendly
+sentence and written to the server console. There is no transient-failure class to retry against the way
+there is against a networked server.
 
 ## Evidence
 
-- `SupportDesk.Tests/ConcurrencyAndTransactionsTests.cs`:
-  - `CloseTicketWithCommentAsync_commits_both_writes_together` — the ordinary path: status Closed, the
-    comment present, both survive.
-  - `CloseTicketWithCommentAsync_rolls_back_the_status_write_when_the_switch_fails_after_it` — the status is
-    unchanged, the comment was never written, and the switch reset itself.
-  - `Prints_the_trace_for_the_transaction_rollback` — the verbatim trace:
-
-    ```
-    Note: CloseTicketWithCommentAsync(#1): BeginTransactionAsync — status update and comment insert share one transaction
-    Command: UPDATE "Tickets" SET "RowVersion" = @p0, "Status" = @p1, "UpdatedAt" = @p2 WHERE "Id" = @p3 AND "RowVersion" = @p4 RETURNING 1;
-    Note: CloseTicketWithCommentAsync(#1 / SD-1001): write 1 of 2 done — Status = Closed, SaveChangesAsync
-    Note: CloseTicketWithCommentAsync: TransactionFailureSwitch armed — throwing before the comment is written
-    Note: CloseTicketWithCommentAsync(#1): transaction rolled back — the comment was not written and the status is unchanged
-    ```
-
-    Note there is only **one** `UPDATE` in the trace and **no** `INSERT INTO "TicketComments"` at all — the
-    comment write was never attempted, exactly as the rollback promises (the ticket's row-level `UPDATE`
-    itself did commit to the connection at the SQL level before the rollback, but `ROLLBACK` at the
-    transaction level undoes it along with everything else in the unit — the test's own re-read of the row
-    after the exception confirms the status is back to its original value).
+- `TicketCommandService.cs` — `SaveAsync` and `DeleteAsync` each end in exactly one `SaveChangesAsync`
+  call; neither begins a transaction of its own.
+- `SupportDeskDataServiceCollectionExtensions.AddSupportDeskData` — `UseSqlite(connectionString)` with no
+  `EnableRetryOnFailure` and no custom execution strategy.
+- `ModelRulesTests.Restrict_deleting_a_customer_with_tickets_throws_DbUpdateException_and_changes_nothing` —
+  a `SaveChangesAsync` the database refuses leaves nothing behind: the five customers are still there.

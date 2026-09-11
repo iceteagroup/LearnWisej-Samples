@@ -116,10 +116,6 @@ namespace EnterpriseOps.Services
             return CommandResult.Ok($"WO-{order.Id:0000} approved", context.CorrelationId);
         }
 
-        /// <summary>The rows this session may reach at all — used by the cross-tenant button to pick a foreign id.</summary>
-        public WorkOrder FirstOfOtherTenant(CommandContext context)
-            => _repository.All().FirstOrDefault(w => !StringComparer.Ordinal.Equals(w.TenantId, context.TenantId));
-
         public int CountForTenant(string tenantId) => _repository.ForTenant(tenantId).Count;
 
         private static WorkQueueRow Project(WorkOrder w) => new WorkQueueRow

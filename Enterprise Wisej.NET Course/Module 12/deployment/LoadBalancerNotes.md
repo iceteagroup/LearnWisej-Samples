@@ -62,8 +62,8 @@ That is why liveness (`/healthz/live`, restart) and readiness (`/healthz`, evict
    and it rejoins the rotation.
 5. The incident is logged and release 2.4.2 is held for a fix.
 
-Press **Fail: node B health check**, then **Rollback…**, and read the trace — every line above appears as a
-`Balancer:` or `Runbook:` entry.
+Press **Deploy…** (the first deploy fails on node B), then **Rollback…** — every step above appears in the
+server log as a `Balancer:` or `Runbook:` entry.
 
 ## Checklist for a new environment
 

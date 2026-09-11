@@ -114,7 +114,7 @@
   <rect x="400" y="522" width="240" height="80" rx="8" fill="#f3efff" stroke="#6a4fb3" stroke-width="1.5"/>
   <text x="520" y="548" text-anchor="middle" font-weight="700" fill="#0d1b2a">2 · INSERT ApprovalAudit</text>
   <text x="520" y="568" text-anchor="middle" fill="#3a4d63">the command is the audit row</text>
-  <text x="520" y="588" text-anchor="middle" fill="#c0392b" font-size="12">✖ outage drill throws here</text>
+  <text x="520" y="588" text-anchor="middle" fill="#c0392b" font-size="12">✖ a failed commit drops all three</text>
 
   <rect x="680" y="522" width="240" height="80" rx="8" fill="#f3efff" stroke="#6a4fb3" stroke-width="1.5"/>
   <text x="800" y="548" text-anchor="middle" font-weight="700" fill="#0d1b2a">3 · INSERT Outbox</text>
@@ -132,9 +132,9 @@
 
   <!-- outcomes -->
   <rect x="24" y="650" width="540" height="90" rx="10" fill="#fdecea" stroke="#c0392b" stroke-width="1.5"/>
-  <text x="40" y="676" font-weight="700" fill="#c0392b">Error path · DataOutageException during the commit</text>
+  <text x="40" y="676" font-weight="700" fill="#c0392b">Error path · the commit throws</text>
   <text x="40" y="698" fill="#3a4d63">Working copy discarded: 0 of 3 statements reach the live store. The handler's catch logs the</text>
-  <text x="40" y="718" fill="#3a4d63">exception (sql01:1433 stays in the trace) and shows Strings.ActionFailed. Recover → confirm again → commit.</text>
+  <text x="40" y="718" fill="#3a4d63">exception (details stay in the log) and shows Strings.ActionFailed. Confirm again once the store answers.</text>
   <path d="M 520 602 L 520 620 L 300 620 L 300 650" fill="none" stroke="#c0392b" stroke-width="1.5" marker-end="url(#arrowRed)"/>
 
   <rect x="616" y="650" width="540" height="90" rx="10" fill="#eefaf2" stroke="#1f8a4c" stroke-width="1.5"/>

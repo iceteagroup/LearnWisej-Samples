@@ -19,7 +19,7 @@ namespace TicketOpsLive
     ///   - a failing subscriber is logged and does not stop the others.
     ///
     /// Subscribers own their subscription: MainPage subscribes on Load and unsubscribes on
-    /// ApplicationExit / Disposed (see CleanupRules.md).
+    /// ApplicationExit / Disposed (see Cleanup() in MainPage.cs).
     /// </summary>
     public sealed class SessionRegistry
     {

@@ -13,7 +13,7 @@ namespace OperationsConsole.Models
         /// <summary>Stable business ID — what lands in <c>ListViewItem.Tag</c>.</summary>
         public int Id { get; set; }
 
-        /// <summary>"DOC-000312" — the ID the user sees and the shell records (<c>ConsoleLog.Record</c>).</summary>
+        /// <summary>"DOC-000312" — the ID the user sees and the shell records (<c>ShellStatus.Record</c>).</summary>
         public string DocumentId => "DOC-" + Id.ToString("000000", CultureInfo.InvariantCulture);
 
         /// <summary>Column 1. Not unique across categories, so never used as a key.</summary>

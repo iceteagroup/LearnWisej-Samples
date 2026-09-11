@@ -109,15 +109,18 @@ CREATE TABLE "TicketComments" (
 );
 ```
 
-Two consequences the page demonstrates:
+Two consequences follow:
 
-- **The database does the work, not the change tracker.** `ModelDemoService` deletes an agent and a ticket
-  *without loading* their dependants, so EF Core has nothing to fix up in memory. One `DELETE` goes out and
-  the counts change anyway — that is `ON DELETE SET NULL` and `ON DELETE CASCADE` running inside SQLite.
+- **The database does the work, not the change tracker.** `ModelDemoService.UnassignAgentByDeletingAsync`
+  and `DeleteTicketWithCommentsAsync` delete an agent and a ticket *without loading* their dependants, so
+  EF Core has nothing to fix up in memory. One `DELETE` goes out and the counts change anyway: that is
+  `ON DELETE SET NULL` and `ON DELETE CASCADE` running inside SQLite. The page has no button for these two
+  (they are destructive); `ModelRulesTests` runs them, see Evidence below.
 - **A refusal arrives as an exception, not as a return value.** `Restrict` makes SQLite raise
   `SQLITE_CONSTRAINT_FOREIGNKEY` (error code 19, *FOREIGN KEY constraint failed*), which EF Core wraps in
-  `DbUpdateException`. The page catches it and shows *This customer still has tickets and cannot be
-  deleted.* — the provider message never reaches the user.
+  `DbUpdateException`. The page's **Delete a customer with tickets** button catches it and shows *This
+  customer still has tickets and cannot be deleted.* in an `AlertBox`; the provider message never reaches
+  the user.
 
 `Restrict` versus `NoAction`: `Restrict` is the one that says "refuse" in both EF Core's fix-up and the
 generated SQL. `NoAction` leaves the enforcement entirely to the database's default and, on a provider
@@ -143,52 +146,14 @@ once they join the projection.
 
 ## Evidence
 
-The page's **Model & migration card** reads this back from the model after every operation (never
-hard-coded), through `SchemaInfoService.DescribeAsync()`:
+**Delete a customer with tickets (refused)**, `buttonDeleteCustomer` on the page: the `AlertBox` reads
+*This customer still has tickets and cannot be deleted.*, `statusLabel` reads *Nothing was changed*, the
+customer count on the counts line stays at 5, and the server console gets the full exception on one
+`[SupportDesk] …` line: `DbUpdateException` wrapping *SQLite Error 19: 'FOREIGN KEY constraint failed'*.
 
-```
-on delete   TicketComments.TicketId → Tickets  ON DELETE CASCADE
-            Tickets.AgentId → Agents           ON DELETE SET NULL
-            Tickets.CategoryId → Categories    ON DELETE RESTRICT
-            Tickets.CustomerId → Customers     ON DELETE RESTRICT
-checks      Tickets: CK_Tickets_Title_Length = length("Title") <= 180
-```
-
-**Delete a customer with tickets (refused)** — `buttonDeleteCustomer`:
-
-```
-• buttonDeleteCustomer_Click ModelDemoService.DeleteCustomerWithTicketsAsync() — Remove a customer that has tickets (DeleteBehavior.Restrict)
-◦ context      #6 created (SupportDeskContext from the factory)
-→ SQL          SELECT "c"."Id", "c"."Email", "c"."Name", ( SELECT COUNT(*) FROM "Tickets" AS "t0" WHERE "c"."Id" = "t0"."CustomerId") AS "TicketCount" FROM "Customers" AS "c" WHERE EXISTS ( SELECT 1 FROM "Tickets" AS "t" WHERE "c"."Id" = "t"."CustomerId") ORDER BY "c"."Id" LIMIT 1   (0.4 ms)
-• service      customer #1 'Halden Logistics' has 12 tickets — DELETE goes to the database, ON DELETE RESTRICT decides
-→ SQL failed   SqliteException: SQLite Error 19: 'FOREIGN KEY constraint failed'. — DELETE FROM "Customers" WHERE "Id" = @p0 RETURNING 1;
-◦ context      #6 disposed (1 tracked entity released)
-• caught       DbUpdateException → SqliteException: SQLite Error 19: 'FOREIGN KEY constraint failed'. → friendly message shown, full exception logged server-side
-```
-
-**Unassign an agent (SetNull)** — `buttonDeleteAgent`:
-
-```
-◦ context      #7 created (SupportDeskContext from the factory)
-→ SQL          SELECT "a"."Id", "a"."DisplayName", … AS "TicketCount" FROM "Agents" AS "a" WHERE EXISTS (…) ORDER BY "a"."Id" LIMIT 1   (0.3 ms)
-→ SQL          SELECT COUNT(*) FROM "Tickets" AS "t" WHERE "t"."AgentId" IS NULL   (0.1 ms)
-• service      agent #1 'Priya Natarajan' owns 14 tickets · 18 tickets unassigned before — DELETE goes to the database, ON DELETE SET NULL decides
-→ SQL          DELETE FROM "Agents" WHERE "Id" = @p0 RETURNING 1;   (0.2 ms)
-→ SQL          SELECT COUNT(*) FROM "Tickets" AS "t" WHERE "t"."AgentId" IS NULL   (0.1 ms)
-◦ context      #7 disposed (0 tracked entities released)
-← result       agent 'Priya Natarajan' deleted · unassigned tickets 18 → 32 (+14, set to NULL by the database) · 4 statement(s) · … ms in the database · 1 context created, 1 disposed
-```
-
-Only one `DELETE` was sent — the fourteen `AgentId` values were cleared by SQLite.
-
-**Delete a ticket with comments (Cascade)** — `buttonDeleteTicket`:
-
-```
-• service      ticket SD-1001 'Printer offline on floor 2' has 1 comments · 16 comments in total — DELETE goes to the database (WHERE Id AND RowVersion), ON DELETE CASCADE decides
-→ SQL          DELETE FROM "Tickets" WHERE "Id" = @p0 AND "RowVersion" = @p1 RETURNING 1;   (0.2 ms)
-→ SQL          SELECT COUNT(*) FROM "TicketComments" AS "t"   (0.1 ms)
-← result       ticket SD-1001 deleted · comments 16 → 15 (−1, cascaded by the database) · 4 statement(s) · … ms in the database · 1 context created, 1 disposed
-```
+The SetNull and Cascade rules have no button; the tests below run them against a real SQLite database.
+Both delete with a single `DELETE` statement and let SQLite clear the `AgentId` values or remove the
+comments.
 
 Tests (`SupportDesk.Tests`):
 

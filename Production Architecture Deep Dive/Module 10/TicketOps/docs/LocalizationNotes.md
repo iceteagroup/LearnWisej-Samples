@@ -15,8 +15,8 @@
 | Chip captions | Open · In progress · Blocked · Done | Offen · In Bearbeitung · Blockiert · Erledigt |
 
 The values are the **same** `DateTime`/`decimal`/`double` in `Domain/WorkOrder.cs`. Only the culture
-passed to `ToString(format, culture)` changes. `Italiano (Italia)` is offered in the picker on purpose
-and rejected by the service (`Rule.CultureNotShipped`) — the validation path.
+passed to `ToString(format, culture)` changes. `Italiano (Italia)` is in the picker and rejected by the
+service (`Rule.CultureNotShipped`): the validation path.
 
 ## How a key becomes text
 
@@ -30,11 +30,11 @@ service: Strings.ResourceManager.GetString(key, culture) // de-DE → de → neu
    `Strings.de.resx` holds the German values for the same keys. The csproj pins the manifest names
    (`TicketOps.Resources.Strings.resources`, `….Strings.de.resources`) so the `ResourceManager` base name
    in `Strings.cs` cannot drift from the file layout.
-2. **The typed accessor** — `Resources/Strings.cs` wraps the `ResourceManager`: `Strings.ActionFailed`,
-   `Strings.Saved`, `Strings.AppTitle` resolve for the request thread's UI culture (the shape every
-   module's `ReportFailure` uses); `Strings.Get(key, culture)` / `TryGet` take an explicit culture.
+2. **The typed accessor** — `Resources/Strings.cs` wraps the `ResourceManager`: `Strings.ActionFailed` and
+   `Strings.AppTitle` resolve for the request thread's UI culture (the shape every module's `ReportFailure`
+   uses); `Strings.Get(key, culture)` / `TryGet` take an explicit culture.
 3. **The service** — `LocalizationService` owns the session's `CultureInfo` (from `SessionContext.Culture`),
-   resolves keys with it, formats with it, and traces every gap. It is plain .NET: no Wisej type, so
+   resolves keys with it and formats with it. It is plain .NET: no Wisej type, so
    `new LocalizationService(new SessionContext { Culture = "de-DE" }, log).FormatCurrency(1850m)` is a
    unit test.
 4. **The screen** — after the service accepts a culture, `OperationsDashboard` sets
@@ -43,12 +43,12 @@ service: Strings.ResourceManager.GetString(key, culture) // de-DE → de → neu
 
 ## Fallbacks are a feature, not an exception
 
-| Situation | What the operator sees | What the trace says |
+| Situation | What the operator sees | What the server log says |
 |---|---|---|
-| key missing in **every** file (`Status.Archived`) | `[Status.Archived]` | `⚠ [SVC] LocalizationService.Text — missing: key 'Status.Archived' … → fallback "[Status.Archived]"` |
-| key missing **only in German** (`Button.Export`) | `Export` (the neutral English text) | `⚠ [SVC] LocalizationService.Text — untranslated: key 'Button.Export' missing in de-DE → neutral (English) value "Export"` |
-| malformed `{0}` pattern | the raw pattern | `✖ [SVC] LocalizationService.Format — pattern … malformed — shown raw [FormatException]` |
-| culture not shipped (`it-IT`) | banner *The language "it-IT" is not shipped with this build — staying on de-DE.* (in the current language) | `⚠ [SVC] LocalizationService.SetCulture — rejected: 'it-IT' is not shipped …` |
+| key missing in **every** file | `[Key.Name]` | `WARN [Service] LocalizationService.Text: missing: key '…' …` |
+| key missing **only in German** | the neutral English text | `WARN [Service] LocalizationService.Text: untranslated: key '…' missing in de-DE …` |
+| malformed `{0}` pattern | the raw pattern | `ERROR [Service] LocalizationService.Format: pattern for '…' is malformed — shown raw` |
+| culture not shipped (`it-IT`) | banner *The language "it-IT" is not shipped with this build — staying on de-DE.* (in the current language) | — (an expected result, not a fault) |
 
 "Untranslated" is detected precisely — `ResourceManager.GetResourceSet(culture, true, false)` for the
 culture and its parent — not by comparing the German and English strings (which would flag `Status`
@@ -66,23 +66,8 @@ culture and its parent — not by comparing the German and English strings (whic
 - **Set text and formatting together.** The culture switch runs `ApplyLocalizedText()` *and* `Bind()`:
   German words next to US-formatted dates would look broken, which is the applied guide's warning.
 - **Test in the real layout.** The widest translated strings were checked against their controls:
-  `In Bearbeitung` (chip, 132 px), `Übersicht aktualisieren` (bottom-bar button, 190 px),
-  `Nur diese Sitzung` (checkbox, 184 px), the German footer sentence (712 px). No clipping in either theme.
+  `In Bearbeitung` (chip, 132 px), `Nächster Status` and `Details öffnen…` (170 px buttons), the German
+  footer sentence (712 px). No clipping in either theme.
 - **Per session, never static.** `SessionContext.Culture`, the `LocalizationService` and its
   `CultureInfo` are created per session in `AppComposition`. `CultureInfo.DefaultThreadCurrentCulture`
   is deliberately *not* touched — it is process-wide and would leak one operator's language to everyone.
-- **`Application.Session`** mirrors the theme choice (`TicketOpsTheme`) as the framework's per-session bag;
-  the `SessionContext` copy is authoritative and the mirror is wrapped in `try/catch` and traced.
-
-## Evidence (running app)
-
-- Load: `[SVC] LocalizationService — culture en-US · shipped: en-US, de-DE`,
-  `[UI] OperationsDashboard.ApplyLocalizedText — captions resolved for en-US · request thread UI culture = en-US`,
-  `[UI] OperationsDashboard.Bind — 10 rows · 4 KPI chips · formatted with en-US: #2002 due 6/14/2026 · $1,850.00`.
-- Culture → Deutsch: `[SVC] LocalizationService.SetCulture — de-DE accepted …`,
-  `[SESSION] Application.CurrentCulture — = de-DE …`, `[SESSION] Application.CultureChanged → de-DE`,
-  `[UI] … Bind — … formatted with de-DE: #2002 due 14.06.2026 · 1.850,00 €`; footer
-  *Sprache: Deutsch (Deutschland) — Beschriftungen, Datum und Währung folgen der Kultur.*
-- Culture → Italiano: the `⚠ rejected` line, the orange banner, the picker snaps back to Deutsch.
-- **Resource gaps** (in German): the two `⚠` lines above; banner
-  *Ressourcenlücken sicher angezeigt … → "[Status.Archived]" · "Export"*.

@@ -61,8 +61,8 @@ alias level (`resolve("simplegauge-accent") → "primary" → "#007AFF"`) and fa
 
 ## Theme switching
 
-**Switch theme** calls `Application.LoadTheme("Material-3")`, then `"FluentDark-5"`, then back to
-`"Bootstrap-4"`. Nothing in the control changes: the `simplegauge` appearance is resolved against
+Set `"theme"` in `Default.json` to `"Material-3"` or `"FluentDark-5"` (or call `Application.LoadTheme(name)`
+from code). Nothing in the control changes: the `simplegauge` appearance is resolved against
 the new theme, the widget's `textColor` changes (the class listens to `changeTextColor` and to the
 theme manager's `changeTheme`), the accent is re-read, and the vendor is repainted through its
 `colors` option. Under FluentDark the tiles turn dark with light needles and a purple accent — the
@@ -80,6 +80,6 @@ code changes.
 ## Evidence (running app)
 
 - Bootstrap-4 (default): white tiles, 1 px `#CCCCCC` border, blue accent arc, dark needle.
-- After **Switch theme → Material-3**: teal accent arc, lighter border.
-- After **Switch theme → FluentDark-5**: dark tile background, light needle/readout, purple accent.
+- Material-3: teal accent arc, lighter border.
+- FluentDark-5: dark tile background, light needle/readout, purple accent.
 - A tile in alarm shows a 2 px red border (`alarm` state) until the reading falls below the threshold.

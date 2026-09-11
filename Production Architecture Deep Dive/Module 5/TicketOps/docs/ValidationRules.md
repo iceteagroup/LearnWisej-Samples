@@ -54,6 +54,5 @@ The validator flags only `Illegal`; the rules flag `Privileged` unless the sessi
 
 ## Evidence
 
-Run **▶ Run 15 test cases**: TC-02 … TC-10 exercise the validator rows above, TC-11 … TC-15 the rules rows;
-each case logs the message it produced next to the expectation. The bottom-bar buttons show the same rules
-end to end with the glyphs and the summary panel (see `ErrorUxGuidelines.md`).
+`ValidationTestCases` TC-02 … TC-10 exercise the validator rows above, TC-11 … TC-15 the rules rows. In the running
+app the same rules show up as glyphs and the summary panel (see `ErrorUxGuidelines.md`).

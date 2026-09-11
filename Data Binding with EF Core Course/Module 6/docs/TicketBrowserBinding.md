@@ -26,8 +26,8 @@ this.ticketBindingSource = new Wisej.Web.BindingSource(this.components);
 this.ticketsDataGridView.AutoGenerateColumns = false;
 this.ticketsDataGridView.AutoSizeColumnsMode = Wisej.Web.DataGridViewAutoSizeColumnsMode.Fill;
 this.ticketsDataGridView.Columns.AddRange(new Wisej.Web.DataGridViewColumn[] {
-    this.colNumber, this.colTitle, this.colCustomerName, this.colAgentName, this.colCategoryName,
-    this.colStatus, this.colPriority, this.colDueDate, this.colUpdatedAt});
+    this.colNumber, this.colTitle, this.colCustomerName, this.colAgentName,
+    this.colCategoryName, this.colStatus, this.colDueDate, this.colUpdatedAt});
 this.ticketsDataGridView.MultiSelect = false;
 this.ticketsDataGridView.ReadOnly = true;
 this.ticketsDataGridView.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
@@ -42,17 +42,19 @@ without changing the screen.
 
 Each column names one property:
 
-| Column | `DataPropertyName` | Notes |
-|---|---|---|
-| `colNumber` | `Number` | |
-| `colTitle` | `Title` | widest fill weight |
-| `colCustomerName` | `CustomerName` | joined by the database |
-| `colAgentName` | `AgentName` | `DefaultCellStyle.NullValue = "— unassigned —"` |
-| `colCategoryName` | `CategoryName` | joined by the database |
-| `colStatus` | `Status` | |
-| `colPriority` | `Priority` | |
-| `colDueDate` | `DueDate` | `DefaultCellStyle.Format = "yyyy-MM-dd"`, empty when null |
-| `colUpdatedAt` | `UpdatedAt` | `Format = "yyyy-MM-dd HH:mm"` — the sort key |
+| Column | Header | `DataPropertyName` | Notes |
+|---|---|---|---|
+| `colNumber` | Number | `Number` | |
+| `colTitle` | Title | `Title` | widest fill weight |
+| `colCustomerName` | Customer | `CustomerName` | joined by the database |
+| `colAgentName` | Agent | `AgentName` | `DefaultCellStyle.NullValue = "—"` for an unassigned ticket |
+| `colCategoryName` | Category | `CategoryName` | joined by the database (Module 6 adds this column) |
+| `colStatus` | Status | `Status` | |
+| `colDueDate` | Due | `DueDate` | `DefaultCellStyle.Format = "yyyy-MM-dd"`, empty when null |
+| `colUpdatedAt` | Updated | `UpdatedAt` | `Format = "yyyy-MM-dd HH:mm"` — the sort key |
+
+`TicketListItem` also carries `Priority`; with `AutoGenerateColumns = false` the grid simply has no column
+for it.
 
 The order matters: **columns first, `DataSource` second**. Wisej.NET matches a column to a bound property
 when the source arrives, and binding before the columns exist throws *Cannot bind to the property or column
@@ -86,70 +88,34 @@ Three things are true about that assignment and all three matter:
 3. **`ResetBindings(false)`** tells the bound controls the list was replaced (`false` = the *schema* did
    not change, only the rows), so the grid repaints without rebuilding its columns.
 
-## The anti-pattern, run for real
+## The anti-pattern: binding the query instead of the list
 
-`SupportDesk.Services/BoundIQueryableAntiPattern.cs` is the wrong version, kept out of the real services
-and named after what it is. `buttonBindQuery` runs it:
-
-```csharp
-var db = await _dbFactory.CreateDbContextAsync(token);
-try
-{
-    boundQuery = db.Tickets.OrderByDescending(t => t.UpdatedAt).Select(t => new TicketListItem(…));
-    // "ticketBindingSource.DataSource = boundQuery;" — the assignment sends nothing at all
-}
-finally
-{
-    await db.DisposeAsync();       // the handler returns; `await using` disposes the unit of work
-}
-
-var rows = boundQuery.ToList();    // the grid enumerates its data source — and this is where it dies
-```
+The wrong version is `ticketBindingSource.DataSource = db.Tickets.Select(t => new TicketListItem(…))`,
+assigned inside a handler whose `await using` then disposes the context. The sample does not ship it; the
+reasoning is what matters.
 
 The assignment looks like it worked: an `IQueryable` is a recipe, so no `COUNT`, no `SELECT` and no rows.
 The failure arrives later, when the grid enumerates to paint its first row — after the handler has
-returned and the context is gone. EF Core answers with `ObjectDisposedException`, thrown from inside the
-UI layer, in a stack that contains none of the data code.
+returned and the context is gone. EF Core answers with `ObjectDisposedException` (*Cannot access a
+disposed context instance.*), thrown from inside the UI layer, in a stack that contains none of the data
+code.
 
 Even if the context somehow survived, the grid would re-run the whole query on every scroll, sort and
 repaint, with no `Skip`/`Take` and every row tracked. The fix is one call: `await …ToListAsync()` before
-the assignment.
+the assignment, which is exactly what `SearchTicketsAsync` does inside the service.
 
 ## Evidence
 
-**The exception, captured in a console check against SQLite in memory:**
-
-```
-ObjectDisposedException: Cannot access a disposed context instance. A common cause of this error is
-disposing a context instance that was resolved from dependency injection and then later trying to use
-the same context instance elsewhere in your application. …
-```
-
-**Trace, `Bind IQueryable (anti-pattern)`** (the shape the page writes):
-
-```
-• anti-pattern ticketBindingSource.DataSource = db.Tickets.Select(...) — the query instead of the list; the context is then disposed and the grid enumerates
-◦ context      #9 created (SupportDeskContext from the factory)
-• service      ticketBindingSource.DataSource = <IQueryable> — the assignment sends nothing: no COUNT, no SELECT, no rows. The handler looks like it worked
-◦ context      #9 disposed (0 tracked entities released)
-• service      the handler has returned and the context is disposed — now the grid enumerates its data source to paint the first rows (this is where the real query would run)
-• caught       ObjectDisposedException: Cannot access a disposed context instance.
-• anti-pattern in a real page this exception is thrown while the grid paints its first row — inside the UI layer, with no data code in the stack. The grid shows nothing and the session looks broken
-• anti-pattern the fix is one call: await …ToListAsync() before the assignment, so the BindingSource holds rows and not a recipe
-```
-
-Note the trace has **no `→ SQL` line at all**: the query never reached the database.
-
-**Trace, a normal search** — the BindingSource row count is reported in the four-lifetimes table under the
-grid: `1 page, the grid, the trace list and a BindingSource holding 50 TicketListItem row(s)`.
+**In the browser:** a search fills the grid with 50 rows and `statusLabel` reads *Showing 50 of 312
+tickets · page 1 of 7 · page size 50*; paging replaces the rows and keeps the columns.
 
 **Tests** (`SupportDesk.Tests/TicketSearchTests.cs`):
 
-- `Binding_the_query_instead_of_the_list_fails_when_the_grid_enumerates` — the anti-pattern throws
-  `ObjectDisposedException` (or `InvalidOperationException`) and the message names a disposed context.
 - `The_search_tracks_nothing_and_never_returns_an_entity` — what the BindingSource is handed is a list of
   `TicketListItem`, and nothing is tracked.
+- `Empty_criteria_return_one_page_and_the_total_of_every_ticket` — the list is materialised: 50 rows of
+  312, 7 pages.
 
-**Not verified here:** the grid's own rendering — column widths under `Fill`, the `— unassigned —` null
-text and the `yyyy-MM-dd` due date — is Wisej.NET behaviour that only the browser can confirm. See the
-README's *Verified / unverified*.
+**Not verified here:** the grid's own rendering — column widths under `Fill`, the `—` null text for an
+unassigned agent and the `yyyy-MM-dd` due date — is Wisej.NET behaviour that only the browser can confirm.
+See the README's *Verified / unverified*.

@@ -55,8 +55,8 @@ Nothing is read-only after creation in this class: the vendor supports changing 
 would get `[Description("… changing it re-creates the widget")]`, its setter would replace the whole nested
 option object (a first-level change) and the adapter would destroy/recreate the vendor in `update`.
 
-Setting a property to the value it already has renders **nothing**: no `update()` call, no trace line. The
-trace proves it — click **Value = 72** twice and the second click logs only the `code-behind` line.
+Setting a property to the value it already has renders **nothing**: no `update()` call and no
+`ValueChanged`. On a fresh page **Value = 72** lists only the statement, never `✓ gauge updated`.
 
 ## Which defaults match the vendor, and which do not
 
@@ -72,8 +72,7 @@ trace proves it — click **Value = 72** twice and the second click logs only th
 ## Designer attributes used
 
 - `[DefaultValue(...)]` — the Designer serializes only what differs from it. `DemoPage.Designer.cs` therefore
-  contains `simpleGauge1.Caption`, `simpleGauge1.Value` and, for the second gauge, `Maximum`, `Threshold`,
-  `Value` — and nothing about packages or scripts.
+  contains `simpleGauge1.Caption` and `simpleGauge1.Value` — and nothing about packages or scripts.
 - `[Category("Gauge")]` — one group in the Properties window, above `Design`.
 - `[Description("…")]` — the help pane text (`Value`: "The current gauge reading. Setting it queues a client
   update — no raw Options editing.").
@@ -86,16 +85,14 @@ trace proves it — click **Value = 72** twice and the second click logs only th
 | `ValueChanged` | `GaugeValueChangedEventArgs` (`Value`, `ReportedValue`, `Previous`) | `OnWidgetEvent("valueChanged")` | the browser has rendered the new value (after the sweep when animated) |
 | `ThresholdExceeded` | `GaugeEventArgs` (`Value`, `ReportedValue`) | `OnWidgetEvent("thresholdExceeded")` | rising edge over `Threshold`, once per crossing |
 | `WidgetError` | `GaugeErrorEventArgs` (`Phase`, `Message`) | `OnWidgetEvent("error")` | the adapter caught a vendor exception instead of crashing the page |
-| `Trace` | `TraceEventArgs` | every rendered option / received event | diagnostics; `[Browsable(false)]` |
 
-`Value` in every `EventArgs` is the **server** value; `ReportedValue` is what the client said. The wrapper
-logs a `contract check` line when they disagree — the server wins.
+`Value` in every `EventArgs` is the **server** value; `ReportedValue` is what the client said. When they
+disagree, the server value wins.
 
 ## Evidence in the running app
 
 - **Value = 72 / 90 / 78** and **Maximum = 120; Value = 45**: each click shows the code-behind statement, then
-  `→ .NET→JS simpleGauge1.update(options) {"value":90}` (or `{"max":120,"warnAt":67}` + `{"value":45}`), then
-  `← JS→.NET simpleGauge1.valueChanged {"value":90,"previous":72}` and `simpleGauge1.ValueChanged fired in C#`.
-- **Value = 200 (invalid)**: `• server rejected  Value must be between Minimum (0) and Maximum (100).` and no
-  `update(options)` line at all — nothing was rendered.
-- **AnimationEnabled = false**: `{"animationEnabled":false}` goes out; the next value jumps instead of sweeping.
+  the needle moves (`Maximum = 120` re-lays out the scale in the same round trip) and `ValueChanged` comes back
+  as `✓ gauge updated · Value = …`.
+- A value outside `Minimum..Maximum` is rejected by the setter with `ArgumentOutOfRangeException` before
+  anything is rendered; the page lists the message and shows an orange banner, and the needle does not move.

@@ -36,7 +36,6 @@ namespace AdaptiveOps.Shell
             this.lblNotesCaption = new Wisej.Web.Label();
             this.txtNotes = new Wisej.Web.TextBox();
             this.commandBar = new Wisej.Web.Panel();
-            this.lblHint = new Wisej.Web.Label();
             this.btnCancel = new Wisej.Web.Button();
             this.btnSave = new Wisej.Web.Button();
             this.headerPanel.SuspendLayout();
@@ -181,41 +180,28 @@ namespace AdaptiveOps.Shell
             //
             // commandBar  (Dock = Bottom · fixed height, so Bottom|Right anchors inside it are stable)
             //
-            this.commandBar.Controls.Add(this.lblHint);
             this.commandBar.Controls.Add(this.btnCancel);
             this.commandBar.Controls.Add(this.btnSave);
             this.commandBar.Dock = Wisej.Web.DockStyle.Bottom;
             this.commandBar.Name = "commandBar";
             this.commandBar.Size = new System.Drawing.Size(330, 48);
             //
-            // lblHint  (Bottom|Left|Right: stretches between the left edge and the buttons)
-            //
-            this.lblHint.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblHint.AutoEllipsis = true;
-            this.lblHint.AutoSize = false;
-            this.lblHint.ForeColor = System.Drawing.Color.FromArgb(103, 112, 133);
-            this.lblHint.Location = new System.Drawing.Point(12, 8);
-            this.lblHint.Name = "lblHint";
-            this.lblHint.Size = new System.Drawing.Size(102, 32);
-            this.lblHint.Text = "Server validates.";
-            this.lblHint.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
-            // btnCancel / btnSave  (Bottom|Right: the command buttons keep their distance from the
-            // bottom-right corner of the bar whatever the width of the details region)
+            // btnCancel
             //
             this.btnCancel.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
             this.btnCancel.Location = new System.Drawing.Point(122, 8);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(88, 32);
             this.btnCancel.Text = "Cancel";
-            this.btnCancel.ToolTipText = "Discard the edits and reload the ticket as it was set by the shell.";
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+            //
+            // btnSave
+            //
             this.btnSave.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
             this.btnSave.Location = new System.Drawing.Point(218, 8);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(100, 32);
             this.btnSave.Text = "Save";
-            this.btnSave.ToolTipText = "Raise Saved; the shell validates on the server and reports the outcome here.";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             //
             // DetailsEditor
@@ -257,7 +243,6 @@ namespace AdaptiveOps.Shell
         private Wisej.Web.Label lblNotesCaption;
         private Wisej.Web.TextBox txtNotes;
         private Wisej.Web.Panel commandBar;
-        private Wisej.Web.Label lblHint;
         private Wisej.Web.Button btnCancel;
         private Wisej.Web.Button btnSave;
     }

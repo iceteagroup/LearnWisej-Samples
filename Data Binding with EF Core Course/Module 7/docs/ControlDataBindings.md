@@ -1,24 +1,36 @@
 # Deliverable 2 · TextBox, ComboBox, DateTimePicker and CheckBox properties bound to the edit model
 
-All bindings are added once, in `TicketEditorForm.Designer.cs`'s `InitializeComponent`, against
-`editBindingSource` — before it has a `DataSource`. This mirrors `TicketBrowserPage.Designer.cs`, where the
-grid's columns are declared with a `DataPropertyName` before any row exists.
+Two kinds of binding, added at two different moments, all against `editBindingSource`:
+
+- the simple ones (`txtTitle`, `txtDescription`, `chkIsUrgent`) are added once, in
+  `TicketEditorForm.Designer.cs`'s `InitializeComponent`, before `editBindingSource` has a `DataSource`.
+  This mirrors `TicketBrowserPage.Designer.cs`, where the grid's columns are declared with a
+  `DataPropertyName` before any row exists;
+- the ComboBox `SelectedValue` bindings are added in `TicketEditorForm.BindLookupControls`, once the lookup
+  lists **and** the model both exist. Added earlier they neither show the model value nor write the
+  selection back.
 
 | Control | Property bound | Model property | `DataSourceUpdateMode` | Notes |
 |---|---|---|---|---|
-| `txtTitle` | `Text` | `Title` | `OnValidation` | Text commits when focus leaves — the value the validation placeholder checks. |
+| `txtTitle` | `Text` | `Title` | `OnValidation` | Text commits when focus leaves; `EndEdit` in Save covers the case where it has not. |
 | `txtDescription` | `Text` | `Description` | `OnValidation` | Multiline; same reasoning as `txtTitle`. |
+| `chkIsUrgent` | `Checked` | `IsUrgent` (`bool`) | `OnPropertyChanged` | Caption *Escalate as urgent*. |
 | `cboCustomer` | `SelectedValue` | `CustomerId` (`int?`) | `OnPropertyChanged` | Nothing selected already means `null` — no sentinel needed; `Customer` is required to *save*, not to have something selected while editing. |
 | `cboAgent` | `SelectedValue` | `AgentId` (`int?`) | `OnPropertyChanged` | The one ComboBox with a real "— unassigned —" row — see below. |
 | `cboCategory` | `SelectedValue` | `CategoryId` (`int?`) | `OnPropertyChanged` | Same reasoning as `cboCustomer`. |
-| `cboStatus` | `SelectedValue` | `Status` (`string`) | `OnPropertyChanged` | `DataSource` = `TicketStatuses.All`, a `List<string>` — the value *is* the display text, no `ValueMember`. |
+| `cboStatus` | `SelectedValue` | `Status` (`string`) | `OnPropertyChanged` | Rows are `NamedValue(s, s)` built from `TicketStatuses.All`, with `ValueMember = Value`. |
 | `cboPriority` | `SelectedValue` | `Priority` (`string`) | `OnPropertyChanged` | Same shape as `cboStatus`, `TicketPriorities.All`. |
-| `chkIsUrgent` | `Checked` | `IsUrgent` (`bool`) | `OnPropertyChanged` | |
 | `dtpDueDate` | *(none — see below)* | `DueDate` (`DateTime?`) | *(manual)* | |
 
-Lookups are loaded and each ComboBox's `DisplayMember`/`DataSource` are set in `LoadEditorAsync`
-**before** `editBindingSource.DataSource = model` — the same rule `TicketBrowserPage.LoadLookupsAsync`
-follows for its filter ComboBoxes: a bound `SelectedValue` with nothing to select resolves to nothing.
+`cboStatus` and `cboPriority` hold strings, but they still get a `ValueMember`. Verified in the browser
+(the note on `NamedValue` in `TicketBrowsing.cs`): a ComboBox bound through `SelectedValue` to a plain
+`List<string>` shows the first row instead of the model value and never pushes the model value into the
+control.
+
+Lookups are loaded and each ComboBox's `DisplayMember`/`ValueMember`/`DataSource` are set in
+`LoadEditorAsync` **before** `editBindingSource.DataSource = model` — the same rule
+`TicketBrowserPage.LoadLookupsAsync` follows for its filter ComboBoxes: a bound `SelectedValue` with
+nothing to select resolves to nothing.
 
 ## The agent sentinel: Format/Parse, not a plain binding
 
@@ -30,10 +42,11 @@ docs: `Wisej.Web.Binding.Format`, `Wisej.Web.Binding.Parse`, both `Wisej.Web.Con
 `Wisej.Web.ConvertEventArgs`) for exactly this conversion:
 
 ```csharp
-Wisej.Web.Binding agentBinding = this.cboAgent.DataBindings.Add(
-    "SelectedValue", this.editBindingSource, nameof(TicketEditModel.AgentId), true, Wisej.Web.DataSourceUpdateMode.OnPropertyChanged);
-agentBinding.Format += new Wisej.Web.ConvertEventHandler(this.AgentBinding_Format);
-agentBinding.Parse += new Wisej.Web.ConvertEventHandler(this.AgentBinding_Parse);
+// BindLookupControls
+var agentBinding = this.cboAgent.DataBindings.Add(
+    "SelectedValue", this.editBindingSource, nameof(TicketEditModel.AgentId), true, DataSourceUpdateMode.OnPropertyChanged);
+agentBinding.Format += new ConvertEventHandler(this.AgentBinding_Format);
+agentBinding.Parse += new ConvertEventHandler(this.AgentBinding_Parse);
 ```
 
 ```csharp
@@ -49,9 +62,10 @@ private void AgentBinding_Parse(object sender, ConvertEventArgs e)
 
 ## The DateTimePicker: copied by hand, not bound through DataBindings.Add
 
-`dtpDueDate` is the one control **not** wired with `DataBindings.Add`. The course cookbook flags binding a
-nullable `DateTime?` model property to `DateTimePicker.Value` (which is not nullable) as unverified, and
-names the safer alternative: copy `Checked`/`Value` by hand. `TicketEditorForm` does exactly that:
+`dtpDueDate` is the one control **not** wired with `DataBindings.Add`. The model's `DueDate` is a
+nullable `DateTime?` and `DateTimePicker.Value` is not nullable; the course cookbook flags that binding
+as unverified and names the safer alternative: copy `Checked`/`Value` by hand. `TicketEditorForm` does
+exactly that:
 
 ```csharp
 // LoadEditorAsync, after the model is loaded and assigned:
@@ -59,19 +73,17 @@ this.dtpDueDate.Checked = model.DueDate.HasValue;
 this.dtpDueDate.Value = model.DueDate ?? DateTime.Today;
 
 // SaveAsync, right after EndEdit — so the picker's state is captured no matter which
-// control the operator touched last:
+// control the operator touched last (DueDate_Changed does the same copy for live validation):
 model.DueDate = this.dtpDueDate.Checked ? this.dtpDueDate.Value.Date : (DateTime?)null;
 ```
 
-`dtpDueDate.ShowCheckBox = true` — unticked means "no due date", the same semantics
-`TicketBrowserPage`'s two filter pickers already use (also unverified there, in Module 3).
+`dtpDueDate.ShowCheckBox = true` — unticked means "no due date".
 
 ## Evidence
 
-- `dotnet build SupportDesk.slnx -nologo -v q` — 0 warnings, 0 errors: every `DataBindings.Add` call,
-  the `Format`/`Parse` wiring and the manual `dtpDueDate` copy all compile against the real
-  `Wisej.Web.Binding`/`ConvertEventArgs`/`ConvertEventHandler` types (confirmed against the Wisej-4 4.1.0
-  XML documentation, not guessed).
+- The solution builds: every `DataBindings.Add` call, the `Format`/`Parse` wiring and the manual
+  `dtpDueDate` copy compile against the real `Wisej.Web.Binding`/`ConvertEventArgs`/`ConvertEventHandler`
+  types (confirmed against the Wisej-4 4.1.0 XML documentation, not guessed).
 - `SupportDesk.Tests/TicketCommandServiceTests.cs` → `Load_then_edit_then_save_then_reload_round_trips_exactly_what_was_typed`
   sets every field a control would push into the model — including `AgentId = null` (the "— unassigned —"
   case) and a `DueDate` — saves and reloads, and asserts every value round-trips. This proves the *model

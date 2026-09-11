@@ -11,9 +11,8 @@ namespace EnterpriseOps.UI
     /// host the same thing. It is a pure observer: hand it a <see cref="JobRecord"/> copy and it renders it.
     /// It never calls a service, never starts anything and does not know a queue exists.
     ///
-    /// It shows the two things a support engineer asks for at 09:41 on a Monday: when each transition happened
-    /// (the status history the store recorded) and which rows failed and why (transient, retried and given up,
-    /// or terminal).
+    /// It shows when each transition happened (the status history the store recorded) and which rows failed
+    /// and why (transient, retried and given up, or terminal).
     /// </summary>
     public partial class JobDetailPanel : UserControl
     {
@@ -30,14 +29,6 @@ namespace EnterpriseOps.UI
             InitializeComponent();
         }
 
-        /// <summary>The retry policy in force, printed under the row errors so the two are read together.</summary>
-        public void ShowPolicy(RetryPolicy policy)
-        {
-            this.labelPolicy.Text = policy == null
-                ? "retry policy: —"
-                : $"retry: {policy.MaxAttempts} attempts · {policy.BaseDelayMs} ms × 2ⁿ · cancel: {CancellationPolicy.Description}";
-        }
-
         public void Clear()
         {
             _shownJobId = Guid.Empty;
@@ -51,8 +42,7 @@ namespace EnterpriseOps.UI
 
         /// <summary>
         /// Renders a job. Called from the observer's push loop several times a second, so it repaints the two
-        /// lists only when the history actually grew — a redraw is cheap, but "cheap × 3 per second × forever"
-        /// is the habit this module is about.
+        /// lists only when the history actually grew.
         /// </summary>
         public void Show(JobRecord record)
         {
@@ -99,8 +89,8 @@ namespace EnterpriseOps.UI
 
                 if (record.Result?.TerminalError != null)
                 {
-                    this.listRowErrors.Items.Add("FILE  terminal — the job failed before any row was read:");
-                    this.listRowErrors.Items.Add("      " + record.Result.TerminalError);
+                    this.listRowErrors.Items.Add("The file could not be read:");
+                    this.listRowErrors.Items.Add(record.Result.TerminalError);
                     return;
                 }
 
@@ -113,10 +103,6 @@ namespace EnterpriseOps.UI
 
                 foreach (var error in errors)
                     this.listRowErrors.Items.Add(error.ToString());
-
-                this.listRowErrors.Items.Add("");
-                this.listRowErrors.Items.Add($"fix these {errors.Count} row(s) and re-import — the other");
-                this.listRowErrors.Items.Add("rows are idempotent, so nothing is duplicated.");
             }
             finally
             {

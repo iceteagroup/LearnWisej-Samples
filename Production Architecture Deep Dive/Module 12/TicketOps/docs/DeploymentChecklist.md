@@ -23,8 +23,8 @@ affinity question until traffic forces a second node — and when it does, `docs
 | Data | migrations reviewed and backward-safe | n/a for the in-memory fake; the release note still carries a **Migration** line so the habit survives |
 | Health | the probe target exists and is served | `Startup.cs` serves `GET /HealthCheck.json` (the one `.json` exception; `Default.json` stays blocked) |
 | Affinity | sticky sessions on if > 1 instance; WebSocket upgrade forwarded | `docs/LoadBalancingNotes.md` §2 — the proxy snippet; single instance today |
-| Diagnostics | role-protected, secret-free | `DiagnosticsService.GetSnapshotAsync` refuses a Technician (`Strings.DiagnosticsAccessDenied`) |
-| Smoke test | the key workflow is scripted | `docs/DemoScript.md` steps 4–5 (health check OK, load test, degraded, outage → recovery) |
+| Diagnostics | role-protected, secret-free | `DiagnosticsService.GetSnapshotAsync` refuses any role but Supervisor (`Strings.DiagnosticsAccessDenied`) |
+| Smoke test | the key workflow is scripted | `docs/DemoScript.md` |
 | Rollback | previous artifact retained; trigger and owner named | `docs/ReleaseNotes.md` → **Rollback** |
 | Window | deploy in a low-traffic window; drain the node first | the diagnostics page's **Sessions** row is the number of users a restart evicts — check it before you recycle |
 
@@ -42,19 +42,10 @@ ASPNETCORE_URLS=http://0.0.0.0:5112 dotnet TicketOps.dll
 | Step | Check | Expected |
 |---|---|---|
 | Liveness | `curl -i http://<node>:5112/HealthCheck.json` | `200` and the JSON with the **new** `version`/`build` — proof the new build is the one answering, not a cached instance |
-| Readiness | open the app → diagnostics page → **✓ Run health check** | `Status: Healthy → HTTP 200 (in rotation)`; `database` OK with a row count, `storage` OK, `websocket` OK |
+| Readiness | open the app → diagnostics page → **↻ Refresh** | `Status: Healthy → HTTP 200 (in rotation)`; `database` OK with a row count, `storage` OK, `websocket` OK |
 | Sessions | diagnostics **Sessions** row | counts the live sessions on this node; open a second tab and refresh — it climbs |
-| WebSocket | diagnostics **WebSocket** row | `connected (server push on)`; `long-polling fallback` means the proxy dropped the upgrade headers |
+| WebSocket | diagnostics **WebSocket** row | `connected`; `long-polling fallback` means the proxy dropped the upgrade headers |
 | Affinity (2+ nodes) | sign in, work for a minute, refresh | the session stays; a lost session means the sticky cookie is missing |
-| Config | **Runtime mode** row | `release (RuntimeMode = true)` in production; `debug / design` means `Default.json` still has `"debug": true` |
+| Config | **Runtime mode** row | `release` in production; `debug` means `Default.json` still has `"debug": true` |
 | Smoke test | `docs/DemoScript.md` | passes end to end |
 | Rollback trigger | watch `/HealthCheck.json` and the diagnostics page for 5 minutes | if the status stays `Unhealthy`/`503` or the smoke test fails → **roll back** (ReleaseNotes.md) |
-
-## Evidence (what the running app shows)
-
-- **Success:** `✓ Run health check` → trace `[UI] → IHealthCheckService.CheckAsync()` · `[INFRA] File.ReadAllText(Application.MapPath("HealthCheck.json"))` ·
-  `[INFRA] manifest: TicketOps Console v1.0.0 build 2026.09.10.1 (Development) · 3 dependencies declared` · `[DATA] 6 rows` ·
-  `[SVC] database → OK (6 rows reachable)` · `storage → OK` · `websocket → OK` · `[SVC] Healthy · database:OK, storage:OK, websocket:OK → HTTP 200`;
-  status **● Healthy · HTTP 200 · in rotation**.
-- **Config leak check:** the diagnostics page shows server, port, mode, version, framework, sessions, WebSocket, uptime — and nothing else.
-- **Restart cost:** the **Sessions** row is what a recycle evicts; open two tabs and refresh to see it count.

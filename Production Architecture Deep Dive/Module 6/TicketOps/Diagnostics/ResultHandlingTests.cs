@@ -84,14 +84,14 @@ namespace TicketOps.Diagnostics
             new ResultHandlingTestCase
             {
                 Id = "RH-6", Name = "Repository outage during commit, then recovery",
-                Expectation = "DataOutageException · 0 of 3 writes applied · retry after recovery succeeds",
+                Expectation = "the commit throws · 0 of 3 writes applied · retry after recovery succeeds",
                 Run = OutageDuringCommit
             }
         };
 
         private (InMemoryWorkOrderRepository repository, IApprovalService service) Fixture()
         {
-            var repository = new InMemoryWorkOrderRepository(_log);
+            var repository = new InMemoryWorkOrderRepository();
             return (repository, new ApprovalService(repository, _log, Approver));
         }
 
@@ -170,20 +170,22 @@ namespace TicketOps.Diagnostics
 
         private async Task<TestOutcome> OutageDuringCommit()
         {
-            var (repo, service) = Fixture();
+            var repo = new InMemoryWorkOrderRepository();
+            var failing = new FailingCommitRepository(repo);
+            var service = new ApprovalService(failing, _log, Approver);
             var confirmed = ApprovalDialogResult.Confirm(ApprovalAction.Approve, "Approved during the outage drill.");
 
-            repo.SimulateOutage = true;
+            failing.FailCommits = true;
             string caught = null;
             try
             {
                 await service.ApplyAsync(PendingOrder, confirmed);
             }
-            catch (DataOutageException ex)
+            catch (StoreUnavailableException ex)
             {
                 caught = ex.GetType().Name;
             }
-            repo.SimulateOutage = false;
+            failing.FailCommits = false;
 
             var wo = await repo.FindAsync(PendingOrder);
             bool nothingApplied = wo.Status == WorkOrderStatus.Pending
@@ -196,12 +198,58 @@ namespace TicketOps.Diagnostics
             var afterRetry = await repo.FindAsync(PendingOrder);
             bool recovered = retry.Succeeded && afterRetry.Status == WorkOrderStatus.Approved && repo.AuditCount == SeedAuditRows + 1;
 
-            bool passed = caught == nameof(DataOutageException) && nothingApplied && recovered;
+            bool passed = caught == nameof(StoreUnavailableException) && nothingApplied && recovered;
             return new TestOutcome
             {
                 Passed = passed,
                 Detail = $"caught {caught ?? "nothing"} · after outage: status {wo.Status}, audit {repo.AuditCount}, notifications {repo.NotificationCount} · retry {retry}"
             };
+        }
+
+        /// <summary>Thrown by the test double when the store refuses a commit.</summary>
+        private sealed class StoreUnavailableException : Exception
+        {
+            public StoreUnavailableException() : base("The store did not accept the commit.") { }
+        }
+
+        /// <summary>Test double: delegates to a real repository, but its transactions can be told to fail on commit.</summary>
+        private sealed class FailingCommitRepository : IWorkOrderRepository
+        {
+            private readonly IWorkOrderRepository _inner;
+
+            public FailingCommitRepository(IWorkOrderRepository inner) => _inner = inner;
+
+            public bool FailCommits { get; set; }
+
+            public Task<IReadOnlyList<WorkOrder>> GetAllAsync() => _inner.GetAllAsync();
+            public Task<WorkOrder> FindAsync(int id) => _inner.FindAsync(id);
+            public Task<IReadOnlyList<ApprovalRecord>> GetAuditTrailAsync() => _inner.GetAuditTrailAsync();
+            public IWorkOrderTransaction BeginTransaction() => new Transaction(_inner.BeginTransaction(), this);
+
+            private sealed class Transaction : IWorkOrderTransaction
+            {
+                private readonly IWorkOrderTransaction _inner;
+                private readonly FailingCommitRepository _owner;
+
+                public Transaction(IWorkOrderTransaction inner, FailingCommitRepository owner)
+                {
+                    _inner = inner;
+                    _owner = owner;
+                }
+
+                public void Update(WorkOrder workOrder) => _inner.Update(workOrder);
+                public void RecordAudit(ApprovalRecord record) => _inner.RecordAudit(record);
+                public void QueueNotification(string recipient, string message) => _inner.QueueNotification(recipient, message);
+
+                public Task CommitAsync()
+                {
+                    if (_owner.FailCommits)
+                        throw new StoreUnavailableException();
+                    return _inner.CommitAsync();
+                }
+
+                public void Dispose() => _inner.Dispose();
+            }
         }
     }
 }

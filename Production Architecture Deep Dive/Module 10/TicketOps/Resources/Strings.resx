@@ -3,7 +3,6 @@
   TicketOps Console · neutral (English) user-visible text.
   Every string a screen shows lives here, keyed by name; Strings.de.resx carries the German values.
   Code references keys (Strings.Get / ILocalizationService.Text), never the sentences.
-  Button.Export is deliberately NOT translated in Strings.de.resx: it shows the traced "untranslated" fallback.
 -->
 <root>
   <resheader name="resmimetype">
@@ -25,7 +24,6 @@
 
   <data name="Header.Theme" xml:space="preserve"><value>Theme</value></data>
   <data name="Header.Culture" xml:space="preserve"><value>Culture</value></data>
-  <data name="Header.SessionOnly" xml:space="preserve"><value>This session only</value></data>
   <data name="Theme.Light" xml:space="preserve"><value>Light · Bootstrap-4</value></data>
   <data name="Theme.Dark" xml:space="preserve"><value>Dark · BootstrapDark-4</value></data>
 
@@ -45,29 +43,20 @@
   <data name="Detail.Due" xml:space="preserve"><value>Due</value></data>
   <data name="Detail.Cost" xml:space="preserve"><value>Labor cost</value></data>
   <data name="Detail.Hours" xml:space="preserve"><value>Hours</value></data>
-  <data name="Detail.Hint" xml:space="preserve"><value>Same values as the dashboard, formatted for {0} — the screen never hard-codes a date or currency pattern.</value></data>
 
   <data name="Button.OpenDetail" xml:space="preserve"><value>Open detail…</value></data>
   <data name="Button.NextStatus" xml:space="preserve"><value>Next status</value></data>
   <data name="Button.Close" xml:space="preserve"><value>Close</value></data>
-  <data name="Button.Refresh" xml:space="preserve"><value>Refresh dashboard</value></data>
-  <data name="Button.Export" xml:space="preserve"><value>Export</value></data>
 
   <data name="State.Ready" xml:space="preserve"><value>ready</value></data>
   <data name="State.Loading" xml:space="preserve"><value>loading</value></data>
   <data name="State.Failed" xml:space="preserve"><value>failed</value></data>
   <data name="State.Rejected" xml:space="preserve"><value>rejected</value></data>
-  <data name="State.Walking" xml:space="preserve"><value>walking statuses</value></data>
-  <data name="State.ResourceGap" xml:space="preserve"><value>resource gap traced</value></data>
 
   <data name="Message.ActionFailed" xml:space="preserve"><value>The action could not be completed. Check the log for details.</value></data>
-  <data name="Message.Saved" xml:space="preserve"><value>Saved.</value></data>
-  <data name="Message.DashboardRefreshed" xml:space="preserve"><value>Dashboard refreshed.</value></data>
   <data name="Message.StatusAdvanced" xml:space="preserve"><value>Work order {0} is now "{1}".</value></data>
   <data name="Message.ThemeApplied" xml:space="preserve"><value>Theme: {0} — applied to every screen.</value></data>
-  <data name="Message.ThemeAppliedSession" xml:space="preserve"><value>Theme: {0} — this session only.</value></data>
-  <data name="Message.CultureApplied" xml:space="preserve"><value>Culture: {0} — labels, dates &amp; currency follow the culture.</value></data>
-  <data name="Message.ResourceGap" xml:space="preserve"><value>Resource gaps shown safely — see the trace for the keys to fix.</value></data>
+  <data name="Message.CultureApplied" xml:space="preserve"><value>Culture: {0} — labels, dates and currency follow the culture.</value></data>
 
   <data name="Rule.DoneCannotAdvance" xml:space="preserve"><value>A finished work order cannot be advanced.</value></data>
   <data name="Rule.WorkOrderMissing" xml:space="preserve"><value>The work order no longer exists. Refresh the dashboard.</value></data>

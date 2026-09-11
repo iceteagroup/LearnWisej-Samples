@@ -6,7 +6,7 @@ namespace EnterpriseOps.Data
     /// <summary>
     /// The EF Core unit of work. Short-lived: one instance per command or per query, created by
     /// <see cref="SessionDatabase.CreateContext"/> and disposed when the operation ends. Never a field
-    /// on a page, never static — see docs/DbContextLifetimeDecision.md and the "Wrong lifetime" button.
+    /// on a page, never static — see docs/DbContextLifetimeDecision.md.
     /// </summary>
     public sealed class EnterpriseOpsDbContext : DbContext
     {

@@ -19,7 +19,7 @@ Views / Controls  ──►  Services  ──►  Domain
                             │
                             └────►  Data
 Infrastructure (ILog, config)  ◄── available to every layer
-Diagnostics (trace, health)     ◄── reads the log, never decides
+Diagnostics (logging, health)   ◄── records what happened, never decides
 ```
 
 Arrows only ever point "downward". UI depends on services; services depend on domain and data; the
@@ -36,9 +36,9 @@ class library that does not reference Wisej.NET.
 | A business record and the rules that belong to it | `Domain/` | `Ticket.CanClose` ("log hours before closing") |
 | The shape the screen collects / the answer it shows | `Domain/` | `TicketDraft`, `OperationResult<T>` |
 | Persistence and queries | `Data/` — behind an `IXxxRepository` | `InMemoryTicketRepository` (today), `SqlTicketRepository` (tomorrow) |
-| Logging, configuration, wiring, integration clients | `Infrastructure/` | `ILog`, `ActivityLog`, `AppComposition` |
+| The logging contract, configuration, wiring, integration clients | `Infrastructure/` | `ILog`, `AppComposition` |
 | Text the user reads, images, themes, `.resx` | `Resources/` | `Strings.ActionFailed` |
-| Health checks, the trace card, troubleshooting pages | `Diagnostics/` | `ActivityTracePanel` |
+| Logging and error tracking, health checks, troubleshooting pages | `Diagnostics/` | `ActivityLog` |
 
 ## Three tests before you commit
 

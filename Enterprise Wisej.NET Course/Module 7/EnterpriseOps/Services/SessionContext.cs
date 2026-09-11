@@ -27,9 +27,6 @@ namespace EnterpriseOps.Services
             return CorrelationId;
         }
 
-        /// <summary>A context for the same session acting as a different user (the "run without wizard" tests).</summary>
-        public SessionContext As(UserIdentity user) => new SessionContext(TenantId, user);
-
         private static string NewCorrelationId() => Guid.NewGuid().ToString("N").Substring(0, 8);
     }
 }

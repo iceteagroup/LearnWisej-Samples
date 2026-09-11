@@ -2,7 +2,7 @@ namespace OrderDesk.Screens
 {
     partial class CustomersScreen
     {
-        // Designer-owned file. Layout: heading Dock = Top, grid Dock = Fill — no fixed positions.
+        // Layout: heading Dock = Top, grid Dock = Fill.
         private System.ComponentModel.IContainer components = null;
 
         protected override void Dispose(bool disposing)
@@ -32,7 +32,7 @@ namespace OrderDesk.Screens
             this.labelHeading.Height = 30;
             this.labelHeading.Name = "labelHeading";
             this.labelHeading.Padding = new Wisej.Web.Padding(12, 0, 12, 0);
-            this.labelHeading.Text = "Customers · reference data (CustomerService, reused as-is)";
+            this.labelHeading.Text = "Customers";
             this.labelHeading.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // gridCustomers  (Dock = Fill)
@@ -47,7 +47,6 @@ namespace OrderDesk.Screens
             this.gridCustomers.RowHeadersVisible = false;
             this.gridCustomers.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
             this.gridCustomers.TabIndex = 0;
-            this.gridCustomers.SelectionChanged += new System.EventHandler(this.gridCustomers_SelectionChanged);
             this.colName.HeaderText = "Customer"; this.colName.Name = "colName"; this.colName.Width = 220; this.colName.ReadOnly = true;
             this.colCity.HeaderText = "City"; this.colCity.Name = "colCity"; this.colCity.Width = 140; this.colCity.ReadOnly = true;
             this.colCountry.HeaderText = "Country"; this.colCountry.Name = "colCountry"; this.colCountry.Width = 80; this.colCountry.ReadOnly = true;

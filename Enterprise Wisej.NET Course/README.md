@@ -2,12 +2,11 @@
 
 One runnable Wisej.NET 4 application per module of the advanced course, built from each module's lesson guide,
 lab / exam guide and walkthrough video. Every sample is a slice of the same application — the **EnterpriseOps
-Command Center**, a multi-tenant field-service work-order system — with the same layout: the screen(s) the module
-names on the left, a **Server · live activity trace** on the right that prints every layer's decision
-(`UI →`, `Service:`, `Security:`, `Data:`, `Job:` …), and a bottom bar of buttons that exercise the success path,
-a progress path, at least one failure path and the recovery. Each module folder has its own `README.md` (run
-command, what to click, lab steps → code map, review questions and acceptance criteria answered) and a `docs/`
-folder with the lab deliverables.
+Command Center**, a multi-tenant field-service work-order system — and each app shows only the screen(s) the
+module's lab guide and walkthrough video build. Services log their decisions server-side (`Diagnostics/ActivityTrace`
+→ `System.Diagnostics.Trace`); failures reach the user as safe messages with a correlation id. Each module folder
+has its own `README.md` (run command, what to try, lab steps → code map) and, where the lab asks for written
+deliverables, a `docs/` folder.
 
 Requirements already on this machine: .NET 10 SDK and the `Wisej-4` 4.1.0 NuGet package (Module 4 also restores
 `Microsoft.EntityFrameworkCore.Sqlite` 10.0.12). Nothing is deployed anywhere.
@@ -42,7 +41,7 @@ or open the `EnterpriseOps.slnx` in the module folder with Visual Studio and pre
 ## `_template`
 
 The scaffold every module was built from, plus `COOKBOOK.md`: the conventions (folder-per-layer namespaces, the
-shared EnterpriseOps domain vocabulary, the trace card and button bar), the framework facts verified while building
+shared EnterpriseOps domain vocabulary), the framework facts verified while building
 and reviewing these samples (dialogs, background pushes, data binding, widgets, health endpoints), and the gotchas
 found on the way — `ComboBox.DisplayMember` needs properties, camel-casing stops at the first level of a Widget's
 `Options`, static initializer order, and how to drive the buttons from the browser console when reviewing.

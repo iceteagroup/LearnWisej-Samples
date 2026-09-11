@@ -40,24 +40,18 @@ namespace TicketOps.Services
             if (user == null) throw new ArgumentNullException(nameof(user));
 
             // Never trust the client-sent id: re-load the record scoped to what this user may see.
-            _log.Info(LogLayer.Service, "TicketLinkService.BuildLinkAsync",
-                $"re-check #{workOrderId} for {user.Name} (the id is client input) → IWorkOrderRepository.FindAsync");
             var order = await _repository.FindAsync(workOrderId);
             if (order == null)
-            {
-                _log.Warn(LogLayer.Service, "TicketLinkService.BuildLinkAsync", $"rejected: #{workOrderId} does not exist — nothing crosses to the browser");
                 return OperationResult<TicketLink>.Fail("That work order does not exist or is not visible to you.");
-            }
 
             // The rule lives on the domain object; the service applies it.
             if (!order.CanShareLink(user, out string reason))
             {
-                _log.Warn(LogLayer.Domain, "WorkOrder.CanShareLink", $"#{workOrderId} rejected: {reason}");
+                _log.Warn(LogLayer.Domain, "WorkOrder.CanShareLink", $"#{workOrderId} rejected for {user.Name}: {reason}");
                 return OperationResult<TicketLink>.Fail(reason);
             }
 
             var link = new TicketLink(order.Id, BaseUrl + order.Id.ToString(CultureInfo.InvariantCulture) + "?sig=" + Sign(order.Id));
-            _log.Info(LogLayer.Service, "TicketLinkService.BuildLinkAsync", $"built {link.Url} — signed server-side, the key never leaves the service");
             return OperationResult<TicketLink>.Ok(link, $"Link for #{order.Id} ready.");
         }
 
@@ -65,8 +59,6 @@ namespace TicketOps.Services
         {
             if (user == null) throw new ArgumentNullException(nameof(user));
 
-            _log.Info(LogLayer.Service, "TicketLinkService.ConfirmCopiedAsync",
-                $"the browser confirmed the copy → IAuditLogService.Record(ticket.link.copied, #{workOrderId})");
             _audit.Record("ticket.link.copied", workOrderId, user);
             return Task.CompletedTask;
         }

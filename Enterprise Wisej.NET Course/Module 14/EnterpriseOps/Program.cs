@@ -22,8 +22,7 @@ namespace EnterpriseOps
         /// <summary>Wisej.NET session entry point (configured in Default.json "startup").</summary>
         static void Main(NameValueCollection args)
         {
-            // A session starts as ana.ops (Manager) on contoso. "Review as ben.tech" on either screen switches
-            // the identity, so the permission-denied paths can be seen without opening a second browser.
+            // A session starts as ana.ops (Manager) on contoso.
             SessionContext session = SessionContext.CreateFor(
                 InMemoryWorkOrderStore.Tenants[0],
                 KnownUsers.AnaOps,

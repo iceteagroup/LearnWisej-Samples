@@ -26,14 +26,13 @@ namespace EnterpriseOps.UI
             this.components = new System.ComponentModel.Container();
             this.pnlHeader = new Wisej.Web.Panel();
             this.lblTitle = new Wisej.Web.Label();
-            this.lblTenant = new Wisej.Web.Label();
-            this.lblUser = new Wisej.Web.Label();
-            this.lblCorrelation = new Wisej.Web.Label();
             this.pnlDossier = new Wisej.Web.Panel();
             this.btnBuildDossier = new Wisej.Web.Button();
             this.btnRunPath = new Wisej.Web.Button();
             this.btnCancel = new Wisej.Web.Button();
-            this.lblStatus = new Wisej.Web.Label();
+            this.btnRollback = new Wisej.Web.Button();
+            this.btnMapTheme = new Wisej.Web.Button();
+            this.btnWorkOrders = new Wisej.Web.Button();
             this.tabDossier = new Wisej.Web.TabControl();
             this.tabPageDossier = new Wisej.Web.TabPage();
             this.dgvDossier = new Wisej.Web.DataGridView();
@@ -79,18 +78,6 @@ namespace EnterpriseOps.UI
             this.txtMemo = new Wisej.Web.TextBox();
             this.lblBanner = new Wisej.Web.Label();
             this.lblStatusBar = new Wisej.Web.Label();
-            this.pnlTrace = new Wisej.Web.Panel();
-            this.lblTraceTitle = new Wisej.Web.Label();
-            this.lstTrace = new Wisej.Web.ListBox();
-            this.lblTraceFooter = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.Panel();
-            this.btnRollback = new Wisej.Web.Button();
-            this.btnMapTheme = new Wisej.Web.Button();
-            this.btnSwitchUser = new Wisej.Web.Button();
-            this.btnWorkOrders = new Wisej.Web.Button();
-            this.btnMemo = new Wisej.Web.Button();
-            this.btnReset = new Wisej.Web.Button();
-            this.btnClearTrace = new Wisej.Web.Button();
             this.pnlHeader.SuspendLayout();
             this.pnlDossier.SuspendLayout();
             this.tabDossier.SuspendLayout();
@@ -100,21 +87,16 @@ namespace EnterpriseOps.UI
             this.tabPageSteps.SuspendLayout();
             this.tabPageFlows.SuspendLayout();
             this.tabPageMemo.SuspendLayout();
-            this.pnlTrace.SuspendLayout();
-            this.pnlActions.SuspendLayout();
             this.SuspendLayout();
             //
-            // pnlHeader  (slim header bar: screen name · tenant · user · correlation id)
+            // pnlHeader
             //
             this.pnlHeader.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(21, 101, 216);
             this.pnlHeader.Controls.Add(this.lblTitle);
-            this.pnlHeader.Controls.Add(this.lblTenant);
-            this.pnlHeader.Controls.Add(this.lblUser);
-            this.pnlHeader.Controls.Add(this.lblCorrelation);
             this.pnlHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1348, 44);
+            this.pnlHeader.Size = new System.Drawing.Size(1048, 44);
             //
             // lblTitle
             //
@@ -123,108 +105,84 @@ namespace EnterpriseOps.UI
             this.lblTitle.ForeColor = System.Drawing.Color.White;
             this.lblTitle.Location = new System.Drawing.Point(24, 0);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(640, 44);
+            this.lblTitle.Size = new System.Drawing.Size(1000, 44);
             this.lblTitle.Text = "EnterpriseOps — Migration Dossier · TicketOps Console → EnterpriseOps baseline";
             this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // lblTenant
-            //
-            this.lblTenant.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblTenant.AutoSize = false;
-            this.lblTenant.Font = new System.Drawing.Font("default", 9F);
-            this.lblTenant.ForeColor = System.Drawing.Color.FromArgb(214, 228, 243);
-            this.lblTenant.Location = new System.Drawing.Point(700, 0);
-            this.lblTenant.Name = "lblTenant";
-            this.lblTenant.Size = new System.Drawing.Size(160, 44);
-            this.lblTenant.Text = "tenant: contoso";
-            this.lblTenant.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            // lblUser
-            //
-            this.lblUser.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblUser.AutoSize = false;
-            this.lblUser.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblUser.ForeColor = System.Drawing.Color.White;
-            this.lblUser.Location = new System.Drawing.Point(870, 0);
-            this.lblUser.Name = "lblUser";
-            this.lblUser.Size = new System.Drawing.Size(280, 44);
-            this.lblUser.Text = "Signed in: ana.ops · Manager";
-            this.lblUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            // lblCorrelation
-            //
-            this.lblCorrelation.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblCorrelation.AutoSize = false;
-            this.lblCorrelation.Font = new System.Drawing.Font("monospace", 9F);
-            this.lblCorrelation.ForeColor = System.Drawing.Color.FromArgb(214, 228, 243);
-            this.lblCorrelation.Location = new System.Drawing.Point(1160, 0);
-            this.lblCorrelation.Name = "lblCorrelation";
-            this.lblCorrelation.Size = new System.Drawing.Size(164, 44);
-            this.lblCorrelation.Text = "corr —";
-            this.lblCorrelation.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            // pnlDossier  (the dossier card: toolbar row, the six dossier tabs, the banner, the dark footer)
+            // pnlDossier
             //
             this.pnlDossier.BackColor = System.Drawing.Color.White;
             this.pnlDossier.BorderStyle = Wisej.Web.BorderStyle.Solid;
             this.pnlDossier.Controls.Add(this.btnBuildDossier);
             this.pnlDossier.Controls.Add(this.btnRunPath);
             this.pnlDossier.Controls.Add(this.btnCancel);
-            this.pnlDossier.Controls.Add(this.lblStatus);
+            this.pnlDossier.Controls.Add(this.btnRollback);
+            this.pnlDossier.Controls.Add(this.btnMapTheme);
+            this.pnlDossier.Controls.Add(this.btnWorkOrders);
             this.pnlDossier.Controls.Add(this.tabDossier);
             this.pnlDossier.Controls.Add(this.lblBanner);
             this.pnlDossier.Controls.Add(this.lblStatusBar);
             this.pnlDossier.Location = new System.Drawing.Point(24, 64);
             this.pnlDossier.Name = "pnlDossier";
-            this.pnlDossier.Size = new System.Drawing.Size(860, 512);
+            this.pnlDossier.Size = new System.Drawing.Size(1000, 512);
             //
-            // btnBuildDossier  (success path: the assessment service computes risk for every dossier row)
+            // btnBuildDossier
             //
             this.btnBuildDossier.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.btnBuildDossier.Location = new System.Drawing.Point(20, 14);
             this.btnBuildDossier.Name = "btnBuildDossier";
-            this.btnBuildDossier.Size = new System.Drawing.Size(170, 36);
+            this.btnBuildDossier.Size = new System.Drawing.Size(160, 36);
             this.btnBuildDossier.Text = "Build dossier";
-            this.btnBuildDossier.ToolTipText = "btnBuildDossier_Click → await _assessment.AssessAsync(CurrentContext). Inventory before action: 7 areas, 14 inventory items, 9 compatibility entries, risk computed by one rule.";
             this.btnBuildDossier.Click += new System.EventHandler(this.btnBuildDossier_Click);
             //
-            // btnRunPath  (progress path: seven verifiable steps, each with a fallback point)
+            // btnRunPath
             //
             this.btnRunPath.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.btnRunPath.Location = new System.Drawing.Point(198, 14);
+            this.btnRunPath.Location = new System.Drawing.Point(188, 14);
             this.btnRunPath.Name = "btnRunPath";
-            this.btnRunPath.Size = new System.Drawing.Size(210, 36);
+            this.btnRunPath.Size = new System.Drawing.Size(200, 36);
             this.btnRunPath.Text = "▶ Run migration path";
-            this.btnRunPath.ToolTipText = "btnRunPath_Click → await _workflow.RunAsync(...). Steps 1–3 pass; step 4 \"Check themes\" fails on the visual diff because the 3.x theme was never mapped.";
             this.btnRunPath.Click += new System.EventHandler(this.btnRunPath_Click);
             //
-            // btnCancel  (stays enabled while the path runs — the CancellationTokenSource lives in an instance field)
+            // btnCancel
             //
             this.btnCancel.Enabled = false;
-            this.btnCancel.Location = new System.Drawing.Point(416, 14);
+            this.btnCancel.Location = new System.Drawing.Point(396, 14);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(96, 36);
+            this.btnCancel.Size = new System.Drawing.Size(90, 36);
             this.btnCancel.Text = "Cancel";
-            this.btnCancel.ToolTipText = "Cancels the running migration path through the CancellationTokenSource kept in an instance field.";
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             //
-            // lblStatus
+            // btnRollback
             //
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.lblStatus.ForeColor = System.Drawing.Color.FromArgb(232, 161, 60);
-            this.lblStatus.Location = new System.Drawing.Point(520, 19);
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(320, 26);
-            this.lblStatus.Text = "● dossier not built";
-            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnRollback.Location = new System.Drawing.Point(506, 14);
+            this.btnRollback.Name = "btnRollback";
+            this.btnRollback.Size = new System.Drawing.Size(190, 36);
+            this.btnRollback.Text = "↶ Roll back failed step";
+            this.btnRollback.Click += new System.EventHandler(this.btnRollback_Click);
             //
-            // tabDossier  (the five deliverable tables plus the decision memo)
+            // btnMapTheme
+            //
+            this.btnMapTheme.Location = new System.Drawing.Point(704, 14);
+            this.btnMapTheme.Name = "btnMapTheme";
+            this.btnMapTheme.Size = new System.Drawing.Size(160, 36);
+            this.btnMapTheme.Text = "Map theme mixin";
+            this.btnMapTheme.Click += new System.EventHandler(this.btnMapTheme_Click);
+            //
+            // btnWorkOrders
+            //
+            this.btnWorkOrders.Location = new System.Drawing.Point(872, 14);
+            this.btnWorkOrders.Name = "btnWorkOrders";
+            this.btnWorkOrders.Size = new System.Drawing.Size(108, 36);
+            this.btnWorkOrders.Text = "Work orders →";
+            this.btnWorkOrders.Click += new System.EventHandler(this.btnWorkOrders_Click);
+            //
+            // tabDossier
             //
             this.tabDossier.Location = new System.Drawing.Point(20, 62);
             this.tabDossier.Name = "tabDossier";
             this.tabDossier.SelectedIndex = 0;
-            this.tabDossier.Size = new System.Drawing.Size(820, 346);
+            this.tabDossier.Size = new System.Drawing.Size(960, 346);
             this.tabDossier.TabPages.AddRange(new Wisej.Web.TabPage[] {
             this.tabPageDossier,
             this.tabPageInventory,
@@ -239,7 +197,7 @@ namespace EnterpriseOps.UI
             this.tabPageDossier.Name = "tabPageDossier";
             this.tabPageDossier.Text = "Dossier";
             //
-            // dgvDossier  (the migration dossier: what changes · what it risks · how it is proven · how to get back)
+            // dgvDossier
             //
             this.dgvDossier.AllowUserToAddRows = false;
             this.dgvDossier.AllowUserToDeleteRows = false;
@@ -305,7 +263,7 @@ namespace EnterpriseOps.UI
             this.tabPageInventory.Name = "tabPageInventory";
             this.tabPageInventory.Text = "Inventory";
             //
-            // dgvInventory  (current-state and target-state inventory, side by side)
+            // dgvInventory
             //
             this.dgvInventory.AllowUserToAddRows = false;
             this.dgvInventory.AllowUserToDeleteRows = false;
@@ -359,7 +317,7 @@ namespace EnterpriseOps.UI
             this.tabPageCompatibility.Name = "tabPageCompatibility";
             this.tabPageCompatibility.Text = "Compatibility / risk";
             //
-            // dgvCompatibility  (framework × Wisej.NET × packages — decided before any code changes)
+            // dgvCompatibility
             //
             this.dgvCompatibility.AllowUserToAddRows = false;
             this.dgvCompatibility.AllowUserToDeleteRows = false;
@@ -419,7 +377,7 @@ namespace EnterpriseOps.UI
             this.tabPageSteps.Name = "tabPageSteps";
             this.tabPageSteps.Text = "Incremental path";
             //
-            // dgvSteps  (the seven verifiable steps, each with its check and its fallback point)
+            // dgvSteps
             //
             this.dgvSteps.AllowUserToAddRows = false;
             this.dgvSteps.AllowUserToDeleteRows = false;
@@ -479,7 +437,7 @@ namespace EnterpriseOps.UI
             this.tabPageFlows.Name = "tabPageFlows";
             this.tabPageFlows.Text = "Regression plan (10 flows)";
             //
-            // dgvFlows  (the ten key flows — they protect behavior, not compilation)
+            // dgvFlows
             //
             this.dgvFlows.AllowUserToAddRows = false;
             this.dgvFlows.AllowUserToDeleteRows = false;
@@ -539,7 +497,7 @@ namespace EnterpriseOps.UI
             this.tabPageMemo.Name = "tabPageMemo";
             this.tabPageMemo.Text = "Decision memo";
             //
-            // txtMemo  (written by the service from evidence — never typed here)
+            // txtMemo
             //
             this.txtMemo.Dock = Wisej.Web.DockStyle.Fill;
             this.txtMemo.Font = new System.Drawing.Font("monospace", 9F);
@@ -547,9 +505,9 @@ namespace EnterpriseOps.UI
             this.txtMemo.Name = "txtMemo";
             this.txtMemo.ReadOnly = true;
             this.txtMemo.ScrollBars = Wisej.Web.ScrollBars.Both;
-            this.txtMemo.Text = "Click \"Write decision memo\" — the memo is generated from the dossier, the steps and the last harness run.";
+            this.txtMemo.Text = "Build the dossier first — the memo is written from the dossier, the steps and the last harness run.";
             //
-            // lblBanner  (failure / recovery banner; hidden until something needs saying)
+            // lblBanner
             //
             this.lblBanner.AutoSize = false;
             this.lblBanner.BackColor = System.Drawing.Color.FromArgb(253, 236, 234);
@@ -558,12 +516,12 @@ namespace EnterpriseOps.UI
             this.lblBanner.Location = new System.Drawing.Point(20, 416);
             this.lblBanner.Name = "lblBanner";
             this.lblBanner.Padding = new Wisej.Web.Padding(12, 0, 12, 0);
-            this.lblBanner.Size = new System.Drawing.Size(820, 36);
+            this.lblBanner.Size = new System.Drawing.Size(960, 36);
             this.lblBanner.Text = "";
             this.lblBanner.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblBanner.Visible = false;
             //
-            // lblStatusBar  (the dark footer: the harness verdict, exactly as the video prints it)
+            // lblStatusBar
             //
             this.lblStatusBar.AutoSize = false;
             this.lblStatusBar.BackColor = System.Drawing.Color.FromArgb(15, 36, 64);
@@ -572,137 +530,17 @@ namespace EnterpriseOps.UI
             this.lblStatusBar.Location = new System.Drawing.Point(20, 458);
             this.lblStatusBar.Name = "lblStatusBar";
             this.lblStatusBar.Padding = new Wisej.Web.Padding(12, 0, 12, 0);
-            this.lblStatusBar.Size = new System.Drawing.Size(820, 36);
+            this.lblStatusBar.Size = new System.Drawing.Size(960, 36);
             this.lblStatusBar.Text = "Regression harness: not run";
             this.lblStatusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
-            // pnlTrace  (Server · live activity trace)
-            //
-            this.pnlTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.pnlTrace.BackColor = System.Drawing.Color.White;
-            this.pnlTrace.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.pnlTrace.Controls.Add(this.lblTraceTitle);
-            this.pnlTrace.Controls.Add(this.lstTrace);
-            this.pnlTrace.Controls.Add(this.lblTraceFooter);
-            this.pnlTrace.Location = new System.Drawing.Point(900, 64);
-            this.pnlTrace.Name = "pnlTrace";
-            this.pnlTrace.Size = new System.Drawing.Size(424, 512);
-            //
-            // lblTraceTitle
-            //
-            this.lblTraceTitle.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblTraceTitle.AutoSize = false;
-            this.lblTraceTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblTraceTitle.Location = new System.Drawing.Point(16, 12);
-            this.lblTraceTitle.Name = "lblTraceTitle";
-            this.lblTraceTitle.Size = new System.Drawing.Size(392, 28);
-            this.lblTraceTitle.Text = "Server · live activity trace";
-            //
-            // lstTrace
-            //
-            this.lstTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lstTrace.Font = new System.Drawing.Font("monospace", 9F);
-            this.lstTrace.Location = new System.Drawing.Point(16, 46);
-            this.lstTrace.Name = "lstTrace";
-            this.lstTrace.Size = new System.Drawing.Size(392, 422);
-            //
-            // lblTraceFooter
-            //
-            this.lblTraceFooter.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblTraceFooter.AutoSize = false;
-            this.lblTraceFooter.Font = new System.Drawing.Font("default", 8F);
-            this.lblTraceFooter.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblTraceFooter.Location = new System.Drawing.Point(16, 474);
-            this.lblTraceFooter.Name = "lblTraceFooter";
-            this.lblTraceFooter.Size = new System.Drawing.Size(392, 28);
-            this.lblTraceFooter.Text = "UI → · Service: · Data: · Security: · Job:   — the buffer survives navigation (flow 9)";
-            //
-            // pnlActions  (bottom bar: recovery, failure path, navigation, memo, reset, clear)
-            //
-            this.pnlActions.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.pnlActions.Controls.Add(this.btnRollback);
-            this.pnlActions.Controls.Add(this.btnMapTheme);
-            this.pnlActions.Controls.Add(this.btnSwitchUser);
-            this.pnlActions.Controls.Add(this.btnWorkOrders);
-            this.pnlActions.Controls.Add(this.btnMemo);
-            this.pnlActions.Controls.Add(this.btnReset);
-            this.pnlActions.Controls.Add(this.btnClearTrace);
-            this.pnlActions.Location = new System.Drawing.Point(24, 592);
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Size = new System.Drawing.Size(1300, 44);
-            //
-            // btnRollback  (recovery 1: back to the failed step's fallback point)
-            //
-            this.btnRollback.Location = new System.Drawing.Point(0, 4);
-            this.btnRollback.Name = "btnRollback";
-            this.btnRollback.Size = new System.Drawing.Size(210, 36);
-            this.btnRollback.Text = "↶ Roll back failed step";
-            this.btnRollback.ToolTipText = "btnRollback_Click → await _workflow.RollbackAsync(...). Restores the fallback point of the failed step only; steps after it are never started.";
-            this.btnRollback.Click += new System.EventHandler(this.btnRollback_Click);
-            //
-            // btnMapTheme  (recovery 2: resource mapping — port the 3.x theme to a 4.x mixin)
-            //
-            this.btnMapTheme.Location = new System.Drawing.Point(218, 4);
-            this.btnMapTheme.Name = "btnMapTheme";
-            this.btnMapTheme.Size = new System.Drawing.Size(190, 36);
-            this.btnMapTheme.Text = "Map theme mixin";
-            this.btnMapTheme.ToolTipText = "btnMapTheme_Click → _workflow.MapThemeMixin(...). Refused while step 4 is Failed: fix on the fallback point, never on the broken build.";
-            this.btnMapTheme.Click += new System.EventHandler(this.btnMapTheme_Click);
-            //
-            // btnSwitchUser  (failure path: a Technician may not change the build for everyone)
-            //
-            this.btnSwitchUser.Location = new System.Drawing.Point(416, 4);
-            this.btnSwitchUser.Name = "btnSwitchUser";
-            this.btnSwitchUser.Size = new System.Drawing.Size(230, 36);
-            this.btnSwitchUser.Text = "Fail: map theme as ben.tech";
-            this.btnSwitchUser.ToolTipText = "Signs in as ben.tech (Technician) and asks for the same mapping — PermissionService denies it server-side. Click again to come back as ana.ops.";
-            this.btnSwitchUser.Click += new System.EventHandler(this.btnSwitchUser_Click);
-            //
-            // btnWorkOrders  (navigation: the migrated screen, painted from the current theme map)
-            //
-            this.btnWorkOrders.Location = new System.Drawing.Point(654, 4);
-            this.btnWorkOrders.Name = "btnWorkOrders";
-            this.btnWorkOrders.Size = new System.Drawing.Size(210, 36);
-            this.btnWorkOrders.Text = "Open WorkOrdersPage →";
-            this.btnWorkOrders.ToolTipText = "The migrated TicketOps screen. It paints itself from ThemeService.Current, so the visual diff is visible, not described.";
-            this.btnWorkOrders.Click += new System.EventHandler(this.btnWorkOrders_Click);
-            //
-            // btnMemo
-            //
-            this.btnMemo.Location = new System.Drawing.Point(872, 4);
-            this.btnMemo.Name = "btnMemo";
-            this.btnMemo.Size = new System.Drawing.Size(190, 36);
-            this.btnMemo.Text = "Write decision memo";
-            this.btnMemo.ToolTipText = "btnMemo_Click → _assessment.BuildDecisionMemo(...). Written from the evidence the run produced — steps, harness verdict, theme diff.";
-            this.btnMemo.Click += new System.EventHandler(this.btnMemo_Click);
-            //
-            // btnReset
-            //
-            this.btnReset.Location = new System.Drawing.Point(1070, 4);
-            this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(110, 36);
-            this.btnReset.Text = "Reset";
-            this.btnReset.ToolTipText = "Back to the state right after the package upgrade: 7 steps pending, flows not run, dossier rows open, theme unmapped.";
-            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
-            //
-            // btnClearTrace
-            //
-            this.btnClearTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.btnClearTrace.Location = new System.Drawing.Point(1190, 4);
-            this.btnClearTrace.Name = "btnClearTrace";
-            this.btnClearTrace.Size = new System.Drawing.Size(110, 36);
-            this.btnClearTrace.Text = "Clear trace";
-            this.btnClearTrace.Click += new System.EventHandler(this.btnClearTrace_Click);
             //
             // MigrationDossierPage
             //
             this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
             this.Controls.Add(this.pnlHeader);
             this.Controls.Add(this.pnlDossier);
-            this.Controls.Add(this.pnlTrace);
-            this.Controls.Add(this.pnlActions);
             this.Name = "MigrationDossierPage";
-            this.Size = new System.Drawing.Size(1348, 680);
+            this.Size = new System.Drawing.Size(1048, 600);
             this.Text = "EnterpriseOps — Migration Dossier";
             this.Load += new System.EventHandler(this.MigrationDossierPage_Load);
             this.pnlHeader.ResumeLayout(false);
@@ -714,8 +552,6 @@ namespace EnterpriseOps.UI
             this.tabPageSteps.ResumeLayout(false);
             this.tabPageFlows.ResumeLayout(false);
             this.tabPageMemo.ResumeLayout(false);
-            this.pnlTrace.ResumeLayout(false);
-            this.pnlActions.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -723,14 +559,13 @@ namespace EnterpriseOps.UI
 
         private Wisej.Web.Panel pnlHeader;
         private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblTenant;
-        private Wisej.Web.Label lblUser;
-        private Wisej.Web.Label lblCorrelation;
         private Wisej.Web.Panel pnlDossier;
         private Wisej.Web.Button btnBuildDossier;
         private Wisej.Web.Button btnRunPath;
         private Wisej.Web.Button btnCancel;
-        private Wisej.Web.Label lblStatus;
+        private Wisej.Web.Button btnRollback;
+        private Wisej.Web.Button btnMapTheme;
+        private Wisej.Web.Button btnWorkOrders;
         private Wisej.Web.TabControl tabDossier;
         private Wisej.Web.TabPage tabPageDossier;
         private Wisej.Web.DataGridView dgvDossier;
@@ -776,17 +611,5 @@ namespace EnterpriseOps.UI
         private Wisej.Web.TextBox txtMemo;
         private Wisej.Web.Label lblBanner;
         private Wisej.Web.Label lblStatusBar;
-        private Wisej.Web.Panel pnlTrace;
-        private Wisej.Web.Label lblTraceTitle;
-        private Wisej.Web.ListBox lstTrace;
-        private Wisej.Web.Label lblTraceFooter;
-        private Wisej.Web.Panel pnlActions;
-        private Wisej.Web.Button btnRollback;
-        private Wisej.Web.Button btnMapTheme;
-        private Wisej.Web.Button btnSwitchUser;
-        private Wisej.Web.Button btnWorkOrders;
-        private Wisej.Web.Button btnMemo;
-        private Wisej.Web.Button btnReset;
-        private Wisej.Web.Button btnClearTrace;
     }
 }

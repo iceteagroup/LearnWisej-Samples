@@ -8,7 +8,7 @@ using OrderDesk.Files;
 namespace OrderDesk.Reporting
 {
     /// <summary>
-    /// ✓ The lesson's reportService: turns domain objects into documents on the server. It knows the
+    /// The lesson's reportService: turns domain objects into documents on the server. It knows the
     /// storage root and the managed writers; it knows nothing about printers, Excel or the user's PC.
     ///
     ///   var rows = orderService.Search(currentFilter);

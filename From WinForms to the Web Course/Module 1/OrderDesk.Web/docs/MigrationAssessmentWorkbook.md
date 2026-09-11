@@ -1,8 +1,7 @@
 # Deliverable 1 + 2 · Migration assessment workbook — LegacyOrderDesk
 
 The inventory of LegacyOrderDesk 3.2 (one WinForms executable, one user per process) and the verdict for every
-item. The same rows are compiled into the app as `Migration/AssessmentWorkbook.cs`, so the console can show,
-filter and count them.
+item.
 
 ## Inventory
 
@@ -48,9 +47,3 @@ Totals: 14 items · 4 direct-port · 5 adapt · 3 redesign · 1 defer · 1 remov
 4. **Attach file** (M, file-system) — needs an upload workflow and a storage root; deferred out of the slice on purpose.
 5. **Startup, connection string, settings** (S) — mechanical, done in Modules 2 and 4.
 6. **Window size restore** (remove), **installer** (defer).
-
-## Evidence (in the running app)
-
-- The **Assessment workbook** card lists the 14 rows; the verdict filter buttons show 4 / 5 / 3 / 1 rows (Remove is
-  visible under *All*); selecting a row prints *Why* and *Replacement*.
-- The trace records each filter as `← JS→.NET workbook.filter verdict = … → n rows`.

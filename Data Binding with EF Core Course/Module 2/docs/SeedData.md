@@ -106,99 +106,31 @@ if (app.Environment.IsDevelopment())
 console. It runs once, before the first session exists, so no page is waiting on it.
 
 **From the page** — `btnSeed_Click`, through the same `RunAsync` pattern as every other handler: the
-`_loading` guard, `SetBusy(true)`, one awaited service call, a friendly message in `catch`, the UI
-restored in `finally`. The button exists so the idempotence can be *watched*: click it a second time and
-the trace shows one `SELECT EXISTS`, one `COUNT`, and no `INSERT` at all, with the state chip turning
-amber (`● nothing to seed`).
+`_loading` guard, `SetBusy(true)`, one awaited service call, a friendly `AlertBox` in `catch`, the UI
+restored in `finally`. The button exists so the idempotence can be *watched*: on a database the host
+already seeded, `statusLabel` reads *nothing to seed: 60 tickets already exist* and the counts line does
+not move. Behind it the seeder sent one `SELECT EXISTS`, one `COUNT` and no `INSERT` at all
+(`DevelopmentSeederTests.Seed_is_idempotent_a_second_call_adds_nothing` checks exactly that).
 
-## Reset & reseed
-
-`ResetDevelopmentDataAsync` is a lab prop, not a pattern to copy. It empties every table in foreign-key
-order and then seeds again:
-
-```csharp
-await db.TicketComments.ExecuteDeleteAsync(token);
-await db.Tickets.ExecuteDeleteAsync(token);
-await db.Customers.ExecuteDeleteAsync(token);
-await db.Agents.ExecuteDeleteAsync(token);
-await db.Categories.ExecuteDeleteAsync(token);
-```
-
-Children first, because the `Restrict` rules on `Tickets` would refuse a customer or category delete
-while tickets exist — the reset has to respect exactly the rules
-[ModelAndDeleteBehaviours.md](ModelAndDeleteBehaviours.md) describes. `ExecuteDeleteAsync` sends one
-`DELETE FROM "…"` per table without loading or tracking anything, and the whole reset is **two contexts**
-(one for the deletes, then `SeedDevelopmentDataAsync` creates its own) — which the trace shows.
-
-It exists because the delete demos are destructive: after unassigning an agent and cascading a ticket's
-comments away, this button puts the database back so the next learner sees the same numbers. Nothing in
-production ever bulk-deletes tickets, and there is no equivalent button anywhere outside Development.
-
-Deleting `SupportDesk.Web/App_Data/supportdesk.db` and restarting is the other way back to a clean state
-— that one also re-runs `MigrateAsync` from nothing.
+Deleting `SupportDesk.Web/App_Data/supportdesk.db` and restarting is the way back to a clean state; it
+also re-runs `MigrateAsync` from nothing. Nothing in the application bulk-deletes tickets.
 
 ## Evidence
 
-**First click of `btnSeed`** (or the first host start):
+**First seed** (the first host start on an empty file, or `btnSeed` on an empty database): the seed is
+one `SELECT EXISTS` followed by 90 `INSERT`s in one `SaveChangesAsync`, and the change tracker releases 90
+tracked entities when the context is disposed. That is everything the seed staged, and the reason the
+context is not allowed to survive the operation. The page's `statusLabel` reads *seeded 5 customers, 3
+agents, 6 categories, 60 tickets, 16 comments in … ms*.
 
-```
-• btnSeed_Click DevelopmentSeeder.SeedDevelopmentDataAsync() — one context: AnyAsync, then AddRange + SaveChangesAsync or nothing
-◦ context      #2 created (SupportDeskContext from the factory)
-→ SQL          SELECT EXISTS ( SELECT 1 FROM "Tickets" AS "t")   (0.3 ms)
-• service      AddRange: 5 customers, 3 agents, 6 categories, 60 tickets (16 comments) → one SaveChangesAsync
-→ SQL          INSERT INTO "Agents" ("DisplayName", "Email") VALUES (@p0, @p1) RETURNING "Id";   (0.1 ms)
-→ SQL          INSERT INTO "Categories" ("Name") VALUES (@p0) RETURNING "Id";   (0.1 ms)
-→ SQL          INSERT INTO "Customers" ("Email", "Name") VALUES (@p0, @p1) RETURNING "Id";   (0.1 ms)
-→ SQL          INSERT INTO "Tickets" ("AgentId", "CategoryId", "CreatedAt", "CustomerId", "Description", "DueDate", "IsUrgent", "Number", "Priority", "RowVersion", "Status", "Title", "UpdatedAt") VALUES (…) RETURNING "Id";   (0.1 ms)
-   …                                                                   (90 INSERTs in total, one SaveChangesAsync)
-→ SQL          INSERT INTO "TicketComments" ("Author", "Body", "CreatedAt", "TicketId") VALUES (@p0, @p1, @p2, @p3) RETURNING "Id";   (0.1 ms)
-◦ context      #2 disposed (90 tracked entities released)
-← result       seeded 5 customers, 3 agents, 6 categories, 60 tickets, 16 comments in 354 ms · 91 statement(s) · … ms in the database · 1 context created, 1 disposed
-◦ card         Model & migration card refreshed · SchemaInfoService.DescribeAsync(): 9 statements (1.2 ms), 1 context created, 1 disposed
-```
-
-`90 tracked entities released` on dispose is the change tracker letting go of everything the seed staged
-— and the reason the context is not allowed to survive the operation.
-
-**Second click** — the whole point of the deliverable:
-
-```
-• btnSeed_Click DevelopmentSeeder.SeedDevelopmentDataAsync() — one context: AnyAsync, then AddRange + SaveChangesAsync or nothing
-◦ context      #3 created (SupportDeskContext from the factory)
-→ SQL          SELECT EXISTS ( SELECT 1 FROM "Tickets" AS "t")   (0.2 ms)
-→ SQL          SELECT COUNT(*) FROM "Tickets" AS "t"   (0.1 ms)
-• service      tickets already exist (60) — returning without AddRange
-◦ context      #3 disposed (0 tracked entities released)
-← result       nothing to seed: 60 tickets already exist — Tickets.AnyAsync() was true, so the seeder returned before AddRange · 2 statement(s) · … ms in the database · 1 context created, 1 disposed
-```
-
-Two statements, no `INSERT`, `● nothing to seed` in amber.
-
-**Reset & reseed** — two contexts, five `DELETE`s, then the seed:
-
-```
-• buttonReset_Click DevelopmentSeeder.ResetDevelopmentDataAsync() — ExecuteDelete on every table (children first), then the seeder (lab prop)
-◦ context      #11 created (SupportDeskContext from the factory)
-• service      ExecuteDeleteAsync on TicketComments, Tickets, Customers, Agents, Categories (children first)
-→ SQL          DELETE FROM "TicketComments" AS "t"   (0.2 ms)
-→ SQL          DELETE FROM "Tickets" AS "t"   (0.3 ms)
-→ SQL          DELETE FROM "Customers" AS "c"   (0.1 ms)
-→ SQL          DELETE FROM "Agents" AS "a"   (0.1 ms)
-→ SQL          DELETE FROM "Categories" AS "c"   (0.1 ms)
-◦ context      #11 disposed (0 tracked entities released)
-◦ context      #12 created (SupportDeskContext from the factory)
-→ SQL          SELECT EXISTS ( SELECT 1 FROM "Tickets" AS "t")   (0.1 ms)
-• service      AddRange: 5 customers, 3 agents, 6 categories, 60 tickets (16 comments) → one SaveChangesAsync
-   …
-◦ context      #12 disposed (90 tracked entities released)
-← result       seeded 5 customers, 3 agents, 6 categories, 60 tickets, 16 comments in 12 ms · 96 statement(s) · … ms in the database · 2 context created, 2 disposed
-```
+**Second run**, the whole point of the deliverable: two statements, no `INSERT`, and *nothing to seed: 60
+tickets already exist*.
 
 Server console at start:
 
 ```
 [SupportDesk] Development seed: seeded 5 customers, 3 agents, 6 categories, 60 tickets, 16 comments in 354 ms
-[SupportDesk] Development seed: nothing to seed: 60 tickets already exist — Tickets.AnyAsync() was true, so the seeder returned before AddRange
+[SupportDesk] Development seed: nothing to seed: 60 tickets already exist
 ```
 
 Tests (`SupportDesk.Tests`):
@@ -207,11 +139,10 @@ Tests (`SupportDesk.Tests`):
   — the counts in `SeedResult` and the counts actually in the database agree, and there are at least 50
   tickets.
 - `DevelopmentSeederTests.Seed_is_idempotent_a_second_call_adds_nothing` — the second call runs one
-  context, reports `nothing to seed`, and the trace contains **no** command starting with `INSERT`.
+  context, reports `nothing to seed`, and the test's command trace (`QueryTrace`) contains **no** command
+  starting with `INSERT`.
 - `DevelopmentSeederTests.Seed_data_is_realistic_and_mixed` — unique ticket numbers, all four statuses,
   all three priorities, due dates present and absent, 20–40 % unassigned, every title within 180
   characters, and a 16-byte `RowVersion` on every row.
-- `DevelopmentSeederTests.Reset_empties_every_table_and_seeds_again` — deletes a ticket (cascading its
-  comments), resets, and gets the original ticket and comment counts back.
 - `MigrationTests.MigrateAsync_applies_InitialCreate_once_and_the_seeder_fills_the_schema` — the seeder
   fills a schema created by the **migration**, not by `EnsureCreated`.

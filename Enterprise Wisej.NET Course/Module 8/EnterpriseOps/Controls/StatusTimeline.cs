@@ -261,15 +261,6 @@ namespace EnterpriseOps.Controls
             OnSelectionCleared(EventArgs.Empty);
         }
 
-        /// <summary>
-        /// One line describing exactly what this component currently holds — used by the lab screen to prove
-        /// that the timeline sees a projection and nothing else.
-        /// </summary>
-        public string DescribeContract()
-            => $"StatusTimeline · {_items.Count} TimelineItem(s) {{At, Status, Message, Severity}} · selected: " +
-               (_selected == null ? "none" : $"#{SelectedIndex} {_selected.Status}") +
-               (_sampleMode ? " · SAMPLE MODE" : "");
-
         #endregion
 
         #region Design time

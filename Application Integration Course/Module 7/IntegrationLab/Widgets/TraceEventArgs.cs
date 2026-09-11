@@ -2,11 +2,11 @@ using System;
 
 namespace IntegrationLab.Widgets
 {
-    public enum TraceDirection { ServerToClient, ClientToServer, Server, Rejected }
+    public enum TraceDirection { ClientToServer, Rejected }
 
     /// <summary>
-    /// One line of the "Server WidgetEvent log" shown by the lab UI: every message that
-    /// crosses the wire in either direction, every .NET event raised, every rejection.
+    /// One line of the "Server WidgetEvent log": a payload received from the client, or the
+    /// reason the server rejected it.
     /// </summary>
     public class TraceEventArgs : EventArgs
     {

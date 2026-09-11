@@ -55,8 +55,8 @@ Not done. Each has an owner and a date, and none of them is "we'll get to it".
 | 5 | No load test above 50 concurrent sessions | the paging and background-task budgets are untested at scale | ana.ops | 2026-10-22 |
 | 6 | Documentation MCP endpoint is not deployed | `docs/index.json` is MCP-shaped but nothing serves it yet | ben.tech | 2026-11-05 |
 
-Item 1 is the one the app can show: press **Fail: missing document** on the Capstone Review screen and the
-package stops passing, exactly as it should while that document does not exist.
+Item 1 is the one the app can show: list `docs/SecurityReviewSignOff.md` in `docs/index.json` before it is
+written and the package stops passing, exactly as it should while that document does not exist.
 
 ## Known limitations of this build
 
@@ -89,5 +89,5 @@ Explained, not assumed.
 ## Evidence
 
 Capstone Review → **✓ Verify package** shows every deliverable of this statement resolved on disk and
-carrying the section that proves it. **Fail: missing document** shows what this statement's open item 1 looks
-like from the inside: the package refuses to pass while a listed document is not there.
+carrying the section that proves it, and refuses to pass while a listed document is not there — what this
+statement's open item 1 looks like from the inside.

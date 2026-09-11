@@ -1,8 +1,8 @@
 // ArchitectureGovernancePatterns.cs
 // Verbatim from the Module 1 lesson resource (and the walkthrough video's review-gate scene).
-// - ArchitectureDecision: the shape of an ADR (see DecisionLog.cs for ADR-001 as data, ADR-001-SolutionStructure.md as prose)
+// - ArchitectureDecision: the shape of an ADR (ADR-001-SolutionStructure.md is the prose version)
 // - IWorkflowScreen:      every course screen implements it (CommandCenterDashboard does)
-// - ReviewGate:           the two rules that catch a fat handler before merge (ReviewGateService runs them on real files)
+// - ReviewGate:           the two rules that catch a fat handler before merge
 using System;
 using System.Collections.Generic;
 

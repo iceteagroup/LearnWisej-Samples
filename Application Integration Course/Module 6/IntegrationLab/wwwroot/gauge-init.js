@@ -5,21 +5,18 @@
 //
 // Contract (see docs/ServerToClientCalls.md and docs/DtoContract.md):
 //   state in    (Options → init/update):  value, min, max, warnAt, threshold, label, units
-//   commands in (C# Call / CallAsync / EvalAsync → functions on THIS wrapper):
+//   commands in (C# Call / CallAsync → functions on THIS wrapper):
 //       setValue(v)          Call         sweeps the needle to v, returns nothing
 //       resetAnimation()     Call         cancels the sweep, restarts the settle animation
 //       getRenderedSize()    CallAsync    → { width, height }                      (RenderedSize)
 //       getSelectedState()   CallAsync    → { value, isAboveThreshold, width, height, isAnimating }  (GaugeStateDto)
-//       measureWidth()       EvalAsync    "this.measureWidth()" → number
 //   events out  (WiredEvents):            thresholdExceeded {value}
 //                                         rangeChanged      {range, value}
 //                                         error             {phase, message}
-//                                         leakDetected      {bytes, keys, sample}
 //
 // Which object does a server call reach?
 //   gauge.Call("setValue", 72)      → this.setValue(72)         the WRAPPER function below (this = wrapper)
 //   gauge.Instance.setValue(72)     → this.widget.setValue(72)  the VENDOR method, bypassing the wrapper
-//   gauge.EvalAsync("this.measureWidth()")  → evaluated with this = wrapper
 // The wrapper functions are the documented contract; Instance.* is a shortcut that skips them.
 //
 // Rules this adapter follows:
@@ -34,7 +31,7 @@ this._vendorEvents = {
     rangeChanged: "rangechange"
 };
 
-this.SWEEP_MS = 700;        // needle sweep length; long enough for "Get selected state" during a stream to catch isAnimating: true
+this.SWEEP_MS = 700;        // needle sweep length (isAnimating is true while it runs)
 
 this.init = function (options) {
     var me = this;
@@ -102,10 +99,6 @@ this.init = function (options) {
 this.update = function (options, old) {
     if (!this.widget) return;
     try {
-        // Serialization discipline check: a domain object leaked into the options.
-        // Report what arrived; never render it.
-        this._checkForLeak(options);
-
         if (options.threshold !== undefined) this._threshold = options.threshold;
 
         this.widget.setOptions({
@@ -165,11 +158,6 @@ this.getSelectedState = function () {
     };
 };
 
-// EvalAsync("this.measureWidth()"): a primitive back from an expression.
-this.measureWidth = function () {
-    return this.host ? this.host.getBoundingClientRect().width : 0;
-};
-
 // ---- needle sweep (client-only visual state) ----------------------------------------------
 
 this._animateTo = function (target) {
@@ -215,30 +203,6 @@ this._cancelSweep = function () {
     this._land();
 };
 
-// ---- serialization discipline: detect a leaked domain object in the options ---------------
-
-this._checkForLeak = function (options) {
-    if (!("debugDump" in options)) return;
-    if (options.debugDump === null || options.debugDump === undefined) { this._lastLeakJson = null; return; }
-
-    var dump = options.debugDump, json;
-    try { json = JSON.stringify(dump); } catch (ex) { json = "[unserializable]"; }
-    if (json === this._lastLeakJson) return;      // already reported this exact payload
-    this._lastLeakJson = json;
-
-    var keys = [], k;
-    try {
-        for (k in dump) keys.push(k);
-        if (dump.customer) for (k in dump.customer) keys.push("customer." + k);
-    } catch (ex) { /* ignore */ }
-
-    var sensitive = keys.filter(function (n) { return /taxId|creditLimit|internalRemarks|email|approvedBy/i.test(n); });
-    var data = { bytes: json.length, keys: keys.length, sample: sensitive.slice(0, 5).join(", ") };
-    if (this._leakHandler) { this._leakHandler(data); return; }
-    var me = this;
-    setTimeout(function () { me.fireWidgetEvent("leakDetected", data); }, 0);
-};
-
 // ---- events -------------------------------------------------------------------------------
 
 // Wisej.NET calls this once for every name in WiredEvents (after "loaded").
@@ -251,7 +215,6 @@ this._addListener = function (name, handler) {
         return;
     }
     if (name === "error") this._errorHandler = handler;          // raised by the adapter itself
-    if (name === "leakDetected") this._leakHandler = handler;    // raised by the adapter itself
 };
 
 this._removeListener = function (name, handler) {
@@ -261,7 +224,6 @@ this._removeListener = function (name, handler) {
         return;
     }
     if (name === "error" && this._errorHandler === handler) this._errorHandler = null;
-    if (name === "leakDetected" && this._leakHandler === handler) this._leakHandler = null;
 };
 
 // Translate the vendor payload into the contract payload: only meaningful data.
@@ -273,8 +235,6 @@ this._getEventData = function (type, e) {
             return { range: e.range, value: e.value };
         case "error":
             return { phase: e.phase, message: e.message };
-        case "leakDetected":
-            return { bytes: e.bytes, keys: e.keys, sample: e.sample };
     }
     return null;
 };

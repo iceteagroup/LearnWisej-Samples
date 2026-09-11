@@ -11,18 +11,15 @@ using Wisej.Web;
 namespace EnterpriseOps.UI
 {
     /// <summary>
-    /// EnterpriseOps — the Escalation Wizard (the video's EscalationWizard, opened modally with ShowDialogAsync).
+    /// EnterpriseOps — the Escalation Wizard, opened modally with ShowDialogAsync.
     ///
-    /// Six designable steps — Reason · Attachments · Approver · Due date · Notifications · Review — fill ONE typed
+    /// Six steps — Reason · Attachments · Approver · Due date · Notifications · Review — fill ONE typed
     /// <see cref="EscalationWizardState"/>. On Finish the workflow turns that state into one
     /// <see cref="EscalationCommand"/> and returns one <see cref="WorkflowResult"/>.
     ///
-    /// What this file is allowed to do: move between steps, copy values into the state object, show what the
-    /// workflow answered. What it must never do — and does not do anywhere below:
-    ///   · decide whether a reason is long enough, an attachment required, an approver allowed, a due date acceptable
-    ///     → EscalationWorkflow.ValidateStep(state, step)
-    ///   · persist, notify, audit or compensate → EscalationWorkflow.EscalateAsync(command)
-    ///   · talk to a repository, a gateway or the audit log directly → it has no reference to any of them.
+    /// This form moves between steps, copies values into the state object and shows what the workflow
+    /// answered. Step rules live in EscalationWorkflow.ValidateStep; persisting, notifying, auditing and
+    /// compensating live in EscalationWorkflow.EscalateAsync. The form holds no repository, gateway or audit log.
     ///
     /// State ownership: the state object lives in WorkflowStateStore on the server, saved after every completed
     /// step, so a browser refresh (or a cancelled wizard) loses nothing — the next open resumes the draft.
@@ -33,10 +30,6 @@ namespace EnterpriseOps.UI
         private readonly IEscalationWorkflow _workflow;
         private readonly EscalationWizardState _state;
         private readonly WorkOrder _workOrder;
-
-        // The five orchestration steps of EscalateAsync, in order — the strip under the wizard in the video.
-        private static readonly string[] OrchestrationSteps = { "validate", "authorize", "persist", "notify", "audit" };
-        private readonly Dictionary<string, StepStatus> _stepStatus = new Dictionary<string, StepStatus>();
 
         private CancellationTokenSource _lookupCts;     // instance field: the approver lookup must be cancellable
         private bool _loading;                          // suppress control events while the state is written into the UI
@@ -79,13 +72,13 @@ namespace EnterpriseOps.UI
         {
             try
             {
-                _services.Trace.Write($"UI → EscalationWizard opened for {_workOrder.Number} ({(Resumed ? "resumed" : "new")} draft {_state.DraftId})");
                 this.Text = $"Escalate work order — {_workOrder.Number}";
-                lblWorkOrder.Text = $"{_workOrder.Number} — {_workOrder.Title} · {_workOrder.Customer} · {_workOrder.Priority} · tenant {_workOrder.TenantId} · v{_workOrder.Version}";
 
                 WriteStateIntoControls();
                 ShowStep(_state.CurrentStep);
-                RenderOrchestration();
+
+                if (Resumed)
+                    lblWizardStatus.Text = $"Draft resumed — {_state.Progress}";
 
                 if (_state.CurrentStep == WizardStep.Approver)
                     await LoadApproversAsync();
@@ -96,7 +89,7 @@ namespace EnterpriseOps.UI
             }
         }
 
-        /// <summary>Next / Finish / Close — the handler the lab's code check reads: thin, async, service call, try/catch.</summary>
+        /// <summary>Next / Finish / Close.</summary>
         private async void btnNext_Click(object sender, EventArgs e)
         {
             try
@@ -126,7 +119,6 @@ namespace EnterpriseOps.UI
 
                 CollectCurrentStep();
                 var previous = (WizardStep)((int)_state.CurrentStep - 1);
-                _services.Trace.Write($"UI → Back to step {(int)previous + 1} ({WizardSteps.Title(previous)}) — nothing is validated going back");
                 ShowStep(previous);
 
                 if (previous == WizardStep.Approver && cboApprover.Items.Count == 0)
@@ -149,7 +141,6 @@ namespace EnterpriseOps.UI
             CollectCurrentStep();
             _services.Drafts.Save(_state);
             DraftKept = true;
-            _services.Trace.Write($"UI → wizard closed at step {(int)_state.CurrentStep + 1} without a decision — draft {_state.DraftId} kept, nothing persisted");
         }
 
         /// <summary>Cancel: keep the collected state as a draft, or discard it and clean the staged uploads up.</summary>
@@ -169,13 +160,11 @@ namespace EnterpriseOps.UI
                 {
                     _services.Drafts.Save(_state);
                     DraftKept = true;
-                    _services.Trace.Write($"UI → cancelled, draft {_state.DraftId} kept — the wizard can resume from step {(int)_state.CurrentStep + 1}");
                 }
                 else
                 {
                     _services.Staging.DiscardAll(_state.Attachments);
                     _services.Drafts.Remove(_state.WorkOrderId, "cancelled by the user");
-                    _services.Trace.Write("UI → cancelled, draft discarded and staging cleaned up — nothing was persisted");
                 }
 
                 _cancelHandled = true;
@@ -184,6 +173,12 @@ namespace EnterpriseOps.UI
             catch (Exception ex)
             {
                 ReportUnexpected(ex);
+            }
+            finally
+            {
+                // The await ends after the request returned: push the final UI state to the browser.
+                if (!IsDisposed)
+                    Application.Update(this);
             }
         }
 
@@ -249,7 +244,6 @@ namespace EnterpriseOps.UI
         {
             if (_loading) return;
             _state.Reason = txtReason.Text;
-            lblReasonHint.Text = $"{txtReason.Text.Trim().Length} characters. Whether that is enough is decided by EscalationWorkflow.ValidateStep — this page only counts.";
         }
 
         #endregion
@@ -264,9 +258,8 @@ namespace EnterpriseOps.UI
             var validation = _workflow.ValidateStep(_state, _state.CurrentStep);
             if (!validation.IsValid)
             {
-                // Validation failure path: stay on the step, show what the service said, persist nothing.
+                // Stay on the step, show what the service said, persist nothing.
                 lblValidation.Text = validation.Summary;
-                lblWizardStatus.Text = $"StepValidation — {validation.Errors.Count} error(s) on {WizardSteps.Title(_state.CurrentStep)} · the step is not left until they are fixed";
                 AlertBox.Show(validation.Summary, MessageBoxIcon.Warning,
                     alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
                 return;
@@ -307,7 +300,7 @@ namespace EnterpriseOps.UI
             _lookupCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             btnLookupApprovers.Enabled = false;
-            lblApproverHint.Text = "Looking the directory up (5 s timeout)…";
+            lblApproverHint.Text = "Looking up the directory…";
             Application.Update(this);
 
             try
@@ -321,15 +314,12 @@ namespace EnterpriseOps.UI
                 if (cboApprover.SelectedItem == null) cboApprover.SelectedIndex = -1;
                 _loading = false;
 
-                lblApproverHint.Text = $"{approvers.Count} people in the directory. Who may actually approve is decided by PermissionService when you click Next — not here.";
+                lblApproverHint.Text = $"{approvers.Count} people in the directory.";
             }
             catch (OperationCanceledException)
             {
-                // Failure path matrix · timeout: the draft stays, nothing is half-applied, the user can retry.
-                _services.Trace.Write("UI → approver lookup timed out after 5 s — draft kept, the user can retry");
+                // Timeout: the draft stays, nothing is half-applied, the user can retry.
                 lblApproverHint.Text = "The approver directory did not answer within 5 seconds. Your draft is saved — click \"Look up the directory again\".";
-                lblValidation.Text = "External step timed out: approver directory. Nothing was lost.";
-                lblWizardStatus.Text = "Timeout — the workflow was never called; the wizard state is still on the server.";
             }
             finally
             {
@@ -375,7 +365,6 @@ namespace EnterpriseOps.UI
             chkNotifySms.Checked = _state.NotifySms;
             _loading = false;
 
-            lblReasonHint.Text = $"{(_state.Reason ?? "").Trim().Length} characters. Whether that is enough is decided by EscalationWorkflow.ValidateStep — this page only counts.";
             RenderAttachments();
         }
 
@@ -393,14 +382,13 @@ namespace EnterpriseOps.UI
 
             btnBack.Enabled = step != WizardStep.Reason;
             btnNext.Text = step == WizardStep.Review ? "Finish" : "Next";
-            lblStepCounter.Text = $"Step {(int)step + 1} of {WizardSteps.Count}";
 
             if (step == WizardStep.Review) RenderSummary();
 
             RenderRail();
             lblWizardStatus.Text = step == WizardStep.Review
                 ? "Review & finish — EscalationCommand ready"
-                : $"Step {(int)step + 1} of {WizardSteps.Count} — the pages collect, EscalationWorkflow decides.";
+                : $"Step {(int)step + 1} of {WizardSteps.Count} — {WizardSteps.Title(step)}";
         }
 
         private void RenderRail()
@@ -419,8 +407,6 @@ namespace EnterpriseOps.UI
                     ? System.Drawing.Color.FromArgb(13, 27, 42)
                     : (done ? System.Drawing.Color.FromArgb(31, 138, 76) : System.Drawing.Color.FromArgb(138, 151, 164));
             }
-
-            lblDraftState.Text = $"draft {_state.DraftId} · {(Resumed ? "resumed" : "new")} · {_state.Progress} · saved {_state.UpdatedUtc:HH:mm:ss} UTC";
         }
 
         private void RenderAttachments()
@@ -434,12 +420,11 @@ namespace EnterpriseOps.UI
         {
             var rows = new List<SummaryRow>
             {
-                new SummaryRow { Field = "WORK ORDER",  Value = $"{_workOrder.Number} — {_workOrder.Title} (v{_state.WorkOrderVersion})" },
+                new SummaryRow { Field = "WORK ORDER",  Value = $"{_workOrder.Number} — {_workOrder.Title}" },
                 new SummaryRow { Field = "REASON",      Value = (_state.Reason ?? "").Trim() },
                 new SummaryRow { Field = "ATTACHMENTS", Value = _state.AttachmentSummary },
                 new SummaryRow { Field = "APPROVER",    Value = ApproverText() },
                 new SummaryRow { Field = "DUE",         Value = $"{_state.DueAtLocal:MMM d, HH:mm} · notify by {_state.ChannelSummary}" },
-                new SummaryRow { Field = "REQUESTED BY",Value = $"{_services.Session.User} · tenant {_services.Session.TenantId}" },
             };
             dgvSummary.DataSource = new BindingSource { DataSource = rows };
         }
@@ -450,31 +435,11 @@ namespace EnterpriseOps.UI
             return approver != null ? $"{approver.Id} — {approver.Role}" : (_state.ApproverId ?? "—");
         }
 
-        /// <summary>The video's orchestration strip, driven by the workflow's progress reports.</summary>
+        /// <summary>The workflow's progress reports drive the status strip while EscalateAsync runs.</summary>
         private void OnWorkflowProgress(WorkflowProgress progress)
         {
-            _stepStatus[progress.Step] = progress.Status;
-            RenderOrchestration();
             lblWizardStatus.Text = $"EscalateAsync — {progress.Step} {progress.Status.ToString().ToLowerInvariant()}{(string.IsNullOrEmpty(progress.Detail) ? "" : ": " + progress.Detail)}";
             Application.Update(this);
-        }
-
-        private void RenderOrchestration()
-        {
-            var parts = OrchestrationSteps.Select(name =>
-            {
-                var status = _stepStatus.TryGetValue(name, out var s) ? s : StepStatus.Pending;
-                string glyph = status switch
-                {
-                    StepStatus.Succeeded => "✓",
-                    StepStatus.Failed => "✕",
-                    StepStatus.Compensated => "✕",
-                    StepStatus.Running => "…",
-                    _ => "·",
-                };
-                return $"{glyph} {name}{(status == StepStatus.Compensated ? " + compensation" : "")}";
-            });
-            lblOrchestration.Text = "EscalationWorkflow:  " + string.Join("  →  ", parts);
         }
 
         /// <summary>Typed result in, screen out. Every branch is an Outcome — no string parsing, no exception catching.</summary>
@@ -494,7 +459,7 @@ namespace EnterpriseOps.UI
                     break;
 
                 case WorkflowOutcome.CreatedWithCompensation:
-                    // The video's failure path: the escalation is KEPT, the compensation is recorded.
+                    // The escalation is KEPT; the compensation is recorded.
                     Banner(System.Drawing.Color.FromArgb(255, 248, 236), System.Drawing.Color.FromArgb(122, 82, 16), System.Drawing.Color.FromArgb(154, 122, 58));
                     lblResultBanner.Text = "!  " + result.Message;
                     lblResultDetail.Text = $"{StepLine(result)} · CompensationAction: {result.CompensationAction} · audited · next: {result.NextAction}";
@@ -509,7 +474,6 @@ namespace EnterpriseOps.UI
                     if (result.FirstFailingStep.HasValue)
                     {
                         var step = result.FirstFailingStep.Value;
-                        _services.Trace.Write($"UI ← ValidationFailed → jumping back to step {(int)step + 1} ({WizardSteps.Title(step)})");
                         ShowStep(step);
                         lblValidation.Text = string.Join(" · ", result.FieldErrors.Where(f => f.Step == step).Select(f => $"{f.Field}: {f.Message}"));
                     }
@@ -553,8 +517,6 @@ namespace EnterpriseOps.UI
             btnCancel.Enabled = false;
             lblValidation.Text = "";
             lblWizardStatus.Text = status;
-            _stepStatus.Clear();
-            RenderOrchestration();
             Application.Update(this);
         }
 
@@ -575,10 +537,10 @@ namespace EnterpriseOps.UI
         /// <summary>Nothing the workflow models — a bug. Log it, tell the user something safe, keep the draft.</summary>
         private void ReportUnexpected(Exception ex)
         {
-            _services.Trace.Write($"UI ← unexpected {ex.GetType().Name}: {ex.Message} — draft {_state.DraftId} kept");
+            _services.Trace.Write($"UI: unexpected {ex.GetType().Name}: {ex.Message} — draft {_state.DraftId} kept");
             _services.Drafts.Save(_state);
             lblValidation.Text = "The action could not be completed. Your draft was kept.";
-            AlertBox.Show("The action could not be completed. Check the activity trace for details.",
+            AlertBox.Show("The action could not be completed. Your draft was kept.",
                 MessageBoxIcon.Error, alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
         }
 

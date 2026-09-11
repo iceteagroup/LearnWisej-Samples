@@ -9,8 +9,8 @@ namespace TicketOps.Security
     /// Role → permission table. The table is constant data (the same for every session), which is the
     /// one kind of static this course allows; the USER is never stored here — callers pass it in.
     ///
-    /// Least privilege: a Technician can look and annotate, a Supervisor can also close and delete,
-    /// an Admin can additionally read the audit trail. Nothing is granted by default.
+    /// Least privilege: a Technician can look and annotate, a Supervisor can also close and delete and
+    /// read the audit trail. Nothing is granted by default.
     /// </summary>
     public sealed class PermissionService : IPermissionService
     {
@@ -40,9 +40,7 @@ namespace TicketOps.Security
 
             var granting = RolesGranting(permission);
             bool allowed = granting.Any(user.IsInRole);
-            if (allowed)
-                _log.Info(LogLayer.Service, "PermissionService.Can", $"{user} {permission} → allowed");
-            else
+            if (!allowed)
                 _log.Warn(LogLayer.Service, "PermissionService.Can", $"{user} {permission} → denied (needs {string.Join(" or ", granting)})");
             return allowed;
         }

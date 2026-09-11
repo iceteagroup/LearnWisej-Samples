@@ -13,8 +13,7 @@ namespace EnterpriseOps.Data
     ///
     /// Latency is simulated as a function of the requested page size so the slow-query failure path is
     /// *measured*, not faked: 140 ms + 0.44 ms per requested row. pageSize 50 → about 160 ms; pageSize 5000
-    /// → 2,340 ms — the number the lesson uses. The store also has a one-shot failure switch so the
-    /// "operation that throws" path can be exercised without a real database.
+    /// → 2,340 ms — the number the lesson uses.
     /// </summary>
     public sealed class InMemoryWorkOrderStore
     {
@@ -37,14 +36,11 @@ namespace EnterpriseOps.Data
 
         public long EstimatedBytes => (long)_rows.Count * ApproxBytesPerRow;
 
-        /// <summary>Failure path switch: the next SearchAsync throws the way a dropped connection would.</summary>
-        public bool FailNextCall { get; set; }
-
         public int SimulatedLatencyMs(int pageSize) => BaseLatencyMs + (int)Math.Round(pageSize * LatencyPerRowMs);
 
         /// <summary>
         /// One page of one tenant's work orders. The correlation id travels in the CommandContext and is
-        /// written into every Data: trace line, so the log for one click can be followed down to here.
+        /// written into every Data: server-trace line, so the log for one click can be followed down to here.
         /// </summary>
         public async Task<PagedResult<WorkOrder>> SearchAsync(WorkQueueQuery query, CommandContext ctx, CancellationToken ct)
         {
@@ -52,17 +48,6 @@ namespace EnterpriseOps.Data
             if (ctx == null) throw new ArgumentNullException(nameof(ctx));
 
             _trace($"Data: SearchAsync tenant={query.TenantId} page={query.Page} pageSize={query.PageSize:N0} · correlation {ctx.CorrelationId}");
-
-            if (FailNextCall)
-            {
-                FailNextCall = false;
-                _trace($"Data: connection lost (simulated) · correlation {ctx.CorrelationId} → throwing to the service");
-
-                // The message deliberately carries the kind of detail a real driver adds — host, pool, spid.
-                // It belongs in the server log with the correlation id, never on the user's screen.
-                throw new InvalidOperationException(
-                    "Connection reset by peer while reading the result set (host sql-prod-02:1433, pool WorkOrders, spid 71).");
-            }
 
             int latency = SimulatedLatencyMs(query.PageSize);
             await Task.Delay(latency, ct);

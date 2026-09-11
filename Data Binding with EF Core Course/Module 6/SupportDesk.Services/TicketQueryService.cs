@@ -32,18 +32,6 @@ public sealed class TicketQueryService
         return await db.Tickets.CountAsync(token);
     }
 
-    /// <summary>
-    /// Lab prop: the same count with an artificial delay, so the loading guard in the page can be
-    /// watched (a busy server, a slow network). The delay sits inside the unit of work on purpose:
-    /// the context stays alive for the whole operation and is still disposed at the end.
-    /// </summary>
-    public async Task<int> CountTicketsSlowlyAsync(TimeSpan latency, CancellationToken token = default)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        await Task.Delay(latency, token);
-        return await db.Tickets.CountAsync(token);
-    }
-
     #endregion
 
     #region Module 3 · the ticket browser query
@@ -72,21 +60,7 @@ public sealed class TicketQueryService
         return await RunSearchAsync(db, criteria, token);
     }
 
-    /// <summary>
-    /// Lab prop: the same search with an artificial delay <b>inside</b> the unit of work, so the loading
-    /// guard, the disabled buttons and the status text can be watched. The context is created before the
-    /// delay and disposed after the query, exactly like the real path — the operation is slow, the lifetime
-    /// rule is not bent.
-    /// </summary>
-    public async Task<PagedResult<TicketListItem>> SearchTicketsSlowlyAsync(TicketSearchCriteria criteria, TimeSpan latency, CancellationToken token = default)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        QueryTrace.Note($"simulated latency of {latency.TotalSeconds:0.#} s inside the unit of work — the context is already open and the page is guarded");
-        await Task.Delay(latency, token);
-        return await RunSearchAsync(db, criteria, token);
-    }
-
-    /// <summary>The composed query. Shared by the normal and the slow search, so both send the same two statements.</summary>
+    /// <summary>The composed query: exactly two statements, a COUNT and one paged SELECT.</summary>
     private static async Task<PagedResult<TicketListItem>> RunSearchAsync(SupportDeskContext db, TicketSearchCriteria criteria, CancellationToken token)
     {
         var pageSize = Math.Max(1, criteria.PageSize);
@@ -265,42 +239,6 @@ public sealed class TicketQueryService
         // not one page of it — unlike the optimised branch's separate CountAsync, this number is simply the
         // size of the list already sitting in memory, which is the whole anti-pattern in one field.
         return new NaiveSearchResult(items, all.Count, tracked);
-    }
-
-    #endregion
-
-    #region Module 6 · a background report job — its own context, progress pushed by the caller
-
-    /// <summary>
-    /// A report-style background job: how many tickets sit in each of the five statuses, counted one status
-    /// at a time with a pause between steps so progress is actually visible to a human. Runs inside
-    /// <b>one</b> context, created here — not captured from whatever click started it — and disposed when
-    /// every step is done: the "a DbContext lives for one operation" rule applied to an operation that
-    /// happens to take a few seconds instead of a few milliseconds. The caller
-    /// (<c>TicketBrowserPage.btnLongJob_Click</c>, running inside <c>Application.StartTask</c>) supplies
-    /// <paramref name="onStep"/> to push progress into a label through <c>Application.Update</c>; this
-    /// method has no reference to <c>Wisej.Web</c> and knows nothing about how its progress is shown.
-    /// </summary>
-    /// <param name="onStep">Called once per status with (status, count so far this status, step number).</param>
-    /// <param name="stepDelay">The pause between steps. Zero in a test — nothing here needs to be slow to be correct.</param>
-    public async Task CountTicketsPerStatusAsync(Action<string, int, int> onStep, TimeSpan stepDelay, CancellationToken token = default)
-    {
-        ArgumentNullException.ThrowIfNull(onStep);
-
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        QueryTrace.Note($"CountTicketsPerStatusAsync: one context created here for the whole {TicketStatuses.All.Count}-step job, not one per step");
-
-        for (var i = 0; i < TicketStatuses.All.Count; i++)
-        {
-            var status = TicketStatuses.All[i];
-            var count = await db.Tickets.CountAsync(t => t.Status == status, token);
-            onStep(status, count, i + 1);
-
-            if (stepDelay > TimeSpan.Zero)
-                await Task.Delay(stepDelay, token);
-        }
-
-        QueryTrace.Note($"CountTicketsPerStatusAsync: {TicketStatuses.All.Count} statements in one context, about to be disposed");
     }
 
     #endregion

@@ -114,13 +114,11 @@ namespace TicketOps.Dialogs
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(110, 40);
             this.buttonCancel.Text = "Cancel";
-            this.buttonCancel.ToolTipText = "Stops the workflow: Result stays unconfirmed, the caller does nothing";
             this.buttonCancel.Click += new System.EventHandler(this.buttonCancel_Click);
             this.buttonConfirm.Location = new System.Drawing.Point(450, 296);
             this.buttonConfirm.Name = "buttonConfirm";
             this.buttonConfirm.Size = new System.Drawing.Size(110, 40);
             this.buttonConfirm.Text = "Confirm";
-            this.buttonConfirm.ToolTipText = "Validates inside the dialog, then builds the typed Result and closes with DialogResult.OK";
             this.buttonConfirm.Click += new System.EventHandler(this.buttonConfirm_Click);
             //
             // ApprovalDialog
@@ -144,7 +142,6 @@ namespace TicketOps.Dialogs
             this.Name = "ApprovalDialog";
             this.StartPosition = Wisej.Web.FormStartPosition.CenterParent;
             this.Text = "Approve Work Order";
-            this.FormClosed += new Wisej.Web.FormClosedEventHandler(this.ApprovalDialog_FormClosed);
             this.ResumeLayout(false);
         }
 

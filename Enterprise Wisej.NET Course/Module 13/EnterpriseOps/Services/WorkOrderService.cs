@@ -150,7 +150,7 @@ namespace EnterpriseOps.Services
                 r.Notes = AppendNote(r.Notes, reason);
                 r.LastChangedBy = ctx.User;
             });
-            _trace.Log(TraceLayer.Data, $"repository.Update {code} v{row.Version} → v{newVersion} · Cancelled by {ctx.User} — the device still holds v{row.Version}");
+            _trace.Log(TraceLayer.Data, $"repository.Update {code} v{row.Version} → v{newVersion} · Cancelled by {ctx.User}");
             _audit.Append(ctx.TenantId, ctx.User, "Cancel", code, "Applied", reason, ctx.CorrelationId);
             return Task.FromResult(CommandResult.Ok(ctx.CorrelationId, newVersion, $"{code} cancelled on the server (v{newVersion})."));
         }

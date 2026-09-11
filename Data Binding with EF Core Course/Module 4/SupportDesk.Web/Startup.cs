@@ -27,11 +27,7 @@ builder.Services.AddSupportDeskData(connectionString, builder.Environment.IsDeve
 //    registration fails in Development ("Cannot resolve scoped service ... from root provider").
 builder.Services.AddTransient<TicketQueryService>();
 builder.Services.AddTransient<TicketCommandService>();
-builder.Services.AddTransient<SchemaInfoService>();
 builder.Services.AddTransient<DevelopmentSeeder>();
-builder.Services.AddTransient<ModelDemoService>();
-builder.Services.AddTransient<SharedContextAntiPattern>();
-builder.Services.AddTransient<BoundIQueryableAntiPattern>();
 
 var app = builder.Build();
 

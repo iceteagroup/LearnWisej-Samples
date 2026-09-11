@@ -40,6 +40,6 @@ an unknown name on the knob's page handler is logged as `rejected: not in the co
 
 ## Evidence
 
-The "Server WidgetEvent log" prints every payload exactly as received (`e.Data = {…}`) followed by
-the DTO that was built from it, or the `✖ rejected …` reason. "Bad payload" (`{ index: -1 }`) is the
-failure path; "Noise counter" shows how many vendor events never became payloads at all.
+The "Server WidgetEvent log" prints every payload exactly as received (`e.Data = {…}`), or the
+`✖ rejected …` reason when server validation refuses it. Hover, zoom, render, layout and legend
+events never become payloads at all.

@@ -28,8 +28,7 @@ The stored form is JSON, exactly what a `nvarchar` column would hold:
  "SortBy":"Priority","Descending":true,"Page":1,"PageSize":50}
 ```
 
-`SavedViewStore.Serialize` / `Deserialize` are that column's read and write. The trace prints the JSON every time a
-view is saved or applied, so the reviewer can see that it is a definition and not a row set.
+`SavedViewStore.Serialize` / `Deserialize` are that column's read and write — a definition, never a row set.
 
 ## Rules
 
@@ -62,17 +61,10 @@ public sealed class GridState
 ```
 
 It is owned by `SessionContext`, which lives in `Application.Session` — per user, never a static. `WorkQueuePage`
-holds no copy of the query; it reads `Grid.Query` and writes it back. That is why **Simulate refresh (F5)** can do
-this:
-
-```csharp
-DetachTrace();
-Application.MainPage = new WorkQueuePage();
-```
-
-The page object is thrown away and a new one is built. The new page's `Load` handler reads the same `GridState`,
-rewrites the filter controls from it, re-runs the same query, restores the same selection and replays the trace.
-The user is back where they were — including the page number and the sort direction.
+holds no copy of the query; it reads `Grid.Query` and writes it back. When a new `WorkQueuePage` is built for the same
+session, its `Load` handler reads the same `GridState`, rewrites the filter controls from it, re-runs the same query
+and restores the same selection. The user is back where they were — including the page number and the sort
+direction.
 
 Switching tenant (`SessionContext.SwitchTenant`) resets the grid state and reloads the saved views on purpose:
 a filter or a selection must never survive a tenant change.
@@ -81,7 +73,7 @@ a filter or a selection must never survive a tenant change.
 
 | Do this | What you should see |
 |---|---|
-| Choose **Overdue HVAC**, click **Apply view** | trace: `Service: saved view "Overdue HVAC" = {"TenantId":"contoso",…}` — a stored query, not a cached result; the filter bar and sort change with it; the badge reads ★ Overdue HVAC |
-| Change the status filter | the badge falls back to *custom filters* immediately |
-| Click **★ Save current as view** | trace: `Service: saved view #3 "…" stored for ana.ops@contoso → {…}`; the new view appears in the drop-down |
-| Go to page 4, select two rows, click **⟳ Simulate refresh (F5)** | the rebuilt page comes back on page 4, same sort, same two rows selected, and the trace still lists everything the old page wrote — because none of it was ever in the page |
+| Choose **Overdue HVAC**, click **Apply view** | the stored query runs again; the filter bar and sort change with it; the badge reads ★ Saved view: “Overdue HVAC” |
+| Change the status filter, click **Search** | the badge falls back to *custom filters* |
+| Click **★ Save current as view** | the new view appears in the drop-down and the badge shows its name |
+| Go to page 4, select two rows, reload the browser (F5) | the screen comes back on page 4, same sort, same two rows selected — because none of it was ever in the page |

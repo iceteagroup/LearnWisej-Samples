@@ -13,7 +13,6 @@ namespace TicketOps.Infrastructure
     ///
     /// Module 9 additions: the signed-link service (with a demo signing key that never reaches the browser),
     /// the audit log, and BrowserApi — the single place that talks to browser-only APIs.
-    /// Module 8 replaces this hand-written factory with Application.Services; the rule it enforces stays the same.
     /// </summary>
     public sealed class AppComposition
     {
@@ -22,7 +21,6 @@ namespace TicketOps.Infrastructure
 
         public ActivityLog Log { get; } = new ActivityLog();
         public SessionContext Session { get; }
-        public InMemoryWorkOrderRepository Repository { get; }
         public IWorkOrderService WorkOrders { get; }
         public IAuditLogService Audit { get; }
         public ITicketLinkService Links { get; }
@@ -30,21 +28,17 @@ namespace TicketOps.Infrastructure
 
         public AppComposition()
         {
-            Log.Info(LogLayer.Infrastructure, "AppComposition", "composing the session object graph (nothing static)");
             Session = new SessionContext(new SessionUser("L. Romero", "Technician"));
-            Log.Info(LogLayer.Session, "AppComposition", $"session user → {Session.User}");
-            Repository = new InMemoryWorkOrderRepository(Log);
-            WorkOrders = new WorkOrderService(Repository, Log);
-            Audit = new AuditLogService(Log);
-            Links = new TicketLinkService(Repository, Audit, DemoLinkSigningKey, Log);
+            var repository = new InMemoryWorkOrderRepository();
+            WorkOrders = new WorkOrderService(repository);
+            Audit = new AuditLogService();
+            Links = new TicketLinkService(repository, Audit, DemoLinkSigningKey, Log);
             Browser = new BrowserApi(Log);
-            Log.Info(LogLayer.Infrastructure, "AppComposition",
-                "ITicketLinkService → TicketLinkService(InMemoryWorkOrderRepository, AuditLogService, signing key); BrowserApi owns every Eval");
         }
 
         public WorkOrdersView CreateMainView()
         {
-            return new WorkOrdersView(WorkOrders, Links, Audit, Browser, Session, Repository, Log);
+            return new WorkOrdersView(WorkOrders, Links, Audit, Browser, Session, Log);
         }
     }
 }

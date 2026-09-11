@@ -12,11 +12,9 @@ namespace EnterpriseOps.UI
         /// </summary>
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && (components != null))
             {
-                DetachTrace();                  // the session's trace outlives this screen — see the code-behind
-                if (components != null)
-                    components.Dispose();
+                components.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -28,13 +26,12 @@ namespace EnterpriseOps.UI
             this.components = new System.ComponentModel.Container();
             this.pnlHeader = new Wisej.Web.Panel();
             this.lblTitle = new Wisej.Web.Label();
-            this.lblTenant = new Wisej.Web.Label();
-            this.lblUser = new Wisej.Web.Label();
-            this.lblCorrelation = new Wisej.Web.Label();
+            this.btnCapstoneReview = new Wisej.Web.Button();
             this.pnlDashboard = new Wisej.Web.Panel();
             this.btnRefresh = new Wisej.Web.Button();
             this.cboStatus = new Wisej.Web.ComboBox();
-            this.lblStatus = new Wisej.Web.Label();
+            this.btnApprove = new Wisej.Web.Button();
+            this.lblUser = new Wisej.Web.Label();
             this.kpiOpen = new EnterpriseOps.Controls.KpiTile();
             this.kpiEscalated = new EnterpriseOps.Controls.KpiTile();
             this.kpiDueToday = new EnterpriseOps.Controls.KpiTile();
@@ -55,42 +52,27 @@ namespace EnterpriseOps.UI
             this.pnlHealth = new Wisej.Web.Panel();
             this.lblHealthTitle = new Wisej.Web.Label();
             this.lblHealthStatus = new Wisej.Web.Label();
+            this.btnRunHealth = new Wisej.Web.Button();
+            this.btnCancelHealth = new Wisej.Web.Button();
             this.dgvHealth = new Wisej.Web.DataGridView();
             this.colProbe = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colProbeState = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colProbeDetail = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colProbeMs = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.pnlTrace = new Wisej.Web.Panel();
-            this.lblTraceTitle = new Wisej.Web.Label();
-            this.lstTrace = new Wisej.Web.ListBox();
-            this.lblTraceFooter = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.Panel();
-            this.btnApprove = new Wisej.Web.Button();
-            this.btnRunHealth = new Wisej.Web.Button();
-            this.btnCancelHealth = new Wisej.Web.Button();
-            this.btnStaleVersion = new Wisej.Web.Button();
-            this.btnSwitchUser = new Wisej.Web.Button();
-            this.btnReload = new Wisej.Web.Button();
-            this.btnCapstoneReview = new Wisej.Web.Button();
-            this.btnClearTrace = new Wisej.Web.Button();
             this.pnlHeader.SuspendLayout();
             this.pnlDashboard.SuspendLayout();
             this.pnlHealth.SuspendLayout();
-            this.pnlTrace.SuspendLayout();
-            this.pnlActions.SuspendLayout();
             this.SuspendLayout();
             //
-            // pnlHeader  (slim header bar: screen name · tenant · user · correlation id)
+            // pnlHeader
             //
             this.pnlHeader.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(21, 101, 216);
             this.pnlHeader.Controls.Add(this.lblTitle);
-            this.pnlHeader.Controls.Add(this.lblTenant);
-            this.pnlHeader.Controls.Add(this.lblUser);
-            this.pnlHeader.Controls.Add(this.lblCorrelation);
+            this.pnlHeader.Controls.Add(this.btnCapstoneReview);
             this.pnlHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1348, 44);
+            this.pnlHeader.Size = new System.Drawing.Size(932, 44);
             //
             // lblTitle
             //
@@ -99,54 +81,29 @@ namespace EnterpriseOps.UI
             this.lblTitle.ForeColor = System.Drawing.Color.White;
             this.lblTitle.Location = new System.Drawing.Point(24, 0);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(560, 44);
-            this.lblTitle.Text = "EnterpriseOps — Command Center · capstone";
+            this.lblTitle.Size = new System.Drawing.Size(420, 44);
+            this.lblTitle.Text = "EnterpriseOps — Command Center";
             this.lblTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // lblTenant
+            // btnCapstoneReview
             //
-            this.lblTenant.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblTenant.AutoSize = false;
-            this.lblTenant.Font = new System.Drawing.Font("default", 9F);
-            this.lblTenant.ForeColor = System.Drawing.Color.FromArgb(214, 228, 243);
-            this.lblTenant.Location = new System.Drawing.Point(700, 0);
-            this.lblTenant.Name = "lblTenant";
-            this.lblTenant.Size = new System.Drawing.Size(180, 44);
-            this.lblTenant.Text = "tenant: contoso";
-            this.lblTenant.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnCapstoneReview.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
+            this.btnCapstoneReview.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
+            this.btnCapstoneReview.Location = new System.Drawing.Point(756, 6);
+            this.btnCapstoneReview.Name = "btnCapstoneReview";
+            this.btnCapstoneReview.Size = new System.Drawing.Size(160, 32);
+            this.btnCapstoneReview.Text = "Capstone review →";
+            this.btnCapstoneReview.Click += new System.EventHandler(this.btnCapstoneReview_Click);
             //
-            // lblUser
+            // pnlDashboard
             //
-            this.lblUser.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblUser.AutoSize = false;
-            this.lblUser.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblUser.ForeColor = System.Drawing.Color.White;
-            this.lblUser.Location = new System.Drawing.Point(886, 0);
-            this.lblUser.Name = "lblUser";
-            this.lblUser.Size = new System.Drawing.Size(270, 44);
-            this.lblUser.Text = "Signed in: ana.ops · Manager";
-            this.lblUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            // lblCorrelation
-            //
-            this.lblCorrelation.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.lblCorrelation.AutoSize = false;
-            this.lblCorrelation.Font = new System.Drawing.Font("monospace", 9F);
-            this.lblCorrelation.ForeColor = System.Drawing.Color.FromArgb(214, 228, 243);
-            this.lblCorrelation.Location = new System.Drawing.Point(1162, 0);
-            this.lblCorrelation.Name = "lblCorrelation";
-            this.lblCorrelation.Size = new System.Drawing.Size(162, 44);
-            this.lblCorrelation.Text = "corr —";
-            this.lblCorrelation.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            // pnlDashboard  (KPI cards from a service + the tenant-scoped work queue)
-            //
-            this.pnlDashboard.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
+            this.pnlDashboard.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.pnlDashboard.BackColor = System.Drawing.Color.White;
             this.pnlDashboard.BorderStyle = Wisej.Web.BorderStyle.Solid;
             this.pnlDashboard.Controls.Add(this.btnRefresh);
             this.pnlDashboard.Controls.Add(this.cboStatus);
-            this.pnlDashboard.Controls.Add(this.lblStatus);
+            this.pnlDashboard.Controls.Add(this.btnApprove);
+            this.pnlDashboard.Controls.Add(this.lblUser);
             this.pnlDashboard.Controls.Add(this.kpiOpen);
             this.pnlDashboard.Controls.Add(this.kpiEscalated);
             this.pnlDashboard.Controls.Add(this.kpiDueToday);
@@ -166,31 +123,40 @@ namespace EnterpriseOps.UI
             this.btnRefresh.Name = "btnRefresh";
             this.btnRefresh.Size = new System.Drawing.Size(120, 34);
             this.btnRefresh.Text = "⟳ Refresh";
-            this.btnRefresh.ToolTipText = "btnRefresh_Click → _dashboard.GetKpisAsync + _workOrders.GetQueueAsync. Two service calls, no logic here.";
             this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             //
-            // cboStatus  (the queue filter — the service turns it into a where clause)
+            // cboStatus
             //
             this.cboStatus.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
             this.cboStatus.Items.AddRange(new object[] { "Open", "Escalated", "All" });
             this.cboStatus.Location = new System.Drawing.Point(146, 12);
             this.cboStatus.Name = "cboStatus";
             this.cboStatus.Size = new System.Drawing.Size(140, 34);
-            this.cboStatus.ToolTipText = "WorkQueueQuery.StatusFilter — \"open\" is defined once, in DashboardService.OpenStatuses.";
             this.cboStatus.SelectedIndexChanged += new System.EventHandler(this.cboStatus_SelectedIndexChanged);
             //
-            // lblStatus
+            // btnApprove
             //
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.lblStatus.ForeColor = System.Drawing.Color.FromArgb(31, 157, 87);
-            this.lblStatus.Location = new System.Drawing.Point(296, 16);
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(588, 26);
-            this.lblStatus.Text = "● ready";
-            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.btnApprove.Enabled = false;
+            this.btnApprove.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
+            this.btnApprove.Location = new System.Drawing.Point(296, 12);
+            this.btnApprove.Name = "btnApprove";
+            this.btnApprove.Size = new System.Drawing.Size(156, 34);
+            this.btnApprove.Text = "✓ Approve selected";
+            this.btnApprove.Click += new System.EventHandler(this.btnApprove_Click);
             //
-            // the five KPI tiles — every number is computed by DashboardService, never here
+            // lblUser
+            //
+            this.lblUser.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
+            this.lblUser.AutoSize = false;
+            this.lblUser.Font = new System.Drawing.Font("default", 10F);
+            this.lblUser.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblUser.Location = new System.Drawing.Point(484, 16);
+            this.lblUser.Name = "lblUser";
+            this.lblUser.Size = new System.Drawing.Size(400, 26);
+            this.lblUser.Text = "Signed in: ana.ops · Manager";
+            this.lblUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            //
+            // kpiOpen
             //
             this.kpiOpen.Accent = System.Drawing.Color.FromArgb(21, 101, 216);
             this.kpiOpen.Caption = "OPEN";
@@ -199,6 +165,9 @@ namespace EnterpriseOps.UI
             this.kpiOpen.Name = "kpiOpen";
             this.kpiOpen.Size = new System.Drawing.Size(166, 80);
             this.kpiOpen.Value = "—";
+            //
+            // kpiEscalated
+            //
             this.kpiEscalated.Accent = System.Drawing.Color.FromArgb(224, 86, 59);
             this.kpiEscalated.Caption = "ESCALATED";
             this.kpiEscalated.Footnote = "needs a manager";
@@ -206,6 +175,9 @@ namespace EnterpriseOps.UI
             this.kpiEscalated.Name = "kpiEscalated";
             this.kpiEscalated.Size = new System.Drawing.Size(166, 80);
             this.kpiEscalated.Value = "—";
+            //
+            // kpiDueToday
+            //
             this.kpiDueToday.Accent = System.Drawing.Color.FromArgb(232, 161, 60);
             this.kpiDueToday.Caption = "DUE TODAY";
             this.kpiDueToday.Footnote = "open, due today";
@@ -213,6 +185,9 @@ namespace EnterpriseOps.UI
             this.kpiDueToday.Name = "kpiDueToday";
             this.kpiDueToday.Size = new System.Drawing.Size(166, 80);
             this.kpiDueToday.Value = "—";
+            //
+            // kpiOverdue
+            //
             this.kpiOverdue.Accent = System.Drawing.Color.FromArgb(192, 57, 43);
             this.kpiOverdue.Caption = "OVERDUE";
             this.kpiOverdue.Footnote = "open, past due";
@@ -220,6 +195,9 @@ namespace EnterpriseOps.UI
             this.kpiOverdue.Name = "kpiOverdue";
             this.kpiOverdue.Size = new System.Drawing.Size(166, 80);
             this.kpiOverdue.Value = "—";
+            //
+            // kpiCompleted
+            //
             this.kpiCompleted.Accent = System.Drawing.Color.FromArgb(31, 157, 87);
             this.kpiCompleted.Caption = "DONE · 7 DAYS";
             this.kpiCompleted.Footnote = "signed off";
@@ -228,7 +206,7 @@ namespace EnterpriseOps.UI
             this.kpiCompleted.Size = new System.Drawing.Size(166, 80);
             this.kpiCompleted.Value = "—";
             //
-            // dgvWorkQueue  (bound to WorkQueueRow — the projection, never the entity)
+            // dgvWorkQueue
             //
             this.dgvWorkQueue.AllowUserToAddRows = false;
             this.dgvWorkQueue.AllowUserToDeleteRows = false;
@@ -255,7 +233,7 @@ namespace EnterpriseOps.UI
             this.dgvWorkQueue.Size = new System.Drawing.Size(868, 180);
             this.dgvWorkQueue.SelectionChanged += new System.EventHandler(this.dgvWorkQueue_SelectionChanged);
             //
-            // the work-queue columns
+            // work-queue columns
             //
             this.colId.DataPropertyName = "Id";
             this.colId.HeaderText = "#";
@@ -292,10 +270,9 @@ namespace EnterpriseOps.UI
             this.colVersion.DataPropertyName = "Version";
             this.colVersion.HeaderText = "v";
             this.colVersion.Name = "colVersion";
-            this.colVersion.ToolTipText = "The optimistic-concurrency token the approve command has to echo back.";
             this.colVersion.Width = 50;
             //
-            // lblBanner  (the failure banner: refusals and stale versions, never a stack trace)
+            // lblBanner
             //
             this.lblBanner.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.lblBanner.AutoSize = false;
@@ -309,7 +286,7 @@ namespace EnterpriseOps.UI
             this.lblBanner.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblBanner.Visible = false;
             //
-            // lblStatusBar  (the dark footer: which service answered, how many rows, how long)
+            // lblStatusBar
             //
             this.lblStatusBar.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.lblStatusBar.AutoSize = false;
@@ -323,25 +300,27 @@ namespace EnterpriseOps.UI
             this.lblStatusBar.Text = "Loading…";
             this.lblStatusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // pnlHealth  (the diagnostics / health card — six probes, run as a progress path)
+            // pnlHealth
             //
-            this.pnlHealth.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
+            this.pnlHealth.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.pnlHealth.BackColor = System.Drawing.Color.White;
             this.pnlHealth.BorderStyle = Wisej.Web.BorderStyle.Solid;
             this.pnlHealth.Controls.Add(this.lblHealthTitle);
             this.pnlHealth.Controls.Add(this.lblHealthStatus);
+            this.pnlHealth.Controls.Add(this.btnRunHealth);
+            this.pnlHealth.Controls.Add(this.btnCancelHealth);
             this.pnlHealth.Controls.Add(this.dgvHealth);
             this.pnlHealth.Location = new System.Drawing.Point(16, 470);
             this.pnlHealth.Name = "pnlHealth";
-            this.pnlHealth.Size = new System.Drawing.Size(900, 146);
+            this.pnlHealth.Size = new System.Drawing.Size(900, 156);
             //
             // lblHealthTitle
             //
             this.lblHealthTitle.AutoSize = false;
             this.lblHealthTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblHealthTitle.Location = new System.Drawing.Point(16, 8);
+            this.lblHealthTitle.Location = new System.Drawing.Point(16, 10);
             this.lblHealthTitle.Name = "lblHealthTitle";
-            this.lblHealthTitle.Size = new System.Drawing.Size(420, 24);
+            this.lblHealthTitle.Size = new System.Drawing.Size(260, 26);
             this.lblHealthTitle.Text = "Diagnostics · health probes";
             //
             // lblHealthStatus
@@ -349,16 +328,35 @@ namespace EnterpriseOps.UI
             this.lblHealthStatus.AutoSize = false;
             this.lblHealthStatus.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
             this.lblHealthStatus.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblHealthStatus.Location = new System.Drawing.Point(440, 8);
+            this.lblHealthStatus.Location = new System.Drawing.Point(284, 10);
             this.lblHealthStatus.Name = "lblHealthStatus";
-            this.lblHealthStatus.Size = new System.Drawing.Size(444, 24);
+            this.lblHealthStatus.Size = new System.Drawing.Size(340, 26);
             this.lblHealthStatus.Text = "● not run";
-            this.lblHealthStatus.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            //
+            // btnRunHealth
+            //
+            this.btnRunHealth.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
+            this.btnRunHealth.Location = new System.Drawing.Point(632, 6);
+            this.btnRunHealth.Name = "btnRunHealth";
+            this.btnRunHealth.Size = new System.Drawing.Size(160, 32);
+            this.btnRunHealth.Text = "▶ Run health check";
+            this.btnRunHealth.Click += new System.EventHandler(this.btnRunHealth_Click);
+            //
+            // btnCancelHealth
+            //
+            this.btnCancelHealth.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
+            this.btnCancelHealth.Enabled = false;
+            this.btnCancelHealth.Location = new System.Drawing.Point(798, 6);
+            this.btnCancelHealth.Name = "btnCancelHealth";
+            this.btnCancelHealth.Size = new System.Drawing.Size(86, 32);
+            this.btnCancelHealth.Text = "■ Cancel";
+            this.btnCancelHealth.Click += new System.EventHandler(this.btnCancelHealth_Click);
             //
             // dgvHealth
             //
             this.dgvHealth.AllowUserToAddRows = false;
             this.dgvHealth.AllowUserToDeleteRows = false;
+            this.dgvHealth.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.dgvHealth.AutoGenerateColumns = false;
             this.dgvHealth.AutoSizeColumnsMode = Wisej.Web.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvHealth.BackColor = System.Drawing.Color.White;
@@ -367,13 +365,13 @@ namespace EnterpriseOps.UI
             this.colProbeState,
             this.colProbeDetail,
             this.colProbeMs});
-            this.dgvHealth.Location = new System.Drawing.Point(16, 38);
+            this.dgvHealth.Location = new System.Drawing.Point(16, 44);
             this.dgvHealth.MultiSelect = false;
             this.dgvHealth.Name = "dgvHealth";
             this.dgvHealth.ReadOnly = true;
             this.dgvHealth.RowHeadersVisible = false;
             this.dgvHealth.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvHealth.Size = new System.Drawing.Size(868, 94);
+            this.dgvHealth.Size = new System.Drawing.Size(868, 98);
             this.colProbe.DataPropertyName = "Name";
             this.colProbe.HeaderText = "Probe";
             this.colProbe.Name = "colProbe";
@@ -391,155 +389,19 @@ namespace EnterpriseOps.UI
             this.colProbeMs.Name = "colProbeMs";
             this.colProbeMs.Width = 60;
             //
-            // pnlTrace  (Server · live activity trace — one line per layer decision)
-            //
-            this.pnlTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.pnlTrace.BackColor = System.Drawing.Color.White;
-            this.pnlTrace.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.pnlTrace.Controls.Add(this.lblTraceTitle);
-            this.pnlTrace.Controls.Add(this.lstTrace);
-            this.pnlTrace.Controls.Add(this.lblTraceFooter);
-            this.pnlTrace.Location = new System.Drawing.Point(932, 56);
-            this.pnlTrace.Name = "pnlTrace";
-            this.pnlTrace.Size = new System.Drawing.Size(400, 560);
-            //
-            // lblTraceTitle
-            //
-            this.lblTraceTitle.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblTraceTitle.AutoSize = false;
-            this.lblTraceTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblTraceTitle.Location = new System.Drawing.Point(14, 10);
-            this.lblTraceTitle.Name = "lblTraceTitle";
-            this.lblTraceTitle.Size = new System.Drawing.Size(368, 26);
-            this.lblTraceTitle.Text = "Server · live activity trace";
-            //
-            // lstTrace
-            //
-            this.lstTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lstTrace.Font = new System.Drawing.Font("monospace", 9F);
-            this.lstTrace.Location = new System.Drawing.Point(14, 42);
-            this.lstTrace.Name = "lstTrace";
-            this.lstTrace.Size = new System.Drawing.Size(368, 482);
-            //
-            // lblTraceFooter
-            //
-            this.lblTraceFooter.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblTraceFooter.AutoSize = false;
-            this.lblTraceFooter.Font = new System.Drawing.Font("default", 8F);
-            this.lblTraceFooter.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblTraceFooter.Location = new System.Drawing.Point(14, 528);
-            this.lblTraceFooter.Name = "lblTraceFooter";
-            this.lblTraceFooter.Size = new System.Drawing.Size(368, 24);
-            this.lblTraceFooter.Text = "UI → · Security: · Service: · Data: · Job: · Review: · Docs:";
-            //
-            // pnlActions  (success · progress · failure · recovery · navigation · clear)
-            //
-            this.pnlActions.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.pnlActions.Controls.Add(this.btnApprove);
-            this.pnlActions.Controls.Add(this.btnRunHealth);
-            this.pnlActions.Controls.Add(this.btnCancelHealth);
-            this.pnlActions.Controls.Add(this.btnStaleVersion);
-            this.pnlActions.Controls.Add(this.btnSwitchUser);
-            this.pnlActions.Controls.Add(this.btnReload);
-            this.pnlActions.Controls.Add(this.btnCapstoneReview);
-            this.pnlActions.Controls.Add(this.btnClearTrace);
-            this.pnlActions.Location = new System.Drawing.Point(16, 624);
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Size = new System.Drawing.Size(1316, 44);
-            //
-            // btnApprove  (the success path: the approve command, permission checked, audited)
-            //
-            this.btnApprove.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.btnApprove.Location = new System.Drawing.Point(0, 4);
-            this.btnApprove.Name = "btnApprove";
-            this.btnApprove.Size = new System.Drawing.Size(156, 36);
-            this.btnApprove.Text = "✓ Approve selected";
-            this.btnApprove.ToolTipText = "ApproveWorkOrderCommand → WorkOrderService.ApproveAsync: permission, tenant, version, audit line.";
-            this.btnApprove.Click += new System.EventHandler(this.btnApprove_Click);
-            //
-            // btnRunHealth  (the progress path: six probes, one at a time, cancellable)
-            //
-            this.btnRunHealth.Location = new System.Drawing.Point(162, 4);
-            this.btnRunHealth.Name = "btnRunHealth";
-            this.btnRunHealth.Size = new System.Drawing.Size(156, 36);
-            this.btnRunHealth.Text = "▶ Run health check";
-            this.btnRunHealth.ToolTipText = "DiagnosticsService.RunAsync — each probe reports its evidence as it finishes.";
-            this.btnRunHealth.Click += new System.EventHandler(this.btnRunHealth_Click);
-            //
-            // btnCancelHealth
-            //
-            this.btnCancelHealth.Enabled = false;
-            this.btnCancelHealth.Location = new System.Drawing.Point(324, 4);
-            this.btnCancelHealth.Name = "btnCancelHealth";
-            this.btnCancelHealth.Size = new System.Drawing.Size(96, 36);
-            this.btnCancelHealth.Text = "■ Cancel";
-            this.btnCancelHealth.ToolTipText = "The CancellationTokenSource lives in an instance field; the run stops at the next probe.";
-            this.btnCancelHealth.Click += new System.EventHandler(this.btnCancelHealth_Click);
-            //
-            // btnStaleVersion  (failure path 1: somebody else saved the row first)
-            //
-            this.btnStaleVersion.Location = new System.Drawing.Point(426, 4);
-            this.btnStaleVersion.Name = "btnStaleVersion";
-            this.btnStaleVersion.Size = new System.Drawing.Size(186, 36);
-            this.btnStaleVersion.Text = "Fail: stale version";
-            this.btnStaleVersion.ToolTipText = "Bumps the selected row's version behind the screen's back, then approves: the store rejects the write.";
-            this.btnStaleVersion.Click += new System.EventHandler(this.btnStaleVersion_Click);
-            //
-            // btnSwitchUser  (failure path 2 / recovery: permission denied, then back)
-            //
-            this.btnSwitchUser.Location = new System.Drawing.Point(618, 4);
-            this.btnSwitchUser.Name = "btnSwitchUser";
-            this.btnSwitchUser.Size = new System.Drawing.Size(206, 36);
-            this.btnSwitchUser.Text = "Switch to ben.tech";
-            this.btnSwitchUser.ToolTipText = "A Technician may view the queue and nothing else. Approve is refused in the service and the denial is audited.";
-            this.btnSwitchUser.Click += new System.EventHandler(this.btnSwitchUser_Click);
-            //
-            // btnReload  (the recovery: read the queue again and the version is current)
-            //
-            this.btnReload.Location = new System.Drawing.Point(830, 4);
-            this.btnReload.Name = "btnReload";
-            this.btnReload.Size = new System.Drawing.Size(168, 36);
-            this.btnReload.Text = "Recover: reload queue";
-            this.btnReload.ToolTipText = "The same refresh path — after it, the approve carries the version the store has.";
-            this.btnReload.Click += new System.EventHandler(this.btnReload_Click);
-            //
-            // btnCapstoneReview  (to the second screen)
-            //
-            this.btnCapstoneReview.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.btnCapstoneReview.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.btnCapstoneReview.Location = new System.Drawing.Point(1004, 4);
-            this.btnCapstoneReview.Name = "btnCapstoneReview";
-            this.btnCapstoneReview.Size = new System.Drawing.Size(190, 36);
-            this.btnCapstoneReview.Text = "Capstone review →";
-            this.btnCapstoneReview.ToolTipText = "The delivery screen: prompt library, review checklist, documentation index, package self-check.";
-            this.btnCapstoneReview.Click += new System.EventHandler(this.btnCapstoneReview_Click);
-            //
-            // btnClearTrace
-            //
-            this.btnClearTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.btnClearTrace.Location = new System.Drawing.Point(1200, 4);
-            this.btnClearTrace.Name = "btnClearTrace";
-            this.btnClearTrace.Size = new System.Drawing.Size(116, 36);
-            this.btnClearTrace.Text = "Clear trace";
-            this.btnClearTrace.Click += new System.EventHandler(this.btnClearTrace_Click);
-            //
             // CommandCenterDashboard
             //
             this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
             this.Controls.Add(this.pnlHeader);
             this.Controls.Add(this.pnlDashboard);
             this.Controls.Add(this.pnlHealth);
-            this.Controls.Add(this.pnlTrace);
-            this.Controls.Add(this.pnlActions);
             this.Name = "CommandCenterDashboard";
-            this.Size = new System.Drawing.Size(1348, 680);
+            this.Size = new System.Drawing.Size(932, 642);
             this.Text = "EnterpriseOps — Command Center";
             this.Load += new System.EventHandler(this.CommandCenterDashboard_Load);
             this.pnlHeader.ResumeLayout(false);
             this.pnlDashboard.ResumeLayout(false);
             this.pnlHealth.ResumeLayout(false);
-            this.pnlTrace.ResumeLayout(false);
-            this.pnlActions.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -547,13 +409,12 @@ namespace EnterpriseOps.UI
 
         private Wisej.Web.Panel pnlHeader;
         private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblTenant;
-        private Wisej.Web.Label lblUser;
-        private Wisej.Web.Label lblCorrelation;
+        private Wisej.Web.Button btnCapstoneReview;
         private Wisej.Web.Panel pnlDashboard;
         private Wisej.Web.Button btnRefresh;
         private Wisej.Web.ComboBox cboStatus;
-        private Wisej.Web.Label lblStatus;
+        private Wisej.Web.Button btnApprove;
+        private Wisej.Web.Label lblUser;
         private EnterpriseOps.Controls.KpiTile kpiOpen;
         private EnterpriseOps.Controls.KpiTile kpiEscalated;
         private EnterpriseOps.Controls.KpiTile kpiDueToday;
@@ -574,23 +435,12 @@ namespace EnterpriseOps.UI
         private Wisej.Web.Panel pnlHealth;
         private Wisej.Web.Label lblHealthTitle;
         private Wisej.Web.Label lblHealthStatus;
+        private Wisej.Web.Button btnRunHealth;
+        private Wisej.Web.Button btnCancelHealth;
         private Wisej.Web.DataGridView dgvHealth;
         private Wisej.Web.DataGridViewTextBoxColumn colProbe;
         private Wisej.Web.DataGridViewTextBoxColumn colProbeState;
         private Wisej.Web.DataGridViewTextBoxColumn colProbeDetail;
         private Wisej.Web.DataGridViewTextBoxColumn colProbeMs;
-        private Wisej.Web.Panel pnlTrace;
-        private Wisej.Web.Label lblTraceTitle;
-        private Wisej.Web.ListBox lstTrace;
-        private Wisej.Web.Label lblTraceFooter;
-        private Wisej.Web.Panel pnlActions;
-        private Wisej.Web.Button btnApprove;
-        private Wisej.Web.Button btnRunHealth;
-        private Wisej.Web.Button btnCancelHealth;
-        private Wisej.Web.Button btnStaleVersion;
-        private Wisej.Web.Button btnSwitchUser;
-        private Wisej.Web.Button btnReload;
-        private Wisej.Web.Button btnCapstoneReview;
-        private Wisej.Web.Button btnClearTrace;
     }
 }

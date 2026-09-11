@@ -51,7 +51,6 @@ namespace IntegrationLab.Widgets
                 _value = value;
                 dynamic options = this.Options;
                 options.value = value;                  // → update(options) → vendor setValue → knobchange → valueChanged {source:"server"}
-                RaiseTrace(TraceDirection.ServerToClient, "update(options)", $"{{\"value\":{PayloadReader.F(value)}}}");
             }
         }
 
@@ -70,15 +69,7 @@ namespace IntegrationLab.Widgets
         [DefaultValue("")]
         public string Units { get => _units; set { _units = value ?? ""; ((dynamic)this.Options).units = _units; } }
 
-        /// <summary>Who changed the value last: "user", "server" or "" (never changed).</summary>
-        [Browsable(false)]
-        public string LastSource { get; private set; } = "";
-
         #endregion
-
-        /// <summary>Every message in either direction, for the lab log.</summary>
-        [Browsable(false)]
-        public event EventHandler<TraceEventArgs> Trace;
 
         /// <summary>
         /// Validates a raw <c>valueChanged</c> payload field by field and shapes it into the DTO.
@@ -110,7 +101,6 @@ namespace IntegrationLab.Widgets
         /// </summary>
         public void AcceptClientValue(KnobValueEventArgs e)
         {
-            this.LastSource = e.Source;
             if (_value == e.Value) return;
             _value = e.Value;
             dynamic options = this.Options;
@@ -119,13 +109,6 @@ namespace IntegrationLab.Widgets
 
         /// <summary>Call("pulse") — an imperative vendor behavior (visual acknowledgement).</summary>
         public void Pulse() => this.Call("pulse");
-
-        public string ToJson()
-            => $"{{\"value\":{PayloadReader.F(_value)},\"min\":{PayloadReader.F(_minimum)},\"max\":{PayloadReader.F(_maximum)},\"step\":{PayloadReader.F(_step)},\"label\":\"{_label}\",\"units\":\"{_units}\"}}";
-
-        /// <summary>Emits a trace line on behalf of the page (the page owns the knob handler).</summary>
-        public void TraceLine(TraceDirection direction, string name, string payload)
-            => RaiseTrace(direction, name, payload);
 
         private void Validate(double value, out string why)
         {
@@ -146,8 +129,5 @@ namespace IntegrationLab.Widgets
             options.units = _units;
             options.color = "#1a86ff";
         }
-
-        private void RaiseTrace(TraceDirection direction, string name, string payload)
-            => Trace?.Invoke(this, new TraceEventArgs(direction, name, payload));
     }
 }

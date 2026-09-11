@@ -2586,26 +2586,6 @@
 				}
 			}
 		},
-		"trace-list": {
-			"inherit": "list",
-			"states": {
-				"default": {
-					"styles": {
-						"width": 1,
-						"style": "solid",
-						"color": "windowFrame",
-						"radius": "$borderRadius"
-					},
-					"properties": {
-						"opacity": 1,
-						"backgroundColor": "surface",
-						"textColor": "textMain",
-						"font": "mono",
-						"itemHeight": 22
-					}
-				}
-			}
-		},
 		"listitem": {
 			"text": "List Item",
 			"states": {
@@ -6759,37 +6739,6 @@
 						"opacity": 1,
 						"font": "defaultBold",
 						"textColor": "textMuted"
-					}
-				},
-				"ok": {
-					"properties": {
-						"textColor": "success"
-					}
-				},
-				"warn": {
-					"properties": {
-						"textColor": "warning"
-					}
-				},
-				"error": {
-					"properties": {
-						"textColor": "danger"
-					}
-				}
-			}
-		},
-		"banner-label": {
-			"inherit": "textlabel",
-			"states": {
-				"default": {
-					"styles": {
-						"backgroundColor": "danger",
-						"radius": "$borderRadius"
-					},
-					"properties": {
-						"opacity": 1,
-						"font": "defaultBold",
-						"textColor": "white"
 					}
 				}
 			}

@@ -26,7 +26,6 @@ builder.Services.AddSupportDeskData(connectionString, builder.Environment.IsDeve
 //    Verified: Wisej.NET resolves [Inject] properties through the ROOT Microsoft provider, so a Scoped
 //    registration fails in Development ("Cannot resolve scoped service ... from root provider").
 builder.Services.AddTransient<TicketQueryService>();
-builder.Services.AddTransient<SharedContextAntiPattern>();
 
 var app = builder.Build();
 

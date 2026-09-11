@@ -4,7 +4,7 @@
 
 ![Approval dialog workflow](ApprovalWorkflow.svg)
 
-The diagram (`ApprovalWorkflow.svg`) reads top to bottom through the three layers the trace shows:
+The diagram (`ApprovalWorkflow.svg`) reads top to bottom through the three layers:
 
 | Layer | What happens | Code |
 |---|---|---|
@@ -20,7 +20,7 @@ The diagram (`ApprovalWorkflow.svg`) reads top to bottom through the three layer
 | **Cancel** | dialog, `buttonCancel_Click` | `{confirmed:false}` | no | unchanged |
 | **✕** (close box) | nobody — the default `Result` survives | `{confirmed:false}` | no | unchanged |
 | **Validation failure** (Reject, empty comments) | dialog, `buttonConfirm_Click` → `DialogResult.None`, stays open | not built yet | no | unchanged |
-| **Service failure** (outage during commit) | repository, inside `CommitAsync` | confirmed | yes → throws | rolled back, 0 of 3 writes |
+| **Service failure** (the store refuses the commit) | repository, inside `CommitAsync` | confirmed | yes → throws | rolled back, 0 of 3 writes (RH-6) |
 | **Success** | service, after the three gates | confirmed | yes → `Ok` | 3 of 3 writes, atomically |
 
 Two more refusals are decided on the server side of the boundary even though the dialog would never
@@ -30,14 +30,8 @@ a bulk job, an API endpoint or a bug in a second screen must hit the same rules.
 
 ## Evidence
 
-- Open the app, select **WO-2002**, click **✓ Approve / Reject…** and watch the trace: `[UI] … await ShowDialogAsync()`
-  → (dialog) `[UI] ApprovalDialog.buttonConfirm_Click — Confirm → Result {confirmed:true, …} · DialogResult.OK`
-  → `[UI] … DialogResult.OK · Result … → IApprovalService.ApplyAsync(#2002, result)` → `[SVC]` gates → `[DOMAIN] WorkOrder.Decide`
-  → `[DATA] tx#1 begin` … `commit — 3 of 3 statements applied atomically` → `[UI] OK · Work order WO-2002 approved.`
-- Press **Cancel** or the **✕** instead: the trace ends at `[UI] … DialogResult.Cancel · Result {confirmed:false} → return (no service call, no mutation)`;
-  the status strip reads *Approval canceled — work order 2002 unchanged.*
-- Choose **Reject**, leave the comments empty, press **Confirm**: the dialog stays open with *Comments are required when rejecting.*;
-  the trace shows one `⚠ [UI] ApprovalDialog.buttonConfirm_Click — validation failed …` and nothing below it.
-- **Simulate data outage**, then confirm a decision: `[DATA] tx#n UPDATE … 1/3 on the working copy`, `✖ [DATA] outage: INSERT INTO ApprovalAudit …`,
-  `⚠ [DATA] tx#n rolled back — 1 of 3 statements discarded, live store unchanged`, `✖ [UI] … caught DataOutageException — user sees the safe message`.
-  The grid still shows WO-2002 **Pending**. Click **Recover the data store**, confirm again → commit.
+- Open the app, select **WO-2002**, click **✓ Approve / Reject…**, keep Approve and **Confirm**: status
+  **● Work order WO-2002 approved.**; the grid shows it Approved.
+- Press **Cancel** or the **✕** instead: the status strip reads *Approval canceled — work order 2002 unchanged.*
+- Choose **Reject**, leave the comments empty, press **Confirm**: the dialog stays open with *Comments are required when rejecting.*
+- The service-failure exit is covered by RH-6 in `ResultHandlingTests.cs`.

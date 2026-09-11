@@ -89,7 +89,8 @@ with a database changes nothing above it: the contract types are the boundary.
 
 ## 5. Evidence (what the running app shows)
 
-Every button and every in-grid gesture writes one `← JS→.NET <action> … → <status> <summary>` line
-to the trace (see `GridOperationContract.md` §6 and `PivotIntegrationPlan.md` §7 for the exact
-lines). The two failure buttons show a 404 and a 400 produced by the store, formatted by the
-controller, written by the postback handler, and reported back by the vendor as one `error` event.
+Every in-grid gesture (page, sort, edit, Add row, ✕) and every pivot load writes one
+`← JS→.NET <action> … → <status> <summary>` line to the Remote operations list (see
+`GridOperationContract.md` §6 and `PivotIntegrationPlan.md` §7 for the exact lines). A rejected
+edit (e.g. `abc` in Hours) shows a 400 produced by the store, formatted by the controller, written
+by the postback handler, and reported back by the vendor as one `error` event.

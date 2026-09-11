@@ -40,23 +40,19 @@ payload. That is the point of a projection: **a page of 50 rows is ≈ 13.7 KB, 
 
 ## Permission flags are a hint, not an authority
 
-`CanReassign` is computed once per row by `Security/PermissionService.cs` so the screen can say *"3 selected · 3 the
-server would allow"* and grey out what is pointless. It is a **UI hint**. `BatchReassignWorkflow.ProcessRow` asks
-`PermissionService.CanReassign` again, against the entity it just read, before every write. A flag that arrived
-from the browser never authorizes anything.
+`CanReassign` is computed once per row by `Security/PermissionService.cs` so the screen can say *"3 selected · 3 can
+be reassigned"*. It is a **UI hint**. `BatchReassignWorkflow.ProcessRow` asks `PermissionService.CanReassign` again,
+against the entity it just read, before every write. A flag that arrived from the browser never authorizes anything.
 
-Press **Run as ben.tech (Technician)** to see both halves: the next page comes back with `CanReassign = false`
-(the selection line drops to *0 the server would allow*) **and** the workflow denies every row with
-`permission-denied` if you run the batch anyway.
+For a Technician (`PermissionService.RoleOf`) both halves apply: the page comes back with `CanReassign = false`
+**and** the workflow denies every row with `permission-denied` if the batch runs anyway.
 
 ## `Version` is part of the projection on purpose
 
-The grid shows the optimistic-concurrency token in the **v** column, and the selection snapshot keeps it. The batch
-sends it back as `BatchItem.ExpectedVersion`, and `WorkOrderStore.TryReassign` re-checks it under the lock. That is
-how a row somebody else changed fails with `stale-version` instead of silently overwriting their edit.
-
-Press **Fail: concurrent edit** to bump a selected row's version behind the screen's back; the page is deliberately
-not reloaded, so the stale value stays in the selection and the next batch refuses that row.
+The selection snapshot keeps the optimistic-concurrency token. The batch sends it back as
+`BatchItem.ExpectedVersion`, and `WorkOrderStore.TryReassign` re-checks it under the lock. That is how a row
+somebody else changed fails with `stale-version` instead of silently overwriting their edit: if another session
+reassigns a row you still have selected, the stale value stays in your selection and the next batch refuses it.
 
 ## Evidence in the running app
 
@@ -64,5 +60,4 @@ not reloaded, so the stale value stays in the selection and the next batch refus
 |---|---|
 | Look at the grid | `Status` reads *In progress*, not `InProgress`; unassigned rows read `—`; `Age (d)` and `Due` are display values |
 | Look at an overdue row | painted red — from `IsOverdue`, computed on the server, not by the grid |
-| Watch the footer | `… · 13.7 KB page` — that is the projected page serialized, the number that would cross the wire |
-| Click **Anti-pattern: load everything** | ≈ 806 KB of projected rows for the same tenant — the same projection, 59× the payload, because the page size is gone |
+| Read the server log | `Data: … page payload ≈ 13.7 KB` — the projected page serialized, the number that would cross the wire (the whole tenant is ≈ 806 KB, 59×; see `PerformanceNotes.md`) |

@@ -23,13 +23,10 @@ The framework serialises `Options` and calls `init(options)` once, then `update(
 | `showLegend` | `bool` | `ShowLegend` | |
 | `badge` | `string` | `SampleMode` | `"DESIGN-TIME SAMPLE"` or `""`. |
 | `selectedKey` | `string` | `Select(key)` / a click | Which slice is highlighted. |
-| `simulateBlockedVendor` | `bool` | `SimulateBlockedVendor` | Diagnostics: take the "package never loaded" path. |
-| `simulateVendorFailure` | `bool` | `SimulateVendorFailure()` | Diagnostics: make the next `update()` be refused by the vendor. Cleared by the server when the resulting `error` arrives. |
 
 **What does *not* cross:** `WorkOrder`, `WorkOrderStatus`, `TenantId`, `AssignedTo`, `Version`,
 `CorrelationId`, the user name, the row count of anything the user may not see. The chart receives four
-objects of three fields. `DescribeWirePayload()` prints exactly what would be sent, and the lab screen puts
-it in the trace on every load so this claim is checkable rather than asserted.
+objects of three fields, built in one place (`WorkOrderChartWidget.ToWire`).
 
 ## 2. Client → server (events, through `WiredEvents`)
 
@@ -51,8 +48,8 @@ Event names are **contract** names, not vendor names: `pointSelected` survives t
   always defers with `setTimeout(..., 0)`.
 * `_addListener("error", …)` can run *after* an `init` failure. The adapter parks the payload in
   `_pendingError` and delivers it the moment the listener arrives, so a blocked package is never silent.
-* A vendor re-init (block → unblock) must not lose the click listener: `_addListener` remembers the handler
-  in `_pointHandler` and `_createVendor` re-attaches it.
+* A vendor re-init must not lose the click listener: `_addListener` remembers the handler in
+  `_pointHandler` and `_createVendor` re-attaches it.
 
 ## 3. Server → client (imperative calls)
 
@@ -70,7 +67,7 @@ Used only from inside the wrapper — the screen has no reason to know they exis
 | Which segments exist, and their numbers | the server (`WorkOrderHistoryService.GetStatusBreakdownAsync`) |
 | Which palette is legal | the server (`WorkOrderChartWidget.KnownPalettes`) |
 | Which segment is selected | the **user**, reported by the browser as a key — then re-validated by the wrapper *and* by the service (`StatusGroup.IsKnown`) before a single row is read |
-| Whether the vendor drew anything | the browser, reported as `error` — the server records it, the screen tells the user |
+| Whether the vendor drew anything | the browser, reported as `error` — the server logs it, the screen tells the user |
 
 The browser is the one part of the system the server does not control, so anything it sends is treated as
 input, not as truth. `Key` is the only field of `ChartSegmentEventArgs` a handler should act on; `Label`,
@@ -82,11 +79,11 @@ The wrapper owns failure. There is no code path in which a vendor problem throws
 
 | What went wrong | Adapter does | Server sees | User sees |
 |---|---|---|---|
-| Package never loaded / blocked | render the embedded fallback list | `error { phase: "init" }` | the same numbers as a list, an amber banner, a toast |
-| Vendor rejects an update | keep the previous drawing, then fall back | `error { phase: "update" }` | amber banner, the screen keeps working |
+| Package never loaded / blocked | render the embedded fallback list | `error { phase: "init" }` | the same numbers as a list, and the banner *WidgetLoadError — vendor-opschart.js · fallback rendered · screen still works* |
+| Vendor rejects an update | keep the previous drawing, then fall back | `error { phase: "update" }` | a banner, the screen keeps working |
 | Vendor throws while drawing | vendor raises `renderfail` | `error { phase: "render" }` | as above |
-| Browser sends a key the widget never rendered | — | the wrapper drops it and traces `rejected` | nothing happens |
-| Screen sets an unsupported option | — | `ArgumentOutOfRangeException` **before** rendering | red banner naming the legal values |
+| Browser sends a key the widget never rendered | — | the wrapper drops it | nothing happens |
+| Screen sets an unsupported option | — | `ArgumentOutOfRangeException` **before** rendering | nothing is sent to the browser |
 
 ## 6. Changing this contract
 

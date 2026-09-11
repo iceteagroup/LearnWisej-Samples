@@ -185,7 +185,7 @@
     <text x="24" y="656">│         └─ pnlActivity → lblActivityHead (Top) · searchActivity : SearchBar (Top) · listActivity (Fill)</text>
     <text x="24" y="674">└─ lblStatus (Bottom 26) "Active profile: …"</text>
   </g>
-  <text x="24" y="704" class="e">ApplyResponsiveProfile(name): switch → ShowAllPanels() | CollapseActivityToTab() | ShowSingleTaskView() | default: warn + ShowAllPanels()</text>
+  <text x="24" y="704" class="e">ApplyResponsiveProfile(name): switch → ShowAllPanels() | CollapseActivityToTab() | ShowSingleTaskView() | default: ShowAllPanels()</text>
   <text x="24" y="722" class="m">MovePanelsToFlex() / MovePanelsToTabs() re-parent pnlDetail and pnlActivity — the same instances, so selection, draft text and the feed survive every switch.</text>
-  <text x="24" y="740" class="m">Host: Views/MainPage (Page, Dock) — workspace card Fill · trace card Right (desktop) / Bottom (tablet) / hidden (phone) · bottom bar = FlowLayoutPanel of paths.</text>
+  <text x="24" y="740" class="m">Host: Views/MainPage (Page, Dock) — workspace card Fill, status banner above the workspace.</text>
 </svg>

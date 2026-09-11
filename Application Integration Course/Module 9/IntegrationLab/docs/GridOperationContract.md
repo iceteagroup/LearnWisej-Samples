@@ -75,8 +75,8 @@ with the same HTTP status — never a stack trace.
 ## 4. Remote operations: the moment it becomes a real integration
 
 `VendorGrid` never sorts or pages in memory: every page change, header click, edit, insert and
-delete is a server call. That is what the trace card makes visible — one `← JS→.NET load … → 200`
-line per interaction. Consequences the contract already accounts for:
+delete is a server call. That is what the Remote operations list makes visible — one
+`← JS→.NET load … → 200` line per interaction. Consequences the contract already accounts for:
 
 - every call must be **fast** (the store is indexed by nothing here; a real one needs an index
   for each sortable field) and **bounded** (`MaxTake`);
@@ -96,13 +96,13 @@ is the escape hatch for the rare vendor option without a typed property.
 ## 6. Evidence (what the running app shows)
 
 - Page load: `← JS→.NET load {skip:0,take:20} → 200 (20/150)`; the grid shows page 1/8.
-- **Next page**: `→ .NET→JS call nextPage()` then `load {skip:20,take:20} → 200 (20/150)`.
-- **Sort by status** / header click: `load {skip:0,take:20,sort:"status asc"} → 200 (20/150)`.
+- The pager's ›: `load {skip:20,take:20} → 200 (20/150)`.
+- A header click: `load {skip:0,take:20,sort:"status asc"} → 200 (20/150)`.
 - Double-click a cell, change it, Enter: `← JS→.NET rowUpdated {rowKey:"WO-1043",changes:{status:"Closed"}}`,
-  `• server RowUpdated fired in C#`, then `← JS→.NET update {"rowKey":"WO-1043","changes":{…}} → 200 WO-1043 saved`.
-- **Insert sample row** / Add row: `create {"values":{…}} → 200 → WO-1151` followed by a reload.
-- **Delete selected** / ✕: `destroy {"rowKey":"WO-1010"} → 200 WO-1010 removed (149 left)`.
-- **Unknown key update**: `update {"rowKey":"WO-9999",…} → 404 Work order "WO-9999" does not exist.`,
-  then `← JS→.NET error {phase:"update",status:404,…}` and the banner.
-- **Take 1000**: `load {skip:0,take:1000} → 400 take must be between 1 and 100 (received 1000).`,
-  then the `error` event and the banner; the grid keeps its last page.
+  a toast, then `← JS→.NET update {"rowKey":"WO-1043","changes":{…}} → 200 WO-1043 saved`.
+- **+ Add row**: `create {"values":{…}} → 200 → WO-1151` followed by a reload.
+- A row's ✕: `destroy {"rowKey":"WO-1010"} → 200 WO-1010 removed (149 left)`.
+- `abc` in an Hours cell: `update {…} → 400 hours must be a number (received abc).`, then
+  `← JS→.NET error {phase:"update",status:400,…}` and an error toast; the cell reverts.
+- The 404 (unknown key) and the `take` bound (`take` > 100 → 400) are enforced by the store and
+  come back the same way when a request breaks them.

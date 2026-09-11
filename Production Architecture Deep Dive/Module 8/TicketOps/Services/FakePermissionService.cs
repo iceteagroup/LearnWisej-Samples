@@ -1,6 +1,5 @@
 using System;
 using TicketOps.Domain;
-using TicketOps.Infrastructure;
 
 namespace TicketOps.Services
 {
@@ -14,12 +13,10 @@ namespace TicketOps.Services
     public sealed class FakePermissionService : IPermissionService
     {
         private readonly IUserService _users;
-        private readonly ILog _log;
 
-        public FakePermissionService(IUserService users, ILog log)
+        public FakePermissionService(IUserService users)
         {
             _users = users ?? throw new ArgumentNullException(nameof(users));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         /// <summary>Test steering: when true every check answers "no".</summary>
@@ -28,21 +25,15 @@ namespace TicketOps.Services
         public bool CanClose(Ticket ticket)
         {
             var user = _users.Current;
-            bool allowed = !DenyEverything && (user.Role == OperatorRole.Manager
+            return !DenyEverything && (user.Role == OperatorRole.Manager
                 || (user.Role == OperatorRole.Technician && (ticket.AssigneeId == user.Id || !ticket.IsAssigned)));
-            _log.Info(LogLayer.Service, "FakePermissionService.CanClose",
-                $"{user} on #{ticket.Id} → {(allowed ? "allowed" : "denied")}{(DenyEverything ? " (DenyEverything)" : "")}");
-            return allowed;
         }
 
         public bool CanAssign(Ticket ticket, int toOperatorId)
         {
             var user = _users.Current;
-            bool allowed = !DenyEverything && (user.Role == OperatorRole.Manager
+            return !DenyEverything && (user.Role == OperatorRole.Manager
                 || (user.Role == OperatorRole.Technician && toOperatorId == user.Id));
-            _log.Info(LogLayer.Service, "FakePermissionService.CanAssign",
-                $"{user} assigning #{ticket.Id} to operator {toOperatorId} → {(allowed ? "allowed" : "denied")}");
-            return allowed;
         }
     }
 }

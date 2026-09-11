@@ -42,10 +42,12 @@ one would carry `Email` and a `Tickets` collection into session memory for nothi
 `TicketBrowserPage_Load` runs, in this order:
 
 ```csharp
+// The lookups come first: the criteria read SelectedValue from them.
 await LoadLookupsAsync();      // 1. the lookups
-await RefreshModelCardAsync(); // 2. the Module 2 card
-await LoadTicketsAsync(...);   // 3. the first search
+await LoadTicketsAsync();      // 2. the first search
 ```
+
+(Module 7 fills its `cboRole` from a local two-row list before these two calls; that list needs no query.)
 
 The order is not cosmetic. `ReadCriteria()` reads `statusComboBox.SelectedValue` and
 `customerComboBox.SelectedValue`; a `SelectedValue` on a ComboBox with no items — or with no item matching
@@ -53,8 +55,9 @@ the value — resolves to **nothing**, silently. A search that runs before the l
 nothing and looks like it worked, and the same trap catches an editor that assigns its edit model to a
 BindingSource before the lookup is populated (Module 4).
 
-`LoadLookupsAsync` also seeds the two date pickers with sensible values (today and today + 14 days) that
-only take effect once the operator ticks their check boxes.
+If the lookups cannot be loaded, `LoadLookupsAsync` writes the exception to the server console and shows a
+warning `AlertBox` (*The filter lists could not be loaded. Search still works without them.*); the search
+then runs with no status and no customer filter.
 
 ## Names out, keys in
 
@@ -115,19 +118,8 @@ SELECT "c"."Id", "c"."Name" FROM "Customers" AS "c" ORDER BY "c"."Name"
 
 five rows, the first being `Brightwater Clinics`.
 
-**Trace, page Load** (the shape the page writes):
-
-```
-• session      page created for session a1b2c3d4 · services through [Inject] → resolved from Microsoft DI
-• lookup       status lookup: the fixed TicketStatuses.All list (5 values) — no statement is sent
-◦ context      #1 created (SupportDeskContext from the factory)
-→ SQL          SELECT "c"."Id", "c"."Name" FROM "Customers" AS "c" ORDER BY "c"."Name"   (0.4 ms)
-• lookup       customer lookup: 5 rows projected to LookupItem (Id + Name), nothing tracked
-◦ context      #1 disposed (0 tracked entities released)
-◦ lookups      statusComboBox 6 rows, customerComboBox 6 rows — filled BEFORE the first search · 1 statement(s), 1 context created, 1 disposed
-```
-
-Six rows each: five values plus the "All" row.
+**On the page:** `statusComboBox` and `customerComboBox` each hold six rows after Load, five values plus
+the "All" row, and both are filled before the first search runs.
 
 **Tests** (`SupportDesk.Tests/TicketSearchTests.cs`):
 

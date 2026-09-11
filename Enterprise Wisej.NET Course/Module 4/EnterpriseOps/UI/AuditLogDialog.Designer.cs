@@ -28,7 +28,6 @@ namespace EnterpriseOps.UI
             this.colUser = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colCorrelation = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colDetail = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.lblAuditFooter = new Wisej.Web.Label();
             this.btnClose = new Wisej.Web.Button();
             this.SuspendLayout();
             //
@@ -41,7 +40,7 @@ namespace EnterpriseOps.UI
             this.lblAuditTitle.Size = new System.Drawing.Size(880, 28);
             this.lblAuditTitle.Text = "Audit log";
             //
-            // dgvAudit  (bound to AuditLogRow projections — never to AuditEntry)
+            // dgvAudit
             //
             this.dgvAudit.AllowUserToAddRows = false;
             this.dgvAudit.AllowUserToDeleteRows = false;
@@ -109,17 +108,6 @@ namespace EnterpriseOps.UI
             this.colDetail.Name = "colDetail";
             this.colDetail.ReadOnly = true;
             //
-            // lblAuditFooter
-            //
-            this.lblAuditFooter.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblAuditFooter.AutoSize = false;
-            this.lblAuditFooter.Font = new System.Drawing.Font("default", 8F);
-            this.lblAuditFooter.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblAuditFooter.Location = new System.Drawing.Point(20, 432);
-            this.lblAuditFooter.Name = "lblAuditFooter";
-            this.lblAuditFooter.Size = new System.Drawing.Size(740, 40);
-            this.lblAuditFooter.Text = "Committed rows were written inside the command's transaction; Rejected rows were written after the rollback, in their own transaction. No row contains SQL or a stack trace.";
-            //
             // btnClose
             //
             this.btnClose.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
@@ -135,7 +123,6 @@ namespace EnterpriseOps.UI
             this.ClientSize = new System.Drawing.Size(920, 492);
             this.Controls.Add(this.lblAuditTitle);
             this.Controls.Add(this.dgvAudit);
-            this.Controls.Add(this.lblAuditFooter);
             this.Controls.Add(this.btnClose);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
@@ -158,7 +145,6 @@ namespace EnterpriseOps.UI
         private Wisej.Web.DataGridViewTextBoxColumn colUser;
         private Wisej.Web.DataGridViewTextBoxColumn colCorrelation;
         private Wisej.Web.DataGridViewTextBoxColumn colDetail;
-        private Wisej.Web.Label lblAuditFooter;
         private Wisej.Web.Button btnClose;
     }
 }

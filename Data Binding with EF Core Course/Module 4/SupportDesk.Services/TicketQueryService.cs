@@ -32,18 +32,6 @@ public sealed class TicketQueryService
         return await db.Tickets.CountAsync(token);
     }
 
-    /// <summary>
-    /// Lab prop: the same count with an artificial delay, so the loading guard in the page can be
-    /// watched (a busy server, a slow network). The delay sits inside the unit of work on purpose:
-    /// the context stays alive for the whole operation and is still disposed at the end.
-    /// </summary>
-    public async Task<int> CountTicketsSlowlyAsync(TimeSpan latency, CancellationToken token = default)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        await Task.Delay(latency, token);
-        return await db.Tickets.CountAsync(token);
-    }
-
     #endregion
 
     #region Module 3 · the ticket browser query
@@ -72,21 +60,7 @@ public sealed class TicketQueryService
         return await RunSearchAsync(db, criteria, token);
     }
 
-    /// <summary>
-    /// Lab prop: the same search with an artificial delay <b>inside</b> the unit of work, so the loading
-    /// guard, the disabled buttons and the status text can be watched. The context is created before the
-    /// delay and disposed after the query, exactly like the real path — the operation is slow, the lifetime
-    /// rule is not bent.
-    /// </summary>
-    public async Task<PagedResult<TicketListItem>> SearchTicketsSlowlyAsync(TicketSearchCriteria criteria, TimeSpan latency, CancellationToken token = default)
-    {
-        await using var db = await _dbFactory.CreateDbContextAsync(token);
-        QueryTrace.Note($"simulated latency of {latency.TotalSeconds:0.#} s inside the unit of work — the context is already open and the page is guarded");
-        await Task.Delay(latency, token);
-        return await RunSearchAsync(db, criteria, token);
-    }
-
-    /// <summary>The composed query. Shared by the normal and the slow search, so both send the same two statements.</summary>
+    /// <summary>The composed query: exactly two statements, a COUNT and one paged SELECT.</summary>
     private static async Task<PagedResult<TicketListItem>> RunSearchAsync(SupportDeskContext db, TicketSearchCriteria criteria, CancellationToken token)
     {
         var pageSize = Math.Max(1, criteria.PageSize);

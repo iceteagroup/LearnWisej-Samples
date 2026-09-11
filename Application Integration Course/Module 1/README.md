@@ -24,7 +24,7 @@ Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet pac
 |---|---|---|
 | Set 72° / 88° / 104° / 79° | success | trace line `→ .NET→JS setValue(104) {"value":104}`, the gauge re-renders, and at 104° one `← JS→.NET thresholdExceeded {"value":104}` comes back and `ThresholdExceeded` fires in C# (red banner + alert) |
 | ▶ Stream readings | progress | a `Timer` (a Component with no visual surface) replays 14 readings; the status label counts them; the threshold event fires exactly once on the way up |
-| Set 150° (invalid) | failure 1 | the server property setter rejects it; nothing is rendered; banner + alert explain why |
+| Set 150° | failure 1 | out of range: the server property setter rejects it; nothing is rendered; banner + alert explain why |
 | Corrupt payload | failure 2 | `{"value":"n/a"}` is shipped on purpose; the vendor throws, the client adapter catches it and reports **one** `error` event; the page stays alive |
 | Resync from server | recovery | the authoritative server state is re-rendered and the banner clears |
 

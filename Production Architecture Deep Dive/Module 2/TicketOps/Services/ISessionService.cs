@@ -26,8 +26,5 @@ namespace TicketOps.Services
 
         /// <summary>Remembers the selected ticket for this session only.</summary>
         void SelectTicket(int? ticketId);
-
-        /// <summary>Progress path: builds a throwaway context the way a new session would, to show ids never collide.</summary>
-        SessionContext SimulateAnotherSession(int number);
     }
 }

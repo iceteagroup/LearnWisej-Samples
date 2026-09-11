@@ -21,7 +21,7 @@ namespace OperationsConsole.Shell
             this.btnStripRefresh = new Wisej.Web.Button();
             this.SuspendLayout();
             //
-            // lblStrip  (private — the three properties are composed into one line here)
+            // lblStrip
             //
             this.lblStrip.AutoSize = false;
             this.lblStrip.Dock = Wisej.Web.DockStyle.Fill;
@@ -32,7 +32,7 @@ namespace OperationsConsole.Shell
             this.lblStrip.Text = "Section · 0 records · never refreshed";
             this.lblStrip.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // btnStripRefresh  (private — a consumer handles StatusStrip.RefreshRequested)
+            // btnStripRefresh
             //
             this.btnStripRefresh.AccessibleName = "Refresh this section";
             this.btnStripRefresh.Dock = Wisej.Web.DockStyle.Right;
@@ -40,14 +40,12 @@ namespace OperationsConsole.Shell
             this.btnStripRefresh.Size = new System.Drawing.Size(44, 30);
             this.btnStripRefresh.TabIndex = 1;
             this.btnStripRefresh.Text = "↻";
-            this.btnStripRefresh.ToolTipText = "Raises StatusStrip.RefreshRequested — the same event RecordHeader raises, from a completely different layout.";
             this.btnStripRefresh.Click += new System.EventHandler(this.btnStripRefresh_Click);
             //
             // StatusStrip
             //
             this.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
             this.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            // Fill first, the docked edge last — the same rule as the page (docs/LayoutNotes.md §2).
             this.Controls.Add(this.lblStrip);
             this.Controls.Add(this.btnStripRefresh);
             this.Name = "StatusStrip";
@@ -57,7 +55,6 @@ namespace OperationsConsole.Shell
 
         #endregion
 
-        // private children: the public surface is Title, RecordCount, LastRefresh and RefreshRequested.
         private Wisej.Web.Label lblStrip;
         private Wisej.Web.Button btnStripRefresh;
     }

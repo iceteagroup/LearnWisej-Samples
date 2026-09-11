@@ -7,8 +7,7 @@ namespace EnterpriseOps.Security
 
     /// <summary>
     /// The course's three users. The role comes from the server-side session, never from
-    /// anything the browser sends (see ClientCommandService.ExecuteTrustingClient for the
-    /// anti-pattern that breaks this rule on purpose).
+    /// anything the browser sends.
     /// </summary>
     public sealed class AppUser
     {

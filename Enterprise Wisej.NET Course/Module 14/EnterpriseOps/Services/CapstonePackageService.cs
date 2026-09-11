@@ -58,12 +58,9 @@ namespace EnterpriseOps.Services
             new Deliverable("Capstone architecture diagram", "docs/capstone-package.svg", "<svg", false),
         };
 
-        /// <summary>Set by the failure-path button: pretend one deliverable was never written.</summary>
-        public bool SimulateMissingDeliverable { get; set; }
-
         /// <summary>
         /// Runs the checks. <paramref name="quiet"/> is used by the diagnostics probe, which has already
-        /// authorised the caller and does not want ten more trace lines.
+        /// authorised the caller and does not want ten more log lines.
         /// </summary>
         public List<PackageCheck> Verify(CommandContext ctx, bool quiet = false)
         {
@@ -113,18 +110,6 @@ namespace EnterpriseOps.Services
                 Detail = broken == 0 ? $"{indexed.Count}/{indexed.Count} resolve" : $"{broken} of {indexed.Count} would answer 404: " +
                          string.Join(", ", indexed.Where(e => !e.Exists).Select(e => e.Path)),
             });
-
-            if (SimulateMissingDeliverable)
-            {
-                checks.Add(new PackageCheck
-                {
-                    Deliverable = "Security review sign-off",
-                    Path = "docs/SecurityReviewSignOff.md",
-                    Required = true,
-                    Passed = false,
-                    Detail = "not written yet — listed as an open item in the readiness statement, owner ana.ops",
-                });
-            }
 
             if (!quiet)
             {

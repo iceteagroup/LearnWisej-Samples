@@ -1,4 +1,4 @@
-// HighVolumeGridPatterns.cs — the contracts the walkthrough video types in (Advanced Module 5).
+// HighVolumeGridPatterns.cs — the work-queue contracts: query, projection, paged result.
 // Kept in one file, as in the video, so the query, the projection and the paged result can be read together.
 // This file opts into nullable annotations (the project default is off) so the `string?` fields read as shown.
 #nullable enable

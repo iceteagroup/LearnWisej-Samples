@@ -75,10 +75,10 @@ event for every caller instead of a silently unhandled string.
 
 ## Evidence in the running app
 
-- The dark strip under the queue prints the result verbatim:
+- The wizard's dark status strip prints the result verbatim:
   `WorkflowResult — Outcome: CreatedWithCompensation · Success: True · ESC-1041 · CompensationAction: manual-review queued (#1) · correlation 9d22e6c1`.
-- Arm **Fail: notification (SMTP)** and finish the wizard: `Success` stays **true** — the escalation is valid —
-  while `CompensationAction` is filled in. A boolean alone could not express that.
+- Finish the first e-mail escalation of the session (the simulated SMTP relay times out): `Success` stays
+  **true** — the escalation is valid — while `CompensationAction` is filled in. A boolean alone could not express that.
 - Force a validation failure **at Finish**: pick **ana.ops** as the approver. Every step accepts her (she is a
   Manager, so `ValidateStep(Approver)` is happy), but the command-level rule *"you cannot approve your own
   escalation"* only exists where the whole command is visible. Finish returns `ValidationFailed`, and the wizard

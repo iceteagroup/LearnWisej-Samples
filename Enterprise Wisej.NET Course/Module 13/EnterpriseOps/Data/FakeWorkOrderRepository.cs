@@ -11,8 +11,7 @@ namespace EnterpriseOps.Data
     ///
     /// Only the server-side <see cref="Services.WorkOrderService"/> talks to it. The device never reaches
     /// this class directly: offline work goes through the local cache and the command queue, and is replayed
-    /// through the same service. (The "anti-pattern" button on the page shows what happens when a screen
-    /// ignores that rule.)
+    /// through the same service.
     /// </summary>
     public class FakeWorkOrderRepository
     {

@@ -32,7 +32,7 @@ namespace EnterpriseOps.UI
             this.pnlReportHeader.SuspendLayout();
             this.SuspendLayout();
             //
-            // pnlReportHeader  (amber band: "Batch result — 2 succeeded, 1 failed" + the correlation id)
+            // pnlReportHeader
             //
             this.pnlReportHeader.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.pnlReportHeader.BackColor = System.Drawing.Color.FromArgb(255, 248, 236);
@@ -65,7 +65,7 @@ namespace EnterpriseOps.UI
             this.lblReportCorrelation.Text = "correlation —";
             this.lblReportCorrelation.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
-            // dgvResults  (one line per row of the batch: outcome + reason — never a single "done")
+            // dgvResults
             //
             this.dgvResults.AllowUserToAddRows = false;
             this.dgvResults.AllowUserToDeleteRows = false;
@@ -143,7 +143,6 @@ namespace EnterpriseOps.UI
             this.btnRetry.Name = "btnRetry";
             this.btnRetry.Size = new System.Drawing.Size(170, 34);
             this.btnRetry.Text = "Retry failed rows";
-            this.btnRetry.ToolTipText = "Closes with DialogResult.Retry — the page re-reads the failed rows only and runs the batch again.";
             this.btnRetry.Click += new System.EventHandler(this.btnRetry_Click);
             //
             // btnCloseReport

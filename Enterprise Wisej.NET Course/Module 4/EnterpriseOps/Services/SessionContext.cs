@@ -11,14 +11,14 @@ namespace EnterpriseOps.Services
     public sealed class SessionContext
     {
         public string SessionId { get; }
-        public string TenantId { get; set; } = "fabrikam";
-        public string UserId { get; set; } = KnownUsers.Manager;
+        public string TenantId { get; } = "fabrikam";
+        public string UserId { get; } = KnownUsers.Manager;
         public Role Role => KnownUsers.RoleOf(UserId);
 
         /// <summary>How long a command may hold its transaction before it is cancelled and mapped to DB_TIMEOUT.</summary>
         public TimeSpan CommandTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
-        /// <summary>The correlation id of the last command built — shown in the header bar.</summary>
+        /// <summary>The correlation id of the last command built — quoted in the unexpected-error message.</summary>
         public string LastCorrelationId { get; private set; } = "—";
 
         public SessionContext(string sessionId)

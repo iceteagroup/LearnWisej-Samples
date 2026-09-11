@@ -65,7 +65,6 @@ this._wire = function () {
     var me = this;                                   // vendor "this" is the <input>; keep the widget
     this._onKnobChange = function (e) {
         var value = e.detail.value;
-        me._seen++;
         if (me._applying) {
             // caused by a server Options change (we are inside update()): deferred path
             me._raise("valueChanged", { value: value, source: "server" });
@@ -81,8 +80,6 @@ this._unwire = function () {
     if (this.input && this._onKnobChange) $(this.input).off("knobchange", this._onKnobChange);
     this._onKnobChange = null;
 };
-
-this._seen = 0;                                      // vendor callbacks observed (for the noise counter)
 
 this.update = function (options, old) {
     if (!this.widget) return;
@@ -124,8 +121,7 @@ this._reportError = function (phase, message) {
     this._raise("error", { phase: phase, message: message });
 };
 
-// functions the server reaches with Call / CallAsync
+// function the server reaches with Call("pulse")
 this.pulse = function () { if (this.widget) this.widget.pulse(); };
-this.getNoiseCount = function () { return { knobchange: this._seen }; };
 
 //# sourceURL=integrationlab.widgets.KnobWidget.js

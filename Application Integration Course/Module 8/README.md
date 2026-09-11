@@ -3,7 +3,7 @@
 Local lab build for **Module 8 · Data Endpoints: Postback, WebRequest & WebMethod**. It follows
 the walkthrough video: a vendor grid pulls JSON from a **postback URL** handled in the widget's
 `WebRequest` event, and the same grid, next to it, gets its rows from a **`[WebMethod]`** it
-calls and awaits. The trace card shows every request, response, call and event in both directions.
+calls and awaits. The **Network** card lists every request, response and call.
 
 Nothing here is deployed anywhere; it is a plain Wisej.NET 4 project on this machine.
 
@@ -21,26 +21,24 @@ Build check: `dotnet build -nologo -v q` (warning CS7022 about `Program.Main` is
 
 ## What to try in the Work Orders page
 
-| Button | Path | What you should see |
-|---|---|---|
-| (page load) | success | both grids show 10 work orders starting at **WO-1042**; the trace shows the postback triple `⇄ HTTP GET …&action=load… → 200 application/json → ← dataLoaded` on the left and `← WebMethod App.MainPage.GetWorkOrders → → return PageResult → ← dataLoaded` on the right; each card's status reads `● 10 rows · page 1/12 · N ms` |
-| Reload both | success / recovery | `Call("reload")` on both: back to `action=load`, page size 10, page 1; banners clear |
-| Next page | progress | `Call("setPage", n)` on both (wraps to 1 after page 12); each grid fetches through its own transport |
-| Sort by status | progress | `Call("sort", "status")` on both; a second click toggles descending (the header shows ▴/▾); `sort` is whitelisted on the server |
-| Invalid action | failure 1 (postback) | the vendor GETs `…&action=delete`; the handler answers `400 {"error":"unknown action"}`; the grid draws a red row `✖ HTTP 400 — unknown action`, the banner and status turn red, `← error {"status":400,…}` is traced |
-| Oversized page | failure 2 (both) | `size=1000` on both: postback → `400 {"error":"size must be between 1 and 50"}`; WebMethod → `ArgumentException` on the server, a Wisej exception popup in the browser, the Promise resolves `null` and the adapter reports `error {"status":0,…}` |
-| WebMethod target: … ▸ switch | communication | toggles `LookupWidget.DataSourceMode` between `"page"` (`App.MainPage.GetWorkOrders…`) and `"widget"` (`this.GetWorkOrders…` registered by `RegisterWebMethods`); `update(options)` is traced and the next `dataLoaded` says which target and call shape was used (`via`) and the property names that came back (`keys`) |
-| Show postback URL | routing | traces `GetPostbackURL()` with the middle redacted (session-scoped, never stored) plus request/rejection counters |
-| Clear trace | — | empties the trace list |
+| Action | What you should see |
+|---|---|
+| (page load) | both grids show 10 work orders starting at **WO-1042**, footer `page 1 / 12`; the Network card shows `⇄ HTTP [postback] GET …&action=load…` → `200 application/json` for the left grid and `← [webmethod] App.MainPage.GetWorkOrders {…}` → `→ return PageResult {…}` for the middle one |
+| the grid's **‹ Prev / Next ›** buttons | each grid fetches the next page through its own transport (GET with `page=2` / a WebMethod call with `"page":2`) |
+| a click on a column header | sorts by that column (a second click toggles descending); `sort` is whitelisted on the server |
+| a click on a row | a small toast names the selected work order (`rowClick` event) |
 
-Clicking a row shows a small toast (`rowClick` event) to prove the vendor event wiring works too.
+Failures surface as an error toast plus the vendor grid's red error row. To see the rejections,
+re-send the grid's postback request from DevTools with `action=delete` or `size=1000` (answered
+`400 {"error"}`), or call `App.MainPage.GetWorkOrdersAsync(1, 1000, "", false)` in the console
+(`ArgumentException`, Wisej popup, the Promise resolves `null`).
 
 ## Deliverables
 
 | # | Deliverable | File |
 |---|---|---|
 | 1 | Postback WebRequest handler | [`IntegrationLab/docs/PostbackWebRequestHandler.md`](IntegrationLab/docs/PostbackWebRequestHandler.md) — code in [`Widgets/GridWidget.cs`](IntegrationLab/Widgets/GridWidget.cs) (`grid_WebRequest`) and [`wwwroot/grid-init.js`](IntegrationLab/wwwroot/grid-init.js) |
-| 2 | WebMethod with arguments and return value | [`IntegrationLab/docs/WebMethod.md`](IntegrationLab/docs/WebMethod.md) — code in [`MainPage.cs`](IntegrationLab/MainPage.cs) (top-level), [`Widgets/LookupWidget.cs`](IntegrationLab/Widgets/LookupWidget.cs) (`RegisterWebMethods`) and [`wwwroot/lookup-init.js`](IntegrationLab/wwwroot/lookup-init.js) |
+| 2 | WebMethod with arguments and return value | [`IntegrationLab/docs/WebMethod.md`](IntegrationLab/docs/WebMethod.md) — code in [`MainPage.cs`](IntegrationLab/MainPage.cs), [`Widgets/LookupWidget.cs`](IntegrationLab/Widgets/LookupWidget.cs) and [`wwwroot/lookup-init.js`](IntegrationLab/wwwroot/lookup-init.js) |
 | 3 | Comparison note: URL data source vs client callback | [`IntegrationLab/docs/ComparisonNote.md`](IntegrationLab/docs/ComparisonNote.md) |
 
 ## Where things live (matches the video's solution tree)
@@ -53,15 +51,15 @@ IntegrationLab/
 │  ├─ PageRequest.cs           the validation both endpoints share (bounds + sort whitelist)
 │  └─ PageResult.cs            wire shape {rows,total,page,size,sort,desc}
 ├─ Widgets/
-│  ├─ GridWidget.cs            postback path: WebRequest += grid_WebRequest, PostbackUrl
-│  ├─ LookupWidget.cs          WebMethod path: [WebMethod] GetWorkOrders + OnWebRender/RegisterWebMethods
+│  ├─ GridWidget.cs            postback path: WebRequest += grid_WebRequest
+│  ├─ LookupWidget.cs          WebMethod path: ExecuteGetWorkOrders, called by MainPage.GetWorkOrders
 │  └─ GridEventArgs.cs         event payload types (data, never behavior)
 ├─ wwwroot/
 │  ├─ vendor-grid.js / .css    the "third-party" VendorGrid library (Packages)
 │  ├─ grid-init.js             adapter: transport.read.url = this.getPostbackUrl() + "&action=load"
-│  └─ lookup-init.js           adapter: load(query) awaits App.MainPage.GetWorkOrdersAsync(...) or this.GetWorkOrdersAsync(...)
+│  └─ lookup-init.js           adapter: load(query) awaits App.MainPage.GetWorkOrdersAsync(...)
 ├─ docs/                       the three deliverables
-├─ MainPage.cs / .Designer.cs  IntegrationLab — Work Orders (Application.MainPage)
+├─ MainPage.cs / .Designer.cs  IntegrationLab — Work Orders (Application.MainPage, [WebMethod] GetWorkOrders)
 ├─ Program.cs                  Wisej.NET session entry point
 └─ Startup.cs                  Kestrel host (app.UseWisej())
 ```

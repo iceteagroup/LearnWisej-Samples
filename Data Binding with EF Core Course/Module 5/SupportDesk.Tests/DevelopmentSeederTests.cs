@@ -76,20 +76,5 @@ public sealed class DevelopmentSeederTests : IDisposable
         Assert.Equal(first.Tickets, await db.Tickets.CountAsync());
     }
 
-    [Fact]
-    public async Task Reset_empties_every_table_and_seeds_again()
-    {
-        var seeder = new DevelopmentSeeder(_factory);
-        var first = await seeder.SeedDevelopmentDataAsync();
-        await new ModelDemoService(_factory).DeleteTicketWithCommentsAsync();
-
-        var reset = await seeder.ResetDevelopmentDataAsync();
-
-        Assert.True(reset.Seeded);
-        await using var db = _factory.CreateDbContext();
-        Assert.Equal(first.Tickets, await db.Tickets.CountAsync());
-        Assert.Equal(first.Comments, await db.TicketComments.CountAsync());
-    }
-
     public void Dispose() => _factory.Dispose();
 }

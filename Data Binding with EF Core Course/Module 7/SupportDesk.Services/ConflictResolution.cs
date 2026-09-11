@@ -7,7 +7,7 @@ namespace SupportDesk.Services;
 /// <summary>
 /// Who is running the editor. Only <see cref="Supervisor"/> may overwrite another operator's change — see
 /// <see cref="ConflictResolution.CanOverwrite"/>. A page-level <c>cboRole</c> selects one; there is no
-/// authentication behind it, it is a Module 7 lab prop that stands in for a real role claim.
+/// authentication in this sample, so it stands in for a real role claim.
 /// </summary>
 public enum UserRole
 {

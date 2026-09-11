@@ -31,7 +31,7 @@ keyed by **user + tenant**, never by user alone.
 | Claim | Meaning | Consumed by |
 |---|---|---|
 | `sub` | Stable subject id → `CommandContext.UserId` | everything; the audit log's User column |
-| `name` | Display name for the header bar | `lblUser` only — never a decision |
+| `name` | Display name, shown on the gate | display only — never a decision |
 | `email` | Contact, shown on the gate | nothing authorizes on it |
 | `tid` | Tenant id → `CommandContext.TenantId` | `TenantGuard`, every query, every audit row |
 | `groups` | Repeated once per directory group → `Role` | `ClaimsMapper`, then `RolePermissionStore` |
@@ -96,12 +96,10 @@ without forcing a new login.
 
 ## Evidence in the running app
 
-- Start the app: the gate opens **before** any data is loaded. Select an account and the middle list shows the
-  raw claims; the box below shows what `ClaimsMapper` made of them.
-- Sign in as `t.novak`: the screen unlocks with an amber banner naming the unmapped group, every command button
-  is hidden, and the work queue is empty because `Demand(ViewWorkOrders)` refused — visible in the trace and in
-  the audit log.
-- Sign in as `ana.ops` and press **Fail: cross-tenant approve**: the tenant on the context came from `tid`, and
-  the guard rejects the fabrikam record before any role is consulted.
-- **Switch identity (SSO)** signs out; the header, the buttons and the audit scope all change, and the audit log
-  keeps every identity's entries.
+- Start the app: the gate opens **before** any data is loaded. Select an account and the right-hand list shows
+  the raw claims the provider asserts.
+- Sign in as `t.novak`: the screen unlocks with an amber banner naming the unmapped group, the approve buttons
+  are hidden, and the work queue is empty because `Demand(ViewWorkOrders)` refused — visible in the audit log.
+- Sign in as `ana.ops`: the tenant on the context came from `tid`, so the queue and the audit log show contoso
+  rows only; `TenantGuard` would reject any fabrikam record before a role is consulted.
+- Sign in as another account in a second browser: the audit log is shared and keeps every identity's entries.

@@ -7,7 +7,7 @@ job status instead. The desktop loop it replaces (`for each order → PrintDocum
 row 8 of `FileBoundaryClassification.md`.
 
 Code: `Reporting/ReportQueue.cs` (the queue and the worker), `Reporting/ReportBuilders.cs` (the three jobs),
-`MainPage.cs` card D (the UI that polls it).
+`MainPage.cs` (the UI that polls it).
 
 ## Design
 
@@ -52,9 +52,7 @@ Code: `Reporting/ReportQueue.cs` (the queue and the worker), `Reporting/ReportBu
 * **Polling with `Wisej.Web.Timer` + `Signature()`.** Every page runs `timerQueue` (`Interval = 1000`). Each tick calls
   `ReportQueue.Signature()` — `id:status:progress;` for every job — and **redraws only when the string changed**
   (`RefreshQueue(force: false)`), so an idle queue costs one string compare per second per session and no round trip
-  of grid data. A forced refresh follows every local action (queue, cancel). Status transitions are traced once per
-  session (`_seenJobStatus`), including jobs another session queued: `• server job 4 (sam)  Monthly statement → Running`.
-  No push: the worker cannot reach a session, and polling is what makes "a second session sees the same queue" free.
+  of grid data. A forced refresh follows every local action (queue, cancel). No push: the worker cannot reach a session, and polling is what makes "a second session sees the same queue" free.
 
 ## The jobs (`ReportBuilders`)
 
@@ -93,18 +91,17 @@ A production queue adds, in roughly this order:
 None of these change the shape callers see (`Enqueue`, `Snapshot`, `Cancel`, `Find`), which is why the sample keeps
 the API this small.
 
-## Evidence (card D)
+## Evidence
 
 | Action | What you should see |
 |---|---|
-| Page load | `• server Wisej.Web.Timer  polling ReportQueue every 1 s (redraws only when a job changed)`; counts label `0 job(s) · 0 queued · 0 running · 0 done` |
-| `buttonQueueSummary` | `← JS→.NET queue report  Q2 summary · ≈ 3 s — Done first, try View ▸ and Download ⬇` · `• server ReportQueue.Enqueue  job 1 · owner kelly · result → App_Data\reports\0001-Q2-summary.pdf`; grid row `1 · Q2 summary · kelly · Running · n% · 0s elapsed`, then within ~3 s `• server job 1 (kelly)  Q2 summary → Done · Q2-summary.pdf`, row `Done · 100% · Q2-summary.pdf · view ▸`, counts `1 job(s) · 0 queued · 0 running · 1 done`; status `● job 1 queued · the page keeps responding while the worker renders` |
-| `buttonQueueBatch`, then `buttonQueueStatement` | Jobs 2 and 3; the batch runs (`Running`, progress climbing, `progressJob` bar follows the selected row), the statement waits (`Queued · waiting · —`); counts `3 job(s) · 1 queued · 1 running · 1 done` |
-| `buttonCancelJob` on the running batch | `← JS→.NET ReportQueue.Cancel  job 2 (Invoice batch × 1,204 orders, Running) → cancellation requested`; next tick `• server job 2 (kelly)  Invoice batch × 1,204 orders → Cancelled`, row `Cancelled · 37% · stopped · —`; the statement starts by itself |
-| `buttonViewResult` on job 1 | `→ .NET→JS InvoicePreviewForm  Q2-summary.pdf (n bytes) from App_Data\reports\0001-Q2-summary.pdf`; the PDF opens in the modal `PdfViewer`; closing it logs `• server InvoicePreviewForm  closed and disposed` |
-| `buttonDownloadResult` on job 1 | `→ .NET→JS Application.Download  App_Data\reports\0001-Q2-summary.pdf → Q2-summary.pdf`; the browser saves it |
-| `buttonSecondSession`, then queue a job there | The new tab's user is `sam`; its first refresh logs every existing job once (`• server job 1 (kelly)  Q2 summary → Done · Q2-summary.pdf` …); a job queued there shows `owner sam` in **both** tabs; the first tab logs `• server job 4 (sam)  … → Running` on its next tick |
+| Page load | counts label `0 job(s) · 0 queued · 0 running · 0 done` |
+| `buttonQueueSummary` | row `1 · Q2 summary · kelly · Running · n% · 0s elapsed`, then within ~3 s `Done · 100% · Q2-summary.pdf · view ▸`; counts `1 job(s) · 0 queued · 0 running · 1 done` |
+| `buttonQueueBatch`, then `buttonQueueStatement` | Jobs 2 and 3; the batch runs (progress climbing, the progress bar follows the selected row), the statement waits (`Queued · waiting · —`); counts `3 job(s) · 1 queued · 1 running · 1 done` |
+| `buttonCancelJob` on the running batch | on the next tick the row turns `Cancelled · 37% · stopped · —`; the statement starts by itself |
+| `buttonViewResult` on job 1 | the PDF opens in the modal `PdfViewer` |
+| `buttonDownloadResult` on job 1 | the browser saves `Q2-summary.pdf` |
+| `buttonSecondSession`, then queue a job there | the new tab's user is `sam`; it shows the same jobs; a job queued there shows `owner sam` in **both** tabs within a second |
 
 `buttonCancelJob`, `buttonViewResult` and `buttonDownloadResult` are enabled only when the selected row allows it
-(active / Done); reaching the handlers otherwise shows an amber `Job n is already Done — only Queued or Running jobs can
-be cancelled.` or `Job n has no result yet (Running).`
+(active / Done).

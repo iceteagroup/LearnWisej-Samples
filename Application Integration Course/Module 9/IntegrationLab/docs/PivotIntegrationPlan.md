@@ -68,9 +68,9 @@ The prototype has **no typed properties**. `MainPage` hands the vendor option ob
 this.pivotWorkOrders.Options = new { rowField = "site", columnField = "status", measure = "hours" };
 ```
 
-Wisej camelCases it and calls `init(options)`; replacing the object later (button
-**Pivot Site×Priority**) is a first-level change, so `update(options, old)` runs and the vendor
-loads again. This is the "fast now" side of the trade-off.
+Wisej camelCases it and calls `init(options)`; replacing the object later is a first-level
+change, so `update(options, old)` runs and the vendor loads again. This is the "fast now" side of
+the trade-off.
 
 ## 5. When to promote to typed properties
 
@@ -98,14 +98,9 @@ Nothing the browser sends is trusted: the WebMethod arguments are re-validated o
 
 ## 7. Evidence (what the running app shows)
 
-- Page load: trace `→ .NET→JS render pivot → init(options) {rowField:"site",…}` followed by
-  `← JS→.NET LoadPivot (WebMethod) {…} → 200 (5×4, N cells)` and `← JS→.NET dataLoaded {rows:5,columns:4,…}`;
-  the pivot card shows the 5×4 table with row, column and grand totals.
-- **Reload pivot**: one more WebMethod line, same result.
-- **Pivot Site×Priority**: `→ .NET→JS update(options) {…columnField:"priority",measure:"count"}`
-  then a WebMethod line with `measure:"count"`; the table re-renders with integer counts.
-- Clicking a cell: `← JS→.NET cellClick {rowKey:"Plant A",columnKey:"Open",value:…}` and
-  `• server Pivot CellClick fired in C#`.
-- Failure path (not wired to a button; call `LoadPivot("site","site","hours")` from the
-  browser console as `App.MainPage.LoadPivotAsync("site","site","hours")`): the trace shows
-  `→ 400 rowField and columnField must differ.` and the pivot status turns red.
+- Page load: `← JS→.NET LoadPivot (WebMethod) {…} → 200 (5×4, N cells)` in the Remote
+  operations list; the pivot card shows the 5×4 table with row, column and grand totals.
+- Clicking a cell: `← JS→.NET cellClick {rowKey:"Plant A",columnKey:"Open",value:…}`.
+- Failure path (call it from the browser console as
+  `App.MainPage.LoadPivotAsync("site","site","hours")`): the list shows
+  `→ 400 rowField and columnField must differ.`

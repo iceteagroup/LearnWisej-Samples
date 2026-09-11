@@ -84,8 +84,8 @@ documentation. It is `ACCEPTED` with no finding.
 Command Center → **Capstone review →** → **Generated-code review**:
 
 - **Load AI draft #214** → **Review generated code** → red verdict
-  `● REJECTED — 9 blocking finding(s) of 11 over 41 lines · 10 rules run`, eleven rows in the findings grid,
-  and the trace on the right showing `Review: Q1 L18 [Reject] …` line by line.
+  `● REJECTED — 9 blocking finding(s) of 11 over 41 lines · 10 rules run`, and eleven rows in the findings
+  grid, each with its rule, line and evidence.
 - **Load rev 2 (fixed)** → **Review generated code** → green `● ACCEPTED — no checklist finding`.
-- **Switch to ben.tech** on the Command Center, then review again → `Security: ReviewGeneratedCode denied`
-  and an audited refusal: a Technician cannot sign a review.
+- A Technician is refused by `GeneratedCodeReviewService` and the refusal is audited: a Technician cannot
+  sign a review.

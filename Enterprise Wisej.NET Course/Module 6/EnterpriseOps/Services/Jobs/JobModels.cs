@@ -96,7 +96,6 @@ namespace EnterpriseOps.Services.Jobs
     public sealed class StartImportCommand
     {
         public string FileName { get; set; }
-        public bool PublishEveryRow { get; set; }
     }
 
     public sealed class CancelJobCommand

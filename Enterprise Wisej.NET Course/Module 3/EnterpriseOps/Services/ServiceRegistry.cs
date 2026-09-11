@@ -1,4 +1,3 @@
-using System;
 using EnterpriseOps.Data;
 using EnterpriseOps.Diagnostics;
 using EnterpriseOps.Security;
@@ -16,7 +15,7 @@ namespace EnterpriseOps.Services
     /// vanish when its author closed the browser).
     ///
     /// Which services can safely be shared? Ones that hold no per-user state and synchronize what they do
-    /// hold. Everything that touches identity — the session context, the guard's trace, the error log — is
+    /// hold. Everything that touches identity — the session context, the diagnostic log, the error log — is
     /// per session, because sharing it would mean sharing a user.
     /// </summary>
     public sealed class ServiceRegistry
@@ -24,40 +23,34 @@ namespace EnterpriseOps.Services
         private ServiceRegistry(SessionContext session, ActivityTrace trace)
         {
             Session = session;
-            Trace = trace;
             Log = new ErrorLog(trace);
 
             // Application-scoped, documented, synchronized — the only two things shared between sessions.
             Store = WorkOrderStore.Shared;
             Audit = AuditTrail.Shared;
 
-            // Per-session instances. Each holds a reference to this session's trace, nothing else about the user.
+            // Per-session instances.
             TenantGuard = new TenantGuard(trace);
             WorkOrders = new WorkOrderService(Store, TenantGuard, Audit, trace);
             Conflicts = new ConflictResolutionService(Audit, trace);
-            OtherSession = new OtherSessionSimulator(Store, Audit, trace);
-            StateAudit = new StateAuditService(Audit, trace);
         }
 
         public SessionContext Session { get; }
-        public ActivityTrace Trace { get; }
         public ErrorLog Log { get; }
         public IWorkOrderStore Store { get; }
         public AuditTrail Audit { get; }
         public ITenantGuard TenantGuard { get; }
         public WorkOrderService WorkOrders { get; }
         public ConflictResolutionService Conflicts { get; }
-        public OtherSessionSimulator OtherSession { get; }
-        public StateAuditService StateAudit { get; }
 
         /// <summary>
         /// Signs the user in from the identity provider and builds the session's service graph. Called once,
         /// by the screen's constructor; the resulting <see cref="SessionContext"/> is what goes into
         /// <c>Application.Session</c>.
         /// </summary>
-        public static ServiceRegistry CreateForSession(string userId, string sessionId, ActivityTrace trace)
+        public static ServiceRegistry CreateForSession(string userId, string sessionId)
         {
-            if (trace == null) throw new ArgumentNullException(nameof(trace));
+            var trace = new ActivityTrace();
 
             VerifiedIdentity identity = new IdentityProvider().SignIn(userId);
             var session = SessionContext.Create(identity, sessionId);

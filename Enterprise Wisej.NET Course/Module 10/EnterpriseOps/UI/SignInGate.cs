@@ -8,16 +8,12 @@ using Wisej.Web;
 namespace EnterpriseOps.UI
 {
     /// <summary>
-    /// The authentication gate — a **simulation** of the OIDC/SSO boundary.
+    /// The authentication gate — a simulation of the OIDC/SSO sign-in.
     ///
-    /// There is no identity provider, no token signature and, deliberately, no password field: this screen picks
-    /// which identity the provider should assert and shows exactly what crosses the boundary — a list of claims.
-    /// Everything to the right of that list is the application's own responsibility, which is the whole subject
-    /// of the module.
-    ///
-    /// The screen owns no security decision. It calls <see cref="SignInService.SignInAsync"/>, which maps the
-    /// claims, fills the session and registers the membership, and it closes with <c>DialogResult.OK</c> only
-    /// when that service says a verified identity exists.
+    /// There is no identity provider, no token signature and no password field: the gate picks which identity
+    /// the provider should assert and shows the claims that cross the boundary. It calls
+    /// <see cref="SignInService.SignInAsync"/>, which maps the claims, fills the session and registers the
+    /// membership, and it closes with <c>DialogResult.OK</c> only when that service says a verified identity exists.
     /// </summary>
     public partial class SignInGate : Form
     {
@@ -30,13 +26,10 @@ namespace EnterpriseOps.UI
             _signIn = signIn;
         }
 
-        /// <summary>The identity the gate signed in, for the caller's banner. Null unless the result was OK.</summary>
+        /// <summary>The identity the gate signed in. Null unless the result was OK.</summary>
         public MappedIdentity Identity { get; private set; }
 
-        /// <summary>Everything the signed-in identity may do — the caller shows it once, then asks the services.</summary>
-        public IReadOnlyList<Permission> Permissions { get; private set; } = Array.Empty<Permission>();
-
-        #region Event handlers — thin, one service call each
+        #region Event handlers
 
         private void SignInGate_Load(object sender, EventArgs e)
         {
@@ -60,11 +53,8 @@ namespace EnterpriseOps.UI
             lstClaims.Items.Clear();
             foreach (SsoClaim claim in _signIn.PreviewClaims(account.Subject) ?? new List<SsoClaim>())
                 lstClaims.Items.Add($"{claim.Type,-10} {claim.Value}");
-
-            lblMapped.Text = "Press Sign in to run ClaimsMapper over these claims.";
         }
 
-        /// <summary>The gate itself: one service call, one result, no security logic in the handler.</summary>
         private async void btnSignIn_Click(object sender, EventArgs e)
         {
             SsoAccount account = Selected;
@@ -98,7 +88,7 @@ namespace EnterpriseOps.UI
 
         #endregion
 
-        #region Showing results — UI state only
+        #region Showing results
 
         private void ShowResult(SignInResult result)
         {
@@ -108,21 +98,12 @@ namespace EnterpriseOps.UI
                 return;
             }
 
-            Identity = result.Identity;
-            Permissions = result.Permissions;
-
             // "Authenticated, entitled to nothing" is a successful sign-in: the gate closes, and the screen
-            // behind it shows the warning and refuses every action. Authentication is not authorization.
-            lblMapped.Text = Describe(result);
+            // behind it shows the warning and every service refuses.
+            Identity = result.Identity;
             DialogResult = DialogResult.OK;
             Close();
         }
-
-        private static string Describe(SignInResult result)
-            => $"user   {result.Identity.UserId}\n"
-             + $"tenant {result.Identity.TenantId}\n"
-             + $"roles  {result.Identity.RoleList}\n"
-             + $"grants {(result.Permissions.Count == 0 ? "(none)" : string.Join(", ", result.Permissions))}";
 
         private void ShowError(string message)
         {

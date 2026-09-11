@@ -1,13 +1,22 @@
+using System;
+
 namespace EnterpriseOps.Services
 {
     /// <summary>
-    /// The one sink every layer writes its decisions to. The page implements it (→ lstTrace); services and
-    /// the sync workflow receive it in their constructor so a reviewer can follow "who decided what" without
-    /// opening the designer. Layer prefixes: UI → · Service: · Data: · Security: · Device: · Job:
+    /// The server-side diagnostics log. Services, the local store, the queue and the sync workflow receive
+    /// it in their constructor so "who decided what" can be followed in the server output without opening
+    /// the designer. Layer prefixes: UI → · Service: · Data: · Security: · Device: · Job:
     /// </summary>
     public interface IActivityTrace
     {
         void Log(string layer, string message);
+    }
+
+    /// <summary>Writes each line to <see cref="System.Diagnostics.Trace"/> with a timestamp and the layer prefix.</summary>
+    public sealed class ActivityTrace : IActivityTrace
+    {
+        public void Log(string layer, string message)
+            => System.Diagnostics.Trace.WriteLine($"{DateTime.Now:HH:mm:ss.fff}  {layer} {message}");
     }
 
     public static class TraceLayer

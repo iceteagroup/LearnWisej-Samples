@@ -17,8 +17,8 @@ not a feeling.
 | 4 | **Binding refresh** | ≤ 150 ms | `PerfBudgetPanel.Bind` returns its own elapsed ms | rebinding a whole grid instead of updating changed rows |
 | 5 | **Background job tick** | ≤ 250 ms | stopwatch around `timerLive_Tick` | doing real work on the UI timer; pushing more often than the browser can paint |
 
-Rows 1, 2 and 4 are recorded during load, so the table is already populated the first time you look at it —
-a budget table full of "not measured" teaches nothing.
+Rows 1, 2 and 4 are recorded during load and row 5 by the first live tick, so the table is already
+populated the first time you look at it — a budget table full of "not measured" teaches nothing.
 
 ## The verdict is not the UI's
 
@@ -56,12 +56,12 @@ The five steps the lesson asks the student to demonstrate, in order:
 
 1. **Timer** — `OperationTimer` wraps the service call and, on `Dispose`, reports `2,340 ms`.
 2. **Budget breach** — `PerformanceBudget.Record` compares it to 400 ms and sets `BudgetStatus.Over`; the
-   `Query — SearchWorkOrders` row turns red on the table and the status line reads
+   `Query — SearchWorkOrders` row turns red on the table and the status bar reads
    `OperationTimer — SearchWorkOrders 2,340 ms · correlation 5e8a13f7 · OVER BUDGET`.
 3. **Structured log line** — the entry that the same timer callback wrote:
    `{"op":"SearchWorkOrders","elapsedMs":2340,"tenant":"fabrikam","page":1,"pageSize":5000,"budgetMs":400,"budget":"over","correlation":"5e8a13f7"}`.
-4. **Correlation id** — `5e8a13f7` on the row, on the log line, in the trace and in the header. One action,
-   one thread to pull.
+4. **Correlation id** — `5e8a13f7` on the row, on the log line, in the server trace and in the status bar.
+   One action, one thread to pull.
 5. **The offending operation** — `"pageSize": 5000`. Somebody bypassed the paged query. The field names the
    bug; nobody had to reproduce it locally or attach a debugger.
 
@@ -80,11 +80,9 @@ new log line proves the fix with a number rather than a claim.
 
 ## Evidence — what the running app shows
 
-- On load the table already shows `Startup`, `Screen load — Diagnostics` and `Binding refresh` measured and
-  green; the other two read `not measured`.
+- On load the table shows `Startup`, `Screen load — Diagnostics` and `Binding refresh` measured and green;
+  `Background job tick` updates once a second, in the low single-digit milliseconds.
 - **Run query · 50** → `Query — SearchWorkOrders  ≤ 400 ms  162 ms  OK ✓`.
-- **Slow query · 5000** → the same row goes `2,340 ms  OVER ✕` on a pink background, the status line turns
-  red, and a red banner quotes the correlation id and the `pageSize` field.
-- **Fix page size** → green again, with a green banner naming the new correlation id.
-- **▶ Live refresh** → the `Background job tick` row updates once a second, staying in the low single-digit
-  milliseconds; click it again to stop.
+- **Slow query · 5000** → the same row goes `2,340 ms  OVER ✕` on a pink background and the status bar
+  reads `… · OVER BUDGET` with the correlation id.
+- **Fix page size** → green again, and the status bar names the new correlation id.

@@ -7,7 +7,7 @@ using EnterpriseOps.Security;
 namespace EnterpriseOps.Data
 {
     /// <summary>
-    /// The in-memory stand-in for the work order table. Unlike the trace, the error log or the session context,
+    /// The in-memory stand-in for the work order table. Unlike the error log or the session context,
     /// this one IS shared by every session on the server — it has to be, or two browser tabs could never
     /// collide on the same record and there would be nothing for optimistic concurrency to catch. That makes
     /// it the interesting entry in the static-state audit:
@@ -26,7 +26,7 @@ namespace EnterpriseOps.Data
     {
         /// <summary>
         /// Application-scoped on purpose — the one static in this sample that is allowed to hold data, because
-        /// the data belongs to the application and not to a user. The audit reads this attribute.
+        /// the data belongs to the application and not to a user.
         /// </summary>
         [SharedState(StateScope.Application,
             holds: "work order rows for every tenant — no per-user, per-session or per-tab data",
@@ -48,8 +48,8 @@ namespace EnterpriseOps.Data
 
         /// <summary>
         /// Finds a row by id across every tenant. The only caller is <c>WorkOrderService.OpenAsync</c>, which
-        /// hands the row's tenant to the <c>TenantGuard</c> before it looks at anything else — that is how the
-        /// "cross-tenant read" failure path shows a rejection instead of a silent empty result.
+        /// hands the row's tenant to the <c>TenantGuard</c> before it looks at anything else — so a cross-tenant
+        /// read ends in a rejection instead of a silent empty result.
         /// </summary>
         public WorkOrder FindById(int id)
         {

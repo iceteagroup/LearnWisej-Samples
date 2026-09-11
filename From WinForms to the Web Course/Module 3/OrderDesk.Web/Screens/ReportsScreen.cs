@@ -7,13 +7,12 @@ using Wisej.Web;
 namespace OrderDesk.Screens
 {
     /// <summary>
-    /// Reports: Print Invoice and Export, the two boundaries Module 1 already crossed. The invoice
-    /// preview is a transient modal window shown with the callback form of ShowDialog and disposed
-    /// in that callback — the other half of the Module 3 rule (OrdersScreen shows the awaited half).
+    /// Reports: Print Invoice (a server-generated PDF in a modal PdfViewer, disposed in the
+    /// ShowDialog callback) and Export (a file streamed to the browser).
     /// </summary>
     public partial class ReportsScreen : ScreenBase
     {
-        private readonly OrderService _orderService = new OrderService();   // ✓ reused unchanged
+        private readonly OrderService _orderService = new OrderService();
 
         public ReportsScreen()
         {
@@ -22,13 +21,13 @@ namespace OrderDesk.Screens
 
         public override string ScreenName => "Reports";
 
-        public override string StatusText => $"{gridReportOrders.Rows.Count} orders · Print Invoice → server PDF · Export → download";
+        public override string StatusText => $"{gridReportOrders.Rows.Count} orders";
 
         public Order SelectedOrder => gridReportOrders.CurrentRow?.Tag as Order;
 
         public override void OnShown(bool first)
         {
-            Reload();   // every time: another screen may have saved or deleted an order
+            Reload();   // every time: another screen may have saved an order
         }
 
         public void Reload(int? selectId = null)
@@ -59,49 +58,28 @@ namespace OrderDesk.Screens
                 gridReportOrders.Rows[0].Selected = true;
         }
 
-        private void buttonReportPrint_Click(object sender, EventArgs e)
-        {
-            RaiseTrace(TraceKind.FromClient, "Print Invoice (PDF)", $"order {SelectedOrder?.Id.ToString() ?? "—"}");
-            PrintSelected();
-        }
+        private void buttonReportPrint_Click(object sender, EventArgs e) => PrintSelected();
 
-        private void buttonReportExport_Click(object sender, EventArgs e)
-        {
-            RaiseTrace(TraceKind.FromClient, "Export orders", "all orders → orders.csv");
-            Export();
-        }
+        private void buttonReportExport_Click(object sender, EventArgs e) => Export();
 
-        /// <summary>Print Invoice: the Module 1 replacement, with the caller-disposes rule spelled out.</summary>
+        /// <summary>Print Invoice: the invoice lines as a PDF built on the server, in a modal PdfViewer.</summary>
         public void PrintSelected()
         {
             var order = SelectedOrder;
             if (order == null) return;
 
-            // ✕ desktop: InvoicePrinter.Print(order) → PrintDocument → the printer on the user's desk.
-            // ✓ web:     the same InvoiceDocument lines → a PDF built on the server → PdfViewer in a modal window.
             var lines = InvoiceDocument.Build(order, _orderService);
             var pdf = InvoicePdfWriter.Write(lines, $"Invoice {order.Id}");
-            RaiseTrace(TraceKind.Boundary, "Print Invoice", $"PrintDocument → local printer  ⇒  server PDF ({pdf.Length:N0} bytes) → PdfViewer");
 
             var preview = new InvoicePreviewForm(pdf, $"Invoice-{order.Id}.pdf");
-            RaiseTrace(TraceKind.ToClient, "InvoicePreviewForm", $"Invoice-{order.Id}.pdf · ShowDialog(callback) — returns at once, the callback runs on close");
-            preview.ShowDialog((form, result) =>
-            {
-                // ✓ the caller disposes the transient dialog when it closes (callback form of the Module 3 rule)
-                form.Dispose();
-                RaiseTrace(TraceKind.Server, "InvoicePreviewForm.Dispose", $"closed with {result} · disposed in the ShowDialog callback");
-            });
+            preview.ShowDialog((form, result) => form.Dispose());
         }
 
         /// <summary>Export: no Office, no local path — bytes in memory streamed to the browser.</summary>
         public void Export()
         {
-            var orders = _orderService.GetOrders();
-            var stream = CsvExport.OrdersStream(orders);
-            RaiseTrace(TraceKind.Boundary, "Export to Excel", $"Excel.Application + C:\\Orders\\out.xlsx  ⇒  {stream.Length:N0} bytes → Application.Download(\"orders.csv\")");
+            var stream = CsvExport.OrdersStream(_orderService.GetOrders());
             Application.Download(stream, "orders.csv");
-            RaiseTrace(TraceKind.ToClient, "Application.Download", "orders.csv — the browser saves it; the server never touched a local path");
-            // ✕ was: MessageBox.Show("Exported to " + path) — informational → ✓ Toast
             Ui.Toast("orders.csv sent to the browser.");
         }
     }

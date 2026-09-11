@@ -31,10 +31,9 @@ namespace IntegrationLab
     }
 
     /// <summary>
-    /// JSON for the live trace. Uses the framework's own serializer (the one that renders
+    /// JSON for the trace list. Uses the framework's own serializer (the one that renders
     /// Widget.Options), so what the trace prints is what travels: anonymous objects and
-    /// classes come out camel-cased (C# MinValue → JSON minValue), which is the
-    /// camel-casing evidence the lesson asks for.
+    /// classes come out camel-cased (C# MinValue → JSON minValue).
     /// </summary>
     internal static class LabJson
     {

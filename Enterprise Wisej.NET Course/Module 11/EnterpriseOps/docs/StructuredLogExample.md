@@ -37,14 +37,13 @@ using (new OperationTimer(SearchOperation, ctx.CorrelationId,
 elapsed time. It has no opinion about budgets or log levels; `WorkOrderService.RecordTiming` asks
 `PerformanceBudget` for the verdict and picks `Information` or `Warning` from it. The UI is not involved.
 
-## The four entries the lab produces
+## The entries the lab produces
 
 | Button | Level | Line (abridged) |
 |---|---|---|
 | **Run query · 50** | `information` | `{"ts":…,"level":"information","op":"SearchWorkOrders","elapsedMs":162,"tenant":"fabrikam","user":"ana.ops","page":1,"pageSize":50,"budgetMs":400,"budget":"ok","correlation":"9c44d2a1"}` |
 | **Slow query · 5000** | `warning` | `{"ts":…,"level":"warning","op":"SearchWorkOrders","elapsedMs":2340,"tenant":"fabrikam","user":"ana.ops","page":1,"pageSize":5000,"budgetMs":400,"budget":"over","correlation":"5e8a13f7"}` |
-| **Store failure** | `warning` then `error` | the timer's `"outcome":"failed"` entry, then the error entry below |
-| **Leak · cache 50,000 rows** | `warning` | `{…,"op":"RetainReport","rows":50000,"heapBeforeBytes":…,"heapAfterBytes":…,"growthBytes":11999xxx,"lifetime":"whole session — never cleared","tenant":"fabrikam","user":"ana.ops","correlation":"…"}` |
+| **Fix page size** | `information` | the same shape as the first line, `"pageSize":50`, `"budget":"ok"`, a new correlation id |
 
 `elapsedMs` for a 50-row page is `140 + 50 × 0.44 ≈ 162 ms` and for 5,000 rows
 `140 + 5000 × 0.44 = 2,340 ms` — the store's simulated latency is a function of the requested page size
@@ -60,7 +59,7 @@ all["message"]       = ex.Message;
 all["userMessage"]   = SafeErrorMessage.For(correlationId);
 ```
 
-so the entry contains, for the **Store failure** path:
+so an entry for a failed `SearchWorkOrders` (for example a dropped database connection) contains:
 
 ```json
 {"ts":"2026-09-10T09:16:02.771Z","level":"error","op":"SearchWorkOrders","tenant":"fabrikam",
@@ -73,7 +72,7 @@ so the entry contains, for the **Store failure** path:
 The user is shown only the `userMessage`: what happened in plain words, the reference to quote, what to do
 next. The host name, the pool, the spid and the exception type help an attacker more than they help the
 user, so they stay on the server. On the diagnostics page itself the error entry is rendered as
-`09:16:02 SearchWorkOrders · error · 7b3d1e04   ← error detail is server-log only` — the page shows what
+`09:16:02 SearchWorkOrders · error · 7b3d1e04   (error detail is in the server log)` — the page shows what
 happened without showing what it was.
 
 ## The log must not become the leak it exists to catch
@@ -85,11 +84,8 @@ entry per tick — a once-per-second log line would fill any sink and teach noth
 
 ## Evidence — what the running app shows
 
-- The **Structured log · JSON lines** card fills from the bottom as you click; each line is one complete
-  JSON object with the correlation id last.
+- The **Structured log** card fills from the bottom as you click; each line is one complete JSON object
+  with the correlation id last.
 - Click **Run query · 50** and then **Slow query · 5000**: two lines with the same `op`, different
   `elapsedMs`, different `pageSize`, different `budget` — and *different* correlation ids, because they are
   two user actions.
-- Click **Store failure**: the redacted error line appears on the page while the trace records
-  `Log: InvalidOperationException written with full detail · correlation … — the message text stays on the server`
-  and `UI → the user is told: "The operation could not be completed. Reference … "`.

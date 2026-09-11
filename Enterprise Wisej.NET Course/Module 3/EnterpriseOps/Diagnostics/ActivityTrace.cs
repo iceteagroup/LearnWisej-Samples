@@ -4,30 +4,20 @@ using System.Globalization;
 namespace EnterpriseOps.Diagnostics
 {
     /// <summary>
-    /// The live activity trace: every layer reports the decision it took, tagged with the layer name, so a
-    /// reviewer can prove from the screen alone that the handler was thin and the service decided.
-    ///
-    /// One instance per session — created by the page, handed to every service it builds. It is deliberately
-    /// NOT static: two sessions must never write into each other's trace. Nothing in this class knows about
-    /// controls; the page subscribes to <see cref="EntryAdded"/> and appends each line to lstTrace.
+    /// Server-side diagnostic log. Each layer writes the decision it took, tagged with the layer name and a
+    /// timestamp, to <see cref="System.Diagnostics.Trace"/>. One instance per session, handed to every
+    /// service the session builds — never static.
     /// </summary>
     public sealed class ActivityTrace : IActivityTrace
     {
-        /// <summary>Raised for every line. A null argument means "clear".</summary>
-        public event Action<string> EntryAdded;
-
-        public void Ui(string message) => Emit("UI →", message);
-        public void UiResult(string message) => Emit("UI ←", message);
         public void Session(string message) => Emit("Session:", message);
         public void Service(string message) => Emit("Service:", message);
         public void Data(string message) => Emit("Data:", message);
-        public void Security(string message) => Emit("Security:", message);
         public void Audit(string message) => Emit("Audit:", message);
-        public void Job(string message) => Emit("Job:", message);
 
         /// <summary>
-        /// <see cref="IActivityTrace"/> — the sink the shared services (TenantGuard …) write to. They put the
-        /// layer at the front of the message themselves; this splits it back off so every line still lines up.
+        /// <see cref="IActivityTrace"/> — used by services that put the layer at the front of the message
+        /// themselves (TenantGuard, ErrorLog); the layer is split back off so every line lines up.
         /// </summary>
         public void Write(string message)
         {
@@ -41,12 +31,10 @@ namespace EnterpriseOps.Diagnostics
                 Emit(string.Empty, message);
         }
 
-        public void Clear() => EntryAdded?.Invoke(null);
-
-        private void Emit(string layer, string message)
+        private static void Emit(string layer, string message)
         {
             string time = DateTime.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture);
-            EntryAdded?.Invoke($"{time}  {layer.PadRight(10)} {message}");
+            System.Diagnostics.Trace.WriteLine($"{time}  {layer.PadRight(10)} {message}");
         }
     }
 }

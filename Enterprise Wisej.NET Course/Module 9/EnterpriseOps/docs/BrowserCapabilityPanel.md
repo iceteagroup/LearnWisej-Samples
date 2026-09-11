@@ -72,9 +72,9 @@ flow exists, and the choice must be logged next to the command that used it.
 
 `BrowserCapabilityService` is never read by `ClientCommandService`. Grep the project for
 `_capabilities` and you will find it only in `CommandCenterShell` (rendering) and in
-`BrowserCapabilityService` itself. There is no path from a detected capability to a permission — the
-"Forged capabilities" button proves the other half: even a report that says `canApprove=1;role=Admin`
-loses both keys at step 4, and neither would have been consulted if it had survived.
+`BrowserCapabilityService` itself. There is no path from a detected capability to a permission — and
+even a report edited to say `canApprove=1;role=Admin` loses both keys at step 4, and neither would
+have been consulted if it had survived.
 
 ---
 
@@ -82,8 +82,6 @@ loses both keys at step 4, and neither would have been consulted if it had survi
 
 | Path | How to reproduce | What proves it |
 | --- | --- | --- |
-| First report | load the page | the card fills a moment after `paletteReady`; summary reads `N/11 available · 0 unknown key(s) ignored · collected HH:mm:ssZ` (N depends on the browser and the security context) |
-| Fallback chosen server-side | run over plain `http://localhost:5209` — `camera` is unavailable in an insecure context | the row reads `✕ Camera   manual entry offered`; trace `Service: fallback · Camera unavailable → manual entry offered` |
-| Re-detection | resize the browser, press **Re-detect browser** | trace `UI → Call("paletteCollect")`, then a new `Client: capability report #2` with the new `viewport` |
-| Forged report | **Forged capabilities** | trace `Client: ⚠ the report carries keys the server never published`, then two `Interop: capability key 'canApprove' is not in the server's list → ignored` lines; the banner explains it; the panel is unchanged |
-| Detection ≠ permission | after the forged report, **Run approve** as `ben.tech` | still `PERMISSION_DENIED` — the report changed nothing |
+| First report | load the page | the card fills a moment after `paletteReady`: one `✓`/`✕` row per capability (which ones are present depends on the browser and the security context) |
+| Fallback chosen server-side | run over plain `http://localhost:5209` — `camera` is unavailable in an insecure context | the row reads `✕ Camera   manual entry offered`; server log `Service: fallback · Camera unavailable → manual entry offered` |
+| Detection ≠ permission | whatever the panel shows, press Ctrl+K → *approve* → Enter | still `PERMISSION_DENIED` — the report changed nothing |

@@ -33,9 +33,8 @@ namespace TicketOps.Validation
 
     /// <summary>
     /// The table in docs/TestCases.md, as code. Because the validator and the rules are pure, running a
-    /// case is one method call with no form on screen — the "Run test cases" button paces these through a
-    /// Timer and the trace shows PASS/FAIL per case. A real project moves this file into an xUnit project
-    /// unchanged; nothing here references Wisej.NET.
+    /// case is one method call with no form on screen (<see cref="ValidationTestRunner"/>). A real project
+    /// moves this file into an xUnit project unchanged; nothing here references Wisej.NET.
     /// </summary>
     public static class ValidationTestCases
     {

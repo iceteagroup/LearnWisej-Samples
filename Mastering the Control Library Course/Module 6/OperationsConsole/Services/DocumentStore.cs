@@ -20,7 +20,7 @@ namespace OperationsConsole.Services
             ReceivedAt = receivedAt;
         }
 
-        /// <summary>Stable id ("DOC-000001") — what goes to the diagnostic panel through <c>ConsoleLog.Record</c>.</summary>
+        /// <summary>Stable id ("DOC-000001") — what goes to the diagnostic panel through <c>ShellStatus.Record</c>.</summary>
         public string Id { get; }
 
         public string FileName { get; }
@@ -58,15 +58,10 @@ namespace OperationsConsole.Services
     }
 
     /// <summary>
-    /// The in-memory document service behind the dashboard's Upload workflow.
-    /// <para>
-    /// The browser boundary in three steps: the user <i>selects</i> a file, the browser <i>uploads</i> the bytes,
-    /// and the server <i>processes</i> what arrived. The server never browses the user's disk and never trusts the
-    /// file name or the size the client reported — <see cref="Validate"/> runs here, on the server, even though the
-    /// <c>Upload</c> control already filters by type and size in the browser. The two command buttons on the
-    /// dashboard call <see cref="Validate"/> directly with a fabricated file so that server-side rejection is
-    /// visible even when the client would have blocked the file first.
-    /// </para>
+    /// The in-memory document service behind the dashboard's Upload workflow. The user selects a file, the browser
+    /// uploads the bytes, and the server processes what arrived: it never browses the user's disk and never trusts
+    /// the name or size the client reported — <see cref="Validate"/> runs here even though the <c>Upload</c> control
+    /// already filters in the browser.
     /// </summary>
     public sealed class DocumentStore
     {
@@ -93,8 +88,7 @@ namespace OperationsConsole.Services
 
         /// <summary>
         /// The server-side check. Returns null when the file is acceptable, otherwise the sentence to show the user.
-        /// Runs before a single byte is copied, and runs whether the bytes came from the Upload control or from the
-        /// "Simulate …" buttons.
+        /// Runs before a single byte is stored.
         /// </summary>
         public string Validate(string fileName, long sizeBytes)
         {
@@ -122,9 +116,7 @@ namespace OperationsConsole.Services
         public StoreResult Store(string fileName, string contentType, Stream content)
         {
             if (SimulateFailure)
-                throw new InvalidOperationException(
-                    "DocumentStore.Store failed: simulated failure (\"Simulate service failure\" is checked). " +
-                    "In a real application this is what a full disk or an unreachable document service looks like.");
+                throw new InvalidOperationException("The document store did not answer.");
 
             if (content == null)
                 return StoreResult.Rejected("Nothing arrived on the server — please try the upload again.");

@@ -29,7 +29,7 @@ namespace TicketOps.Services
     /// <summary>
     /// The audit trail of sensitive actions. Services write to it whether the action succeeded or was
     /// denied — a stream of denials against one account is exactly the signal a reviewer wants to see.
-    /// Plain C#: no UI type, so the same entries feed the trace, the in-app list and (in production) a SIEM.
+    /// Plain C#: no UI type, so the same entries feed the server log, the in-app list and (in production) a SIEM.
     /// </summary>
     public interface IAuditService
     {

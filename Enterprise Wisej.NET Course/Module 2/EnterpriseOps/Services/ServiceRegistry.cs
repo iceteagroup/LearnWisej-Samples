@@ -7,9 +7,9 @@ namespace EnterpriseOps.Services
     /// <summary>
     /// The composition root of one session: every service the two screens share, created once in
     /// <c>Program.Main</c> and stored in <c>Application.Session.Services</c>. Instance fields — never statics:
-    /// two users must never share a store, a theme state or a trace (Module 3's static-state audit says why).
+    /// two users must never share a store, a theme state or a log (Module 3's static-state audit says why).
     /// Both pages receive the same registry, so navigating MigrationDossierPage ⇄ WorkOrdersPage keeps the
-    /// dossier, the steps, the harness outcomes and the trace buffer.
+    /// dossier, the steps, the harness outcomes and the theme state.
     /// </summary>
     public sealed class ServiceRegistry
     {

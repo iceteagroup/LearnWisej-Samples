@@ -7,8 +7,7 @@
 1. **User text is data, not markup.** Anything a person can type (notes, titles, comments, user names)
    is rendered as text. Labels keep `AllowHtml = false` — the Wisej.NET default — and the framework
    escapes the string, so `<img src=x onerror=alert(1)>` is shown as those characters.
-2. **Every HTML-capable surface is a review item.** A label with `AllowHtml = true`, a `ListBox` (renders
-   HTML by default — the activity trace and the audit list are ListBoxes), a tooltip, a grid cell style
+2. **Every HTML-capable surface is a review item.** A label with `AllowHtml = true`, a tooltip, a grid cell
    with HTML enabled, a message box with markup. Before user text reaches one of these it goes through
    `HtmlPolicy.Encode` (encode on output: `<`, `>`, `&`, quotes → entities).
 3. **Formatting, if truly needed, comes from an allow-list.** `HtmlPolicy.RenderWithAllowList` encodes
@@ -35,19 +34,16 @@ Adding a tag to `HtmlPolicy.AllowedTags` is a security review item.
 |---|---|---|
 | `WorkOrdersView.labelNotePlain` | `false` (explicit) | `ticket.Note` raw — the framework escapes it |
 | `WorkOrdersView.labelNoteAllowList` | **`true` — REVIEWED** (comment in the Designer) | `HtmlPolicy.RenderWithAllowList(ticket.Note)` only |
-| Activity trace `ListBox` (`ActivityTracePanel`) | HTML-capable | log lines; user text is encoded **before logging** (`TicketService.AddNoteAsync`, `AuthenticationService.SignInAsync`) |
-| Audit list `ListBox` (`WorkOrdersView.listAudit`) | HTML-capable | `AuditLog.Format(entry)` — entries hold no user text (a note is audited as "N chars") |
+| Audit list `ListBox` (`WorkOrdersView.listAudit`) | escapes its items | `AuditLog.Format(entry)` — entries hold no user text (a note is audited as "N chars"); a rejected user name is encoded before it is audited |
 | `DataGridView` cells | default | ids, seeded titles, status, `"N chars"`, closed-by user names — no free text |
-| `LoginView.labelIdentity`, `labelSignedIn`, `labelSelected` | default (`false`) | server values / seeded titles |
+| `labelSignedIn`, `labelSelected` | default (`false`) | server values / seeded titles |
 
-## Evidence
+## Check it in the running app
 
 Select #2002, type `Pump failed <b>again</b> <img src=x onerror=alert(1)>`, click **Render ticket note**:
 
-- left box (escaped): `Pump failed <b>again</b> <img src=x onerror=alert(1)>` shown literally;
-- right box (allow-list): **again** in bold, then the literal text `<img src=x onerror=alert(1)>`;
-- trace: `[SVC] TicketService.AddNoteAsync — #2002 note (53 chars, contains markup — stored as text): Pump failed &lt;b&gt;again&lt;/b&gt; …` rendered by the ListBox as the visible characters, and
-  `[UI] WorkOrdersView.RenderNote — note contains markup → rendered as text (AllowHtml = false) and through the allow-list … — nothing executes`;
+- **NOTE AS TEXT**: `Pump failed <b>again</b> <img src=x onerror=alert(1)>` shown literally;
+- **NOTE WITH FORMATTING**: **again** in bold, then the literal text `<img src=x onerror=alert(1)>`;
 - audit: `[AUDIT] ✓ AddNote #2002 — l.romero (Technician): 53 chars` — no note body.
 
 No alert appears; nothing in the page changed except the two boxes.

@@ -20,21 +20,22 @@ Then open <http://localhost:5075>. (Visual Studio: open `IntegrationLab.slnx`, p
 Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet package.
 `dotnet build -nologo -v q` passes; warning CS7022 (Program.Main ignored) is expected.
 
-## What to try on the Operations Dashboard
+## What you see on the Operations Dashboard
 
-| Button | Path | What you should see |
-|---|---|---|
-| (page load) | render | half a second after load, four `→ .NET→JS render #1 <tile> {"className":"integrationlab.controls.SimpleGaugeControl","appearance":"simplegauge","value":70,…}` lines: the whole render contract of each tile |
-| ▶ Stream live | progress | a `Timer` drifts all four readings every 800 ms; each tick costs one `render #n` line per tile (only `value` changes on the wire). Boiler 2, Turbine and Coolant cross their thresholds periodically (Boiler 1 never does): `← JS→.NET thresholdExceeded {"value":…}` comes back, `ThresholdExceeded` fires in C#, the tile shows a red banner and a red border (theme state `alarm`), the **Alerts** KPI counts up; the banner clears when the reading falls back |
-| Switch theme → Material-3 / FluentDark-5 / Bootstrap-4 | theming | `Application.LoadTheme(...)`: the same four controls are restyled by the theme — accent arc, needle/readout colour, tile background, border, radius — together with every built-in control |
-| Invalid value (999 psi) | failure | the `Value` setter rejects it on the server; nothing is rendered; `• server rejected boiler1 …` + banner + alert |
-| Reset gauges | recovery | nominal readings are set again; the server is the source of truth, so recovery is a re-render of the difference |
-| Design-time notes | design time | an overlay shows what `OnWebRender` writes when `IsDesignMode()` is true (sample value at 62 % of the scale, design caption) and the Designer restart discipline |
-| Clear trace | — | empties the trace list |
-
-The right-hand card is the live client/server trace: `→ .NET→JS` render lines, `← JS→.NET` wired
-events, `• server` decisions. The state label under it shows the current theme, the total number of
-renders and the last rendered config of the Boiler 1 tile.
+- A KPI row (Active lines, Avg. throughput, Alerts, Uptime) and four tiles — Boiler 1, Boiler 2,
+  Turbine, Coolant — each the same `SimpleGaugeControl`.
+- The page streams from load (`● live`): a `Timer` drifts the four readings every 800 ms, and only
+  `value` changes on the wire.
+- Boiler 2, Turbine and Coolant cross their thresholds periodically (Boiler 1 never does): the client
+  class fires `thresholdExceeded`, `ThresholdExceeded` is raised in C#, the tile shows a red banner and a
+  red border (theme state `alarm`), the **Alerts** KPI counts up and the status reads `● alarm (n)`. The
+  banner clears when the reading falls back.
+- A value outside `Minimum..Maximum` is rejected by the control's setter on the server: nothing is
+  rendered, the tile's banner and a toast show the message, and streaming stops.
+- Theming: set `"theme"` in `Default.json` to `Material-3` or `FluentDark-5` (default `Bootstrap-4`) and
+  reload. The same four controls are restyled by the theme together with every built-in control.
+- Design time: open `EnterprisePage.cs` in the Wisej Designer; the gauges render live
+  (`docs/DesignTimeNotes.md`).
 
 ## Where things live (matches the video's solution tree)
 
@@ -98,7 +99,7 @@ be repainted from theme colours; the rest of its API is unchanged.
 - **Logic** on the server: validation in the setters, the alarm state, the `ThresholdExceeded` decision.
 - **Vendor behaviour** isolated in the client class: creation on `appear`, apply methods, resize,
   theme colours, destruction — no application logic.
-- **Failure path tested**: server rejection (Invalid value). A malformed value can no longer reach
-  the vendor because the typed properties are the only way in.
-- **Before production**: verify the mixin is deployed with the app (`Themes/` copied to output),
-  decide whether `Trace`/`RenderCount` diagnostics stay, and add the Designer screenshot.
+- **Failure path tested**: server rejection in the `Value` setter, caught by the page and shown on the
+  tile banner. A malformed value can never reach the vendor because the typed properties are the only way in.
+- **Before production**: verify the mixin is deployed with the app (`Themes/` copied to output)
+  and add the Designer screenshot.

@@ -6,16 +6,10 @@ using OperationsConsole.Models;
 namespace OperationsConsole.Services
 {
     /// <summary>
-    /// The dashboard's data service (Module 6). It owns a small in-memory <b>ticket table</b> — a few hundred rows —
-    /// and never lets it out: <see cref="GetDashboard"/> returns a <see cref="DashboardModel"/> with six monthly
-    /// aggregates, one completion percentage and one document reference. That is the rule the module teaches:
-    /// <i>do not load a huge chart data set when an aggregate answers the question</i>. Ten times more tickets change
-    /// the loop below, not the payload, not the chart and not this method's signature.
-    /// <para>
-    /// <see cref="SimulateFailure"/> makes the call throw (the failure path of the lab) and <see cref="LatencyMs"/>
-    /// keeps the call slow enough for the loading state to be seen. Both are lab instrumentation, and both are
-    /// exactly what a real service does on a bad day.
-    /// </para>
+    /// The dashboard's data service. It owns a small in-memory ticket table and never lets it out:
+    /// <see cref="GetDashboard"/> returns a <see cref="DashboardModel"/> with six monthly aggregates, one completion
+    /// percentage and one document reference. <see cref="SimulateFailure"/> makes the call throw and
+    /// <see cref="LatencyMs"/> keeps it slow enough for the loading state to be seen.
     /// </summary>
     public sealed class DashboardService
     {
@@ -47,24 +41,14 @@ namespace OperationsConsole.Services
         /// <summary>Milliseconds <see cref="GetDashboard"/> spends "querying", so the loading state is visible.</summary>
         public int LatencyMs { get; set; } = 650;
 
-        /// <summary>When true, <see cref="GetDashboard"/> throws — the "the dashboard service is down" path.</summary>
+        /// <summary>When true, <see cref="GetDashboard"/> throws.</summary>
         public bool SimulateFailure { get; set; }
 
-        /// <summary>How many ticket rows the aggregate was computed from (for the Event log line).</summary>
-        public int TicketCount => _tickets.Count;
-
-        /// <summary>The question this dashboard exists to answer. Written down first, control chosen second.</summary>
-        public const string Question = "Are we on track for this month's ticket target?";
-
-        /// <summary>
-        /// The one call the dashboard makes. Aggregates only — the ticket table never leaves this object.
-        /// </summary>
+        /// <summary>The one call the dashboard makes. Aggregates only — the ticket table never leaves this object.</summary>
         public DashboardModel GetDashboard()
         {
             if (SimulateFailure)
-                throw new InvalidOperationException(
-                    "DashboardService.GetDashboard failed: simulated failure (\"Simulate service failure\" is checked). " +
-                    "In a real application this is a timeout, a dead connection or an aggregation query that blew up.");
+                throw new InvalidOperationException("The dashboard service did not answer.");
 
             if (LatencyMs > 0)
                 Thread.Sleep(LatencyMs);   // the query the loading state is covering for
@@ -111,8 +95,7 @@ namespace OperationsConsole.Services
                 completion,
                 TargetPercent,
                 DescribePreviewDocument(),
-                DateTime.Now,
-                _tickets.Count);
+                DateTime.Now);
         }
 
         /// <summary>

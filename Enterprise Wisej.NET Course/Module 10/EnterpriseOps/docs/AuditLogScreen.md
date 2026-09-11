@@ -1,6 +1,6 @@
 # Audit log screen — EnterpriseOps
 
-Deliverable 4 of Module 10. `UI/AuditLogPage.cs` / `.Designer.cs` — the bottom-left card of the running screen.
+Deliverable 4 of Module 10. `UI/AuditLogPage.cs` / `.Designer.cs` — the bottom card of the running screen.
 
 ## What an entry answers
 
@@ -11,19 +11,18 @@ Who did what, to which record, in which tenant, when, and how it ended.
 | `AtUtc` | `DateTime.UtcNow` at the moment of the decision | **Time** (local) |
 | `UserId` | `CommandContext.UserId` — the `sub` claim | **User** |
 | `TenantId` | `CommandContext.TenantId` — the `tid` claim | **Tenant** |
-| `Action` | the `Permission` demanded, or a command name (`SignIn`, `ApproveWorkOrder`, `UnsafeHtmlRender`) | **Permission demanded** |
+| `Action` | the `Permission` demanded, or a command name (`SignIn`, `ApproveWorkOrder`, `ApproveExport`) | **Permission demanded** |
 | `Result` | `Ok` · `Denied` · `Pending` · `Failed` | **Result** |
 | `Target` | `WO-1002`, `export #3 · 36 rows` | **Detail · correlation id** |
 | `Detail` | the named reason and the values that matter | **Detail · correlation id** |
 | `CorrelationId` | `CommandContext.CorrelationId` | **Detail · correlation id** |
 
-The correlation id is the join key: the same eight characters appear in the header bar, in the trace lines of
-that click, and (from Module 11) in the structured logs.
+The correlation id is the join key: the same eight characters appear in the Detail column, in the status bar
+and error banners (`ref …`), in the server log lines of that click, and (from Module 11) in the structured logs.
 
 ## Properties of the log
 
-- **Append-only.** `AuditLog.Write` adds; nothing updates or deletes; there is no "clear audit" button. **Clear
-  trace** empties the diagnostic trace card and touches nothing in the audit log.
+- **Append-only.** `AuditLog.Write` adds; nothing updates or deletes; there is no "clear audit" button.
 - **Written by the service that executes the command, inside the same operation.** An action cannot succeed
   without being recorded, because the record is written where the decision is taken
   (`PermissionService.Demand`) and where the change is made (`WorkOrderService.ApproveAsync`).
@@ -39,7 +38,7 @@ that click, and (from Module 11) in the structured logs.
 `AuditQueryService.QueryAsync` decides the scope with `Has(ViewAuditLog)`:
 
 - with the permission → every entry of the caller's tenant;
-- without it → the caller's own entries only, and the card says so under "scope:".
+- without it → the caller's own entries only.
 
 The three combo boxes (**User: any**, **Permission: any**, **Result: any**) are read into an `AuditFilter` and
 applied **by the service**. The grid binds to `AuditRow`, a projection — never to `AuditEntry` itself. Denied
@@ -67,11 +66,9 @@ Then, live:
 | Do this | New audit row |
 |---|---|
 | Sign in as anyone | `SignIn · OK · claims mapped → Manager` |
-| **Break the UI: enable Export**, then **Export data** as `l.romero` | `ExportData · DENIED · missing permission for roles Technician` — the first row of the grid |
-| **Fail: cross-tenant approve** | `ApproveWorkOrders · DENIED · cross-tenant: session 'fabrikam' requested 'contoso'` |
+| **Export data** as `l.romero` (the button is offered to every signed-in user) | `ExportData · DENIED · missing permission for roles Technician` — the first row of the grid |
 | **Approve** as `m.weber` | two rows: `ApproveWorkOrders · OK` (the decision) and `ApproveWorkOrder · OK · WO-…` (the change) |
 | **Export data** as `m.weber` | `ExportData · PENDING · awaiting a second approver` |
 | **Approve pending export** as `d.singh` on his own request | `ApproveExport · DENIED · separation of duties` |
 | **Approve pending export** as `j.kim` | `ApproveExport · OK` and `ExportData · OK · completed after approval` |
-| **Fail: render note as raw HTML** | `UnsafeHtmlRender · FAILED · untrusted text from 'customer portal (public form)' rendered with AllowHtml = true` |
 | Set **Result: DENIED** in the filter | only the refusals — the probing view |

@@ -111,7 +111,6 @@ namespace TicketOps.Controls
             this.btnBack.Name = "btnBack";
             this.btnBack.Size = new System.Drawing.Size(84, 36);
             this.btnBack.Text = "← Back";
-            this.btnBack.ToolTipText = "Phone profile: back to the ticket list (the editor keeps its draft)";
             this.btnBack.Visible = false;
             this.btnBack.Click += new System.EventHandler(this.btnBack_Click);
             //
@@ -141,7 +140,6 @@ namespace TicketOps.Controls
             this.searchTickets.Location = new System.Drawing.Point(12, 9);
             this.searchTickets.Name = "searchTickets";
             this.searchTickets.Size = new System.Drawing.Size(546, 34);
-            this.searchTickets.ToolTipText = "SearchBar UserControl: Query + SearchRequested → ITicketService.SearchAsync";
             this.searchTickets.SearchRequested += new System.EventHandler<TicketOps.Controls.SearchEventArgs>(this.searchTickets_SearchRequested);
             //
             // btnNewTicket
@@ -151,7 +149,6 @@ namespace TicketOps.Controls
             this.btnNewTicket.Name = "btnNewTicket";
             this.btnNewTicket.Size = new System.Drawing.Size(130, 34);
             this.btnNewTicket.Text = "+ New Ticket";
-            this.btnNewTicket.ToolTipText = "Clears the detail editor (display only)";
             this.btnNewTicket.Click += new System.EventHandler(this.btnNewTicket_Click);
             //
             // pnlNavigation  (Dock Left: the navigation rail; compact on tablet, hidden on phone)
@@ -477,13 +474,11 @@ namespace TicketOps.Controls
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(84, 32);
             this.btnSave.Text = "Save";
-            this.btnSave.ToolTipText = "ReadDraftFromForm() → await _tickets.SaveAsync(draft) → ShowResult(result)";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             this.btnClose.Margin = new Wisej.Web.Padding(6, 6, 0, 0);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(84, 32);
             this.btnClose.Text = "Close";
-            this.btnClose.ToolTipText = "await _tickets.CloseAsync(id): the rule \"log hours before closing\" lives in the domain, not here";
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             //
             // pnlActivity  (the activity card: head Dock Top, SearchBar #2 Dock Top, feed Dock Fill)
@@ -520,7 +515,6 @@ namespace TicketOps.Controls
             this.pnlActivitySearch.Size = new System.Drawing.Size(204, 46);
             this.searchActivity.Dock = Wisej.Web.DockStyle.Fill;
             this.searchActivity.Name = "searchActivity";
-            this.searchActivity.ToolTipText = "The same SearchBar UserControl, second instance → ITicketService.GetActivityAsync";
             this.searchActivity.SearchRequested += new System.EventHandler<TicketOps.Controls.SearchEventArgs>(this.searchActivity_SearchRequested);
             //
             // listActivity
@@ -565,7 +559,6 @@ namespace TicketOps.Controls
             this.Controls.Add(this.lblStatus);
             this.Name = "TicketWorkspace";
             this.Size = new System.Drawing.Size(712, 456);
-            this.ResponsiveProfileChanged += new Wisej.Web.ResponsiveProfileChangedEventHandler(this.TicketWorkspace_ResponsiveProfileChanged);
             this.pnlHeader.ResumeLayout(false);
             this.pnlToolbar.ResumeLayout(false);
             this.pnlNavigation.ResumeLayout(false);

@@ -1,42 +1,31 @@
 /*
- * AdaptiveOps.css — the scoped application stylesheet of the Adaptive Operations Console (Module 3).
+ * AdaptiveOps.css — the scoped application stylesheet of the Adaptive Operations Console.
  *
- * Loaded from Default.html next to the theme. Rules of this file:
- *   1. Every selector starts from a class the console owns and sets through Control.CssClass.
- *      Nothing here targets a standard Wisej widget, its appearance classes or its internal DOM.
- *   2. Colour, font and text colour of standard controls stay in Themes/AdaptiveOps.theme. The theme
- *      engine writes those as inline styles on the widget element, so a class rule could not win anyway —
- *      that is why this file owns *surfaces* (elevation, radius of app-only elements, tints, transitions,
- *      letter-spacing) and the theme owns identity.
- *   3. The one value that follows live data (the SLA fill) is not here: it is the single CssStyle in
- *      MainPage.cs (SetSlaProgress). A class cannot express "63 %".
+ * Loaded from Default.html next to the theme. Every selector starts from a class the console owns and
+ * sets through Control.CssClass; nothing here targets a standard widget or its internal DOM. Colour,
+ * font and text colour of standard controls stay in Themes/AdaptiveOps.theme. The one value that follows
+ * live data (the SLA fill) is the single CssStyle in MainPage.UpdateSla().
  */
 
-/* ---- metric cards (Panel · AppearanceKey "metric-card" owns background/border/radius/stale) ---- */
+/* ---- metric cards (AppearanceKey "metric-card" owns background, border, radius and the stale state) ---- */
 
 .metric-card {
-    transition: box-shadow 250ms ease, transform 250ms ease;
+    box-shadow: 0 6px 18px rgba(13, 40, 80, 0.08);
 }
 
-/* elevation is a reusable app decision: one place to change, four cards follow */
-.metric-card.elevated {
-    box-shadow: 0 10px 24px rgba(13, 40, 80, 0.18);
-    transform: translateY(-2px);
-}
-
-/* the small uppercase title inside a card (Label · AppearanceKey "metric-title" owns colour and font) */
+/* the small uppercase title inside a card */
 .metric-card .metric-title {
     text-transform: uppercase;
     letter-spacing: 0.08em;
 }
 
-/* the 4 px accent strip at the top of each card: modifier classes instead of four BackColor values */
+/* the 4 px accent strip at the top of each card */
 .metric-strip.strip-open     { background-color: #2454A6; }
 .metric-strip.strip-overdue  { background-color: #B42318; }
 .metric-strip.strip-mine     { background-color: #B54708; }
 .metric-strip.strip-closed   { background-color: #027A48; }
 
-/* ---- compact badge (Label in the details editor) ---- */
+/* ---- compact badge (priority pill in the details editor) ---- */
 
 .compact-badge {
     border-radius: 999px;
@@ -48,14 +37,6 @@
 .compact-badge.priority-high     { background-color: rgba(181, 71, 8, 0.18); }
 .compact-badge.priority-critical { background-color: rgba(180, 35, 24, 0.18); }
 
-/* ---- validation banner (Label · AppearanceKey "banner-label" owns the red bold text) ---- */
-
-.banner-danger {
-    background-color: #FDECEA;
-    border-left: 4px solid #B42318;
-    border-radius: 6px;
-}
-
 /* ---- SLA progress bar: a track Panel and a fill Panel that fills it ---- */
 
 .progress-track {
@@ -64,8 +45,7 @@
     overflow: hidden;
 }
 
-/* the fill always spans the whole track; how much of it is *revealed* is the single computed
-   CssStyle set in MainPage.SetSlaProgress: clip-path:inset(0 <100-pct>% 0 0) */
+/* how much of the fill is revealed is the CssStyle set in MainPage.UpdateSla(): clip-path:inset(0 <100-pct>% 0 0) */
 .progress-fill {
     background-color: #2454A6;
     border-radius: 999px;

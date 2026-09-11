@@ -23,20 +23,14 @@ Build check: `dotnet build -nologo -v q` (warning CS7022 about `Program.Main` is
 
 ## What to try on the Dashboard
 
-| Button | Path | What you should see |
-|---|---|---|
-| Set "High" / Set "Peak" / Set "Idle" | success | trace `• server Set "High"  Options = { value: 88, level: 78 } → update(options)`, one `→ .NET→JS gauge.Options {"value":88}` and one `knob.Options {"level":78}`, then `gauge.Call("flash") — queued to client`; the needle and the knob move, **then** the gauge flashes (High, Idle) or the knob pulses (Peak). Peak / Idle also replace the `bands` array: the legend under the gauge is redrawn |
-| ▶ Stream | progress | a `Timer` pushes 20 → 95 → 20 through `Options.value` / `Options.level`; only those two fields travel, `update()` touches nothing else |
-| Change nested (no notify) | failure | `gauge.Options.bands[0].color` is changed **in place**; nothing renders, red banner, state label says `[nested change NOT sent]` |
-| Notify / Update() | recovery | `gauge.Update()` re-renders the Options; the client's `update(options, old)` finds the changed band and the legend chip turns blue |
-| Destroy & recreate | vendor limitation | toggles `Options.style` (card / compact); the InitScript destroys and recreates the vendor instance for that one option and reports `← JS→.NET recreated {"style":"compact",…}` |
-| drag / wheel the knob | client → server | `← JS→.NET valueChanged {"value":63}`; the server clamps it, owns it, writes it back to `Options.level` |
-| Clear trace | — | empties the list |
+| Action | What you should see |
+|---|---|
+| Set "High" / Set "Peak" / Set "Idle" | the needle and the knob move, **then** the gauge flashes (High, Idle) or the knob pulses (Peak); Peak / Idle also replace the `bands` array, so the legend under the gauge is redrawn. The list on the right shows `→ .NET→JS gauge.Options {"value":88}`, `knob.Options {"level":78}` and `gauge.Call("flash") — queued to client` |
+| drag / wheel the knob | `← JS→.NET knob.valueChanged {"value":63}`; the server clamps it and writes it back to `Options.level` |
 
-The right-hand card is the live **Server ⇄ Client** trace: every message in both directions, so
-the JSON can be compared with the docs. The page-load line shows the full `Options` object with
-camel-cased names (`range.minValue`), and the gauge's `initialized` event echoes the keys exactly as
-they arrived in the browser.
+The right-hand card, *⟶ Client · options & queued calls*, lists what the server sends: the full
+`Options` at page load (camel-cased names such as `range.minValue`), every Options change and every
+queued `Call`. A vendor failure caught by either adapter shows a red banner under the widgets.
 
 ## Deliverables
 
@@ -46,18 +40,18 @@ they arrived in the browser.
 | 2 | **InitScript and update implementation** | [docs/InitAndUpdate.md](IntegrationLab/docs/InitAndUpdate.md) · `wwwroot/gauge-init.js`, `wwwroot/knob-init.js` (embedded, see `IntegrationLab.csproj`) |
 | 3 | **Server button that changes widget options and calls the client** | [docs/ServerButton.md](IntegrationLab/docs/ServerButton.md) · `DashboardPage.cs` (`ApplySetPoint`, `QueueCall`, `button*_Click`) |
 
-## Where things live (matches the video's solution tree)
+## Where things live
 
 ```
 IntegrationLab/
-├─ DashboardPage.cs / .Designer.cs   the Dashboard page: two Widgets, trace, server buttons
-├─ LabHelpers.cs                     EmbeddedScript.Read (InitScript from the assembly), LabJson (trace JSON via the Wisej serializer)
+├─ DashboardPage.cs / .Designer.cs   the Dashboard page: server buttons, two Widgets, the client list
+├─ LabHelpers.cs                     EmbeddedScript.Read (InitScript from the assembly), LabJson (list JSON via the Wisej serializer)
 ├─ wwwroot/
 │  ├─ gauge-init.js                  InitScript of the gauge widget (embedded resource)
 │  ├─ knob-init.js                   InitScript of the knob widget (embedded resource)
 │  ├─ vendor-gauge.js / .css         the "third-party" gauge library + its stylesheet (Packages)
 │  ├─ jquery-lite.js                 jQuery-compatible subset (Package, must load before the plugin)
-│  ├─ vendor-knob.js / knob.css      the jQuery-style knob plugin + its stylesheet (Packages)
+│  └─ vendor-knob.js / knob.css      the jQuery-style knob plugin + its stylesheet (Packages)
 ├─ docs/
 │  ├─ WidgetPackages.md              deliverable 1
 │  ├─ InitAndUpdate.md               deliverable 2
@@ -72,7 +66,7 @@ IntegrationLab/
   Every time the server changes a **first-level** field of `Widget.Options` after the first render
   (`init`). It receives the full new options and the previous ones (`old`), and it is *not* called
   for a nested change (`Options.bands[0].color = …`) until `Update()` or `Options.Notify("bands")`
-  is called — the "Change nested (no notify)" button shows exactly that.
+  is called — which is why the server buttons replace the whole `bands` array.
 - **What makes Options flexible but error-prone?**
   Anything assigned to it is serialized as-is: anonymous types, arrays, nested objects — no types,
   no validation, no versioning. That gets a widget on screen in minutes, but names are camel-cased

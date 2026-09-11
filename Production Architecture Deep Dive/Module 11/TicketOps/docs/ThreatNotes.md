@@ -10,7 +10,7 @@ be forged; everything right of it is ours — as long as the rule is enforced th
 ```
  BROWSER (untrusted)             │  SERVER (trusted)
                                  │
- hidden/disabled button ─────────┼──► WorkOrdersView.buttonDelete_Click   (checks nothing)
+ disabled button ────────────────┼──► WorkOrdersView.buttonDelete_Click   (checks nothing)
  DevTools: btnDelete.disabled=0  │        │
  replayed / forged event message │        ▼
  role shown in a chip            │   TicketService.DeleteAsync
@@ -23,39 +23,36 @@ be forged; everything right of it is ours — as long as the rule is enforced th
 ## 1. Forged or replayed client events
 
 **Threat.** The browser sends "button X was clicked" messages. Nothing stops a client from sending that
-message for a button it never saw, sending it twice, or sending it after the button was removed.
+message for a button it never saw, sending it twice, or sending it after the button was disabled.
 
 **What would go wrong without the boundary.** A handler that deletes because "the button is only
-visible to Supervisors" deletes for anyone who can produce the message.
+enabled for Supervisors" deletes for anyone who can produce the message.
 
 **Defense here.** `TicketService.DeleteAsync` reads the identity from `IUserSession` and asks
 `IPermissionService` before it touches the repository. The handler adds nothing to the decision — so
 the forged message reaches the same `⛔ DENIED` as a legitimate click by a Technician.
-**Proof in the app:** *Call DeleteAsync directly (button hidden)* skips the button entirely.
 
-## 2. Hidden-button bypass (the "disabled control is not a control" case)
+## 2. Disabled-button bypass (the "disabled control is not a control" case)
 
 **Threat.** `btnDelete.disabled = false` in the DevTools console; or a stored widget state replayed.
 
-**Defense here.** `WorkOrdersView.ApplyPermissionsToControls` hides Delete for a Technician as a
-courtesy; the service repeats the check. **Proof in the app:** *Force-enable Delete (DevTools)* makes the
-button visible again and the click still ends with `UnauthorizedAccessException` thrown by the service,
-audited as `[AUDIT] ⛔ DENIED DeleteTicket #2002 — l.romero (Technician): needs Supervisor or Admin`.
+**Defense here.** `WorkOrdersView.ApplyPermissionsToControls` disables Delete for a Technician as a
+courtesy; the service repeats the check. **Proof in the app:** *Force-enable Delete* re-enables the
+button, and the click still ends with `UnauthorizedAccessException` thrown by the service, audited as
+`[AUDIT] ⛔ DENIED DeleteTicket #2002 — l.romero (Technician): needs Supervisor or Admin`.
 The user sees `Strings.AccessDenied`, not the exception.
 
 ## 3. HTML injection (stored XSS)
 
 **Threat.** A note such as `Pump failed <b>again</b> <img src=x onerror=alert(1)>` is stored and later
 shown to another user through an HTML-capable surface: a label with `AllowHtml = true`, a tooltip, a grid
-cell with HTML enabled. (The `ListBox` used by the activity trace escapes its items — verified at runtime —
-so it is not such a surface; encoding text for it shows literal entities.)
+cell with HTML enabled.
 
 **Defense here.** `Security/HtmlPolicy`:
 - default surfaces keep `AllowHtml = false` and the framework escapes the text (`labelNotePlain`);
 - the single reviewed `AllowHtml = true` surface (`labelNoteAllowList`) receives
   `HtmlPolicy.RenderWithAllowList(note)`: everything encoded, then only literal `<b>`, `<i>`, `<br>`
   restored — no attributes can survive, so `onerror=` stays text;
-- user text is **encoded before it is logged**, because the trace `ListBox` is itself HTML-capable;
 - the audit trail never carries user text at all (only its length).
 
 A Content Security Policy header is the second layer for production (`ProductionReadinessNote.md`);
@@ -68,10 +65,9 @@ it is a backstop, not a substitute for encoding on output.
   application never accepts a session id from a URL or a form field. Still, document on deployment:
   session cookie `HttpOnly` + `Secure` + `SameSite`, and — where the identity provider supports it —
   establish the application session **after** the external login completes rather than upgrading an
-  anonymous one. This sample logs only the first six characters of `Application.SessionId`, never the full value.
+  anonymous one. The application never logs `Application.SessionId`.
 - **Theft via XSS** is closed by §3 plus `HttpOnly`, so a script that did run could not read the cookie.
-- **Theft on the wire** is closed by TLS; `Application.IsSecure` is logged at load so a reviewer sees
-  whether the session runs on https/wss.
+- **Theft on the wire** is closed by TLS; check `Application.IsSecure` on the host.
 - **Idle sessions**: set a session timeout and clear the identity on sign-out (`AuthenticationService.SignOut`
   → `UserSession.SignOut` → `Application.User = null`, audited as `SignOut`).
 
@@ -88,16 +84,16 @@ the credential was verified against the server-side store. The chip on the scree
 
 **Threat.** Exception text, SQL, host names or "user not found" reaching the browser.
 
-**Defense here.** `ReportFailure` in both views shows `Strings.*` only; `InMemoryTicketRepository` and
-`InMemoryUserStore` throw messages with `sql01:1433` / `dc01.ticketops.local:636` that stop in the log.
-Sign-in failure is one neutral sentence for wrong password and unknown user alike.
+**Defense here.** `ReportFailure` in both views shows `Strings.*` only; exception details go to the
+server log. Sign-in failure is one neutral sentence for wrong password and unknown user alike.
 
 ## 7. Credential handling (out of scope for the code, in scope for the note)
 
-The demo store keeps a constant `"demo"` per account and compares it in fixed time. Production replaces
-`AuthenticationService` + `InMemoryUserStore` with an identity provider (OpenID Connect / Windows
-authentication) that owns password storage, lockout, MFA and rotation. Nothing else in the app changes,
-because screens and services only know `IUserSession`, `IUserContext` and `IPermissionService`.
+The demo store keeps a constant password (`secret123`) per account and compares it in fixed time.
+Production replaces `AuthenticationService` + `InMemoryUserStore` with an identity provider (OpenID
+Connect / Windows authentication) that owns password storage, lockout, MFA and rotation. Nothing else in
+the app changes, because screens and services only know `IUserSession`, `IUserContext` and
+`IPermissionService`.
 
 ## What the sample deliberately does NOT protect against
 

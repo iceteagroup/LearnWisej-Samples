@@ -6,7 +6,7 @@ namespace AdaptiveOps.Models
 {
     /// <summary>
     /// Thrown by <see cref="TicketRepository.Save"/> when a ticket does not pass server-side validation.
-    /// The UI catches it, shows the banner and logs the rejection; nothing is written.
+    /// Nothing is written.
     /// </summary>
     public sealed class TicketValidationException : Exception
     {
@@ -27,13 +27,6 @@ namespace AdaptiveOps.Models
 
         public TicketRepository()
         {
-            Reset();
-        }
-
-        /// <summary>Restores the seed data (the recovery path of the lab).</summary>
-        public void Reset()
-        {
-            _tickets.Clear();
             _tickets.AddRange(Seed());
         }
 
@@ -75,12 +68,6 @@ namespace AdaptiveOps.Models
             var stored = _tickets.FirstOrDefault(x => x.Id == ticket.Id);
             if (stored == null)
                 throw new TicketValidationException($"Unknown ticket '{ticket.Id}'.");
-
-            // Lab prop (Module 4, lab step 8): an owner named "fault" makes the store throw a
-            // non-validation exception, so the shell's try/catch around DetailsEditor.Saved can be
-            // seen turning a server error into a visible message instead of a broken layout.
-            if (owner.Equals("fault", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException($"Simulated storage fault while writing {ticket.Id} (lab prop: owner 'fault').");
 
             stored.Title = title;
             stored.Priority = ticket.Priority;

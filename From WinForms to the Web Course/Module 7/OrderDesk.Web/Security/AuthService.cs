@@ -39,7 +39,7 @@ namespace OrderDesk.Security
             public string Hash;   // hex SHA-256 of "salt:password"
         }
 
-        // kelly / northwind-2026 · sam / fabrikam-2026 (the demo passwords the console buttons pass).
+        // kelly / northwind-2026 · sam / fabrikam-2026 (the demo passwords the sign-in buttons pass).
         private static readonly IReadOnlyDictionary<string, Account> Accounts = new Dictionary<string, Account>(StringComparer.OrdinalIgnoreCase)
         {
             ["kelly"] = new Account { UserName = "kelly", Company = "Acme", Role = "Manager", Salt = "a3f1c9d2e8b74c06", Hash = "17f9d6d8204c334829452c502f3b1a62a17d3ffb8233f181fedf1adb51499a56" },

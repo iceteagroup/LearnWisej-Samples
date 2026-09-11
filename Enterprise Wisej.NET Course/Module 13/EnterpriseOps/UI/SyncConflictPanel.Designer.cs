@@ -130,22 +130,20 @@ namespace EnterpriseOps.UI
             this.flpConflictActions.Size = new System.Drawing.Size(352, 82);
             this.flpConflictActions.WrapContents = true;
             //
-            // btnKeepServer  (the safe resolution — nothing is lost)
+            // btnKeepServer
             //
             this.btnKeepServer.Location = new System.Drawing.Point(3, 3);
             this.btnKeepServer.Name = "btnKeepServer";
             this.btnKeepServer.Size = new System.Drawing.Size(214, 36);
             this.btnKeepServer.Text = "Keep server — attach my notes";
-            this.btnKeepServer.ToolTipText = "The dispatcher's version stays. Your field notes are appended to the work order and audited.";
             this.btnKeepServer.Click += new System.EventHandler(this.btnKeepServer_Click);
             //
-            // btnApplyMine  (needs workorder.override — a Technician is refused, and the refusal is audited)
+            // btnApplyMine
             //
             this.btnApplyMine.Location = new System.Drawing.Point(3, 3);
             this.btnApplyMine.Name = "btnApplyMine";
             this.btnApplyMine.Size = new System.Drawing.Size(180, 36);
             this.btnApplyMine.Text = "Apply my completion…";
-            this.btnApplyMine.ToolTipText = "Writes your completion over the server change. Requires workorder.override (Manager/Admin).";
             this.btnApplyMine.Click += new System.EventHandler(this.btnApplyMine_Click);
             //
             // SyncConflictPanel

@@ -35,11 +35,5 @@ namespace TicketOps.Services
         public int? SelectedTicketId { get; set; }
 
         public DateTime StartedUtc { get; } = DateTime.UtcNow;
-
-        /// <summary>First 8 characters of the session id — enough to tell two tabs apart in the trace.</summary>
-        public string ShortId => string.IsNullOrEmpty(SessionId) ? "(none)" : (SessionId.Length > 8 ? SessionId.Substring(0, 8) + "…" : SessionId);
-
-        public override string ToString()
-            => $"{{session:{ShortId}, user:\"{CurrentUser}\", tenant:{Tenant}, theme:{Theme}, profile:{ClientProfile}, selected:{(SelectedTicketId.HasValue ? "#" + SelectedTicketId : "none")}}}";
     }
 }

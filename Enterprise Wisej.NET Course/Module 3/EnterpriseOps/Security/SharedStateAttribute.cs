@@ -7,8 +7,8 @@ namespace EnterpriseOps.Security
 
     /// <summary>
     /// Documents a static field or singleton that is deliberately shared by every session on the server:
-    /// what it holds, which scope owns it and how concurrent access is synchronized. The static-state audit
-    /// reads it — an undocumented mutable static is a finding, a documented one with a per-user scope is a bug.
+    /// what it holds, which scope owns it and how concurrent access is synchronized. In the static-state audit
+    /// an undocumented mutable static is a finding, and a documented one with a per-user scope is a bug.
     /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Class, AllowMultiple = false)]
     public sealed class SharedStateAttribute : Attribute

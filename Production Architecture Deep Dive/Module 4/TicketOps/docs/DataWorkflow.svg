@@ -90,7 +90,7 @@
   <rect x="40" y="556" width="514" height="36" rx="8" fill="#fff" stroke="#cfd5de"/>
   <text x="56" y="580" fill="#1f2d3a">GetAllAsync() → 6 seeded copies (#2001–#2006)</text>
   <rect x="40" y="600" width="514" height="36" rx="8" fill="#fff" stroke="#cfd5de"/>
-  <text x="56" y="624" fill="#1f2d3a">UpsertAsync(copy) → "#2002 written" · outage → DataOutageException</text>
+  <text x="56" y="624" fill="#1f2d3a">UpsertAsync(copy) → "#2002 written" · a failure throws before AcceptChanges</text>
 
   <!-- ===== DOMAIN box ===== -->
   <rect x="616" y="556" width="488" height="80" rx="8" fill="#fff" stroke="#e8c88a"/>

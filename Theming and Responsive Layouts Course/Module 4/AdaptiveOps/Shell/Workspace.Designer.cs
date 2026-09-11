@@ -38,10 +38,7 @@ namespace AdaptiveOps.Shell
             this.stripClosed = new Wisej.Web.Panel();
             this.lblClosedTitle = new Wisej.Web.Label();
             this.lblClosedValue = new Wisej.Web.Label();
-            this.bannerPanel = new Wisej.Web.Panel();
-            this.lblBanner = new Wisej.Web.Label();
-            this.tabs = new Wisej.Web.TabControl();
-            this.tabTickets = new Wisej.Web.TabPage();
+            this.gridCard = new Wisej.Web.Panel();
             this.lblWorkspaceTitle = new Wisej.Web.Label();
             this.gridTickets = new Wisej.Web.DataGridView();
             this.colId = new Wisej.Web.DataGridViewTextBoxColumn();
@@ -50,12 +47,6 @@ namespace AdaptiveOps.Shell
             this.colStatus = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colOwner = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colDue = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.tabTwin = new Wisej.Web.TabPage();
-            this.twin = new AdaptiveOps.Lab.ResizeCodeTwin();
-            this.tracePanel = new Wisej.Web.Panel();
-            this.traceCard = new Wisej.Web.Panel();
-            this.lblTraceTitle = new Wisej.Web.Label();
-            this.listTrace = new Wisej.Web.ListBox();
             this.metricsPanel.SuspendLayout();
             this.slotOpen.SuspendLayout();
             this.cardOpen.SuspendLayout();
@@ -65,12 +56,7 @@ namespace AdaptiveOps.Shell
             this.cardMine.SuspendLayout();
             this.slotClosed.SuspendLayout();
             this.cardClosed.SuspendLayout();
-            this.bannerPanel.SuspendLayout();
-            this.tabs.SuspendLayout();
-            this.tabTickets.SuspendLayout();
-            this.tabTwin.SuspendLayout();
-            this.tracePanel.SuspendLayout();
-            this.traceCard.SuspendLayout();
+            this.gridCard.SuspendLayout();
             this.SuspendLayout();
             //
             // metricsPanel  (Dock = Top · four fixed-width slots docked Left; the slot Padding is the gap)
@@ -208,41 +194,15 @@ namespace AdaptiveOps.Shell
             this.lblClosedValue.Size = new System.Drawing.Size(160, 36);
             this.lblClosedValue.Text = "–";
             //
-            // bannerPanel  (Dock = Top · hidden until an error; a hidden docked control takes no space)
+            // gridCard  (Dock = Fill · the ticket grid under its heading)
             //
-            this.bannerPanel.Controls.Add(this.lblBanner);
-            this.bannerPanel.Dock = Wisej.Web.DockStyle.Top;
-            this.bannerPanel.Name = "bannerPanel";
-            this.bannerPanel.Padding = new Wisej.Web.Padding(0, 0, 0, 8);
-            this.bannerPanel.Size = new System.Drawing.Size(772, 38);
-            this.bannerPanel.Visible = false;
-            this.lblBanner.AutoEllipsis = true;
-            this.lblBanner.AutoSize = false;
-            this.lblBanner.BackColor = System.Drawing.Color.FromArgb(253, 236, 234);
-            this.lblBanner.Dock = Wisej.Web.DockStyle.Fill;
-            this.lblBanner.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblBanner.ForeColor = System.Drawing.Color.FromArgb(178, 59, 39);
-            this.lblBanner.Name = "lblBanner";
-            this.lblBanner.Padding = new Wisej.Web.Padding(10, 0, 10, 0);
-            this.lblBanner.Text = "";
-            this.lblBanner.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
-            // tabs  (Dock = Fill · "Tickets" = the docked grid, "Resize-code twin" = the before)
-            //
-            this.tabs.Controls.Add(this.tabTickets);
-            this.tabs.Controls.Add(this.tabTwin);
-            this.tabs.Dock = Wisej.Web.DockStyle.Fill;
-            this.tabs.Name = "tabs";
-            this.tabs.SelectedIndex = 0;
-            this.tabs.SelectedIndexChanged += new System.EventHandler(this.tabs_SelectedIndexChanged);
-            //
-            // tabTickets
-            //
-            this.tabTickets.Controls.Add(this.gridTickets);
-            this.tabTickets.Controls.Add(this.lblWorkspaceTitle);
-            this.tabTickets.Name = "tabTickets";
-            this.tabTickets.Padding = new Wisej.Web.Padding(8);
-            this.tabTickets.Text = "Tickets · docked shell (after)";
+            this.gridCard.BackColor = System.Drawing.Color.White;
+            this.gridCard.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.gridCard.Controls.Add(this.gridTickets);
+            this.gridCard.Controls.Add(this.lblWorkspaceTitle);
+            this.gridCard.Dock = Wisej.Web.DockStyle.Fill;
+            this.gridCard.Name = "gridCard";
+            this.gridCard.Padding = new Wisej.Web.Padding(8);
             //
             // lblWorkspaceTitle  (Dock = Top)
             //
@@ -308,58 +268,15 @@ namespace AdaptiveOps.Shell
             this.colDue.Name = "colDue";
             this.colDue.ReadOnly = true;
             //
-            // tabTwin  (the "before": five panels positioned by a Resize handler)
-            //
-            this.tabTwin.Controls.Add(this.twin);
-            this.tabTwin.Name = "tabTwin";
-            this.tabTwin.Padding = new Wisej.Web.Padding(4);
-            this.tabTwin.Text = "Resize-code twin (before)";
-            //
-            // twin
-            //
-            this.twin.Dock = Wisej.Web.DockStyle.Fill;
-            this.twin.Name = "twin";
-            this.twin.Traced += new System.EventHandler<AdaptiveOps.Lab.TraceEventArgs>(this.twin_Traced);
-            //
-            // tracePanel  (Dock = Bottom · the gap above it is its Padding)
-            //
-            this.tracePanel.Controls.Add(this.traceCard);
-            this.tracePanel.Dock = Wisej.Web.DockStyle.Bottom;
-            this.tracePanel.Name = "tracePanel";
-            this.tracePanel.Padding = new Wisej.Web.Padding(0, 8, 0, 0);
-            this.tracePanel.Size = new System.Drawing.Size(772, 176);
-            //
-            // traceCard  ("Layout & theme · live trace")
-            //
-            this.traceCard.BackColor = System.Drawing.Color.White;
-            this.traceCard.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.traceCard.Controls.Add(this.listTrace);
-            this.traceCard.Controls.Add(this.lblTraceTitle);
-            this.traceCard.Dock = Wisej.Web.DockStyle.Fill;
-            this.traceCard.Name = "traceCard";
-            this.traceCard.Padding = new Wisej.Web.Padding(8);
-            this.lblTraceTitle.AutoSize = false;
-            this.lblTraceTitle.Dock = Wisej.Web.DockStyle.Top;
-            this.lblTraceTitle.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.lblTraceTitle.Name = "lblTraceTitle";
-            this.lblTraceTitle.Size = new System.Drawing.Size(754, 22);
-            this.lblTraceTitle.Text = "Layout & theme · live trace";
-            this.lblTraceTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.listTrace.Dock = Wisej.Web.DockStyle.Fill;
-            this.listTrace.Font = new System.Drawing.Font("monospace", 9F);
-            this.listTrace.Name = "listTrace";
-            //
             // Workspace
             //
-            // Child order = dock priority: tabs (Fill) first so it is docked LAST; metricsPanel last so
-            // it is docked FIRST against the top edge, then bannerPanel below it, tracePanel at the bottom.
-            // No AutoSize on this container: its children dock back to it (the circular-layout smell).
+            // Child order = dock priority: gridCard (Fill) first so it is docked last; metricsPanel
+            // last so it is docked first against the top edge. No AutoSize on this container: its
+            // children dock back to it.
             //
             this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
             this.BorderStyle = Wisej.Web.BorderStyle.None;
-            this.Controls.Add(this.tabs);
-            this.Controls.Add(this.tracePanel);
-            this.Controls.Add(this.bannerPanel);
+            this.Controls.Add(this.gridCard);
             this.Controls.Add(this.metricsPanel);
             this.Name = "Workspace";
             this.Size = new System.Drawing.Size(772, 588);
@@ -372,12 +289,7 @@ namespace AdaptiveOps.Shell
             this.cardMine.ResumeLayout(false);
             this.slotClosed.ResumeLayout(false);
             this.cardClosed.ResumeLayout(false);
-            this.bannerPanel.ResumeLayout(false);
-            this.tabs.ResumeLayout(false);
-            this.tabTickets.ResumeLayout(false);
-            this.tabTwin.ResumeLayout(false);
-            this.tracePanel.ResumeLayout(false);
-            this.traceCard.ResumeLayout(false);
+            this.gridCard.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
@@ -406,11 +318,8 @@ namespace AdaptiveOps.Shell
         private Wisej.Web.Label lblClosedTitle;
         private Wisej.Web.Label lblClosedValue;
 
-        // Banner, tabs, grid, twin, trace
-        private Wisej.Web.Panel bannerPanel;
-        private Wisej.Web.Label lblBanner;
-        private Wisej.Web.TabControl tabs;
-        private Wisej.Web.TabPage tabTickets;
+        // Grid
+        private Wisej.Web.Panel gridCard;
         private Wisej.Web.Label lblWorkspaceTitle;
         private Wisej.Web.DataGridView gridTickets;
         private Wisej.Web.DataGridViewTextBoxColumn colId;
@@ -419,11 +328,5 @@ namespace AdaptiveOps.Shell
         private Wisej.Web.DataGridViewTextBoxColumn colStatus;
         private Wisej.Web.DataGridViewTextBoxColumn colOwner;
         private Wisej.Web.DataGridViewTextBoxColumn colDue;
-        private Wisej.Web.TabPage tabTwin;
-        private AdaptiveOps.Lab.ResizeCodeTwin twin;
-        private Wisej.Web.Panel tracePanel;
-        private Wisej.Web.Panel traceCard;
-        private Wisej.Web.Label lblTraceTitle;
-        private Wisej.Web.ListBox listTrace;
     }
 }

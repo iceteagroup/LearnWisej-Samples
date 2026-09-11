@@ -5,13 +5,14 @@
 `TicketEditorForm.LoadEditorAsync` (called from the form's `Load` event) does the same three things for
 both cases, in the same order:
 
-1. `Commands.GetLookupsAsync()` — customers, agents (plus the sentinel), categories, `TicketStatuses.All`,
-   `TicketPriorities.All`. Assigned to every ComboBox's `DataSource` **before** the model exists.
+1. `Commands.GetLookupsAsync()` — customers, agents, categories, `TicketStatuses.All`,
+   `TicketPriorities.All`. Module 4's screen uses two of those lists, assigned to `cboCustomer` and
+   `cboCategory` **before** the model exists.
 2. Either `Commands.LoadEditModelAsync(existingId)` (a no-tracking read, mapped into a `TicketEditModel`,
    plus the ticket number) or `TicketEditModel.NewTicket()` (defaults: `Status = Open`, `Priority = Normal`,
    everything else unset).
-3. `this.editBindingSource.DataSource = model;` then the manual `dtpDueDate` copy (see
-   `docs/ControlDataBindings.md`).
+3. `this.editBindingSource.DataSource = model;`, then `BindLookupControls()` and the manual `dtpDueDate`
+   copy (see `docs/ControlDataBindings.md`).
 
 ```csharp
 TicketEditModel model;
@@ -20,18 +21,18 @@ if (_ticketId is int existingId)
     var data = await Commands.LoadEditModelAsync(existingId);
     model = data.Model;
     _ticketNumber = data.Number;
-    this.Text = $"Edit ticket {_ticketNumber}";
-    this.lblNumber.Text = _ticketNumber;
+    this.Text = $"Edit Ticket — {_ticketNumber}";
     this.btnDelete.Visible = true;
 }
 else
 {
     model = TicketEditModel.NewTicket();
-    this.Text = "Add ticket";
-    this.lblNumber.Text = "assigned on save";
+    _ticketNumber = null;
+    this.Text = "Add Ticket";
     this.btnDelete.Visible = false;
 }
 this.editBindingSource.DataSource = model;
+BindLookupControls();
 ```
 
 The context `LoadEditModelAsync` opens is disposed before the method returns — the form never holds one.
@@ -41,34 +42,37 @@ The context `LoadEditModelAsync` opens is disposed before the method returns —
 The pipeline, in order, exactly as the lesson names it:
 
 ```csharp
-if (_saving) { /* guard: log and return */ }
-using var scope = QueryTrace.Begin(OnQueryTrace);
+if (_saving)
+    return;                                                 // guard: a second click is dropped
+
 try
 {
     _saving = true; this.btnSave.Enabled = false; this.btnDelete.Enabled = false;
 
-    this.editBindingSource.EndEdit();                     // 1. commit pending control edits
+    this.editBindingSource.EndEdit();                       // 1. commit pending control edits
     var model = (TicketEditModel)this.editBindingSource.Current;
     model.DueDate = this.dtpDueDate.Checked ? this.dtpDueDate.Value.Date : (DateTime?)null;
 
-    this.errorProvider.Clear();                            // 2. the Module 4 validation placeholder
+    this.errorProvider.Clear();                             // 2. the Module 4 validation placeholder
     if (string.IsNullOrWhiteSpace(model.Title))
     {
         this.errorProvider.SetError(this.txtTitle, "Title is required.");
         return;                                             // stopped — no context created
     }
 
-    var result = await Commands.SaveAsync(model, _saveLatency);   // 3. fresh context, map, SaveChangesAsync
+    await Commands.SaveAsync(model);                        // 3. fresh context, map, SaveChangesAsync
     this.DialogResult = DialogResult.OK;
     Close();
 }
-catch (TicketNotFoundException) { /* friendly message, still closes OK — see docs/DeleteConfirmationAndReload.md */ }
-catch (DatabaseUnavailableException ex) { Fail("...not reachable...", ex); }
-catch (DbUpdateConcurrencyException ex) { Fail("Someone else changed this ticket...", ex); }
-catch (DbUpdateException ex) { Fail("...database rejected the change.", ex); }
-catch (Exception ex) { Fail("...try again in a moment.", ex); }
+catch (TicketNotFoundException)         { /* warning AlertBox, still closes OK — see docs/DeleteConfirmationAndReload.md */ }
+catch (DbUpdateConcurrencyException ex) { ShowError("Someone else changed this ticket in the meantime. Nothing was saved. Reload and try again.", ex); }
+catch (DbUpdateException ex)            { ShowError("The ticket could not be saved because the database rejected the change.", ex); }
+catch (Exception ex)                    { ShowError("The ticket could not be saved. Please try again in a moment.", ex); }
 finally { _saving = false; buttons re-enabled; Application.Update(this); }
 ```
+
+`ShowError` writes the full exception to the server console and shows the sentence in a top-right error
+`AlertBox`; the dialog stays open, so nothing the operator typed is lost.
 
 `TicketCommandService.SaveAsync` is the "fresh context, load or create, map, SaveChangesAsync" half:
 
@@ -98,31 +102,19 @@ await db.SaveChangesAsync(token);
 unchanged since). `Number` and `CreatedAt` are never touched on an update because `TicketEditModel` never
 carried them.
 
-## The double-click guard, proved with the slow-save toggle
+## The double-click guard
 
 `_saving` is a form field, checked first in both `SaveAsync` and `DeleteAsync` — the same shape as
-`TicketBrowserPage._loading`. `TicketBrowserPage`'s **Slow save (2.5 s)** toggle arms a `TimeSpan` that
-`TicketCommandService.SaveAsync` sleeps on **after the context is open and the ticket is mapped, before
-`SaveChangesAsync`** — inside the unit of work, exactly like `SearchTicketsSlowlyAsync`'s latency in Module
-3:
-
-```csharp
-if (latency > TimeSpan.Zero)
-{
-    QueryTrace.Note($"simulated latency of {latency.TotalSeconds:0.#} s inside the unit of work — the context is already open and Save is guarded");
-    await Task.Delay(latency, token);
-}
-await db.SaveChangesAsync(token);
-```
-
-A second click on `btnSave` while that delay is running finds `_saving` already `true` and logs
-`• editor guard: save already running — this click is ignored` instead of starting a second save.
+`TicketBrowserPage._loading`. Save and Delete are disabled while it is set and re-enabled in `finally`, on
+every path. A second click on `btnSave` while a save is still running finds `_saving` already `true` and
+returns without starting a second save.
 
 ## Evidence
 
-- `dotnet build` / `dotnet test` — 0 warnings, 0 errors, 52 passed.
 - The real SQL, captured from `TicketCommandService` running against SQLite in memory (a console check —
-  the same code path the form calls, not written from memory):
+  the same code path the form calls, not written from memory). In Development the server console shows the
+  same statements, because `appsettings.Development.json` logs `Microsoft.EntityFrameworkCore.Database.Command`
+  at `Information`:
   - Update: `UPDATE "Tickets" SET "RowVersion" = @p0, "Status" = @p1, "Title" = @p2, "UpdatedAt" = @p3 WHERE "Id" = @p4 AND "RowVersion" = @p5 RETURNING 1;`
     preceded by the tracked read `SELECT ... FROM "Tickets" AS "t" WHERE "t"."Id" = @model_Id LIMIT 2` —
     **exactly two statements**, proved by `SaveAsync_update_sends_exactly_two_statements_the_tracked_read_and_the_UPDATE`.
@@ -140,6 +132,6 @@ A second click on `btnSave` while that delay is running finds `_saving` already 
 
 **Not verified here — for the browser reviewer.** Whether `editBindingSource.EndEdit()` really commits a
 `txtTitle` edit that has not lost focus yet (the mechanism the cookbook's lesson calls out as the reason
-Save always starts with `EndEdit`); whether the Save button visibly greys out during the armed 2.5 s delay
-and a second real click is dropped with the guard trace line appearing in the page's trace list; whether
-`errorProvider.SetError` renders the red indicator next to `txtTitle` when Title is blank.
+Save always starts with `EndEdit`); whether the Save button visibly greys out while a save runs and a second
+real click is dropped; whether `errorProvider.SetError` renders the red indicator next to `txtTitle` when
+Title is blank.

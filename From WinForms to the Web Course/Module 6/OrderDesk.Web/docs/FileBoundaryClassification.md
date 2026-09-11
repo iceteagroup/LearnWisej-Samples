@@ -4,7 +4,6 @@ The browser is not the desktop. Every `File.*`, `Directory.*`, `Registry.*`, `Pr
 `Excel.Application` call that LegacyOrderDesk made ran on the **user's PC**. After the migration the same call runs on
 the **server**, unless a client-mediated feature (Upload, Download, ClientFileSystem) is used on purpose. This table
 classifies every file, Office and printer touch of the desktop app into one of the five answers the lesson gives.
-The same rows are data in `Files/FileBoundaryClassifier.cs` and drive card A of the console.
 
 | Feature (LegacyOrderDesk) | Legacy API · path | Class | Replacement in OrderDesk.Web |
 |---|---|---|---|
@@ -43,21 +42,16 @@ Counts: Server storage 3 · Upload 2 · Download 1 · ClientFileSystem 1 · Rede
 * Paths are **case-sensitive**: `App_Data/Uploads` and `App_Data/uploads` are two folders. `StorageRoot` uses one
   spelling (`uploads`, `exports`, `reports`) and nothing else composes those names.
 * The separator is `/`. A literal `@"C:\Orders\in.csv"` is a *relative file name* on Linux (backslashes are ordinary
-  characters), so `File.ReadAllLines` throws `FileNotFoundException` instead of `DirectoryNotFoundException` — the
-  console's "Legacy import" button catches both.
+  characters), so `File.ReadAllLines` throws `FileNotFoundException` instead of `DirectoryNotFoundException`.
 * `Path.Combine`, `Path.GetFileName`, `Path.DirectorySeparatorChar`, `Path.GetRelativePath` do the right thing on both
   platforms; string concatenation with `"\\"` does not. `Path.GetFileName` strips both separator styles on .NET Core.
 * `Application.StartupPath` is the content root under `dotnet run` (the project folder) and the deployed folder under
   IIS / systemd / a container. `Path.Combine(Application.StartupPath, "App_Data")` therefore works everywhere.
 * `Type.GetTypeFromProgID`, `Registry.CurrentUser`, `System.Drawing.Printing` are Windows-only; the last one does not
-  even compile for `net10.0`, which is why `InvoicePrinter` survives only as a quoted excerpt in
-  `Legacy/DesktopBoundaries.cs`.
+  even compile for `net10.0`, which is why `InvoicePrinter` is not carried over at all.
 
 ## Evidence
 
-* **Card A** lists the nine rows above; the six filter buttons (All · Server storage · Upload · Download ·
-  ClientFileSystem · Redesign) reduce the grid and the trace logs `← JS→.NET boundaries.filter  class = Upload → 2 rows`.
-  Selecting a row shows *legacy call → replacement → evidence* under the grid.
-* **Load trace** shows the configured root replacing the literals:
-  `⚠ boundary storage root  C:\Orders\…  ⇒  <project>\App_Data  (OrderDesk.StorageRoot = "App_Data" · n file(s) · separator '\')`.
-* Every other card is the evidence of one row: card B (Import), card C (Export, Office, Print), card D (long reports).
+Each replacement is part of the running app: **Upload** (import orders), **Export .xlsx** (download), **Print Invoice
+(PDF)** (server PDF in a `PdfViewer`) and the **Report queue** (long reports under `App_Data/reports/`). Every file the
+app writes lands under the configured root (`App_Data/uploads`, `exports`, `reports`).

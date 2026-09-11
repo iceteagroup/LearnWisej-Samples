@@ -2,7 +2,7 @@ namespace OrderDesk.Screens
 {
     partial class ReportsScreen
     {
-        // Designer-owned file. Layout: heading Dock = Top, actions Dock = Right (220), order list Dock = Fill.
+        // Layout: heading Dock = Top, actions Dock = Right (220), order list Dock = Fill.
         private System.ComponentModel.IContainer components = null;
 
         protected override void Dispose(bool disposing)
@@ -23,7 +23,6 @@ namespace OrderDesk.Screens
             this.colTotal = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colStatus = new Wisej.Web.DataGridViewTextBoxColumn();
             this.panelActions = new Wisej.Web.Panel();
-            this.labelReportHint = new Wisej.Web.Label();
             this.buttonReportPrint = new Wisej.Web.Button();
             this.buttonReportExport = new Wisej.Web.Button();
             this.panelActions.SuspendLayout();
@@ -40,7 +39,7 @@ namespace OrderDesk.Screens
             this.labelHeading.Text = "Reports · pick an order";
             this.labelHeading.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // gridReportOrders  (Dock = Fill)
+            // gridReportOrders
             //
             this.gridReportOrders.AllowUserToAddRows = false;
             this.gridReportOrders.AllowUserToDeleteRows = false;
@@ -59,39 +58,29 @@ namespace OrderDesk.Screens
             this.colTotal.DefaultCellStyle.Format = "N2";
             this.colStatus.HeaderText = "Status"; this.colStatus.Name = "colStatus"; this.colStatus.Width = 80; this.colStatus.ReadOnly = true;
             //
-            // panelActions  (Dock = Right)
+            // panelActions
             //
             this.panelActions.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
-            this.panelActions.Controls.Add(this.labelReportHint);
             this.panelActions.Controls.Add(this.buttonReportPrint);
             this.panelActions.Controls.Add(this.buttonReportExport);
             this.panelActions.Dock = Wisej.Web.DockStyle.Right;
             this.panelActions.Name = "panelActions";
             this.panelActions.Width = 220;
             //
-            // labelReportHint
-            //
-            this.labelReportHint.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.labelReportHint.AutoSize = false;
-            this.labelReportHint.Font = new System.Drawing.Font("default", 9F);
-            this.labelReportHint.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelReportHint.Location = new System.Drawing.Point(12, 8);
-            this.labelReportHint.Name = "labelReportHint";
-            this.labelReportHint.Size = new System.Drawing.Size(196, 110);
-            this.labelReportHint.Text = "Print Invoice: PrintDocument → a PDF built on the server, shown in a modal PdfViewer (disposed in the ShowDialog callback).\n\nExport: bytes in memory → Application.Download.";
-            this.labelReportHint.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            //
-            // buttons
+            // buttonReportPrint
             //
             this.buttonReportPrint.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.buttonReportPrint.Location = new System.Drawing.Point(12, 124);
+            this.buttonReportPrint.Location = new System.Drawing.Point(12, 12);
             this.buttonReportPrint.Name = "buttonReportPrint";
             this.buttonReportPrint.Size = new System.Drawing.Size(196, 30);
             this.buttonReportPrint.TabIndex = 1;
             this.buttonReportPrint.Text = "Print Invoice (PDF)";
             this.buttonReportPrint.Click += new System.EventHandler(this.buttonReportPrint_Click);
+            //
+            // buttonReportExport
+            //
             this.buttonReportExport.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.buttonReportExport.Location = new System.Drawing.Point(12, 160);
+            this.buttonReportExport.Location = new System.Drawing.Point(12, 48);
             this.buttonReportExport.Name = "buttonReportExport";
             this.buttonReportExport.Size = new System.Drawing.Size(196, 30);
             this.buttonReportExport.TabIndex = 2;
@@ -118,7 +107,6 @@ namespace OrderDesk.Screens
         private Wisej.Web.DataGridViewTextBoxColumn colTotal;
         private Wisej.Web.DataGridViewTextBoxColumn colStatus;
         private Wisej.Web.Panel panelActions;
-        private Wisej.Web.Label labelReportHint;
         private Wisej.Web.Button buttonReportPrint;
         private Wisej.Web.Button buttonReportExport;
     }

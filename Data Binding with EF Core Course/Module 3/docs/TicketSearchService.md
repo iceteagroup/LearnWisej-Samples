@@ -31,7 +31,7 @@ public sealed record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount);
 
 | | `Ticket` (the entity) | `TicketListItem` (the projection) |
 |---|---|---|
-| columns | 14, including `Description` (4000 chars) and `RowVersion` | the 10 the grid shows |
+| columns | 14, including `Description` (4000 chars) and `RowVersion` | the 10 the browser's list needs |
 | related data | `Customer`, `Agent`, `Category` objects and a `Comments` collection | three joined **names** and nothing else |
 | change tracker | one snapshot per row, per session | nothing — the query is `AsNoTracking` |
 | after the context is disposed | a detached graph nobody should save | still a perfectly valid list |
@@ -43,7 +43,8 @@ data-loss bug rather than a compile error.
 
 `TicketSearchCriteria` uses `init` properties rather than a positional constructor because most of it is
 optional: `new TicketSearchCriteria { PageSize = 50 }` is a valid "everything, first page". `Describe()`
-renders only the filters that are set — it is what the trace prints.
+renders only the filters that are set; the service writes it into the `QueryTrace` note the tests
+record.
 
 `PagedResult<T>` carries `TotalCount` alongside the page because the operator needs *"50 of 312"*, and 312
 cannot be derived from 50 rows. `PageCount(pageSize)` never returns 0, so an empty result still reads
@@ -70,10 +71,6 @@ rule as Module 1's count. The page never sees a `DbContext`, an `IQueryable` or 
 3. `await query.CountAsync(token)` — statement one, the total *before* the page is cut;
 4. `OrderByDescending(t => t.UpdatedAt).Skip(...).Take(...).Select(...)` then
    `await …ToListAsync(token)` — statement two, the page.
-
-`SearchTicketsSlowlyAsync` is the same query with a `Task.Delay` inside the unit of work — the lab prop
-that makes the loading guard watchable. It is deliberately the same `RunSearchAsync`, so the slow path and
-the real path send exactly the same two statements.
 
 The filters are covered in [PagingInTheDatabase.md](PagingInTheDatabase.md); the binding side in
 [TicketBrowserBinding.md](TicketBrowserBinding.md).
@@ -119,20 +116,11 @@ Ten columns, three joins, `LEFT JOIN` on the agent, and no `Description`, `RowVe
 `IsUrgent` or comment anywhere. Note that SQLite pages the **ticket** rows in the subquery and joins the
 names afterwards — the joins never widen the page.
 
-**Trace, one search** (the shape `TicketBrowserPage` writes; the reviewer sees it in the right-hand card):
-
-```
-• searchButton_Click TicketQueryService.SearchTicketsAsync(no filters · page 1, 50 rows)
-◦ context      #4 created (SupportDeskContext from the factory)
-• service      composed IQueryable<Ticket>: no filters · page 1, 50 rows — nothing sent yet; the two awaits below are the only statements
-→ SQL          SELECT COUNT(*) FROM "Tickets" AS "t"   (0.2 ms)
-→ SQL          SELECT "t0"."Id", "t0"."Number", … LIMIT @p1 OFFSET @p …   (0.6 ms)
-• service      materialised 50 TicketListItem rows of 312 matching · 0 entities tracked (AsNoTracking) — the list outlives this context
-◦ context      #4 disposed (0 tracked entities released)
-← result       Showing 50 of 312 tickets · page 1 of 7 · page size 50 · 2 statement(s) · 0.8 ms in the database · 1 context created, 1 disposed
-```
-
-`0 tracked entities released` is `AsNoTracking` doing its job.
+**One search from the page:** `statusLabel` reads *Showing 50 of 312 tickets · page 1 of 7 · page size
+50*. Where `appsettings.Development.json` logs `Microsoft.EntityFrameworkCore.Database.Command` at
+`Information` (Modules 3 to 6), the server console shows the two statements of every search: the
+`SELECT COUNT(*)` and the paged `SELECT … LIMIT … OFFSET …`. Nothing is tracked, which is `AsNoTracking`
+doing its job (`The_search_tracks_nothing_and_never_returns_an_entity` below).
 
 **Tests** (`SupportDesk.Tests/TicketSearchTests.cs`, all against the real 312-ticket seed):
 
@@ -143,5 +131,5 @@ names afterwards — the joins never widen the page.
   tickets, some with a null `AgentName` and some with a null `DueDate`: the `LEFT JOIN` drops nothing.
 - `The_search_tracks_nothing_and_never_returns_an_entity` — a context opened alongside the search has the
   same number of tracked entries before and after it.
-- `The_slow_search_returns_the_same_page_and_still_sends_two_statements` — `SearchTicketsSlowlyAsync`
-  returns the identical ids and closes its context; the latency extends the operation, not the lifetime.
+- `A_search_sends_exactly_two_statements_a_COUNT_and_a_paged_SELECT` — two commands, one context created
+  and disposed.

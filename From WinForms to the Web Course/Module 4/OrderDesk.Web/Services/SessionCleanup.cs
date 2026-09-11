@@ -5,19 +5,18 @@ using System.IO;
 namespace OrderDesk.Services
 {
     /// <summary>
-    /// ✓ The one cleanup routine both exits share: logout (the user clicks Sign out), timeout
-    /// (Application.SessionTimeout → the session ends) and ApplicationExit (the session is torn
-    /// down; subscribed in Program.Main). The lesson's list — long-running transactions, temporary
-    /// files, report jobs, locks — must be released here because an abandoned browser tab never
-    /// reaches "workflow complete".
+    /// The one cleanup routine every exit shares: logout (the user clicks Sign out) and
+    /// ApplicationExit (the session is torn down — timeout expired, browser gone; subscribed in
+    /// Program.Main). Long-running transactions, temporary files, report jobs and locks must be
+    /// released here because an abandoned browser tab never reaches "workflow complete".
     ///
     /// What this sample really owns per session is a workspace folder under &lt;StorageRoot&gt;/tmp
-    /// (created at sign-in to stand for temp files and staged report output); the rest is logged as
-    /// the requirement it is in a production system.
+    /// (created at sign-in for temp files and staged report output); the other steps are the
+    /// requirement as it stands in a production system.
     ///
     /// Every step runs in its own try/catch: a locked temp file must not stop the steps after it —
-    /// SessionContext.Reset() in particular — and must never throw out of a Click handler, a Timer
-    /// tick or the ApplicationExit handler. A failed step is reported as a step line instead.
+    /// SessionContext.Reset() in particular — and nothing may throw out of a Click handler or the
+    /// ApplicationExit handler. A failed step is reported as a step line instead.
     /// </summary>
     public static class SessionCleanup
     {
@@ -36,7 +35,7 @@ namespace OrderDesk.Services
         }
 
         /// <summary>
-        /// Releases everything this session holds and returns one line per step for the trace.
+        /// Releases everything this session holds and returns one line per step (logged by Program.Main).
         /// Idempotent: running it on logout and again on ApplicationExit is harmless. Never throws.
         /// </summary>
         public static IList<string> Run(string reason, string sessionId)

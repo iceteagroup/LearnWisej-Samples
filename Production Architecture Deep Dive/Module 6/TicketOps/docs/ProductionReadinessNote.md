@@ -13,8 +13,8 @@
 | Server-side re-check of what the UI checked | ✔ `ApprovalService` refuses unconfirmed results and rejections without comments regardless of the caller | `Services/ApprovalService.cs` (Gate 1, Gate 2) |
 | The domain rule lives in the domain | ✔ `WorkOrder.CanDecide` / `Decide`; the service asks, the dialog never knew | `Domain/WorkOrder.cs` |
 | One UI action = one transaction | ✔ status + audit + notification are buffered and committed together; a throw discards the working copy | `Data/InMemoryWorkOrderRepository.Commit` |
-| Failure paths visible without leaking internals | ✔ expected refusals are `OperationResult.Fail(message)` shown in the banner; the outage's `sql01:1433` text stays in the trace, the user sees `Strings.ActionFailed` | `WorkOrderQueue.ShowResult` / `ReportFailure` |
-| `async void` handlers own their try/catch | ✔ `buttonReview_Click`, `timerTests_Tick`, the two failure buttons | `Views/WorkOrderQueue.cs` |
+| Failure paths visible without leaking internals | ✔ expected refusals are `OperationResult.Fail(message)` shown in the banner; exception details go to `ILog` only, the user sees `Strings.ActionFailed` | `WorkOrderQueue.ShowResult` / `ReportFailure` |
+| `async void` handlers own their try/catch | ✔ `buttonReview_Click`, `buttonRefresh_Click` | `Views/WorkOrderQueue.cs` |
 | No per-user state in statics | ✔ `grep -rn "static" TicketOps/*.cs`: `Strings` constants, `SeedData` iterators, `OperationResult.Ok/Fail`, `StatusBanner.ColorFor`, the `Money` culture, `AppComposition.CurrentUser` const — all pure | — |
 | Designer-friendly | ✔ every Form has a parameterless constructor and a `.Designer.cs` with layout only | `Views/`, `Dialogs/` |
 | Testable without a browser | ✔ six cases in `Diagnostics/ResultHandlingTests.cs` run against `ApprovalService` with no Wisej.NET type | `docs/TestCases.md` |
@@ -44,6 +44,5 @@
 
 ## Evidence
 
-Run the app (`http://localhost:5106`): the **What to click** table in the README walks the success path, the two
-failure paths, the error path with its recovery and the test run; every row states the trace lines that prove the
-row above. `dotnet build -nologo -v q` — 0 warnings, 0 errors for `net10.0-windows` and `net10.0`.
+Run the app (`http://localhost:5106`): the **What to try** table in the README walks the success, cancel, ✕ and
+validation exits; `ResultHandlingTests` covers the service refusals and the failed commit.

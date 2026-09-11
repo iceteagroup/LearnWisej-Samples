@@ -24,14 +24,12 @@ namespace EnterpriseOps.Data
     {
         private readonly SessionDatabase _database;
         private readonly IActivityTrace _trace;
-        private readonly FaultInjector _faults;
         private readonly Func<TimeSpan> _commandTimeout;
 
-        public WorkOrderCommandService(SessionDatabase database, IActivityTrace trace, FaultInjector faults, Func<TimeSpan> commandTimeout)
+        public WorkOrderCommandService(SessionDatabase database, IActivityTrace trace, Func<TimeSpan> commandTimeout)
         {
             _database = database;
             _trace = trace;
-            _faults = faults;
             _commandTimeout = commandTimeout;
         }
 
@@ -165,7 +163,7 @@ namespace EnterpriseOps.Data
         private async Task<CommandResult> RunAsync(string operation, int? workOrderId, CommandContext context, CancellationToken cancellationToken, CommandBody body)
         {
             // A bounded wait: a command that cannot finish becomes DB_TIMEOUT, not a hung session.
-            var timeout = _faults.TakeTimeout() ?? _commandTimeout();
+            var timeout = _commandTimeout();
             using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutSource.CancelAfter(timeout);
             var ct = timeoutSource.Token;
@@ -197,13 +195,6 @@ namespace EnterpriseOps.Data
                     _trace.Trace(TraceLayer.Data, $"BEGIN TRANSACTION (timeout {timeout.TotalMilliseconds:0} ms)");
                     try
                     {
-                        int delay = _faults.TakeDelayMs();
-                        if (delay > 0)
-                        {
-                            _trace.Trace(TraceLayer.Data, $"simulated slow query: {delay} ms inside the transaction…");
-                            await Task.Delay(delay, ct);
-                        }
-
                         result = await body(repository, dbContext, ct);
 
                         if (result.Success)
@@ -215,7 +206,7 @@ namespace EnterpriseOps.Data
                         }
                         else
                         {
-                            // A domain rejection: nothing was persisted, roll back explicitly so the trace shows it.
+                            // A domain rejection: nothing was persisted, roll back explicitly.
                             await transaction.RollbackAsync(CancellationToken.None);
                             _trace.Trace(TraceLayer.Data, $"ROLLBACK ({result.ErrorCode})");
                         }

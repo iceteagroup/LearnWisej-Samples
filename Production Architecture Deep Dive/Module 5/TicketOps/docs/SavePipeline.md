@@ -16,19 +16,17 @@ every save"; here is where each step lives in this project.
 | 4 | Validate (server) | `WorkOrderService.SaveAsync` step 1 | re-runs `WorkOrderValidator` — the gate a crafted request cannot skip | `SaveResult.Invalid("validate", errors)` |
 | 5 | Business rules + Authorize | step 2: `IWorkOrderRepository.FindAsync` then `WorkOrderRules.Check(stored, command, session.Role)` | closed-order freeze, transition table against the **stored** status, cost approval threshold against the **session's** role | `SaveResult.Invalid("rules", errors)` |
 | 6 | Persist | step 3: `BeginTransaction()` → `Upsert` → `Audit` → `CommitAsync()` | the row and its audit entry are staged, then committed once | exception; `Dispose` rolls back; the handler shows `Strings.SaveFailed` |
-| 7 | Refresh | `WorkOrderEditor` after `result.Succeeded` | grid reloads, editor shows the saved row (`v2`) | — |
-| 8 | Log | every step writes to `ILog`; the audit entry is part of the transaction | the trace shows the whole journey | — |
+| 7 | Refresh | `WorkOrderEditor` after `result.Succeeded` | grid reloads, editor shows the saved row | — |
+| 8 | Log | the audit entry is part of the transaction; rejections and failures go to `ILog` | who did what, when | — |
 
 ## The four habits baked in
 
 1. **Errors are collected, not thrown.** `ValidationResult` holds every field error and every summary error; the
    user fixes them all in one round-trip (TC-10 proves three at once).
-2. **Nothing is written until everything passes.** Steps 4 and 5 return before `BeginTransaction()` is ever called —
-   the trace for a rejected save has no `[DATA] tx#…` line at all.
+2. **Nothing is written until everything passes.** Steps 4 and 5 return before `BeginTransaction()` is ever called.
 3. **Persistence is atomic.** `IWorkOrderTransaction` stages the `UPDATE` and the `INSERT AuditLog` and applies them
-   in one `CommitAsync`. When the commit throws (the write outage), `Dispose` logs `tx#n rolled back — 0 rows changed`
-   and readers never saw the staged row. `RowVersion` only increments on commit, which is how
-   `VerifyNothingPartial` can prove `#2002 … v1 — unchanged` afterwards.
+   in one `CommitAsync`. When the commit throws, `Dispose` rolls back and readers never saw the staged row.
+   `RowVersion` only increments on commit.
 4. **Success is reported after the commit, never before.** `SaveResult.Ok` is built from the object `CommitAsync`
    returned; the status bar cannot say "saved" for a save that did not happen.
 
@@ -37,10 +35,10 @@ every save"; here is where each step lives in this project.
 | Outcome | Kind | Who handles it | What the user sees |
 |---|---|---|---|
 | a field is wrong, a rule says no | **result** — `SaveResult.Invalid` | `ShowSaveResult` → `ShowValidation` | glyph beside the field, summary panel, status **● 2 problems found — nothing was saved** |
-| the store refused the commit | **exception** — `DataOutageException` | the handler's `catch` → `ReportFailure` | red banner + toast with `Strings.SaveFailed`; the edits stay in the editor |
+| the store refused the commit | **exception** | the handler's `catch` → `ReportFailure` | red banner + toast with `Strings.SaveFailed`; the edits stay in the editor |
 
-The service logs the outage with its real message (`timeout connecting to sql01:1433 …`) at the `[DATA]` and `[SVC]`
-layers and rethrows; the handler adds one `[UI]` line with the exception type and shows a sentence that contains none of it.
+The service logs the failure with its real message and rethrows; the handler logs it once more and shows a
+sentence that contains none of it.
 
 ## Client versus server
 
@@ -51,10 +49,10 @@ layers and rethrows; the handler adds one `[UI]` line with the exception type an
 | Role restriction | nothing — the editor does not even know the role | `WorkOrderRules` with `SessionContext.Role` — the only enforcement point |
 | Store unreachable | cannot know | commit throws, transaction rolls back, exception surfaces |
 
-**Bypass: crafted command** builds a `SaveWorkOrderCommand` without the form and hands it to the service the way an
-import job or a replayed request would. The validator passes it (cost 9,500 is in range) and the rules reject it for
-a Technician. Switch **Acting as** to Supervisor and the same command saves: the role, read on the server, is the gate —
-not a disabled button.
+A `SaveWorkOrderCommand` built without the form (an import job, a replayed request) enters at step 4: it skips the
+editor's pre-check, never the server. As a Technician, a cost of 9,500 passes the validator (it is in range) and the
+rules reject it; switch **Acting as** to Supervisor and the same values save. The role, read on the server, is the
+gate — not a disabled button.
 
 ## What Module 6 adds
 
@@ -64,10 +62,5 @@ pipeline's final step: the service confirms to the screen that the commit happen
 
 ## Evidence
 
-- **Save** on a valid #2002 (change the title): trace `[UI] pre-check passed → …`, `[SVC] step 1 validate …`, `[DATA] FindAsync #2002 found — Assigned · v1`,
-  `[SVC] step 2 rules …`, `[DOMAIN] WorkOrderRules.Check — all rules pass`, `[SVC] step 3 persist → BeginTransaction`, `[DATA] tx#1 open`,
-  `[DATA] tx#1 stage UPDATE WorkOrders #2002`, `[DATA] tx#1 stage INSERT AuditLog …`, `[DATA] tx#1 committed — 1 row(s), 1 audit entry · #2002 now v2`,
-  `[SVC] step 4 confirm …`, `[UI] OK · Work order #2002 saved.`; the grid's **Ver** column shows `v2`.
-- **Simulate write outage**: the same lines through `stage INSERT AuditLog`, then `✖ [DATA] outage: COMMIT tx#2 … failed — timeout connecting to sql01:1433 …`,
-  `⚠ [DATA] tx#2 rolled back — 0 rows changed (1 staged write(s) discarded)`, `✖ [SVC] persist failed after validation passed …`,
-  `✖ [UI] caught DataOutageException — user sees the safe message, edits stay on screen`, `[UI] re-read #2002: v2 … — unchanged, nothing partial`.
+- **Save** on a valid #2002 (change the title): status **● Work order #2002 saved.**; the grid reloads with the new title.
+- As a Technician set the cost to 9,500 and **Save**: the summary panel reads "• Only a Supervisor may set a cost above $2,500."; nothing is written.

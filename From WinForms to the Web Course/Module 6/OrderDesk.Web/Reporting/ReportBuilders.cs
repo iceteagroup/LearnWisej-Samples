@@ -8,7 +8,7 @@ using OrderDesk.Domain;
 namespace OrderDesk.Reporting
 {
     /// <summary>
-    /// ✓ The long-running reports the queue executes. Each builder returns a function the worker
+    /// The long-running reports the queue executes. Each builder returns a function the worker
     /// calls off-session: it reports progress through the callback, honours the cancellation token
     /// between units of work and returns the finished PDF bytes. The pauses stand in for a real
     /// rendering engine (a 1,204-order batch takes about 36 s, a monthly statement about 15 s) so the
@@ -34,7 +34,7 @@ namespace OrderDesk.Reporting
                 {
                     token.ThrowIfCancellationRequested();
                     var order = orders[i % orders.Count];
-                    var lines = InvoiceDocument.Build(order, service);           // ✓ the reused content rule, once per page
+                    var lines = InvoiceDocument.Build(order, service);           // the reused content rule, once per page
                     lines.Add("");
                     lines.Add($"Batch page {i + 1} of {count}");
                     pages.Add(lines);
@@ -77,7 +77,7 @@ namespace OrderDesk.Reporting
             };
             foreach (var group in orders.GroupBy(o => o.CustomerName).OrderBy(g => g.Key))
             {
-                decimal total = group.Sum(o => service.CalculateOrderTotal(o));     // ✓ the business rule, not a stored column
+                decimal total = group.Sum(o => service.CalculateOrderTotal(o));     // the business rule, not a stored column
                 decimal open = group.Where(o => o.Status == OrderStatus.Open).Sum(o => o.Total);
                 decimal invoiced = group.Where(o => o.Status == OrderStatus.Invoiced).Sum(o => o.Total);
                 lines.Add($"{Trunc(group.Key, 27),-28}{group.Count(),8}{open.ToString("N2", ci),12}{invoiced.ToString("N2", ci),12}{total.ToString("N2", ci),12}");

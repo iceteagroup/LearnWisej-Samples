@@ -24,7 +24,6 @@ frameworks (Blazor Server and Wisej.NET alike).
 services.AddDbContextFactory<SupportDeskContext>((provider, options) =>
 {
     options.UseSqlite(connectionString);
-    options.AddInterceptors(new QueryTraceInterceptor(), new OutageInterceptor(...));   // lab instruments
     if (isDevelopment)
     {
         options.EnableDetailedErrors();
@@ -34,9 +33,7 @@ services.AddDbContextFactory<SupportDeskContext>((provider, options) =>
 ```
 
 `Startup.cs` calls `builder.Services.AddSupportDeskData(connectionString, builder.Environment.IsDevelopment())`
-— step 2 of the host. The two interceptors are the lab's teaching instruments (the SQL trace shown on the
-page and the outage switch); a production registration would drop them and add `EnableRetryOnFailure()`
-on a SQL Server provider.
+— step 2 of the host. On a SQL Server provider the registration would also add `EnableRetryOnFailure()`.
 
 ## The design-time factory (`SupportDesk.Data/SupportDeskDesignTimeFactory.cs`)
 
@@ -71,8 +68,8 @@ dotnet ef database update     --project SupportDesk.Data --startup-project Suppo
 
 Module 1 maps one minimal `Ticket` (Id, Number, Title, Status, CreatedAt) with three Fluent rules so the
 count has something to count; the full model arrives in Module 2. The constructor and `Dispose` report to
-`QueryTrace` — that is how the page can print `◦ context #n created` / `◦ context #n disposed (0 tracked
-entities released)` around each statement. Remove those two lines and nothing else changes.
+`QueryTrace` (in `Diagnostics/`), which is how the tests count the contexts created and disposed per
+operation. Remove those two lines and nothing else in the app changes.
 
 ## Development-only startup
 
@@ -84,8 +81,7 @@ script.
 
 ## Evidence
 
-- Every operation in the page trace is bracketed by `created` / `disposed` lines with the same context
-  number and `0 alive between clicks` in the lifetimes table.
+- `Each_operation_creates_and_disposes_its_own_context`: two counts, two contexts created and two disposed.
 - `dotnet ef dbcontext info` succeeds from the module folder without starting Kestrel.
 - The tests build their own `IDbContextFactory<SupportDeskContext>` (`SqliteTestFactory`) over an in-memory
   connection and pass it to `TicketQueryService` — the service does not care where the factory comes from.

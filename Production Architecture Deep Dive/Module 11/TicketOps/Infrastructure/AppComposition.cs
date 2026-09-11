@@ -19,8 +19,6 @@ namespace TicketOps.Infrastructure
     public sealed class AppComposition
     {
         public ActivityLog Log { get; } = new ActivityLog();
-        public InMemoryUserStore UserStore { get; }
-        public InMemoryTicketRepository Repository { get; }
         public UserSession Session { get; }
         public IPermissionService Permissions { get; }
         public IAuditService Audit { get; }
@@ -29,21 +27,14 @@ namespace TicketOps.Infrastructure
 
         public AppComposition()
         {
-            Log.Info(LogLayer.Infrastructure, "AppComposition", "composing the session object graph (nothing static)");
-
-            UserStore = new InMemoryUserStore(Log);
-            Repository = new InMemoryTicketRepository(Log);
-            Session = new UserSession(Log);
+            Session = new UserSession();
             Audit = new AuditLog(Log);
             Permissions = new PermissionService(Log);
-            Authentication = new AuthenticationService(UserStore, Session, Audit, Log);
-            Tickets = new TicketService(Repository, Session, Permissions, Audit, Log);
+            Authentication = new AuthenticationService(new InMemoryUserStore(), Session, Audit, Log);
+            Tickets = new TicketService(new InMemoryTicketRepository(), Session, Permissions, Audit, Log);
 
             // Infrastructure mirrors the session identity into the Wisej.NET host (Application.User).
             WisejSessionBinding.Bind(Session, Log);
-
-            Log.Info(LogLayer.Infrastructure, "AppComposition",
-                "ITicketService → TicketService(InMemoryTicketRepository, UserSession, PermissionService, AuditLog) · IAuthenticationService → AuthenticationService(InMemoryUserStore, …)");
         }
 
         /// <summary>The first screen of the session is the login gate.</summary>
@@ -51,12 +42,12 @@ namespace TicketOps.Infrastructure
 
         public LoginView CreateLoginView()
         {
-            return new LoginView(Authentication, UserStore, Session, Log, CreateWorkOrdersView);
+            return new LoginView(Authentication, Log, CreateWorkOrdersView);
         }
 
         public WorkOrdersView CreateWorkOrdersView()
         {
-            return new WorkOrdersView(Tickets, Permissions, Audit, Session, Authentication, Repository, Log, CreateLoginView);
+            return new WorkOrdersView(Tickets, Permissions, Audit, Session, Authentication, Log, CreateLoginView);
         }
     }
 }

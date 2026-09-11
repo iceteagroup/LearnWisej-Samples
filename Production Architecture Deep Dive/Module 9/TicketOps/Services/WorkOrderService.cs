@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using TicketOps.Data;
 using TicketOps.Domain;
-using TicketOps.Infrastructure;
 
 namespace TicketOps.Services
 {
@@ -18,12 +17,10 @@ namespace TicketOps.Services
         private const int MaxQueryLength = 80;
 
         private readonly IWorkOrderRepository _repository;
-        private readonly ILog _log;
 
-        public WorkOrderService(IWorkOrderRepository repository, ILog log)
+        public WorkOrderService(IWorkOrderRepository repository)
         {
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<IReadOnlyList<WorkOrder>> SearchAsync(string query)
@@ -33,16 +30,11 @@ namespace TicketOps.Services
             if (q.Length > MaxQueryLength)
                 q = q.Substring(0, MaxQueryLength);
 
-            _log.Info(LogLayer.Service, "WorkOrderService.SearchAsync",
-                q.Length == 0 ? "no filter → IWorkOrderRepository.GetAllAsync()" : $"\"{q}\" → IWorkOrderRepository.GetAllAsync() then filter");
-
             var all = await _repository.GetAllAsync();
             if (q.Length == 0)
                 return all;
 
-            var matches = all.Where(w => Matches(w, q)).ToList();
-            _log.Info(LogLayer.Service, "WorkOrderService.SearchAsync", $"{matches.Count} of {all.Count} match");
-            return matches;
+            return all.Where(w => Matches(w, q)).ToList();
         }
 
         private static bool Matches(WorkOrder w, string q)

@@ -45,6 +45,6 @@ dossier row and at least one regression flow — if a category had neither, it w
 
 - Click **Build dossier**, then open the **Inventory** tab: the fourteen rows above, current state and target state
   side by side.
-- The trace prints
+- The server log records
   `Data:  MigrationInventoryStore → 7 dossier areas, 14 inventory items, 9 compatibility entries`
   before any risk is computed — inventory first, action second.

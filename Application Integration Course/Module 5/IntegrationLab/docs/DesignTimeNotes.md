@@ -30,10 +30,6 @@ both sides.
   (range, threshold, units) is what the preview shows. Nothing design-only leaks into runtime: the
   sample value is never stored in `_value`.
 
-The **Design-time notes** button on the dashboard prints this JSON for the Boiler 1 tile at
-runtime (`GetDesignTimeConfigJson()`), so the reviewer can see the design-mode output without
-opening Visual Studio.
-
 ## Coping on the client
 
 - No server round trip is needed to draw: the vendor is created on the first `appear` from the

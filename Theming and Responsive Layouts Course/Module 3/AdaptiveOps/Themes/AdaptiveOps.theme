@@ -373,27 +373,6 @@
 						"textColor": "success",
 						"font": "defaultBold"
 					}
-				},
-				"warn": {
-					"properties": {
-						"textColor": "warning"
-					}
-				},
-				"error": {
-					"properties": {
-						"textColor": "danger"
-					}
-				}
-			}
-		},
-		"banner-label": {
-			"inherit": "textlabel",
-			"states": {
-				"default": {
-					"properties": {
-						"textColor": "danger",
-						"font": "defaultBold"
-					}
 				}
 			}
 		},

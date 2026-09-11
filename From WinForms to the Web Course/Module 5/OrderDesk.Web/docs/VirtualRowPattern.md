@@ -5,10 +5,9 @@
 ## The desktop habit, and why it does not cross the wire
 
 `LegacyOrderDesk.OrdersForm.ReloadGrid` did `ordersGrid.DataSource = _orderService.Search(filter)`. On one PC with the
-database on the LAN that felt instant, so nobody asked how many rows it was. The console keeps that code as
-`Legacy/DesktopGridHabits.LoadWholeTable` and runs it on purpose (**Naive port: load all rows**): the service clones and
-sorts all 200,000 orders on the server for *this* session, then hands rows to a browser that can show twelve. Multiply by
-every open session.
+database on the LAN that felt instant, so nobody asked how many rows it was. With 200,000 orders the service clones
+and sorts the whole table on the server for *each* session, then hands rows to a browser that can show twelve
+(measured in `GridPerformanceNotes.md`). Multiply by every open session.
 
 ## What the web screen does instead
 
@@ -28,7 +27,7 @@ grid asks ──► CellValueNeeded(rowIndex, columnIndex)
 * `CellValueNeeded` is raised per cell for the rows the viewport displays; the page keeps a `Dictionary<int, IReadOnlyList<Order>>`
   keyed by block start so one server query serves 50 × 5 cells.
 * `LargeOrderRepository.Query` sorts once per filter+sort key and memoizes the ordered list until the next write, so
-  block 2…n of the same query are `Skip/Take` over a list that already exists (the trace says *ordered set memoized*).
+  block 2…n of the same query are `Skip/Take` over a list that already exists.
 * Any write (`OrderService.Save` after the edit dialog) bumps the repository version; the page clears its block cache and
   re-counts, so the row shows the new values without reloading anything else.
 * Sorting happens in the query (`OrderSort` + `Descending`); the grid's own column sorting is switched off
@@ -44,9 +43,8 @@ grid asks ──► CellValueNeeded(rowIndex, columnIndex)
 
 ## Evidence (what the running app shows)
 
-| Action | Trace |
+| Action | Performance panel |
 |---|---|
-| page load | `OrderQueryService.Count status=Open · sort=Date desc → n rows`, `grid.RowCount n (VirtualMode …)`, then one `block fetched rows 0–49` as the grid paints |
-| scroll / click a row far down | one `block fetched rows k–k+49 … (ordered set memoized)` per new block, nothing for blocks already held |
-| **Apply filter** | a new count + Σ, the cache emptied, blocks fetched again on demand |
-| **Naive port** | `⚠ boundary load-everything OrderService.GetOrders() cloned + sorted 200,000 rows in … ms …` and a red banner |
+| page load | `Rows matching` = the Open orders, `Rows fetched 50`, one block fetch as the grid paints |
+| scroll / click a row far down | `Block fetches` grows by one per new block, nothing for blocks already held |
+| **Apply** with another filter or sort | a new count + Σ, the cache emptied, blocks fetched again on demand |

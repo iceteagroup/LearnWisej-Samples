@@ -13,9 +13,7 @@
 //   label   { text, units }            C#  Options.label = new { Text = "Boiler 3", Units = "°F" }
 //   style   "card" | "compact"         which host the vendor is bound to → requires recreation
 //
-// Events out (WiredEvents on the server): initialized {keys, rangeKeys, bandKeys}
-//                                         recreated   {style, reason}
-//                                         error       {phase, message}
+// Events out (WiredEvents on the server): error {phase, message}
 // Server → client calls (Call): flash()
 //
 // VendorGauge has no "bands" API — it knows warnAt / threshold. The adapter translates:
@@ -66,17 +64,6 @@ this.init = function (options) {
             if (typeof frameworkDispose === "function") frameworkDispose.apply(me, arguments);
         }
     };
-
-    // Camel-casing evidence for the trace: the property names exactly as they arrived.
-    // Deferred: events fired synchronously while the framework is still applying a server
-    // render are dropped (see the cookbook gotcha), so this goes out on the next tick.
-    setTimeout(function () {
-        me.fireWidgetEvent("initialized", {
-            keys: Object.keys(options),
-            rangeKeys: Object.keys(options.range || {}),
-            bandKeys: Object.keys((options.bands && options.bands[0]) || {})
-        });
-    }, 0);
 };
 
 // ---------------------------------------------------------------------------------------------
@@ -93,7 +80,7 @@ this.update = function (options, old) {
     try {
         // 1. the option the vendor cannot take after construction → destroy & recreate
         if (options.style !== old.style) {
-            this._recreate(options, "style changed " + JSON.stringify(old.style) + " → " + JSON.stringify(options.style));
+            this._recreate(options);
             return;                                   // the new instance was built from the full options
         }
 
@@ -175,7 +162,7 @@ this._buildHost = function (style) {
     this.frame = frame; this.host = host; this.legend = legend;
 };
 
-this._recreate = function (options, reason) {
+this._recreate = function (options) {
     var me = this;
     if (this._resizeObserver) { this._resizeObserver.disconnect(); this._resizeObserver = null; }
     if (this.widget) { this.widget.destroy(); this.widget = null; }
@@ -189,7 +176,6 @@ this._recreate = function (options, reason) {
         this._resizeObserver = new ResizeObserver(function () { if (me.widget) me.widget.resize(); });
         this._resizeObserver.observe(this.host);
     }
-    this._raise("recreated", { style: options.style, reason: reason });
 };
 
 // Options (contract) → VendorGauge constructor options (vendor)

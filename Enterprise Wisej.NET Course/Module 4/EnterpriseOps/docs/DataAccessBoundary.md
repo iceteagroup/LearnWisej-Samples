@@ -19,7 +19,7 @@ provider's exceptions — lives behind `EnterpriseOps.Services` interfaces and i
 | UI → service | `CommandContext` — tenant · user · role · correlation id | `Services/Commands/CommandContext.cs` |
 | UI → service | `WorkQueueQuery` | `Services/Queries/WorkQueueQuery.cs` |
 | service → UI | `CommandResult` — `Success · UserMessage · ErrorCode · Detail · CorrelationId · NewVersion` | `Services/Commands/CommandResult.cs` |
-| service → UI | `PagedResult<WorkQueueRow>`, `WorkOrderHeader` | `Services/Queries/` |
+| service → UI | `PagedResult<WorkQueueRow>` | `Services/Queries/` |
 | service → UI | `AuditQueryResult` (`Allowed` · `DeniedReason` · `Rows`), `AuditLogRow` | `Services/Queries/` |
 
 ## What never crosses
@@ -62,10 +62,10 @@ nothing this application actually changes.
 
 ## Evidence in the running app
 
-* **Search / tenant switch** → the trace shows `Data: SELECT … WHERE TenantId='fabrikam' … → 20 of 20
+* **Search** → the server log shows `Data: SELECT … WHERE TenantId='fabrikam' … → 20 of 20
   rows (AsNoTracking, projected to WorkQueueRow)`. The grid is bound to `WorkQueueRow`, not to
   `WorkOrder`: try to save a row and there is nothing to save it with.
-* **Approve** → the trace shows the layers in order: `UI → btnApprove_Click …`, `Security: authorize
+* **Approve** → the server log shows the layers in order: `Security: authorize
   ana.ops (Manager) → Approve allowed`, `Data: DbContext #n created`, `Data: BEGIN TRANSACTION`,
   `Data: SELECT WorkOrders WHERE TenantId=… AND Id=… (tracked)`, `Service: validate transition …`,
   `Data: SaveChanges …`, `Data: COMMIT`, `Audit: Approve Committed`, `Service: CommandResult.Ok`.

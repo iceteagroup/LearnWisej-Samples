@@ -37,7 +37,7 @@ namespace OperationsConsole.Orders
             string.Equals(Search ?? "", other.Search ?? "", StringComparison.OrdinalIgnoreCase) &&
             string.Equals(Status ?? "", other.Status ?? "", StringComparison.Ordinal);
 
-        /// <summary>A short human description for the Event log and the status strip.</summary>
+        /// <summary>A short human description for the status messages.</summary>
         public string Describe()
         {
             if (IsEmpty)

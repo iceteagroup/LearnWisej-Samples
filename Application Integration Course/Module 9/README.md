@@ -25,24 +25,19 @@ Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet pac
 
 ## What to try on the "IntegrationLab — Data Widgets" page
 
-| Button / gesture | Path | What you should see in the trace card |
-|---|---|---|
-| (page load) | success | `→ .NET→JS render grid → init(options)`, then `← JS→.NET load {skip:0,take:20} → 200 (20/150)`; `→ .NET→JS render pivot → init(options)`, then `← JS→.NET LoadPivot (WebMethod) {…} → 200 (5×4, N cells)` and `dataLoaded` |
-| **Reload grid** | success | `→ .NET→JS call reload()` then `load {skip:…} → 200 (20/150)` |
-| **Next page** | success (remote paging) | `load {skip:20,take:20} → 200 (20/150)`; the grid shows page 2/8, wraps to page 1 after the last |
-| **Sort by status** | success (typed property → `Options.sort` → `update()` → remote sort) | `→ .NET→JS update(options) {sort:"status asc"}` then `load {…,sort:"status asc"} → 200`; click again for `desc`, again to clear. Header clicks do the same from the browser side |
-| **Insert sample row** | success (server-driven `Call("insertRow", values)`) | `create {"values":{…}} → 200 → WO-1151`, followed by a reload; the store count in the grid state label grows |
-| **Delete selected** | success / small client failure | click a cell first: `destroy {"rowKey":"WO-1010"} → 200 WO-1010 removed (149 left)`; with nothing selected the vendor throws and one `error {phase:"destroy",status:0,…}` event arrives |
-| double-click a cell, edit, Enter | success (event + operation) | `rowUpdated {rowKey:"WO-1043",changes:{status:"Closed"}}`, `• server RowUpdated fired in C#` (+ toast), then `update {…} → 200 WO-1043 saved` |
-| click a cell | success (event) | `cellClick {rowKey,field,value}` and `• server CellClick fired in C#` |
-| **Reload pivot** | success (WebMethod) | one more `LoadPivot (WebMethod) … → 200` line |
-| **Pivot Site×Priority** | success (JSON option object replaced → `update()` → vendor reloads) | `→ .NET→JS update(options) {…columnField:"priority",measure:"count"}` then the WebMethod line; the cross-tab shows counts. Click again to go back to Site×Status hours |
-| **Unknown key update** | failure (404) | `→ .NET→JS call updateRow(key, changes)`, `update {"rowKey":"WO-9999",…} → 404 Work order "WO-9999" does not exist.`, then `← JS→.NET error {phase:"update",status:404,…}`, the orange banner and `• server WidgetError fired in C#` |
-| **Take 1000** | failure (400) | `load {skip:0,take:1000} → 400 take must be between 1 and 100 (received 1000).`, then the `error` event and the banner; the grid keeps its last good page |
-| **Clear trace** | – | empties the trace list |
+Everything happens in the two widgets; the **Remote operations** card on the right lists each
+operation and event as it reaches the server.
 
-The right-hand card is the live client/server trace: every operation (HTTP postback or WebMethod)
-and every event, in both directions, so the JSON can be compared with the written contracts.
+| Gesture | What you should see |
+|---|---|
+| (page load) | `← JS→.NET load {skip:0,take:20} → 200 (20/150)` and `← JS→.NET LoadPivot (WebMethod) {…} → 200 (5×4, N cells)` |
+| the grid's ‹ › pager | `load {skip:20,take:20} → 200 (20/150)` (remote paging) |
+| a click on a column header | `load {…,sort:"status asc"} → 200` (remote sort); click again for `desc` |
+| double-click a cell, edit, Enter | `rowUpdated {rowKey:"WO-1043",changes:{status:"Closed"}}` (+ toast), then `update {…} → 200 WO-1043 saved` |
+| type `abc` into an Hours cell | `update {…} → 400 hours must be a number …`, then `error {phase:"update",status:400,…}` and an error toast |
+| **+ Add row**, fill in, save | `create {"values":{…}} → 200 → WO-1151`, followed by a reload |
+| a row's ✕ | `destroy {"rowKey":"WO-1010"} → 200 WO-1010 removed (149 left)` |
+| click a grid cell / a pivot cell | `cellClick {rowKey,field,value}` / `cellClick {rowKey,columnKey,value}` |
 
 ## Deliverables
 
@@ -98,7 +93,7 @@ IntegrationLab/
   user interaction — a header click, a page change, an edit — is a server call. The calls must be
   fast (indexes, bounded `MaxTake`), safe (whitelisted fields and operators, never the vendor's
   raw expressions) and honest about failure (a clean 4xx the vendor can show, not a stack trace).
-  The trace card shows exactly that: one `← JS→.NET` line per interaction.
+  The Remote operations card shows exactly that: one `← JS→.NET` line per interaction.
 - **Why should Kendo and DevExtreme be taught as examples, not as the whole course?**
   Their APIs differ (a DataSource with transport settings vs. a CustomStore with load/modify
   functions, a sort string vs. a JSON array) but the adapter responsibilities are identical: load

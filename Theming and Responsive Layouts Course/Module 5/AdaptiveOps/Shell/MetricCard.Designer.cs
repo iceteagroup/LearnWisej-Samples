@@ -60,9 +60,8 @@ namespace AdaptiveOps.Shell
             //
             // MetricCard
             //
-            // Size is the card's own size (what Flow uses); MinimumSize is what the Flex weights may not go
-            // below; MaximumSize pins the height so AlignY has a dimension the card does not fill.
-            // Margin is the card's distance to its neighbours — honoured by Flow, Table and Flex, ignored by Dock.
+            // Size is the card's own size (what Flow uses). Margin is the card's distance to its
+            // neighbours: honoured by Flow, Table and Flex, ignored by Dock.
             //
             this.BackColor = System.Drawing.Color.White;
             this.BorderStyle = Wisej.Web.BorderStyle.Solid;

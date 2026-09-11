@@ -68,8 +68,8 @@ technician can see why their work did not land instead of wondering.
    application being killed mid-shift. In this sample `Hybrid/LocalStore.cs` is the in-memory stand-in
    with the same surface.
 5. **Retry is safe.** A command is only marked `Synced` after the server said so; a failed sync leaves
-   the queue untouched, and **Sync now** replays it.
-6. **The queue is wiped with the device.** Logout, lock-out or the recovery path destroys it — pending
+   the queue untouched, and the next reconnect replays it.
+6. **The queue is wiped with the device.** Logout or lock-out (`LocalStore.Wipe()`) destroys it — pending
    work included. That is a deliberate product decision: a device whose state is doubted is re-provisioned,
    never repaired.
 
@@ -87,9 +87,9 @@ technician can see why their work did not land instead of wondering.
 
 | Claim | Where you see it |
 |---|---|
-| Enqueue is explicit and sized | Trace: `Device: queue.Enqueue CompleteWorkOrder WO-1041 (base v2) → PendingSync · 1 pending · payload 138 bytes` |
+| Enqueue is explicit and sized | Server log: `Device: queue.Enqueue CompleteWorkOrder WO-1041 (base v2) → PendingSync · 1 pending · payload 138 bytes` |
 | The record is untouched until sync | The grid's **Server status** stays `Assigned` while the card says `PendingSync` |
 | Replay is ordered and paced | Three queued completions turn `Synced` one at a time, 700 ms apart, with the progress bar advancing |
 | The state machine is visible | Queue cards colour by state: amber `PendingSync`, green `Synced`, red `Conflict`, grey `Rejected` |
 | A conflict preserves order | After the conflict card appears, the queue title still shows the commands behind it as `PendingSync` |
-| Rejection keeps the evidence | Press **Revoke ben.tech's permission** before syncing: cards go `Rejected` with `permission workorder.complete revoked` on them, and the audit log has a `Rejected` entry |
+| Rejection keeps the evidence | When the server refuses a replayed command (for example `workorder.complete` revoked while the device was offline), its card goes `Rejected` with the server's message on it, and the audit log has a `Rejected` entry; after **Keep server** the conflicting card goes `Rejected · kept server — notes preserved` |

@@ -8,11 +8,11 @@ namespace EnterpriseOps.Services
 {
     /// <summary>
     /// Per-session state: the signed-in user, the tenant, the work-queue grid state, the saved views and the
-    /// activity trace. Created once in <c>Program.Main</c> and stored in <c>Application.Session</c> — never in
-    /// a static field, because a static is shared by every user on the server.
+    /// diagnostic log. Created once per session and stored in <c>Application.Session</c> — never in a static
+    /// field, because a static is shared by every user on the server.
     ///
-    /// State ownership (the lab's review question): the <b>page</b> owns nothing that must survive a refresh.
-    /// The grid state lives here, so "Simulate refresh" can throw the page away and rebuild it from this object.
+    /// State ownership: the <b>page</b> owns nothing that must survive a refresh. The grid state lives here, so a
+    /// rebuilt page restores the same filters, sort, page and selection from this object.
     /// </summary>
     public sealed class SessionContext
     {
@@ -70,16 +70,6 @@ namespace EnterpriseOps.Services
             WorkQueueGrid = GridState.Default(tenantId);
             SavedViews = new SavedViewStore(tenantId, UserName);
             Trace.Write($"Session: tenant → {tenantId}; grid state reset, saved views reloaded for {UserName}");
-        }
-
-        /// <summary>Switching user changes the role — the projection's permission flags are recomputed on the next page.</summary>
-        public void SwitchUser(string userName)
-        {
-            if (string.IsNullOrEmpty(userName) || userName == UserName)
-                return;
-            UserName = userName;
-            Role = PermissionService.RoleOf(userName);
-            Trace.Write($"Security: user → {userName} ({Role}); CanReassign / CanApprove flags recomputed by the next query");
         }
     }
 }

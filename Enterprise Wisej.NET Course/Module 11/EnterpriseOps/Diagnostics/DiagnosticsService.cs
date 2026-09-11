@@ -22,7 +22,7 @@ namespace EnterpriseOps.Diagnostics
     /// <summary>
     /// Builds what the diagnostics page shows. The snapshot is chosen by type: version, environment, node,
     /// theme, flags, safe recent events — nothing else can get in. Sensitive values from the deployment
-    /// config are redacted here, before any view model exists, and the trace says what was redacted and how.
+    /// config are redacted here, before any view model exists, and the server trace records what was redacted and how.
     /// </summary>
     public sealed class DiagnosticsService
     {
@@ -41,7 +41,7 @@ namespace EnterpriseOps.Diagnostics
             _trace = trace ?? throw new ArgumentNullException(nameof(trace));
         }
 
-        /// <summary>What was kept out of the last snapshot, and how. Shown as a count on the page, in full in the trace.</summary>
+        /// <summary>What was kept out of the last snapshot, and how. Shown as a count on the page, in full in its tooltip.</summary>
         public IReadOnlyList<string> RedactionNotes { get; private set; } = Array.Empty<string>();
 
         /// <summary>The version support needs: AssemblyInformationalVersion (semver + commit), from Properties/AssemblyInfo.cs.</summary>

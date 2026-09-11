@@ -9,8 +9,5 @@ namespace TicketOps.Resources
         public const string AppTitle = "TicketOps Console";
         public const string ActionFailed = "The action could not be completed. Check the log for details.";
         public const string SelectTicket = "Select a ticket first.";
-        public const string ServiceUnavailable = "Exporting is not available in this profile. Ask an administrator to check the service registration.";
-        public const string TestsPassed = "All presenter tests passed — no browser was needed for the decisions.";
-        public const string TestsFailed = "Some presenter tests failed. Check the trace for details.";
     }
 }

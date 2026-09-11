@@ -1,7 +1,6 @@
 # migration-log.md — LegacyOrderDesk → OrderDesk.Web
 
-One line per accepted decision or workaround. Later modules append to this file; the console's trace panel is the
-live version of it.
+One line per accepted decision or workaround. Later modules append to this file.
 
 ## Module 1 · Migration discovery (2026-09-09)
 
@@ -11,7 +10,7 @@ live version of it.
 - **Static current user is a defect, not a style issue.** `AppState.CurrentUser` is one slot per server process; a second session overwrites it. Kept in `Legacy/` next to `Application.Session.User` so the leak is reproducible; the typed session context is Module 4's job.
 - **Print Invoice → server PDF.** `PrintDocument` targets a printer attached to the server. The shared `InvoiceDocument` lines are written by a dependency-free `InvoicePdfWriter` and shown in a `PdfViewer` (+ Download). No printer, no local path.
 - **Export to Excel → bytes + `Application.Download`.** Excel Interop is not supported in a server process and `C:\Orders\out.xlsx` is the user's disk. First slice ships CSV built in memory; Module 6 upgrades to a managed .xlsx writer and a report queue.
-- **Attach file deferred to Module 6.** `OpenFileDialog` + `C:\Orders\Attachments` cannot exist on the server; the button logs the boundary instead of faking it. Replacement: `Upload` control + configured storage root.
+- **Attach file deferred to Module 6.** `OpenFileDialog` + `C:\Orders\Attachments` cannot exist on the server, so the first slice leaves it out instead of faking it. Replacement: `Upload` control + configured storage root.
 - **Connection string → `Web.config`.** `App.config` is gone; settings live in the web host's configuration (`<appSettings>` now; a `<connectionStrings>` section is added and read in Module 2).
 - **Window-size restore removed.** The browser window belongs to the user; responsive layout (Module 7) replaces it.
 - **Installer / ClickOnce deferred.** The web app is deployed once; checklist in Module 7.

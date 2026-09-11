@@ -62,7 +62,7 @@ entity was loaded — is left alone, which is precisely what EF Core puts in the
 override stamps `UpdatedAt` on every modified ticket, so the "recently changed" sort never depends on a
 handler remembering to set it.
 
-The result on the wire, captured from the trace:
+The statement EF Core sends for a modified ticket:
 
 ```sql
 UPDATE "Tickets" SET "RowVersion" = @p0, "UpdatedAt" = @p1
@@ -126,34 +126,12 @@ CREATE INDEX        "IX_Tickets_UpdatedAt"     ON "Tickets" ("UpdatedAt");
 
 ## Evidence
 
-The **Model & migration card** lists them straight from the model metadata after every operation:
+`SchemaInfoService.DescribeAsync()` reads the indexes, delete behaviours and check constraints straight
+from the model metadata (never hard-coded); the model test below asserts on that list.
 
-```
-indexes     Customers: IX_Customers_Name (Name)
-            TicketComments: IX_TicketComments_TicketId (TicketId)
-            Tickets: IX_Tickets_AgentId (AgentId) · IX_Tickets_CategoryId (CategoryId) · IX_Tickets_CustomerId (CustomerId) · IX_Tickets_Number (Number) UNIQUE · IX_Tickets_UpdatedAt (UpdatedAt) · IX_Tickets_Status_DueDate (Status, DueDate)
-```
-
-The token is visible in the trace of every write path. **Delete a ticket with comments** sends the
-condition:
-
-```
-→ SQL          DELETE FROM "Tickets" WHERE "Id" = @p0 AND "RowVersion" = @p1 RETURNING 1;   (0.2 ms)
-```
-
-and a stale token — what the second agent's save produces — comes back as:
-
-```
-◦ context      #9 created (SupportDeskContext from the factory)
-→ SQL          SELECT "t"."Id", … FROM "Tickets" AS "t" ORDER BY "t"."Id" LIMIT 1   (0.3 ms)
-→ SQL          UPDATE "Tickets" SET "RowVersion" = @p0, "UpdatedAt" = @p1 WHERE "Id" = @p2 AND "RowVersion" = @p3 RETURNING 1;   (0.2 ms)
-◦ context      #9 disposed (1 tracked entity released)
-• caught       DbUpdateConcurrencyException: The database operation was expected to affect 1 row(s), but actually affected 0 row(s); data may have been modified or deleted since entities were loaded. → friendly message shown, full exception logged server-side
-```
-
-with the banner *Someone else changed this row in the meantime. Nothing was saved — reload and try
-again.* — `RunAsync` catches `DbUpdateConcurrencyException` before the general `DbUpdateException`, so
-this path already has its own message a whole module before the conflict dialog exists.
+A stale token (what the second agent's save produces) fails with *The database operation was expected to
+affect 1 row(s), but actually affected 0 row(s); data may have been modified or deleted since entities
+were loaded.* inside `DbUpdateConcurrencyException`. The two concurrency tests below reproduce it.
 
 Tests (`SupportDesk.Tests`):
 

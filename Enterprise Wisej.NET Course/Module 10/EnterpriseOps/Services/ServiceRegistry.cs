@@ -9,9 +9,10 @@ namespace EnterpriseOps.Services
     /// finished services.
     ///
     /// Everything here is **per session** — trace, session context, repositories, permission service — because
-    /// every session in the process belongs to a different person. The single exception is
-    /// <see cref="AuditLog.Shared"/>, which is application-scoped on purpose and documented as such: an audit
-    /// that vanished with the session would not be an audit.
+    /// every session in the process belongs to a different person. The exceptions are
+    /// <see cref="AuditLog.Shared"/>, which is application-scoped on purpose and documented as such (an audit
+    /// that vanished with the session would not be an audit), and the pending-export queue inside
+    /// <see cref="ExportService"/>, which the requester and a second approver share across sessions.
     ///
     /// Wiring order is the security order: identity → claims mapping → session → role store → permission
     /// service → the services that demand permissions.
@@ -20,8 +21,6 @@ namespace EnterpriseOps.Services
     {
         public ServiceRegistry(ActivityTrace trace)
         {
-            Trace = trace;
-
             Audit = AuditLog.Shared;
             SeedData.EnsureAuditHistory(AuditLog.Shared);
 
@@ -40,12 +39,10 @@ namespace EnterpriseOps.Services
             WorkOrders = new WorkOrderService(repository, Permissions, Audit, trace);
             Exports = new ExportService(repository, Permissions, Audit, trace);
             AuditQuery = new AuditQueryService(Audit, Permissions, trace);
-            Notes = new NoteRenderService(Audit, trace);
+            Notes = new NoteRenderService(trace);
             NoteStore = new InMemoryNoteStore(trace);
-            Review = new SecurityReviewService(Permissions, trace);
         }
 
-        public ActivityTrace Trace { get; }
         public SessionContext Session { get; }
         public IAuditLog Audit { get; }
         public RolePermissionStore Roles { get; }
@@ -56,6 +53,5 @@ namespace EnterpriseOps.Services
         public AuditQueryService AuditQuery { get; }
         public NoteRenderService Notes { get; }
         public INoteStore NoteStore { get; }
-        public SecurityReviewService Review { get; }
     }
 }

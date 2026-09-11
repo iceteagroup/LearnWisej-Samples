@@ -54,7 +54,7 @@ deployment** regression flows. See `RegressionPlan.md` — ten flows, five categ
 ## Evidence — what the running app shows
 
 1. **Build dossier** → the *Dossier* tab fills with the seven rows above, risk column coloured H red / M amber /
-   L green, every row `open`. The trace prints one `Service:` line per row with the two inputs and the computed
+   L green, every row `open`. The server log records one `Service:` line per row with the two inputs and the computed
    risk, e.g.
    `Service:  Themes / resources: custom Blue-2019 → mapped theme mixin — breaking=yes user-visible=yes → risk H · proof "visual diff per screen" · fallback "theme folder copy"`.
 2. **Run migration path** → rows for steps 1, 2 and 3 turn `✓ proven`; the *Themes / resources* row turns

@@ -71,8 +71,8 @@ the `CommandContext`, so Module 3's static-state audit still passes.
 ## Evidence in the running app
 
 - Click **+ New import…** twice quickly: the first job goes `Queued → Running`, the second stays `Queued`
-  until the worker frees up. The trace shows `Queue: 1 pending · worker busy · the request thread is free again.`
-- The trace's `Queue: Worker picked up IMP-… (thread NN, no session attached).` line names the thread that
-  is doing the work — a different one from every `UI →` line.
-- Press **Reopen** mid-import: the page object is destroyed and rebuilt while the same worker thread keeps
-  going. The percentage does not restart.
+  until the worker frees up.
+- The job detail's `Queue: Worker picked up IMP-… (thread NN).` history line names the worker thread doing
+  the work — not a request thread of any session.
+- Close the browser tab mid-import and open the app again: the old page and session are gone while the same
+  worker thread keeps going. The percentage does not restart.

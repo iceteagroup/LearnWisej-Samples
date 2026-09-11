@@ -3,7 +3,7 @@ using Wisej.Web;
 namespace OrderDesk.Services
 {
     /// <summary>
-    /// ✓ The session-context pattern from the lesson: callers write
+    /// The session-context pattern from the lesson: callers write
     /// <c>SessionContext.Current.CurrentFilter</c> exactly as they used to write
     /// <c>AppState.CurrentFilter</c>, but the value is stored in <see cref="Application.Session"/>,
     /// which Wisej.NET keeps per browser session. Nobody outside this class knows WHERE the
@@ -41,8 +41,7 @@ namespace OrderDesk.Services
 
         /// <summary>
         /// Logout / timeout: drop the whole context so the next access starts anonymous.
-        /// Only THIS session is affected — compare Legacy.AppState, where clearing the statics
-        /// signs out every user on the server.
+        /// Only THIS session is affected.
         /// </summary>
         public static void Reset()
         {

@@ -19,12 +19,11 @@
 
   <ItemGroup>
     <!--
-      The InitScripts ship inside the assembly: Window1 reads them as embedded resources and hands
-      them to the Wisej.Web.Widget instances (the Designer would store the same text in a .resx).
+      The InitScript ships inside the assembly: Window1 reads it as an embedded resource and hands
+      it to the Wisej.Web.Widget (the Designer would store the same text in a .resx).
       The logical name must match the string passed to GetManifestResourceStream.
     -->
     <EmbeddedResource Include="wwwroot\gauge-init.js" LogicalName="IntegrationLab.wwwroot.gauge-init.js" />
-    <EmbeddedResource Include="wwwroot\gauge-init.broken.js" LogicalName="IntegrationLab.wwwroot.gauge-init.broken.js" />
   </ItemGroup>
 
   <ItemGroup>

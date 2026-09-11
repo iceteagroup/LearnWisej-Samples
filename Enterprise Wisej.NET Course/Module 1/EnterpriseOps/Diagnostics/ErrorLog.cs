@@ -5,7 +5,7 @@ namespace EnterpriseOps.Diagnostics
 {
     /// <summary>
     /// The `_log.Error(ex)` of the lab's handler shape. Keeps the exceptions of the session (Module 11 turns
-    /// this into a real diagnostics page) and mirrors each one into the activity trace with its correlation id.
+    /// this into a real diagnostics page) and writes each one to the activity log with its correlation id.
     ///
     /// The exception type and message go here — never into the UI. The user sees Resources/UiText.ActionFailed.
     /// </summary>

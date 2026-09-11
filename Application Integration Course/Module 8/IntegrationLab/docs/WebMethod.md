@@ -22,19 +22,16 @@ public object GetWorkOrders(int page, int size, string sort, bool desc)
   caller. Return plain DTOs (`Data/PageResult.cs`): strings, numbers, lists; nothing the browser
   should not see.
 
-Both copies of the method delegate to one implementation, `LookupWidget.ExecuteGetWorkOrders`,
-so validation and tracing are identical whichever one the client calls.
+`MainPage.GetWorkOrders` delegates to `LookupWidget.ExecuteGetWorkOrders`, which validates the
+request and loads the page.
 
 ## 2. Where a WebMethod can live
 
 | Placement | Registration | Client call | In this lab |
 |---|---|---|---|
 | **Static** method in `Program` (or any static class) | automatic | `App.MethodName(...)` | not used |
-| **Instance** method on a **top-level container** (Page, Form, Desktop) | automatic: Wisej searches top-level containers | `App.MainPage.MethodName(...)` for `Application.MainPage`; other top-level containers are reachable through the `App` namespace by name | (a) `MainPage.GetWorkOrders` — `MainPage.cs` |
-| **Instance** method on a **child control** | manual: override `OnWebRender(dynamic config)`, call `base.OnWebRender((object)config)` then `RegisterWebMethods(config)`; the render carries `webMethods: ["GetWorkOrders"]` | `this.MethodName(...)` from the widget's own InitScript (`this` is the wrapper = the component) | (b) `LookupWidget.GetWorkOrders` — `Widgets/LookupWidget.cs` |
-
-The **WebMethod target** button switches `LookupWidget.DataSourceMode` between `"page"` (a) and
-`"widget"` (b); the `dataLoaded` trace line reports which one was used in its `via` field.
+| **Instance** method on a **top-level container** (Page, Form, Desktop) | automatic: Wisej searches top-level containers | `App.MainPage.MethodName(...)` for `Application.MainPage`; other top-level containers are reachable through the `App` namespace by name | `MainPage.GetWorkOrders` — `MainPage.cs` |
+| **Instance** method on a **child control** | manual: override `OnWebRender(dynamic config)`, call `base.OnWebRender((object)config)` then `RegisterWebMethods(config)`; the render carries `webMethods: ["GetWorkOrders"]` | `this.MethodName(...)` from the widget's own InitScript (`this` is the wrapper = the component) | not used |
 
 ## 3. Marshaling on the client — the two call shapes
 
@@ -52,8 +49,8 @@ App.MainPage.GetWorkOrders(page, size, sort, desc, function (result) { grid.data
 Either way the call goes out as an HTTP request of type `methodCall` with
 `{ targetId, methodName, parameters }`, and the callback / Promise receives the response's
 `returnValue`. The adapter (`wwwroot/lookup-init.js`, `_callWebMethod`) prefers the `…Async`
-Promise, falls back to the callback style, and reports an `error` if neither function exists on the
-chosen target — so the page tells you which shape worked.
+Promise, falls back to the callback style, and reports an `error` if neither function exists on
+`App.MainPage`.
 
 Wisej components passed as arguments are marshaled by id; everything else is sent as JSON.
 
@@ -67,24 +64,20 @@ The WebMethod applies the same rules as the postback handler (`Data/PageRequest.
 | Rejection travels as | HTTP status code `400` + short JSON body | a Wisej **exception action** in the response |
 | Client sees | `fetch()` response with `response.ok === false`; the vendor parses `{"error"}` and draws the red row | the framework's default exception handler shows a message popup (`Wisej.onException`); the awaited Promise / callback receives **`null`** — there is no status code |
 | Adapter reaction | `error {status:400, message:"size must be between 1 and 50"}` | the `load()` function treats `null` as failure: `error {status:0, message:"WebMethod returned null: the server rejected the call …"}` |
-| Lab UI | red row + banner `✖ HTTP 400: …` | red row + banner `✖ WebMethod returned null …` plus the Wisej popup |
+| Lab UI | red row `✖ HTTP 400 — …` + error toast | red row `✖ WebMethod returned null …` + error toast, plus the Wisej popup |
 
 Because a WebMethod has no status code to inspect, an endpoint that must report *why* a call was
-refused should return a result object with an error field rather than throw. This lab throws on
-purpose, to make the difference visible.
+refused should return a result object with an error field rather than throw.
 
 ## 5. Evidence (what the running app shows)
 
-| Path | Click | Trace lines |
+| Path | Action | Network list |
 |---|---|---|
-| success (a) | (page load) / **Reload both** | `← JS→.NET [webmethod] WebMethod App.MainPage.GetWorkOrders {"page":1,"size":10,"sort":"","desc":false}` → `→ .NET→JS [webmethod] return PageResult {"rows":10,"total":120,…}` → `← JS→.NET [webmethod] dataLoaded {…,"via":"App.MainPage.GetWorkOrdersAsync (top-level Page) → Promise","keys":"rows,total,page,size,sort,desc"}` |
-| success (b) | **WebMethod target …switch to widget** | `→ .NET→JS [webmethod] update(options) {"dataSourceMode":"widget"}` then the same triple with `WebMethod this.GetWorkOrders (LookupWidget)` and `via: "this.GetWorkOrdersAsync (LookupWidget, RegisterWebMethods) → Promise"` |
-| progress | **Next page**, **Sort by status** | `Call("setPage") 2` / `Call("sort") "status"` followed by the call/return/dataLoaded triple |
-| failure | **Oversized page** | `WebMethod … {"page":1,"size":1000,…}` → `• server [webmethod] ArgumentException size must be between 1 and 50 → client: Wisej exception popup, Promise resolves null` → `← JS→.NET [webmethod] error {"status":0,"message":"WebMethod returned null…"}` |
-| recovery | **Reload both** | `Call("reload")` then call/return/dataLoaded |
+| success | page load | `← JS→.NET [webmethod] App.MainPage.GetWorkOrders {"page":1,"size":10,"sort":"","desc":false}` then `→ .NET→JS [webmethod] return PageResult {"rows":10,"total":120,…}` |
+| progress | the grid's **Next ›** button, a click on a column header | the same call/return pair with `"page":2` / `"sort":"status"` |
+| failure | a call outside the bounds from the browser console, e.g. `App.MainPage.GetWorkOrdersAsync(1, 1000, "", false)` | `→ .NET→JS [webmethod] ArgumentException size must be between 1 and 50`, the Wisej exception popup, and the Promise resolves `null` |
 
-The `keys` field of `dataLoaded` shows the property names of the marshaled object as the browser
-received them (the adapter tolerates both `rows` and `Rows`).
+Return values are not camel-cased, so the adapter accepts both `rows` and `Rows`.
 
-Files: `MainPage.cs` (a), `Widgets/LookupWidget.cs` (b + shared implementation),
+Files: `MainPage.cs` (the WebMethod), `Widgets/LookupWidget.cs` (the shared implementation),
 `wwwroot/lookup-init.js` (adapter with both call shapes), `Data/PageRequest.cs` (validation).

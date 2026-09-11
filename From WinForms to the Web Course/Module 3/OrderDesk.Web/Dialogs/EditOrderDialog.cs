@@ -9,20 +9,10 @@ namespace OrderDesk.Dialogs
     /// <summary>
     /// The modal edit dialog, ported from LegacyOrderDesk/EditOrderDialog.cs. Same fields, same
     /// DialogResult contract (OK on Save, Cancel otherwise), same AcceptButton/CancelButton.
-    ///
-    /// What changed for the web:
-    ///  - ✓ ShowDialog does not block: the caller passes a callback (or awaits ShowDialogAsync) and
-    ///    reads the result there — see Screens/OrdersScreen.EditOrder.
-    ///  - ✓ Closing does not dispose: the caller owns the lifetime and disposes a transient dialog
-    ///    in that callback. Dispose(bool) lives here (not in the .Designer.cs) so the DialogTracker
-    ///    bookkeeping stays in hand-written code and the designer file stays designer-owned.
-    ///  - ✓ Bind(order) is public so a caller that reuses one instance on purpose can reset it.
+    /// The caller awaits ShowDialogAsync and disposes the dialog.
     /// </summary>
     public partial class EditOrderDialog : Form
     {
-        private readonly string _sessionId;   // captured now: Dispose may run outside a request
-        private bool _released;
-
         /// <summary>A private copy of the order being edited; the caller saves it on OK.</summary>
         public Order Order { get; private set; }
 
@@ -34,14 +24,11 @@ namespace OrderDesk.Dialogs
             customerComboBox.Items.AddRange(customers.Cast<object>().ToArray());
             statusComboBox.Items.AddRange(Enum.GetValues(typeof(OrderStatus)).Cast<object>().ToArray());
             Bind(order);
-
-            _sessionId = Application.SessionId;
-            DialogTracker.Opened(_sessionId);
         }
 
         /// <summary>
-        /// Loads an order into the fields and resets the dialog state. Called by the constructor and
-        /// again by callers that reuse the instance ("reuse on purpose: make it visible + reset state").
+        /// Loads an order into the fields and resets the dialog state (call it again before
+        /// re-showing an instance that is reused on purpose).
         /// </summary>
         public void Bind(Order order)
         {
@@ -68,7 +55,7 @@ namespace OrderDesk.Dialogs
         {
             if (!(customerComboBox.SelectedItem is Customer customer))
             {
-                // ✓ kept modal on purpose: the user must fix the input before Save can continue (docs/NotificationsReview.md).
+                // A validation message stays modal: Save must not continue.
                 MessageBox.Show("Select a customer.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -79,7 +66,6 @@ namespace OrderDesk.Dialogs
             Order.PoNumber = poTextBox.Text.Trim();
             Order.Status = (OrderStatus)statusComboBox.SelectedItem;
 
-            // ✓ the same contract as WinForms: set the result, close; the caller's callback receives it.
             DialogResult = DialogResult.OK;
             Close();
         }
@@ -88,22 +74,6 @@ namespace OrderDesk.Dialogs
         {
             DialogResult = DialogResult.Cancel;
             Close();
-        }
-
-        /// <summary>
-        /// Deterministic release. Nothing calls this automatically when the dialog closes — the
-        /// caller does (Screens/OrdersScreen.EditOrder), which is the Module 3 rule.
-        /// </summary>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && !_released)
-            {
-                _released = true;
-                DialogTracker.Released(_sessionId);
-            }
-            if (disposing && components != null)
-                components.Dispose();
-            base.Dispose(disposing);
         }
     }
 }

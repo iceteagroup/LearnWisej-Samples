@@ -34,7 +34,7 @@ namespace EnterpriseOps.Security
 
     /// <summary>
     /// The security hardening checklist as code, so the document in <c>docs/SecurityHardeningChecklist.md</c> and
-    /// the running application cannot drift apart. The lesson's instruction is to treat it as living code: add an
+    /// the code it describes cannot drift apart. The lesson's instruction is to treat it as living code: add an
     /// item every time a review finds a gap, and record who checked each item for each release.
     ///
     /// The list covers the surfaces a Wisej.NET application actually has: HTML, uploads, cookies, CSP and the
@@ -45,11 +45,11 @@ namespace EnterpriseOps.Security
         public static IReadOnlyList<ChecklistItem> Items { get; } = new List<ChecklistItem>
         {
             new ChecklistItem("HTML", "Every control with AllowHtml = true is inventoried and its text source is known",
-                ChecklistState.Done, "Run 'AllowHtml review' — it walks the live control tree, it is not a list someone typed"),
+                ChecklistState.Done, "docs/SecurityHardeningChecklist.md — the AllowHtml surface inventory"),
             new ChecklistItem("HTML", "Untrusted text is escaped, or sanitized against an allow-list, before it reaches an HTML surface",
-                ChecklistState.Done, "Security/HtmlText.cs · the safe/unsafe note buttons on the page"),
+                ChecklistState.Done, "Security/HtmlText.cs · Services/NoteRenderService.cs"),
             new ChecklistItem("HTML", "Grid cells and tooltips count as HTML surfaces (DataGridViewColumn.AllowHtml, ToolTip.AllowHtml)",
-                ChecklistState.Done, "Services/SecurityReviewService.cs inspects grid columns as well as controls"),
+                ChecklistState.Done, "colUser and colDetail are in the surface inventory"),
 
             new ChecklistItem("Uploads", "Size limit, content-type allow-list, extension check, and a stored name the server chose",
                 ChecklistState.Deployment, "No upload surface in this module — the item stays on the list so the next screen inherits it"),

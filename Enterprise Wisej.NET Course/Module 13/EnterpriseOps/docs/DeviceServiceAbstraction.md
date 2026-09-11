@@ -27,7 +27,7 @@ that value; it never reads a user agent.
 
 | Implementation | Shape | `IsOnlineAsync` | `ScanDocumentAsync` | `VibrateAsync` |
 |---|---|---|---|---|
-| `BrowserDeviceServices` (this sample) | browser / connected + simulated offline | the simulated connectivity flag flipped by **Go offline / Go online** | a rotating list of asset tags, one of them deliberately wrong | traced, no-op |
+| `BrowserDeviceServices` (this sample) | browser / connected + simulated offline | the simulated connectivity flag flipped by **Go offline / Go online** | a rotating list of asset tags, one of them deliberately wrong | logged, no-op |
 | *A Hybrid shell build* | remote / local | the platform reachability callback | the native camera + barcode decoder | the platform haptic API |
 | *A kiosk build* | connected | always `true` | a wedge scanner's keyboard input | not available → returns immediately |
 | *A test double* | — | whatever the test needs | a known constant | counts calls |
@@ -43,13 +43,13 @@ that value; it never reads a user agent.
 `UI/FieldTechnicianPage.cs` holds **two** fields on purpose:
 
 ```csharp
-private readonly BrowserDeviceServices _shell;   // the implementation: simulate switch, connectivity
+private readonly BrowserDeviceServices _shell;   // the implementation: detection + connectivity
 private readonly IDeviceServices _device;        // what the screen is allowed to call
 ```
 
-Every field action goes through `_device`. `_shell` exists only for the *lab controls* that stand in for
-the shell itself (the connectivity toggle and the Simulate switch) — in production those are the
-platform's job, not a button.
+Every field action goes through `_device`. `_shell` exists only for what stands in for the shell itself
+(device detection and the **Go offline / Go online** connectivity toggle) — in production connectivity
+is the platform's job, not a button.
 
 ```csharp
 if (await _device.IsOnlineAsync())
@@ -86,9 +86,9 @@ services and the same queue.
 
 | Claim | Where you see it |
 |---|---|
-| Screens call the abstraction, not the platform | Trace: `Device: IDeviceServices.IsOnlineAsync() → False` on every **Complete…** click |
-| Detection happens once, as a value | Trace at load: `Device: device detected → Desktop · reported "Desktop" · Chrome on Windows · screen 1920×1080` |
-| The switch changes layout only | Pick **Phone** in *Simulate device*: the frame narrows to 380 px, buttons grow to 44 px, `Site` and `v` disappear — the banner says "No screen logic changed." |
+| Screens call the abstraction, not the platform | Server log: `Device: IDeviceServices.IsOnlineAsync() → False` on every **Complete…** click |
+| Detection happens once, as a value | Server log at load: `Device: device detected → Desktop · reported "Desktop" · Chrome on Windows · screen 1920×1080` |
+| The shape changes layout only | Open the app on a phone (or in the browser's device emulation, then reload): the frame narrows to 380 px, buttons grow to 44 px, `Site` and `v` disappear — the handlers are the same. |
 | The scanner works offline | Go offline, press **Scan**: `Device: IDeviceServices.ScanDocumentAsync() → "ASSET-Pump-88121" (untrusted until the server validates it)` |
 | Scanned values are server-validated | Online, keep pressing **Scan**: the four simulated tags rotate, so one matches the selected work order's site (`✓ ASSET-Subs-44107 matches WO-1038 (Substation B).`), others belong elsewhere (`✖ … does not belong to WO-1038's site.`) and the fourth is not an asset tag at all (`✖ The scanned code is not an asset tag.`) |
-| Haptics go through the interface | Complete offline: `Device: IDeviceServices.VibrateAsync() → shell haptic (no-op in the browser)` |
+| Haptics go through the interface | Complete offline, server log: `Device: IDeviceServices.VibrateAsync() → shell haptic (no-op in the browser)` |

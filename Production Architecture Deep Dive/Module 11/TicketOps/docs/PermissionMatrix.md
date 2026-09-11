@@ -12,13 +12,13 @@ is granted by default (least privilege), and a `null` user (not signed in) is al
 | `AddNote` | ✔ | ✔ | ✔ | `TicketService.AddNoteAsync` |
 | `CloseTicket` | ✖ | ✔ | ✔ | `TicketService.CloseAsync` |
 | `DeleteTicket` | ✖ | ✔ | ✔ | `TicketService.DeleteAsync` |
-| `ViewAuditTrail` | ✖ | ✔ | ✔ | UI caption only in this lab (the list is shown to every role so the evidence is visible); production gates the list |
+| `ViewAuditTrail` | ✖ | ✔ | ✔ | not enforced in this lab (the audit list is shown to every role so the denial is visible); production gates the list |
 
 ## Two callers, one answer, one boundary
 
 | Caller | Question | Purpose | Is it security? |
 |---|---|---|---|
-| `WorkOrdersView.ApplyPermissionsToControls` | `Can(user, DeleteTicket)` → `buttonDelete.Visible` | courtesy: honest users do not see what they cannot do | **No** — a hint |
+| `WorkOrdersView.ApplyPermissionsToControls` | `Can(user, DeleteTicket)` → `buttonDelete.Enabled` | courtesy: honest users are not offered what they cannot do | **No** — a hint |
 | `TicketService.Authorize` | `Can(user, DeleteTicket)` → continue or throw | the actual control, where the state changes | **Yes** |
 
 ## Denial contract
@@ -27,9 +27,9 @@ is granted by default (least privilege), and a `null` user (not signed in) is al
 - Then it **throws** `UnauthorizedAccessException` — before `FindAsync`, before any write.
 - The screen maps that exception to `Strings.AccessDenied`; the exception text never reaches the user.
 
-## Evidence
+## Check it in the running app
 
-| Signed in as | Delete button | *Call DeleteAsync directly* | Trace |
-|---|---|---|---|
-| `l.romero` (Technician) | hidden | red banner *You are not allowed to perform this action.*, #2002 still listed | `[SVC] ⚠ PermissionService.Can — l.romero [Technician] DeleteTicket → denied (needs Supervisor or Admin)` · `[INFRA] ⚠ AuditLog — [AUDIT] ⛔ DENIED DeleteTicket #2002 — l.romero (Technician): needs Supervisor or Admin` · `[SVC] ⚠ TicketService.DeleteTicket — denied before any read or write → throw UnauthorizedAccessException` |
-| `m.weber` (Supervisor) | shown | status *● Ticket #2002 deleted.*, row gone | `[SVC] PermissionService.Can — m.weber [Supervisor] DeleteTicket → allowed` · `[DATA] InMemoryTicketRepository.DeleteAsync — #2002 deleted (5 rows left)` · `[INFRA] AuditLog — [AUDIT] ✓ DeleteTicket #2002 — m.weber (Supervisor)` |
+| Signed in as | Delete button | Force-enable Delete, then Delete on #2002 |
+|---|---|---|
+| `l.romero` (Technician) | disabled | red banner *You are not allowed to perform this action.*, #2002 still listed, audit line `⛔ DENIED DeleteTicket #2002 — l.romero (Technician): needs Supervisor or Admin` |
+| `m.weber` (Supervisor) | enabled | status *Ticket #2002 deleted.*, row gone, audit line `✓ DeleteTicket #2002 — m.weber (Supervisor)` |

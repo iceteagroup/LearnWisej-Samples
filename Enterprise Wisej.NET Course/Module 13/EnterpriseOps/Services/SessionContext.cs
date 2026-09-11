@@ -4,7 +4,7 @@ namespace EnterpriseOps.Services
 {
     /// <summary>
     /// Per-session identity: who is using this browser tab, for which tenant. Created once in the page
-    /// constructor and stored in Application.Session — never in a static.
+    /// constructor — never in a static.
     /// </summary>
     public class SessionContext
     {
@@ -12,7 +12,6 @@ namespace EnterpriseOps.Services
         public string TenantName { get; set; }
         public string User { get; set; }
         public string Role { get; set; }
-        public string SessionId { get; set; }
 
         /// <summary>A new command context for one user action: same tenant and user, a fresh correlation id.</summary>
         public CommandContext NewCommand()

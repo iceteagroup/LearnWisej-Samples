@@ -11,19 +11,18 @@ namespace EnterpriseOps.UI
 {
     /// <summary>
     /// EnterpriseOps — Capstone review. The delivery screen: it presents the capstone package and checks it
-    /// in front of the reviewer instead of asking them to take a checklist on trust.
+    /// in front of the reviewer.
     ///
     /// Six tabs, one per deliverable:
     ///  • Capstone package        — every deliverable, its file, and the evidence it is really that deliverable.
     ///  • AI prompt library       — the project-rules header and the task prompts, read from docs/PromptLibrary.md.
     ///  • Review checklist        — the ten questions asked of every change, generated or not.
-    ///  • Generated-code review   — the failure path: pull request #214 runs through the checklist and is stopped.
+    ///  • Generated-code review   — pull request #214 runs through the checklist and is stopped; rev 2 passes.
     ///  • Documentation index     — docs/index.json read back, every path resolved (MCP-ready shape).
     ///  • AI usage notes          — which generated code was accepted, by whom and why.
     ///
-    /// The boundary, again: nothing on this screen decides anything. Whether a deliverable passes, whether a
-    /// line breaks a rule and whether this user may sign a review are decided in EnterpriseOps.Services, and
-    /// the trace on the right shows each decision as it is taken.
+    /// Nothing on this screen decides anything: whether a deliverable passes, whether a line breaks a rule and
+    /// whether this user may sign a review are decided in EnterpriseOps.Services.
     /// </summary>
     public partial class CapstoneReviewPage : Page
     {
@@ -46,41 +45,34 @@ namespace EnterpriseOps.UI
             _session = session;
             _dashboard = dashboard;
             _trace = session.Services.Trace;
-            _trace.LineAdded += trace_LineAdded;
         }
 
         private CommandContext CurrentContext => _current ?? NewCommand();
 
-        #region Event handlers — thin, one service call each
+        #region Event handlers
 
         private async void CapstoneReviewPage_Load(object sender, EventArgs e)
         {
-            ShowTraceHistory();
-            ShowSignedIn();
             ShowChecklist();
             ShowPrompts();
             ShowDocumentationIndex();
             ShowDecisions();
 
             txtGeneratedCode.Text = GeneratedCodeSamples.GeneratedDraft;
-            lblReviewSource.Text = GeneratedCodeSamples.GeneratedDraftName + " · the text below is reviewed exactly as pasted";
-            _trace.Ui("CapstoneReviewPage_Load → prompt library, checklist, documentation index");
+            lblReviewSource.Text = GeneratedCodeSamples.GeneratedDraftName;
 
             await VerifyPackageAsync();
         }
 
-        /// <summary>The success path: the package verifies itself, deliverable by deliverable.</summary>
         private async void btnVerifyPackage_Click(object sender, EventArgs e)
         {
             await VerifyPackageAsync();
         }
 
-        /// <summary>The heart of the module: run the checklist over the change in the box.</summary>
         private async void btnReviewGeneratedCode_Click(object sender, EventArgs e)
         {
             btnReviewGeneratedCode.Enabled = false;
             NewCommand();
-            _trace.Ui($"btnReviewGeneratedCode_Click → GeneratedCodeReviewService.ReviewAsync corr={CurrentContext.CorrelationId}");
 
             try
             {
@@ -96,7 +88,9 @@ namespace EnterpriseOps.UI
             finally
             {
                 btnReviewGeneratedCode.Enabled = true;
-                tabCapstone.SelectedTab = tabReview;
+
+                // The awaits end after the request returned: push the final UI state to the browser.
+                Application.Update(this);
             }
         }
 
@@ -105,7 +99,6 @@ namespace EnterpriseOps.UI
             LoadSample(GeneratedCodeSamples.GeneratedDraft, GeneratedCodeSamples.GeneratedDraftName);
         }
 
-        /// <summary>The recovery: the same feature after the checklist sent it back.</summary>
         private void btnLoadFixed_Click(object sender, EventArgs e)
         {
             LoadSample(GeneratedCodeSamples.AcceptedRevision, GeneratedCodeSamples.AcceptedRevisionName);
@@ -115,7 +108,6 @@ namespace EnterpriseOps.UI
         {
             NewCommand();
             ReviewReport report = _session.Services.Review.LastReport;
-            _trace.Ui($"btnSignDecision_Click → RecordDecision({report?.PullRequest ?? "nothing reviewed yet"})");
 
             CommandResult result = _session.Services.Review.RecordDecision(report, ReasonFor(report), CurrentContext);
             if (!result.Succeeded)
@@ -128,22 +120,6 @@ namespace EnterpriseOps.UI
             tabCapstone.SelectedTab = tabDecisions;
             AlertBox.Show("Decision recorded in the AI usage notes.", MessageBoxIcon.Information,
                 alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
-        }
-
-        /// <summary>Failure path: a document the index promises and the disk does not have.</summary>
-        private async void btnMissingDeliverable_Click(object sender, EventArgs e)
-        {
-            bool simulating = !_session.Services.CapstonePackage.SimulateMissingDeliverable;
-            _session.Services.CapstonePackage.SimulateMissingDeliverable = simulating;
-            _session.Services.DocumentationIndex.SimulateMissingDocument = simulating;
-            btnMissingDeliverable.Text = simulating ? "Recover: document written" : "Fail: missing document";
-
-            _trace.Docs(simulating
-                ? "simulating a missing deliverable (docs/SecurityReviewSignOff.md) — no file on disk is touched"
-                : "the missing deliverable is back in the package");
-
-            ShowDocumentationIndex();
-            await VerifyPackageAsync();
         }
 
         private void lstPrompts_SelectedIndexChanged(object sender, EventArgs e)
@@ -161,27 +137,19 @@ namespace EnterpriseOps.UI
 
         private void btnDashboard_Click(object sender, EventArgs e)
         {
-            _trace.Ui("btnDashboard_Click → Application.MainPage = CommandCenterDashboard");
             Application.MainPage = _dashboard != null && !_dashboard.IsDisposed
                 ? _dashboard
                 : new CommandCenterDashboard(_session);
         }
 
-        private void btnClearTrace_Click(object sender, EventArgs e)
-        {
-            _trace.Clear();
-            lstTrace.Items.Clear();
-        }
-
         #endregion
 
-        #region Screen work
+        #region Showing results
 
         private async Task VerifyPackageAsync()
         {
             btnVerifyPackage.Enabled = false;
             NewCommand();
-            _trace.Ui($"verify capstone package corr={CurrentContext.CorrelationId}");
 
             try
             {
@@ -202,6 +170,9 @@ namespace EnterpriseOps.UI
             finally
             {
                 btnVerifyPackage.Enabled = true;
+
+                // The awaits end after the request returned: push the final UI state to the browser.
+                Application.Update(this);
             }
         }
 
@@ -238,11 +209,9 @@ namespace EnterpriseOps.UI
         private void LoadSample(string code, string name)
         {
             txtGeneratedCode.Text = code;
-            lblReviewSource.Text = name + " · the text below is reviewed exactly as pasted";
+            lblReviewSource.Text = name;
             dgvFindings.DataSource = null;
             SetVerdict("● pending review — press \"Review generated code\"", System.Drawing.Color.FromArgb(90, 107, 125));
-            tabCapstone.SelectedTab = tabReview;
-            _trace.Ui($"loaded {name} into the review box ({code.Split('\n').Length} lines)");
         }
 
         private void ShowChecklist()
@@ -277,8 +246,6 @@ namespace EnterpriseOps.UI
             lblDocsStatus.ForeColor = broken == 0
                 ? System.Drawing.Color.FromArgb(31, 157, 87)
                 : System.Drawing.Color.FromArgb(224, 86, 59);
-
-            _trace.Docs("resources/list → " + _session.Services.DocumentationIndex.DescribeResourceList());
         }
 
         private void ShowDecisions()
@@ -319,17 +286,14 @@ namespace EnterpriseOps.UI
             }
         }
 
+        #endregion
+
+        #region Helpers
+
         private CommandContext NewCommand()
         {
             _current = _session.BeginCommand();
-            lblCorrelation.Text = "corr " + _current.CorrelationId;
             return _current;
-        }
-
-        private void ShowSignedIn()
-        {
-            lblTenant.Text = "tenant: " + _session.Tenant.Id;
-            lblUser.Text = $"Signed in: {_session.User.Name} · {_session.User.Role}";
         }
 
         private void SetPackageStatus(string text, System.Drawing.Color colour)
@@ -352,35 +316,6 @@ namespace EnterpriseOps.UI
             _trace.Service($"unhandled {ex.GetType().Name}: {ex.Message} [corr {CurrentContext.CorrelationId}]");
             AlertBox.Show($"{message} Quote correlation id {CurrentContext.CorrelationId} when you report it.",
                 MessageBoxIcon.Error, alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
-        }
-
-        private void ShowTraceHistory()
-        {
-            lstTrace.Items.Clear();
-            foreach (string line in _trace.Lines)
-                lstTrace.Items.Add(line);
-            SelectLastTraceLine();
-        }
-
-        private void trace_LineAdded(object sender, string line)
-        {
-            if (IsDisposed)
-                return;
-            lstTrace.Items.Add(line);
-            SelectLastTraceLine();
-        }
-
-        private void SelectLastTraceLine()
-        {
-            if (lstTrace.Items.Count > 0)
-                lstTrace.SelectedIndex = lstTrace.Items.Count - 1;
-        }
-
-        /// <summary>Called from Dispose: the session's trace outlives this screen, so the handler must not.</summary>
-        private void DetachTrace()
-        {
-            if (_trace != null)
-                _trace.LineAdded -= trace_LineAdded;
         }
 
         #endregion

@@ -90,8 +90,8 @@ namespace EnterpriseOps.Hybrid
             _trace = trace;
         }
 
-        /// <summary>Pause between commands, so the progress push stays well above the 250 ms floor and the
-        /// reviewer can watch each state change land.</summary>
+        /// <summary>Pause between commands, so the progress push stays well above the 250 ms floor and
+        /// each state change is visible.</summary>
         public int StepDelayMs { get; set; } = 700;
 
         /// <summary>Step 1 of every reconnect, also used when the device is re-provisioned after a wipe.</summary>
@@ -114,7 +114,7 @@ namespace EnterpriseOps.Hybrid
             var fresh = RefreshPermissions();
             _trace.Log(TraceLayer.Job, $"reconnect 1/2 — permission snapshot refreshed BEFORE replay: {fresh}");
             if (before != null && before.Permissions.Count != fresh.Permissions.Count)
-                _trace.Log(TraceLayer.Security, $"the device's cached permissions were STALE ({before.Permissions.Count} → {fresh.Permissions.Count} grants) — queued commands are re-evaluated against the server's current answer");
+                _trace.Log(TraceLayer.Security, $"cached permissions were stale ({before.Permissions.Count} → {fresh.Permissions.Count} grants)");
 
             var pending = _queue.GetPendingAsync().GetAwaiter().GetResult();
             report.Total = pending.Count;
@@ -148,7 +148,7 @@ namespace EnterpriseOps.Hybrid
                 _queue.LinkToAudit(command.LocalId, ctx.CorrelationId);
 
                 _trace.Log(TraceLayer.Job,
-                    $"replay {i + 1}/{pending.Count}: {command.EntityId} → WorkOrderService.Complete (corr {ctx.CorrelationId}) — the same service the online screen calls");
+                    $"replay {i + 1}/{pending.Count}: {command.EntityId} → WorkOrderService.Complete (corr {ctx.CorrelationId})");
 
                 CommandResult result = _service.Complete(payload, ctx, command.CreatedAt);
 
@@ -187,7 +187,7 @@ namespace EnterpriseOps.Hybrid
                     report.Conflict = conflict;
                     report.Message = $"Sync conflict on {command.EntityId} — the server changed it while you were offline.";
                     _trace.Log(TraceLayer.Job,
-                        $"replay stopped at {command.EntityId}: {pending.Count - i - 1} command(s) stay PendingSync so the order is preserved — a person decides");
+                        $"replay stopped at {command.EntityId}: {pending.Count - i - 1} command(s) stay PendingSync");
 
                     onProgress(new SyncProgress
                     {
@@ -205,7 +205,7 @@ namespace EnterpriseOps.Hybrid
                 ApplyToCache(payload.WorkOrderId, null, 0, "rejected by the server");
                 report.Rejected++;
                 report.Remaining--;
-                _trace.Log(TraceLayer.Job, $"{command.EntityId} rejected — audited on the server, kept on the device so the technician can see why");
+                _trace.Log(TraceLayer.Job, $"{command.EntityId} rejected — {result.Message}");
 
                 onProgress(new SyncProgress
                 {

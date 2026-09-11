@@ -47,8 +47,8 @@ Every decision is in `ConflictResolutionService`:
 | Dialog does | Service does |
 |---|---|
 | `dgvVersions.DataSource = _service.Summarize(_conflict)` | builds the two rows ("YOUR EDIT", "CURRENT — v8") |
-| `dgvCompare.DataSource = _service.Compare(_conflict)` | builds the field-by-field comparison and traces how many fields differ |
-| `Choose(resolution)` | `RecordChoice(context, conflict, choice)` → audit entry + trace line, with the correlation id |
+| `dgvCompare.DataSource = _service.Compare(_conflict)` | builds the field-by-field comparison and logs how many fields differ |
+| `Choose(resolution)` | `RecordChoice(context, conflict, choice)` → audit entry + log line, with the correlation id |
 
 That is what lets the three paths be reviewed without opening the designer, and reused by a batch save or an
 import that hits the same conflict. Every handler in `ConflictDialog.cs` is four lines or fewer.
@@ -57,8 +57,8 @@ import that hits the same conflict. Every handler in `ConflictDialog.cs` is four
 
 ```csharp
 // WorkOrderEditorPage.ResolveConflictAsync
-var dialog = new ConflictDialog(conflict, CurrentContext, _services.Conflicts, _trace);
-DialogResult answer = await dialog.ShowDialogAsync();
+var dialog = new ConflictDialog(conflict, CurrentContext, _services.Conflicts);
+await dialog.ShowDialogAsync();
 
 if (dialog.Resolution == ConflictResolution.Reload)
     await ReloadLatestAsync();
@@ -80,9 +80,8 @@ months later — and so does "who was told about the conflict and chose to walk 
 
 | Action | What you see |
 |---|---|
-| Save a stale edit | amber banner *"This work order changed while you were editing — correlation … — expected v7, found v8. Nothing was overwritten."*, then the dialog |
-| Dialog opens | trace `UI → ConflictDialog opened for #2002 — correlation 8f3a21c4 — expected v7, found v8` |
-| **Compare changes** | `Service: ConflictResolutionService.Compare(#2002) → 5 fields, 3 differ`; the panel appears; the button becomes **Hide comparison**; nothing is saved |
-| **Reload latest** | audit line, dialog closes, editor rebinds at `v8`, green banner, queue refreshed |
-| **Cancel** | audit line, dialog closes, the stale edit is still in `txtTitle`, status reads `conflict cancelled — your edit kept` |
+| Save a stale edit | footer *"Save rejected — expected v7, found v8 · correlation 8f3a21c4"*, then the dialog |
+| **Compare changes** | the panel appears; the button becomes **Hide comparison**; nothing is saved |
+| **Reload latest** | audit entry, dialog closes, editor rebinds at `v8`, footer *"Reloaded v8 — re-apply your edit on the latest version"*, queue refreshed |
+| **Cancel** | audit entry, dialog closes, the stale edit is still in `txtTitle`, amber banner *"Conflict left open — your edit is still on screen …"* |
 | ✕ | same as Cancel — `Resolution` was never moved off its default |

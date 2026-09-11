@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.Json;
 using EnterpriseOps.Data;
 using EnterpriseOps.Diagnostics;
@@ -35,26 +34,11 @@ namespace EnterpriseOps.Services
         /// <summary>The index file the tool endpoint would serve.</summary>
         public const string IndexPath = "docs/index.json";
 
-        /// <summary>Set by the "Simulate a missing document" button: an extra entry whose file is not there.</summary>
-        public bool SimulateMissingDocument { get; set; }
-
-        /// <summary>The entry the simulation injects — a document the readiness statement lists as an open item.</summary>
-        public static DocEntry MissingDocumentProbe => new DocEntry
-        {
-            Id = "security-review-signoff",
-            Title = "Security review sign-off",
-            Purpose = "The signed record of the Module 10 security review (open item — owner ana.ops).",
-            Path = "docs/SecurityReviewSignOff.md",
-            Module = "10",
-            LastVerified = "—",
-            Exists = false,
-        };
-
         /// <summary>Reads (and caches) the index. A parse failure is reported, never thrown at the user.</summary>
         public List<DocEntry> Load()
         {
             if (_cache != null)
-                return WithSimulation(_cache);
+                return _cache;
 
             var entries = new List<DocEntry>();
             string json = _docs.ReadAllText(IndexPath);
@@ -62,7 +46,7 @@ namespace EnterpriseOps.Services
             {
                 _trace.Docs($"{IndexPath} not found — the documentation endpoint would answer 404");
                 _cache = entries;
-                return WithSimulation(entries);
+                return entries;
             }
 
             try
@@ -82,7 +66,7 @@ namespace EnterpriseOps.Services
             }
 
             _cache = entries;
-            return WithSimulation(entries);
+            return entries;
         }
 
         /// <summary>Re-reads the index from disk (the recovery path after a document is added or fixed).</summary>
@@ -92,27 +76,6 @@ namespace EnterpriseOps.Services
             List<DocEntry> entries = Load();
             _trace.Docs($"{IndexPath} reloaded → {entries.Count} resources");
             return entries;
-        }
-
-        /// <summary>
-        /// The answer a documentation MCP server would return for <c>resources/list</c>, rendered as text so
-        /// the reviewer can read the contract in the trace instead of taking it on trust.
-        /// </summary>
-        public string DescribeResourceList()
-        {
-            List<DocEntry> entries = Load();
-            var text = new StringBuilder();
-            text.Append("{\"resources\":[");
-            for (int i = 0; i < entries.Count; i++)
-            {
-                if (i > 0) text.Append(',');
-                text.Append("{\"uri\":\"file://").Append(entries[i].Path)
-                    .Append("\",\"name\":\"").Append(entries[i].Title)
-                    .Append("\",\"mimeType\":\"").Append(entries[i].Path.EndsWith(".svg", StringComparison.OrdinalIgnoreCase) ? "image/svg+xml" : "text/markdown")
-                    .Append("\"}");
-            }
-            text.Append("]}");
-            return text.ToString();
         }
 
         private DocEntry ReadEntry(JsonElement resource)
@@ -140,14 +103,5 @@ namespace EnterpriseOps.Services
 
         private static string Text(JsonElement element, string property)
             => element.TryGetProperty(property, out JsonElement value) && value.ValueKind == JsonValueKind.String ? value.GetString() : "";
-
-        private List<DocEntry> WithSimulation(List<DocEntry> entries)
-        {
-            if (!SimulateMissingDocument)
-                return entries;
-
-            var withProbe = new List<DocEntry>(entries) { MissingDocumentProbe };
-            return withProbe;
-        }
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using IntegrationLab.Contracts;
 using Wisej.Core;
 using Wisej.Web;
@@ -60,7 +59,7 @@ namespace IntegrationLab.Widgets
             set { _seriesLabel = value ?? ""; PushSeries(); }
         }
 
-        /// <summary>"light" or "dark". The vendor cannot switch theme in place: the adapter destroys and recreates.</summary>
+        /// <summary>"light" or "dark". The vendor cannot switch theme in place: the adapter destroys, recreates and re-wires.</summary>
         [DefaultValue("light")]
         public string Theme
         {
@@ -71,29 +70,8 @@ namespace IntegrationLab.Widgets
                 if (_theme == value) return;
                 _theme = value;
                 ((dynamic)this.Options).theme = value;
-                RaiseTrace(TraceDirection.ServerToClient, "update(options)", $"{{\"theme\":\"{value}\"}}  → adapter destroys + recreates the vendor instance and re-wires");
             }
         }
-
-        /// <summary>Replaces the whole data set (labels and one series). Replacing arrays is a first-level Options change.</summary>
-        public void SetData(string[] labels, double[] values)
-        {
-            if (labels == null || values == null) throw new ArgumentNullException(labels == null ? nameof(labels) : nameof(values));
-            if (labels.Length != values.Length) throw new ArgumentException($"labels ({labels.Length}) and values ({values.Length}) must have the same length.");
-            foreach (double v in values)
-                if (double.IsNaN(v) || double.IsInfinity(v)) throw new ArgumentOutOfRangeException(nameof(values), "every value must be a finite number");
-            _labels = (string[])labels.Clone();
-            _values = (double[])values.Clone();
-            PushSeries();
-            RaiseTrace(TraceDirection.ServerToClient, "update(options)", $"{{\"labels\":[{string.Join(",", _labels)}],\"series\":[{{\"label\":\"{_seriesLabel}\",\"values\":[{string.Join(",", Array.ConvertAll(_values, PayloadReader.F))}]}}]}}");
-        }
-
-        /// <summary>Toggles the theme, which forces the adapter down its destroy-and-recreate path.</summary>
-        public void RecreateVendorInstance() => this.Theme = _theme == "light" ? "dark" : "light";
-
-        /// <summary>Last point accepted by the server (for the UI), or null.</summary>
-        [Browsable(false)]
-        public ChartPointEventArgs LastPoint { get; private set; }
 
         #endregion
 
@@ -103,7 +81,7 @@ namespace IntegrationLab.Widgets
         [Description("Raised when the user clicks a point and the payload passed validation.")]
         public event EventHandler<ChartPointEventArgs> PointClicked;
 
-        /// <summary>Every message in either direction, for the lab log.</summary>
+        /// <summary>Every payload received and every rejection, for the WidgetEvent log.</summary>
         [Browsable(false)]
         public event EventHandler<TraceEventArgs> Trace;
 
@@ -120,7 +98,7 @@ namespace IntegrationLab.Widgets
         {
             if (e.Type == "widgetEvent" && TryReadWidgetEvent(e, out string type, out object data) && type == "pointClicked")
             {
-                HandlePointClicked(data, "OnWebEvent");
+                HandlePointClicked(data);
                 return;                                  // handled: do not raise WidgetEvent a second time for it
             }
 
@@ -171,7 +149,7 @@ namespace IntegrationLab.Widgets
             switch (e.Type)
             {
                 case "pointClicked":
-                    HandlePointClicked(e.Data, "OnWidgetEvent (fallback)");
+                    HandlePointClicked(e.Data);
                     break;
 
                 case "error":
@@ -189,7 +167,7 @@ namespace IntegrationLab.Widgets
             }
         }
 
-        private void HandlePointClicked(object payload, string via)
+        private void HandlePointClicked(object payload)
         {
             dynamic data = payload;
             RaiseTrace(TraceDirection.ClientToServer, "pointClicked", "e.Data = " + PayloadReader.ToJson(payload));
@@ -201,40 +179,19 @@ namespace IntegrationLab.Widgets
             if (index < 0 || index >= _labels.Length)
             { Reject("pointClicked", $"index out of range ({index}; 0..{_labels.Length - 1})"); return; }
 
-            if (!PayloadReader.TryString(PayloadReader.Get(() => data.label), out string label))
+            if (!PayloadReader.TryString(PayloadReader.Get(() => data.label), out string _))
             { Reject("pointClicked", "label is missing or not a string"); return; }
 
-            if (!PayloadReader.TryDouble(PayloadReader.Get(() => data.value), out double value))
+            if (!PayloadReader.TryDouble(PayloadReader.Get(() => data.value), out double _))
             { Reject("pointClicked", "value is missing or not a finite number"); return; }
 
             // The index is a lookup key: label and value are resolved from SERVER data.
-            // The client copies are only compared, never trusted.
-            if (label != _labels[index] || Math.Abs(value - _values[index]) > 0.001)
-                RaiseTrace(TraceDirection.Server, "contract check",
-                    $"client sent label={label} value={PayloadReader.F(value)}; server has {_labels[index]}/{PayloadReader.F(_values[index])}: server wins");
-
-            var args = new ChartPointEventArgs(index, _labels[index], _values[index]);
-            this.LastPoint = args;
-            RaiseTrace(TraceDirection.Server, "PointClicked", $"raised via {via} → ChartPointEventArgs {args}");
-            PointClicked?.Invoke(this, args);
+            // The client copies are never trusted.
+            PointClicked?.Invoke(this, new ChartPointEventArgs(index, _labels[index], _values[index]));
         }
 
         private void Reject(string eventName, string reason)
             => RaiseTrace(TraceDirection.Rejected, eventName, "rejected: " + reason);
-
-        #endregion
-
-        #region Client calls
-
-        /// <summary>CallAsync("getNoiseCount") — how many vendor events stayed in the browser vs were forwarded.</summary>
-        public Task<dynamic> GetNoiseCountAsync() => this.CallAsync("getNoiseCount");
-
-        /// <summary>Call("fireBadPayload") — makes the adapter fire a pointClicked that violates the contract.</summary>
-        public void FireBadPayloadForTesting()
-        {
-            RaiseTrace(TraceDirection.ServerToClient, "Call(\"fireBadPayload\")", "adapter will fire pointClicked { index: -1 } (no label, no value)");
-            this.Call("fireBadPayload");
-        }
 
         #endregion
 

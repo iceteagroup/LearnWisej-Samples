@@ -11,85 +11,67 @@ that, because another save could land between the check and the write. The uniqu
 `IX_Tickets_Number` (Module 2) is the only thing that can actually guarantee it, and it does so by refusing
 the `INSERT` and making EF Core throw `DbUpdateException` from `SaveChangesAsync`.
 
-## Reproducing it on demand: the lab prop
+## Reproducing it: the `forceDuplicateNumber` parameter
 
-`TicketCommandService.SaveAsync` gained a `forceDuplicateNumber` parameter:
+The editor always saves through `SaveAsync(model)`, which numbers a new ticket with `NextNumberAsync` and
+never collides in normal use. To reproduce the collision on demand, `TicketCommandService` has an overload
+with a `forceDuplicateNumber` parameter, used by `DuplicateNumberTests`:
 
 ```csharp
-public async Task<SaveTicketResult> SaveAsync(TicketEditModel model, TimeSpan latency, bool forceDuplicateNumber, CancellationToken token = default)
+public async Task<SaveTicketResult> SaveAsync(TicketEditModel model, bool forceDuplicateNumber, CancellationToken token = default)
 {
     …
     if (model.Id == 0)
     {
-        string number = forceDuplicateNumber
-            ? await db.Tickets.OrderBy(t => t.Id).Select(t => t.Number).FirstAsync(token)   // lab prop: reuse one
-            : await NextNumberAsync(db, token);                                             // ordinary path
+        string number;
+        if (forceDuplicateNumber)
+            number = await db.Tickets.OrderBy(t => t.Id).Select(t => t.Number).FirstAsync(token);   // reuse one
+        else
+            number = await NextNumberAsync(db, token);                                             // ordinary path
         ticket = new Ticket { Number = number };
         …
 ```
 
-`TicketEditorForm` has a matching development-only lab control, `chkDuplicateNumber` ("Lab: reuse an existing
-ticket number (forces a duplicate save)"), visible only for a **new** ticket (it means nothing on an edit —
-`forceDuplicateNumber` is only read when `model.Id == 0`). `SaveAsync` passes it straight through:
-
-```csharp
-var result = await Commands.SaveAsync(model, _saveLatency, this.chkDuplicateNumber.Checked && model.Id == 0);
-```
-
-The **"Add: duplicate number (DbUpdateException)"** button on the browser page (`btnLabDuplicateNumber_Click`)
-opens the editor with `EditorLabScenario.DuplicateNumber`: a valid Title, a valid Customer and Category (so
-`TicketValidator` passes and Save actually reaches the database), and `chkDuplicateNumber` pre-ticked.
+`forceDuplicateNumber` is only read when `model.Id == 0`; an edit never changes `Number`. The screen has no
+control for it: the same `DbUpdateException` also covers a stale foreign key (a customer or category
+deleted while the dialog was open), and the handling below is identical for both causes.
 
 ## The catch, below the concurrency catch
 
 ```csharp
-catch (DbUpdateConcurrencyException ex) { Fail(…); }     // must come first — it derives from DbUpdateException
-catch (DbUpdateException ex)               { await FailDbUpdateAsync(ex); }
+catch (DbUpdateConcurrencyException ex) { … }      // must come first — it derives from DbUpdateException
+catch (DbUpdateException ex)
+{
+    // A duplicate ticket number or a stale foreign key: the database's final word.
+    ShowError(FriendlyDatabaseErrors.TicketSaveRejected, ex);
+    await ReloadLookupsAsync();
+}
 ```
 
-`FailDbUpdateAsync`:
-
-1. **Logs the full exception server-side** — `Console.Error.WriteLine($"[SupportDesk] server log: DbUpdateException saving ticket — {ex}")`,
+1. **Logs the full exception server-side** — `ShowError` writes `Console.Error.WriteLine("[SupportDesk] " + ex)`,
    the whole exception (including `ex.InnerException`, the `SqliteException`), never trimmed.
 2. **Shows one plain sentence** — `FriendlyDatabaseErrors.TicketSaveRejected` ("The ticket could not be saved
-   because the database rejected the change. Please verify required fields and lookup values."), through both
-   `labelBanner` (the form's own banner) and `AlertBox.Show(…, MessageBoxIcon.Error, alignment: TopRight, autoCloseDelay: 4000)`.
-   No SQL, no constraint name, no connection string — `FriendlyDatabaseErrors` is a small, UI-free static class
-   in `SupportDesk.Services` precisely so a test can assert that directly (see [`NegativeTests.md`](NegativeTests.md)).
+   because the database rejected the change. Please verify required fields and lookup values.") in an error
+   `AlertBox` (`MessageBoxIcon.Error`, top-right, `autoCloseDelay: 4000`). No SQL, no constraint name, no
+   connection string — `FriendlyDatabaseErrors` is a small, UI-free static class in `SupportDesk.Services`
+   precisely so a test can assert that directly (see [`NegativeTests.md`](NegativeTests.md)).
 3. **Reloads the lookup lists** — `ReloadLookupsAsync()` re-fetches `Commands.GetLookupsAsync()` and refills
-   `cboCustomer`/`cboAgent`/`cboCategory`, because a stale foreign key (a customer or category deleted while
-   the dialog was open) is another plausible cause of the same exception, not just a duplicate number.
+   `cboCustomer`/`cboAgent`/`cboCategory`, because a stale foreign key is another plausible cause of the same
+   exception, not just a duplicate number.
 
 The dialog **stays open** — nothing about a caught `DbUpdateException` closes it, the same rule Module 4
-established for every caught failure — so the operator's typed values are not lost; unticking the lab checkbox
-and pressing Save again succeeds.
-
-## The trace
-
-Because `SaveAsync` wraps the whole operation in `QueryTrace.Begin(OnQueryTrace)`, the failed `INSERT` is
-reported by the same `QueryTraceInterceptor.CommandFailed` hook every other SQL statement in this course goes
-through — captured on this machine:
-
-```
-→ SQL failed   SqliteException: SQLite Error 19: 'UNIQUE constraint failed: Tickets.Number'. — INSERT INTO "Tickets" …
-```
-
-followed by the editor's own line:
-
-```
-• editor       caught DbUpdateException → friendly message shown, full exception logged server-side
-```
+established for every caught failure — so the operator's typed values are not lost and Save can be pressed
+again.
 
 ## Evidence
 
-- `dotnet build` — 0 warnings, 0 errors.
 - `SupportDesk.Tests/DuplicateNumberTests.cs`:
   - `SaveAsync_with_forceDuplicateNumber_throws_DbUpdateException_wrapping_the_UNIQUE_constraint` — asserts
     the thrown exception is `DbUpdateException`, its `InnerException` is `Microsoft.Data.Sqlite.SqliteException`,
     and that inner exception's `Message` contains `UNIQUE constraint failed: Tickets.Number`. Console probe of
     the actual text on this machine: `SQLite Error 19: 'UNIQUE constraint failed: Tickets.Number'.`
   - `SaveAsync_without_forceDuplicateNumber_never_collides_with_an_existing_number` — the ordinary path still
-    saves normally when the lab prop is off.
+    saves normally.
   - `The_friendly_save_message_contains_no_SQL_constraint_name_or_connection_detail` — asserts
     `FriendlyDatabaseErrors.TicketSaveRejected` contains none of `SQLite`, `SQL`, `constraint`, `UNIQUE`,
     `Data Source` or `Tickets.Number` (case-insensitive).

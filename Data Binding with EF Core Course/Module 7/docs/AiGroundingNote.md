@@ -15,8 +15,8 @@ essay on EF Core or Wisej.NET.
    `docs/ArchitectureNote.md`) — something that would throw at page construction time.
 2. **`BindingSource` as the UI bridge.** `TicketBrowserPage`'s grid and `TicketEditorForm`'s fields never
    bind directly to an EF Core entity or a live query. The browser binds a materialised `List<TicketListItem>`
-   (never an `IQueryable`, see `SupportDesk.Web/TicketBrowserPage.cs`'s `buttonBindQuery_Click` anti-pattern
-   demo for what happens if you do); the editor binds a `TicketEditModel`, a plain UI-only class
+   (never an `IQueryable`: bound after its context is disposed, it fails with `ObjectDisposedException` when
+   the grid enumerates, see `docs/TicketBrowserBinding.md`); the editor binds a `TicketEditModel`, a plain UI-only class
    `TicketCommandService` maps onto a tracked entity only inside `SaveAsync`. An assistant should not suggest
    binding a grid or form directly to `DbSet<T>` or an `IQueryable`.
 3. **Explicit validation, not implicit.** `TicketValidator.Validate` is the one place
@@ -27,8 +27,8 @@ essay on EF Core or Wisej.NET.
 4. **Async loading guards.** Every page and form handler follows the same shape: a boolean guard field
    (`_loading` / `_saving`) checked first, set busy, one awaited service call, a friendly message in `catch`,
    the UI restored in `finally` with `Application.Update(this)`. Wisej.NET *does* deliver a second click
-   while an awaited handler is still pending — the guard, not the framework, is what drops it (verified with
-   the Module 1 "Count ×3 rapid" button). An assistant should not assume disabling a button is enough by
+   while an awaited handler is still pending — the guard, not the framework, is what drops it (verified in
+   the browser in Module 1). An assistant should not assume disabling a button is enough by
    itself, or that Wisej.NET serialises clicks for you.
 5. **`RowVersion` concurrency, restored as `OriginalValue` before mapping.** The one new pattern this module
    adds: `TicketEditModel.RowVersion` is hidden state carried from `LoadEditModelAsync` to `SaveAsync`, and
@@ -57,8 +57,9 @@ essay on EF Core or Wisej.NET.
 
 ## Evidence
 
-- The five patterns above are each demonstrated by a still-working button on the page (see the README's
-  "What to click" table) and covered by at least one test in `SupportDesk.Tests` (`TicketQueryServiceTests`,
-  `TicketCommandServiceTests`, `TicketValidatorTests`, `ConcurrencyAndTransactionsTests`).
+- The five patterns above are each visible in the running app (search and paging, Add Ticket / Edit Ticket,
+  validation in the editor, the two-tab conflict; see the README) and covered by at least one test in
+  `SupportDesk.Tests` (`TicketQueryServiceTests`, `TicketCommandServiceTests`, `TicketValidatorTests`,
+  `ConcurrencyAndTransactionsTests`).
 - `docs/ArchitectureNote.md` — the service boundary and DI bridge these patterns depend on.
 - `_template/COOKBOOK.md` — the verified-vs-unverified distinction this note follows for Wisej.NET facts.

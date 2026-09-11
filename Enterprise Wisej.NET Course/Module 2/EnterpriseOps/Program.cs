@@ -20,7 +20,6 @@ namespace EnterpriseOps
             var services = new ServiceRegistry(session, () => (SessionContext)Application.Session.Context);
             Application.Session.Services = services;
 
-            services.Trace.Ui($"Program.Main → SessionContext {session} stored in Application.Session; MainPage = MigrationDossierPage");
             Application.MainPage = new UI.MigrationDossierPage(services);
         }
     }

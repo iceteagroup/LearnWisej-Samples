@@ -83,7 +83,7 @@
   <text x="42" y="454" font-size="11.5" fill="#31414f">• CreateWorkOrderCommand · UpdateWorkOrderCommand · ApproveWorkOrderCommand</text>
   <text x="42" y="475" font-size="11.5" fill="#31414f">• CommandContext (tenant · user · role · correlation id)</text>
   <text x="42" y="496" font-size="11.5" fill="#31414f">• CommandResult (Success · UserMessage · ErrorCode · Detail · CorrelationId)</text>
-  <text x="42" y="517" font-size="11.5" fill="#31414f">• WorkQueueQuery · PagedResult&lt;WorkQueueRow&gt; · WorkOrderHeader</text>
+  <text x="42" y="517" font-size="11.5" fill="#31414f">• WorkQueueQuery · PagedResult&lt;WorkQueueRow&gt;</text>
   <text x="42" y="538" font-size="11.5" fill="#31414f">• AuditQueryResult · AuditLogRow</text>
   <text x="42" y="561" font-size="11" fill="#5a6b7d">Every one of them is a plain class. None of them needs a Form to exist.</text>
 

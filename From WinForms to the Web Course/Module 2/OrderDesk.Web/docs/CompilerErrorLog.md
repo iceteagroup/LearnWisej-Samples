@@ -4,7 +4,6 @@ What the compiler said after `OrdersForm.cs`, `OrdersForm.Designer.cs`, `EditOrd
 and the WinForms `Program.cs` were copied into the shell and `System.Windows.Forms` was replaced by `Wisej.Web`
 (and `namespace LegacyOrderDesk` by `namespace OrderDesk`) with one search-and-replace. Every line was **categorized
 before it was edited** — the rule of the module is "categorize, fix, rebuild; don't randomly edit designer files".
-The same rows are compiled into the app as `Migration/CompilerErrorLog.cs`, which the console shows, filters and replays.
 
 Legend: **#** = error lines the compiler printed for that symbol over all passes (0 = it compiled, the row records a
 *silent* difference) · **Pass** = surfaced → fixed · **open** = still open after Module 2, carried in `migration-log.md`.
@@ -45,10 +44,10 @@ Legend: **#** = error lines the compiler printed for that symbol over all passes
 
 | Symbol | Code | # | Pass | Message | Fix | Module | open |
 |---|---|---|---|---|---|---|---|
-| `RegistrySettings.Load/Save` (×3) | CS0103 | 3 | 2 → 3 | The name 'RegistrySettings' does not exist in the current context | Original lines commented ✕; window size is the browser's; grid density → per-user profile store | Module 4 | open |
-| `InvoicePrinter.Print` (PrintDocument, PrintPreviewDialog) | CS0103 | 1 | 2 → 3 | The name 'InvoicePrinter' does not exist in the current context | Commented ✕ + stand-in; InvoiceDocument stays, delivery becomes a server PDF in PdfViewer | Module 6 | open |
-| `ExcelExport.ExportOrders` (Excel Interop, `C:\Orders`) | CS0103 | 1 | 2 → 3 | The name 'ExcelExport' does not exist in the current context | Commented ✕ + stand-in; managed writer + `Application.Download` | Module 6 | open |
-| `SettingsForm` (edits HKCU) | CS0246 | 1 | 2 → 3 | The type or namespace name 'SettingsForm' could not be found | Commented ✕ + stand-in; ported with the per-user settings store | Module 4 | open |
+| `RegistrySettings.Load/Save` (×3) | CS0103 | 3 | 2 → 3 | The name 'RegistrySettings' does not exist in the current context | Removed; window size is the browser's; grid density → per-user profile store | Module 4 | open |
+| `InvoicePrinter.Print` (PrintDocument, PrintPreviewDialog) | CS0103 | 1 | 2 → 3 | The name 'InvoicePrinter' does not exist in the current context | Stubbed ("not available yet"); InvoiceDocument stays, delivery becomes a server PDF in PdfViewer | Module 6 | open |
+| `ExcelExport.ExportOrders` (Excel Interop, `C:\Orders`) | CS0103 | 1 | 2 → 3 | The name 'ExcelExport' does not exist in the current context | Stubbed ("not available yet"); managed writer + `Application.Download` | Module 6 | open |
+| `SettingsForm` (edits HKCU) | CS0246 | 1 | 2 → 3 | The type or namespace name 'SettingsForm' could not be found | Stubbed ("not available yet"); ported with the per-user settings store | Module 4 | open |
 | `Application.Run(new OrdersForm())` | CS0117 | 1 | 2 → 3 | 'Application' does not contain a definition for 'Run' | `Program.Main(NameValueCollection)` sets `Application.MainPage`; Default.json names it (`"startup"`) | Module 2 | |
 | `LoginForm` (in Program.Main) | CS0246 | 1 | 2 → 3 | The type or namespace name 'LoginForm' could not be found | Not copied — the WinForms Program.cs is replaced by the shell's; login becomes the session sign-in | Module 4 | open |
 | `[STAThread]` | — | 0 | — | Compiles anywhere but means nothing on a server thread pool — removed with Program.cs | Deleted | Module 2 | |
@@ -59,7 +58,7 @@ Legend: **#** = error lines the compiler printed for that symbol over all passes
 |---|---|---|---|---|---|---|---|
 | `dialog.ShowDialog(this) == DialogResult.OK` (×3) | — | 0 | — | Compiles, but ShowDialog returns immediately on the web: the OK branch never runs | Minimal fix now: `ShowDialog(owner, (form, result) => …)`; the Module 3 rule is `ShowDialogAsync` + dispose in the caller | Module 3 | open |
 | `using (var dialog = …) { dialog.ShowDialog(this) … }` | — | 0 | — | Compiles, but disposes the dialog while it is still open in the browser | Dispose in the callback (`form.Dispose()`) — done here; formalised in Module 3 | Module 3 | open |
-| `new OpenFileDialog { Title = … }` | — | 0 | — | Compiles — `Wisej.Web.OpenFileDialog` exists, but it browses the **server's** file system | Commented ✕ + stand-in; Upload control + server storage root | Module 6 | open |
+| `new OpenFileDialog { Title = … }` | — | 0 | — | Compiles — `Wisej.Web.OpenFileDialog` exists, but it browses the **server's** file system | Stubbed ("not available yet"); Upload control + server storage root | Module 6 | open |
 | static `AppState.CurrentUser / CurrentFilter / LastSearch` | — | 0 | — | Compiles — one static slot for every browser session (Module 1 showed the leak) | `Application.Session` behind a typed UserContext | Module 4 | open |
 | `MessageBox.Show("Saved.", "LegacyOrderDesk")` | — | 0 | — | Works as-is for a notification; a Yes/No decision needs `ShowAsync` or the callback overload | Keep; review every MessageBox whose return value is read | Module 3 | open |
 | `ordersGrid.DataSource = list; CurrentRow.DataBoundItem` | — | 0 | — | Compiles — list binding with `DataPropertyName` columns; loads every row like the desktop did | Verify in the browser; server-side paging + virtual mode for real volumes | Module 5 | open |
@@ -73,7 +72,7 @@ Legend: **#** = error lines the compiler printed for that symbol over all passes
 |---|---|---|---|
 | 1 | **15** | Declarations only: `MenuStrip`, `ToolStripMenuItem` ×10, `StatusStrip`, `ToolStripStatusLabel` in the designer's field list, plus the two dead `using LegacyOrderDesk.*` lines. | Four control substitutions (MenuBar, MenuItem, StatusBar, StatusBarPanel); two usings deleted. |
 | 2 | **24** | The bodies surface: `DropDownItems` ×4, `ToolStripItem[]` ×6, `.Items` ×2, `MainMenuStrip`, `FixedDialog` — **plus** every desktop op the missing usings had hidden (`RegistrySettings` ×3, `InvoicePrinter`, `ExcelExport`, `SettingsForm`, `LoginForm`) and the WinForms `Program.cs` (`Run`, `EnableVisualStyles`, `SetCompatibleTextRenderingDefault`). | Member renames (`MenuItems`, `Panels`, `MenuItem[]`/`StatusBarPanel[]`), `MainMenuStrip` line deleted, `FormBorderStyle.Fixed`. |
-| 3 | **10** | Only the desktop ops are left: `RegistrySettings` ×3, `InvoicePrinter`, `ExcelExport`, `SettingsForm`, `LoginForm`, `Application.Run` / `EnableVisualStyles` / `SetCompatibleTextRenderingDefault`. | Each original line commented `✕ compiler: <category>` with a one-line stand-in that raises `BoundaryHit`; the WinForms `Program.cs` not copied — the shell's `Program.cs` takes over. |
+| 3 | **10** | Only the desktop ops are left: `RegistrySettings` ×3, `InvoicePrinter`, `ExcelExport`, `SettingsForm`, `LoginForm`, `Application.Run` / `EnableVisualStyles` / `SetCompatibleTextRenderingDefault`. | Each desktop call removed, with a one-line comment naming the original and a "not available in the web version yet" message on its button or menu item; the WinForms `Program.cs` not copied — the shell's `Program.cs` takes over. |
 | 4 | **0** | Build succeeded. | *Compiling isn't done*: the six **unclear/deferred** rows compile and behave differently. The `ShowDialog` result and the `using`-disposal got their minimal fix (callback + dispose in the callback); the rest is logged. |
 
 ### Why the count *rises* after pass 1
@@ -98,15 +97,8 @@ hides the desktop ops inside the noise of the control substitutions.
 | `ExcelExport.ExportOrders`, `OpenFileDialog` + `C:\Orders\Attachments` | Office + the user's disk | Module 6 · managed .xlsx writer + `Application.Download`; `Upload` + storage root |
 | `ordersGrid.DataSource = every row` | works in the lab, fails at production row counts | Module 5 · server-side filter + `VirtualMode` |
 
-## Evidence (in the running app)
+## Evidence
 
-- **Compiler errors · categorized** card: the 30 rows with `Symbol | Code | # | Category | Fix | Module | open`; the
-  six buttons filter by category and trace `← JS→.NET errors.filter category = control substitution → 10 rows · 26 error lines`;
-  the count label reads `39 error lines over 4 passes → 0 · 11 open items`.
-- **▶ Replay the build funnel**: a `Wisej.Web.Timer` (900 ms) walks the passes — the big label shows `15 errors`,
-  `24 errors`, `10 errors`, then `0 errors · build succeeded` in green; the trace gets one `• server build pass n/4`
-  line per pass with the summary above; the green banner says *Build succeeded — but compiling isn't done* and the
-  status turns green.
-- **Open the ported OrdersForm ↗**: the form runs; every commented desktop call reports `⚠ boundary` in the trace
-  (`RegistrySettings.Load` on open, `InvoicePrinter.Print`, `ExcelExport.ExportOrders`, `OpenFileDialog`, `SettingsForm`,
-  `RegistrySettings.Save` on close) — the open items, live.
+The project builds with 0 errors on both target frameworks and the ported `OrdersForm` opens in the browser. Print
+Invoice, Export to Excel, Attach file… and File › Settings… are the open desktop ops: each shows a "not available in
+the web version yet" message.

@@ -74,7 +74,7 @@ namespace EnterpriseOps.Security
 
         /// <summary>
         /// The tags a reviewer wants named when a note is quarantined: what the payload actually tried to do.
-        /// Used for the trace line and the audit detail, never to decide whether to render — that decision is
+        /// Used for the log line, never to decide whether to render — that decision is
         /// "escape it", always.
         /// </summary>
         public static string DescribeMarkup(string text)

@@ -26,7 +26,7 @@ namespace OperationsConsole.Models
 
         public decimal CreditLimit { get; set; }
 
-        /// <summary>Stamped by <c>CustomerService.SaveAsync</c>; shown in the editor's state row.</summary>
+        /// <summary>Stamped by <c>CustomerService.SaveAsync</c>.</summary>
         public DateTime? SavedAt { get; set; }
 
         /// <summary>True until the service has given the record an id.</summary>

@@ -1,7 +1,6 @@
 # migration-log.md — LegacyOrderDesk → OrderDesk.Web
 
-One line per accepted decision or workaround. Later modules append to this file; the console's trace panel is the
-live version of it.
+One line per accepted decision or workaround. Later modules append to this file.
 
 ## Module 1 · Migration discovery (2026-09-09)
 
@@ -18,13 +17,13 @@ live version of it.
 ## Module 5 · Data access, grids, validation & performance (2026-09-10)
 
 - **Production-sized test data.** `OrderStore.Large` seeds 200,000 orders once per process (`Lazy<T>`, deterministic). The walkthrough's five orders stay first. `InMemoryOrderRepository.Shared` (Module 1) is untouched.
-- **"Load every row" measured, not argued.** `Legacy/DesktopGridHabits.LoadWholeTable` (= `OrdersForm.ReloadGrid`) is kept and executed by the console: `GetOrders()` clones + sorts 200,000 orders per session. Recorded in the Performance card and in `GridPerformanceNotes.md`.
+- **"Load every row" measured, not argued.** `OrdersForm.ReloadGrid` bound `GetOrders()`, which clones + sorts 200,000 orders per session. Measured once and recorded in `GridPerformanceNotes.md`; the migrated screen no longer has that path.
 - **Query model added to the Domain.** `OrderQuery { Status, Text, CustomerId, SortBy, Descending, Skip, Take }`, `PagedResult<T>`, `OrderSummary`, `OrderQueryService` (`Page`, `Count`, `Summarize`). `OrderService`'s Module 1 API is unchanged; `OrderFilter` still works.
 - **Filter + sort on the server, memoized.** `LargeOrderRepository.Query` orders once per filter+sort key and keeps the ordered set until the next write; pages are `Skip/Take` over it. Only the requested rows are cloned.
 - **Virtual rows.** `DataGridView.VirtualMode = true`, `RowCount` from `Count`, `CellValueNeeded` served from a 50-row block cache; column sorting disabled (`SortMode = NotSortable`) because the grid only ever holds a page. Pattern in `VirtualRowPattern.md`.
 - **Σ row on the server.** `Summarize(query)` → count + total in the footer. A grid summary row over a virtual grid would sum what the browser holds; the footer sums what the filter matches.
 - **Default filter = Open.** The users' working set; "All" is a choice. The search box matches customer, id and PO number — the same three fields `OrderService.Search` always looked at.
-- **Validation out of the form.** `OrderValidator.Validate(order) → ValidationResult { Errors[field], General }` in `Domain/`; the dialog shows messages with an `ErrorProvider`, a batch and a direct call use the same class. The desktop's single `MessageBox` rule is kept in `Legacy/` for comparison. Rules in `ValidationRules.md`.
+- **Validation out of the form.** `OrderValidator.Validate(order) → ValidationResult { Errors[field], General }` in `Domain/`; the dialog shows messages with an `ErrorProvider`; a batch import or an API would call the same class. Rules in `ValidationRules.md`.
 - **Edit workflow.** `EditOrderDialog` (Customer, PO, Owner, Status, one line) → `ShowDialog(callback)` → validator on Save → `OrderService.Save` (CalculateOrderTotal reused) → toast → block cache cleared, grid re-counted. The dialog is disposed in the callback.
-- **Live updates: not added.** Nothing on this screen benefits from server push; a Timer drives only the lab's batch and measurement paths. (Real-time is its own course.)
-- **Performance notes.** `GridPerformanceNotes.md` holds the method and the table; the *Average of 10* interaction row is the number to quote.
+- **Live updates: not added.** Nothing on this screen benefits from server push. (Real-time is its own course.)
+- **Performance notes.** `GridPerformanceNotes.md` holds the method and the table; the Performance panel next to the grid shows the live numbers for the current filter.

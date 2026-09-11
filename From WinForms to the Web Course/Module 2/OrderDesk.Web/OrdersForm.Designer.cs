@@ -1,4 +1,4 @@
-namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
+namespace OrderDesk
 {
     partial class OrdersForm
     {
@@ -11,17 +11,13 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
             base.Dispose(disposing);
         }
 
-        #region Wisej.NET Designer generated code   (was: Windows Form Designer generated code)
+        #region Wisej.NET Designer generated code
 
-        // Every "System.Windows.Forms." below became "Wisej.Web." with one search-and-replace. The lines
-        // tagged "✓ was:" are the control substitutions the compiler then asked for (MenuStrip → MenuBar,
-        // ToolStripMenuItem → MenuItem, StatusStrip → StatusBar, ToolStripStatusLabel → StatusBarPanel);
-        // everything else — DataGridView + columns, GroupBox, Label, Button, Anchor, ClientSize — compiled as-is.
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.menuStrip = new Wisej.Web.MenuBar();                       // ✓ was: System.Windows.Forms.MenuStrip
-            this.fileMenu = new Wisej.Web.MenuItem();                       // ✓ was: System.Windows.Forms.ToolStripMenuItem (×10)
+            this.menuStrip = new Wisej.Web.MenuBar();
+            this.fileMenu = new Wisej.Web.MenuItem();
             this.settingsMenuItem = new Wisej.Web.MenuItem();
             this.exitMenuItem = new Wisej.Web.MenuItem();
             this.viewMenu = new Wisej.Web.MenuItem();
@@ -47,8 +43,8 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
             this.printInvoiceButton = new Wisej.Web.Button();
             this.exportButton = new Wisej.Web.Button();
             this.attachButton = new Wisej.Web.Button();
-            this.statusStrip = new Wisej.Web.StatusBar();                   // ✓ was: System.Windows.Forms.StatusStrip
-            this.statusLabel = new Wisej.Web.StatusBarPanel();              // ✓ was: System.Windows.Forms.ToolStripStatusLabel
+            this.statusStrip = new Wisej.Web.StatusBar();
+            this.statusLabel = new Wisej.Web.StatusBarPanel();
             ((System.ComponentModel.ISupportInitialize)(this.ordersGrid)).BeginInit();
             this.menuStrip.SuspendLayout();
             this.detailGroup.SuspendLayout();
@@ -57,28 +53,28 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
             //
             // menuStrip  (File · View · Reports · Help)
             //
-            this.fileMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.settingsMenuItem, this.exitMenuItem });     // ✓ was: DropDownItems.AddRange(new ToolStripItem[] …)
+            this.fileMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.settingsMenuItem, this.exitMenuItem });
             this.fileMenu.Text = "&File";
             this.settingsMenuItem.Text = "&Settings…";
             this.settingsMenuItem.Click += new System.EventHandler(this.settingsMenuItem_Click);
             this.exitMenuItem.Text = "E&xit";
             this.exitMenuItem.Click += new System.EventHandler(this.exitMenuItem_Click);
-            this.viewMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.filterOpenMenuItem, this.filterAllMenuItem });   // ✓ was: DropDownItems
+            this.viewMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.filterOpenMenuItem, this.filterAllMenuItem });
             this.viewMenu.Text = "&View";
             this.filterOpenMenuItem.Text = "Open orders only";
             this.filterOpenMenuItem.Click += new System.EventHandler(this.filterOpenMenuItem_Click);
             this.filterAllMenuItem.Text = "All orders";
             this.filterAllMenuItem.Click += new System.EventHandler(this.filterAllMenuItem_Click);
-            this.reportsMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.printInvoiceMenuItem });                 // ✓ was: DropDownItems
+            this.reportsMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.printInvoiceMenuItem });
             this.reportsMenu.Text = "&Reports";
             this.printInvoiceMenuItem.Text = "Print &Invoice";
             this.printInvoiceMenuItem.Click += new System.EventHandler(this.printInvoiceButton_Click);
-            this.helpMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.aboutMenuItem });                          // ✓ was: DropDownItems
+            this.helpMenu.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.aboutMenuItem });
             this.helpMenu.Text = "&Help";
             this.aboutMenuItem.Text = "&About";
             this.aboutMenuItem.Click += new System.EventHandler(this.aboutMenuItem_Click);
-            this.menuStrip.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.fileMenu, this.viewMenu, this.reportsMenu, this.helpMenu });   // ✓ was: menuStrip.Items.AddRange(new ToolStripItem[] …)
-            this.menuStrip.Dock = Wisej.Web.DockStyle.Top;                  // ✓ MenuStrip docked top implicitly; MenuBar is told to
+            this.menuStrip.MenuItems.AddRange(new Wisej.Web.MenuItem[] { this.fileMenu, this.viewMenu, this.reportsMenu, this.helpMenu });
+            this.menuStrip.Dock = Wisej.Web.DockStyle.Top;
             this.menuStrip.Location = new System.Drawing.Point(0, 0);
             this.menuStrip.Name = "menuStrip";
             //
@@ -119,7 +115,7 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
             this.statusColumn.Name = "statusColumn";
             this.statusColumn.Width = 90;
             //
-            // detailGroup  (right-hand detail panel)
+            // detailGroup
             //
             this.detailGroup.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
             this.detailGroup.Controls.Add(this.customerLabel);
@@ -153,11 +149,11 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
             //
             // statusStrip
             //
-            this.statusStrip.Panels.AddRange(new Wisej.Web.StatusBarPanel[] { this.statusLabel });   // ✓ was: statusStrip.Items.AddRange(new ToolStripItem[] …)
-            this.statusStrip.Dock = Wisej.Web.DockStyle.Bottom;              // ✓ StatusStrip docked bottom implicitly; StatusBar is told to
+            this.statusStrip.Panels.AddRange(new Wisej.Web.StatusBarPanel[] { this.statusLabel });
+            this.statusStrip.Dock = Wisej.Web.DockStyle.Bottom;
             this.statusStrip.Name = "statusStrip";
-            this.statusStrip.ShowPanels = true;                              // ✓ a StatusBar shows its Text unless ShowPanels is on
-            this.statusLabel.AutoSize = Wisej.Web.StatusBarPanelAutoSize.Spring;   // ✓ the ToolStripStatusLabel used the whole strip
+            this.statusStrip.ShowPanels = true;
+            this.statusLabel.AutoSize = Wisej.Web.StatusBarPanelAutoSize.Spring;
             this.statusLabel.Text = "Ready";
             //
             // OrdersForm
@@ -167,12 +163,10 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
             this.Controls.Add(this.detailGroup);
             this.Controls.Add(this.statusStrip);
             this.Controls.Add(this.menuStrip);
-            // ✕ compiler: Control substitution — this.MainMenuStrip = this.menuStrip;  (CS1061 · a docked MenuBar needs no owner property)
             this.MinimumSize = new System.Drawing.Size(640, 360);
             this.Name = "OrdersForm";
             this.StartPosition = Wisej.Web.FormStartPosition.CenterScreen;
-            this.Text = "LegacyOrderDesk — Orders";
-            this.FormClosing += new Wisej.Web.FormClosingEventHandler(this.OrdersForm_FormClosing);
+            this.Text = "Orders";
             this.Load += new System.EventHandler(this.OrdersForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.ordersGrid)).EndInit();
             this.menuStrip.ResumeLayout(false);
@@ -187,8 +181,8 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
 
         #endregion
 
-        private Wisej.Web.MenuBar menuStrip;                 // ✓ was: System.Windows.Forms.MenuStrip
-        private Wisej.Web.MenuItem fileMenu;                 // ✓ was: System.Windows.Forms.ToolStripMenuItem (×10)
+        private Wisej.Web.MenuBar menuStrip;
+        private Wisej.Web.MenuItem fileMenu;
         private Wisej.Web.MenuItem settingsMenuItem;
         private Wisej.Web.MenuItem exitMenuItem;
         private Wisej.Web.MenuItem viewMenu;
@@ -214,7 +208,7 @@ namespace OrderDesk                    // ✓ was: namespace LegacyOrderDesk
         private Wisej.Web.Button printInvoiceButton;
         private Wisej.Web.Button exportButton;
         private Wisej.Web.Button attachButton;
-        private Wisej.Web.StatusBar statusStrip;             // ✓ was: System.Windows.Forms.StatusStrip
-        private Wisej.Web.StatusBarPanel statusLabel;        // ✓ was: System.Windows.Forms.ToolStripStatusLabel
+        private Wisej.Web.StatusBar statusStrip;
+        private Wisej.Web.StatusBarPanel statusLabel;
     }
 }

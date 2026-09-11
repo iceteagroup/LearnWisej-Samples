@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using TicketOps.Data;
 using TicketOps.Domain;
-using TicketOps.Infrastructure;
 
 namespace TicketOps.Services
 {
@@ -11,14 +10,11 @@ namespace TicketOps.Services
     public sealed class FakeUserService : IUserService
     {
         private readonly List<Operator> _roster = SeedData.Operators().ToList();
-        private readonly ILog _log;
         private Operator _current;
 
-        public FakeUserService(ILog log)
+        public FakeUserService()
         {
-            _log = log ?? throw new ArgumentNullException(nameof(log));
             _current = _roster.First(o => o.Id == SeedData.DefaultOperatorId);
-            _log.Info(LogLayer.Session, "FakeUserService", $"signed in as {_current} (session-scoped)");
         }
 
         public Operator Current => _current;
@@ -32,7 +28,6 @@ namespace TicketOps.Services
             var next = _roster.FirstOrDefault(o => o.Id == operatorId)
                        ?? throw new ArgumentException($"Unknown operator {operatorId}", nameof(operatorId));
             _current = next;
-            _log.Info(LogLayer.Session, "FakeUserService.SignInAs", $"current operator → {next} (this session only)");
             return next;
         }
     }

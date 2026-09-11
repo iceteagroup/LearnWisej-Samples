@@ -5,15 +5,9 @@ using Wisej.Web;
 namespace OperationsConsole.ListsTrees
 {
     /// <summary>
-    /// The detail half of the document explorer (Module 4).
-    /// <para>
-    /// <b>Its whole public surface is two methods.</b> <see cref="Show(DocumentModel)"/> renders a document,
-    /// <see cref="ShowMessage(string)"/> renders the empty / loading / error state. It has no reference to
-    /// <c>categoryTree</c>, to <c>documentList</c>, to <c>DocumentService</c> or to anything that fetches data:
-    /// the page resolves the stable ID, calls the service and hands the finished
-    /// <see cref="DocumentModel"/> over. That is what makes the interesting half of the selection handler
-    /// testable without a browser.
-    /// </para>
+    /// The detail half of the document explorer. <see cref="Show(DocumentModel)"/> renders a document and
+    /// <see cref="ShowMessage(string)"/> renders the empty / loading / error state. It has no reference to the tree,
+    /// the list or the service: the page hands it a finished <see cref="DocumentModel"/>.
     /// </summary>
     public partial class DocumentDetailControl : UserControl
     {
@@ -25,10 +19,7 @@ namespace OperationsConsole.ListsTrees
             InitializeComponent();
         }
 
-        /// <summary>
-        /// Renders one document. This is the single entry point the lab asks for — the page calls it after the
-        /// service returned, and nothing else in the application touches the Labels below.
-        /// </summary>
+        /// <summary>Renders one document.</summary>
         public void Show(DocumentModel model)
         {
             if (model == null)
@@ -39,7 +30,7 @@ namespace OperationsConsole.ListsTrees
 
             this.lblId.Text = model.DocumentId;
             this.lblDocTitle.Text = model.Title;
-            this.lblCategory.Text = model.CategoryPath + "   (category " + model.CategoryId + ")";
+            this.lblCategory.Text = model.CategoryPath;
             this.lblType.Text = model.TypeLabel;
             this.lblSize.Text = model.SizeText;
             this.lblModified.Text = model.ModifiedText;
@@ -53,10 +44,7 @@ namespace OperationsConsole.ListsTrees
             this.pnlFields.Visible = true;
         }
 
-        /// <summary>
-        /// The empty, loading and error states: one honest sentence instead of a half-filled card.
-        /// The page never shows exception text here — that goes to the Event log only.
-        /// </summary>
+        /// <summary>The empty, loading and error states: one sentence instead of a half-filled card.</summary>
         public void ShowMessage(string text)
         {
             this.lblMessage.Text = text;

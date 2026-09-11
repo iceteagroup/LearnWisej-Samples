@@ -8,8 +8,7 @@ namespace TicketOps.Resources
     {
         public const string AppTitle = "TicketOps Console";
         public const string ActionFailed = "The action could not be completed. Check the log for details.";
-        public const string DirectoryUnavailable = "The user directory is not available right now. Try again in a moment.";
-        public const string SelectTicketHint = "Select a ticket — the selection is stored in this session only.";
+        public const string NoTicketSelected = "No ticket selected.";
         public const string TicketSelected = "Ticket {0} selected for this session.";
     }
 }

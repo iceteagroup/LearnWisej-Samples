@@ -6,13 +6,14 @@ using EnterpriseOps.Services;
 namespace EnterpriseOps.Integrations
 {
     /// <summary>
-    /// In-memory stand-in for the e-mail / in-app / SMS provider. FailNextSend(reason) arms the
-    /// lab's failure path: the next send times out AFTER the escalation was persisted.
+    /// In-memory stand-in for the e-mail / in-app / SMS provider, with a simulated notification failure:
+    /// the SMTP relay times out on the first e-mail of the session (after the escalation was persisted)
+    /// and delivers every send after that, so a retry from the manual-review queue goes through.
     /// </summary>
     public class FakeNotificationGateway : INotificationGateway
     {
         private readonly ActivityTrace _trace;
-        private string _failNextReason;
+        private bool _smtpRelayReady;
         private int _sequence = 5000;
 
         public FakeNotificationGateway(ActivityTrace trace)
@@ -20,24 +21,15 @@ namespace EnterpriseOps.Integrations
             _trace = trace;
         }
 
-        public bool IsArmedToFail => _failNextReason != null;
-
-        /// <summary>Lab switch: the next send throws NotificationFailedException(reason).</summary>
-        public void FailNextSend(string reason)
-        {
-            _failNextReason = reason;
-            _trace.Write($"Integrations: notification gateway armed — the next send will fail ({reason})");
-        }
-
         public async Task<NotificationReceipt> SendApproverNotificationAsync(Escalation escalation, Approver approver)
         {
             _trace.Write($"Integrations: sending {escalation.Channels} notification for {escalation.Number} to {approver.Id}…");
             await Task.Delay(400);                  // the round trip to the provider
 
-            if (_failNextReason != null)
+            if (escalation.Channels.HasFlag(NotificationChannels.Email) && !_smtpRelayReady)
             {
-                string reason = _failNextReason;
-                _failNextReason = null;
+                _smtpRelayReady = true;
+                const string reason = "smtp timeout after 30s";
                 _trace.Write($"Integrations: send FAILED — {reason}");
                 throw new NotificationFailedException(reason);
             }

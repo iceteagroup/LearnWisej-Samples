@@ -84,7 +84,6 @@ namespace OperationsConsole.ListsTrees
             this.lblId.Size = new System.Drawing.Size(170, 22);
             this.lblId.Text = "—";
             this.lblId.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblId.ToolTipText = "The stable business ID the tree and the list carry in Tag — never the display text.";
             //
             this.lblOwnerCaption.AutoSize = false;
             this.lblOwnerCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
@@ -141,7 +140,6 @@ namespace OperationsConsole.ListsTrees
             this.lblCategory.Size = new System.Drawing.Size(374, 22);
             this.lblCategory.Text = "—";
             this.lblCategory.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblCategory.ToolTipText = "Which branch the document really belongs to — three folders are called \"Contracts\".";
             //
             // row 4 — Type | Size
             //

@@ -9,19 +9,9 @@ using TicketOps.Infrastructure;
 namespace TicketOps.Data
 {
     /// <summary>
-    /// Raised by the data layer when the store refuses a write. Its message is deliberately internal
-    /// (host names, table names): it belongs in the log, and the screen must never show it.
-    /// </summary>
-    public sealed class DataOutageException : Exception
-    {
-        public DataOutageException(string message) : base(message) { }
-    }
-
-    /// <summary>
     /// In-memory repository seeded with the TicketOps work orders. One instance per session (created in
     /// AppComposition), so two browser tabs never share a list — the same reason nothing here is static.
-    /// <see cref="SimulateWriteOutage"/> makes every COMMIT fail the way a primary that is read-only during
-    /// a failover would: reads still answer, so the lab can prove afterwards that nothing was written.
+    /// Writes go through <see cref="IWorkOrderTransaction"/>: staged, then applied all at once on commit.
     /// </summary>
     public sealed class InMemoryWorkOrderRepository : IWorkOrderRepository
     {
@@ -31,8 +21,6 @@ namespace TicketOps.Data
         private int _nextId;
         private int _nextTx;
 
-        public bool SimulateWriteOutage { get; set; }
-
         public IReadOnlyList<string> AuditTrail => _audit;
 
         public InMemoryWorkOrderRepository(ILog log)
@@ -41,12 +29,10 @@ namespace TicketOps.Data
             foreach (var o in SeedData.WorkOrders())
                 _orders[o.Id] = o;
             _nextId = _orders.Keys.Max() + 1;
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository", $"seeded {_orders.Count} work orders (in-memory, per session)");
         }
 
         public Task<IReadOnlyList<WorkOrder>> GetAllAsync()
         {
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.GetAllAsync", $"SELECT * FROM WorkOrders — {_orders.Count} rows");
             IReadOnlyList<WorkOrder> rows = _orders.Values.OrderBy(o => o.Id).Select(Clone).ToList();
             return Task.FromResult(rows);
         }
@@ -54,30 +40,17 @@ namespace TicketOps.Data
         public Task<WorkOrder> FindAsync(int id)
         {
             _orders.TryGetValue(id, out var order);
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.FindAsync",
-                order == null ? $"#{id} not found" : $"#{id} found — {order.Status} · v{order.RowVersion}");
             return Task.FromResult(order == null ? null : Clone(order));
         }
 
         public IWorkOrderTransaction BeginTransaction()
         {
-            var tx = new Transaction(this, ++_nextTx);
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.BeginTransaction", $"tx#{tx.Number} open — writes are staged, not visible");
-            return tx;
+            return new Transaction(this, ++_nextTx);
         }
 
         /// <summary>Applies a staged transaction. This is the only method that changes the visible rows.</summary>
         private WorkOrder Apply(Transaction tx)
         {
-            if (SimulateWriteOutage)
-            {
-                // What a real driver would say — and exactly what must not reach the user.
-                string statement = $"COMMIT tx#{tx.Number} ({tx.Statements})";
-                _log.Error(LogLayer.Data, "InMemoryWorkOrderRepository", null,
-                    $"outage: {statement} failed — timeout connecting to sql01:1433 (TicketOps.dbo.WorkOrders is read-only during failover)");
-                throw new DataOutageException("Timeout connecting to sql01:1433 while executing: " + statement);
-            }
-
             WorkOrder last = null;
             foreach (var staged in tx.Orders)
             {
@@ -89,16 +62,13 @@ namespace TicketOps.Data
             foreach (var entry in tx.AuditEntries)
                 _audit.Add(entry);
 
-            _log.Info(LogLayer.Data, "InMemoryWorkOrderRepository.Commit",
-                $"tx#{tx.Number} committed — {tx.Orders.Count} row(s), {tx.AuditEntries.Count} audit entr{(tx.AuditEntries.Count == 1 ? "y" : "ies")}"
-                + (last != null ? $" · #{last.Id} now v{last.RowVersion}" : ""));
             return last;
         }
 
         private void Rollback(Transaction tx)
         {
             _log.Warn(LogLayer.Data, "InMemoryWorkOrderRepository.Rollback",
-                $"tx#{tx.Number} rolled back — 0 rows changed ({tx.Orders.Count} staged write(s) discarded)");
+                $"tx#{tx.Number} rolled back — {tx.Orders.Count} staged write(s) discarded");
         }
 
         private static WorkOrder Clone(WorkOrder o) => new WorkOrder
@@ -123,7 +93,6 @@ namespace TicketOps.Data
             public int Number { get; }
             public List<WorkOrder> Orders { get; } = new List<WorkOrder>();
             public List<string> AuditEntries { get; } = new List<string>();
-            public string Statements => string.Join(", ", Orders.Select(o => $"UPDATE WorkOrders #{o.Id}").Concat(AuditEntries.Select(a => "INSERT AuditLog")));
 
             public Transaction(InMemoryWorkOrderRepository repo, int number)
             {
@@ -140,23 +109,19 @@ namespace TicketOps.Data
                 if (staged.Id == 0)
                     staged.Id = _repo._nextId++;
                 Orders.Add(staged);
-                _repo._log.Info(LogLayer.Data, "Transaction.Upsert",
-                    $"tx#{Number} stage {(order.Id == 0 ? "INSERT" : "UPDATE")} WorkOrders #{staged.Id} (pending — readers still see the old row)");
                 return staged.Id;
             }
 
             public void Audit(int workOrderId, string action, string actor)
             {
                 if (_finished) throw new InvalidOperationException("Transaction already finished.");
-                string entry = string.Format(CultureInfo.InvariantCulture, "{0:HH:mm:ss} #{1} {2} by {3}", DateTime.Now, workOrderId, action, actor);
-                AuditEntries.Add(entry);
-                _repo._log.Info(LogLayer.Data, "Transaction.Audit", $"tx#{Number} stage INSERT AuditLog \"{entry}\"");
+                AuditEntries.Add(string.Format(CultureInfo.InvariantCulture, "{0:HH:mm:ss} #{1} {2} by {3}", DateTime.Now, workOrderId, action, actor));
             }
 
             public Task<WorkOrder> CommitAsync()
             {
                 if (_finished) throw new InvalidOperationException("Transaction already finished.");
-                var applied = _repo.Apply(this);             // throws on outage: _finished stays false → Dispose rolls back
+                var applied = _repo.Apply(this);             // if this throws, _finished stays false → Dispose rolls back
                 _finished = true;
                 return Task.FromResult(applied);
             }

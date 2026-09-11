@@ -2,7 +2,7 @@
 
 No screenshots are stored in the repository; this is the written record the lab step asks for, with the layout of
 each screen as it renders. "Before" is LegacyOrderDesk on a 1024×768 desktop; "after" is OrderDesk.Web in the
-console at `http://localhost:5603` (the shell card is 616×396; the product page would use the whole tab).
+browser at `http://localhost:5603`.
 
 ## 1 · The main shell
 
@@ -32,8 +32,8 @@ Window size restored from `HKCU\Software\LegacyOrderDesk`; the filter (View › 
 **After — `AppShell` in the browser tab (MenuBar · ToolBar · screen host · StatusBar, all docked)**
 
 ```
-┌ OrderDesk.Web · the ported shell ─────────────────────────────────── ● shell running · Orders screen ┐
-│ File   View   Reports   Help                                                                          │  MenuBar (Dock Top)
+┌ OrderDesk ────────────────────────────────────────────────────────────────────────────────────────────┐
+│ View   Reports   Help                                                                                 │  MenuBar (Dock Top)
 │ [Orders] [Customers] [Reports] │ [New Order] [Print Invoice] [Export]                                 │  ToolBar (Dock Top)
 ├───────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ Orders · all                                                             ┃ Order 1042                 │  labelHeading (Dock Top)
@@ -45,21 +45,21 @@ Window size restored from `HKCU\Software\LegacyOrderDesk`; the filter (View › 
 │ 1038   Globex Corp         3,090.00   Hold                               ┃ [ Edit…            ]       │
 │                                                                          ┃ [ New Order        ]       │
 │   gridOrders (Dock Fill)                                                 ┃ [ Print Invoice    ]       │
-│                                                                          ┃ [ Attach file…     ]       │
+│                                                                          ┃                            │
 ├───────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ Orders · 5 orders · filter all · session 3f2a9c1e                                                     │  StatusBar (Dock Bottom)
+│ Orders · 5 orders · filter all                                                                        │  StatusBar (Dock Bottom)
 └───────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-No fixed size anywhere; the filter is a field of the screen (one per session); Settings and Exit are logged as
-boundaries; the three screens swap inside the same host. Totals are `N2` — the server does not pick the user's
+No fixed size anywhere; the filter is a field of the screen (one per session); Settings, Exit and Attach file are
+not ported yet; the three screens swap inside the same host. Totals are `N2` — the server does not pick the user's
 currency symbol.
 
-**Customers** (ToolBar › Customers): heading `Customers · reference data (CustomerService, reused as-is)`, a
-docked grid with the 8 customers (Adventure Works … Wide World Importers, Tailspin Toys showing `5 %`).
+**Customers** (ToolBar › Customers): heading `Customers`, a docked grid with the 8 customers (Adventure Works …
+Wide World Importers, Tailspin Toys showing `5 %`).
 
 **Reports** (ToolBar › Reports): the same five orders on the left, a right panel with
-`[ Print Invoice (PDF) ]` and `[ Export orders ⬇ ]` and a hint that explains the PdfViewer and the download.
+`[ Print Invoice (PDF) ]` and `[ Export orders ⬇ ]`.
 
 ## 2 · The edit dialog
 
@@ -92,30 +92,14 @@ docked grid with the 8 customers (Adventure Works … Wide World Importers, Tail
 └─────────────────────────────────────────────┘
       ↓ Save                                              ┌──────────────────────────┐
   dialog closes → OrderService.Save → grid reloads →      │ ✓ Order 1042 saved.      │  ← Toast, top-right, gone in 4 s
-  Dispose (using block) → counter back to 0               └──────────────────────────┘
+  Dispose (using block)                                   └──────────────────────────┘
 ```
 
 The validation message (`Select a customer.`) is the one MessageBox that stays modal in the dialog.
 
-## 3 · The console around it
-
-```
-┌ OrderDesk.Web · the ported shell ───────────────────────┐ ┌ Migration log · live trace ───────────────────────────┐
-│  (the shell above)                                      │ │ 10:41:02.113  • server   startup …                    │
-│                                                         │ │ 10:41:02.120  ← JS→.NET  navigate  Orders → created … │
-└─────────────────────────────────────────────────────────┘ │ 10:41:09.402  • server   new EditOrderDialog  order …  │
-┌ Dialog lifetime · DialogTracker ────────────────────────┐ │ 10:41:14.870  → .NET→JS  Ui.Toast  "Order 1042 saved."│
-│ live EditOrderDialog instances  this session 0 · proc 0 │ │ 10:41:14.871  • server   EditOrderDialog.Dispose …    │
-│ reuse instance none                                     │ └───────────────────────────────────────────────────────┘
-│ [Edit (disposed)] [Edit (leak ×1)] [Reuse one dialog]   │ ┌ Review · what the desktop assumed, what the web does ─┐
-│ [Delete order…]                              [Clear]    │ │ ✓ using (var dialog = new EditOrderDialog(…)) …       │
-│ [Blocking op (3 s)] [StartTask (3 s)] ▓▓▓▓░░░ 1.4 s·7 t │ │   Dispose runs when the await completes …             │
-└─────────────────────────────────────────────────────────┘ └───────────────────────────────────────────────────────┘
-```
-
 ## Evidence
 
-The layouts above are what `MainPage.Designer.cs`, `Shell/AppShell.Designer.cs`, `Screens/*.Designer.cs` and
+The layouts above are what `Shell/AppShell.Designer.cs`, `Screens/*.Designer.cs` and
 `Dialogs/EditOrderDialog.Designer.cs` produce; the WinForms originals are under `Legacy/WinForms/`. The
-`// ✕ before / ✓ after` block at the top of `Screens/OrdersScreen.Designer.cs` lists the exact coordinates that
-were replaced by `Dock`/`Anchor`.
+"Fixed layout vs Dock/Anchor" table in `NavigationPort.md` lists the exact coordinates that were replaced by
+`Dock`/`Anchor`.

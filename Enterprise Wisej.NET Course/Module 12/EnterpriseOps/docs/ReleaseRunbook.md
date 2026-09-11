@@ -3,7 +3,7 @@
 **Release:** EnterpriseOps 2.4.2 · **Previous (rollback target):** 2.4.1
 **Who may run it:** a Manager or an Admin (`Security/ReleaseAuthorization.cs`). `ben.tech` may watch, not release.
 **Where it is executed in the sample:** `Services/ReleaseService.DeployAsync` — the same eight steps, in the same
-order, one chip and one `Runbook:` trace line each.
+order, one chip and one `Runbook:` log line each.
 
 > A release procedure that cannot be reversed is not finished. That is why step 8 exists and why it is rehearsed.
 
@@ -58,7 +58,7 @@ log the incident, hold the release for a fix. See `RollbackAndSmokeTestChecklist
 
 | Action | What the runbook strip does |
 |---|---|
-| **Deploy…** (clean) | chips 1–7 turn green one after the other; chip 8 stays grey with `rollback not needed — 2.4.1 stays retained and redeployable`. |
-| **Fail: node B health check** | chips 1–3 green, **chip 4 red** — the smoke test's health check and known-query check both fail (`app-node-B { "status": "Unhealthy" … database: FAIL }`) — chip 8 amber and armed; the node grid shows `ROUTED AWAY — no new sessions`. The release never reaches step 5: catching it at step 4 is exactly what smoke tests are for. Step 5 is the net for a node that degrades *after* the smoke tests pass. |
+| First **Deploy…** | chips 1–3 green, **chip 4 red** — the smoke test's health check and known-query check both fail (`app-node-B { "status": "Unhealthy" … database: FAIL }`) — chip 8 amber and armed; the node grid shows `ROUTED AWAY — no new sessions`. The release never reaches step 5: catching it at step 4 is exactly what smoke tests are for. Step 5 is the net for a node that degrades *after* the smoke tests pass. |
 | **Rollback…** | chip 8 turns `↩`, node B returns on 2.4.1, smoke tests re-run green, the banner reads *"Users never saw a broken node."* |
-| **Deploy…** as `ben.tech` | refused by `ReleaseAuthorization` before anything runs — the trace line is `Security: ben.tech (Technician) may NOT deploy`. |
+| **Deploy…** again (the fix shipped) | chips 1–7 turn green one after the other; chip 8 stays grey with `rollback not needed — 2.4.1 stays retained and redeployable`. |
+| **Deploy…** as a Technician | refused by `ReleaseAuthorization` before anything runs. |

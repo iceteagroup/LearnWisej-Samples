@@ -53,8 +53,6 @@ namespace TicketOps.Diagnostics
             this.labelOverall = new Wisej.Web.Label();
             this.labelJsonCaption = new Wisej.Web.Label();
             this.textJson = new Wisej.Web.TextBox();
-            this.labelLoad = new Wisej.Web.Label();
-            this.progressLoad = new Wisej.Web.ProgressBar();
             this.panelRuntime.SuspendLayout();
             this.panelHealth.SuspendLayout();
             this.SuspendLayout();
@@ -76,7 +74,6 @@ namespace TicketOps.Diagnostics
             this.buttonRefresh.Name = "buttonRefresh";
             this.buttonRefresh.Size = new System.Drawing.Size(112, 28);
             this.buttonRefresh.Text = "↻ Refresh";
-            this.buttonRefresh.ToolTipText = "Success path: IDiagnosticsService.GetSnapshotAsync() — role check, runtime facts, live health check";
             this.buttonRefresh.Click += new System.EventHandler(this.buttonRefresh_Click);
             //
             // labelRefreshed
@@ -89,7 +86,7 @@ namespace TicketOps.Diagnostics
             this.labelRefreshed.Size = new System.Drawing.Size(400, 16);
             this.labelRefreshed.Text = "refreshed —";
             //
-            // panelRuntime  (server-side facts from Wisej.Web.Application)
+            // panelRuntime  (server-side facts)
             //
             this.panelRuntime.BackColor = System.Drawing.Color.FromArgb(246, 249, 252);
             this.panelRuntime.BorderStyle = Wisej.Web.BorderStyle.Solid;
@@ -122,7 +119,7 @@ namespace TicketOps.Diagnostics
             this.labelRuntimeTitle.Location = new System.Drawing.Point(12, 8);
             this.labelRuntimeTitle.Name = "labelRuntimeTitle";
             this.labelRuntimeTitle.Size = new System.Drawing.Size(316, 18);
-            this.labelRuntimeTitle.Text = "RUNTIME · Wisej.Web.Application.*";
+            this.labelRuntimeTitle.Text = "RUNTIME";
             //
             // runtime rows (key · value)
             //
@@ -154,7 +151,7 @@ namespace TicketOps.Diagnostics
             this.labelHealthTitle.Location = new System.Drawing.Point(12, 8);
             this.labelHealthTitle.Name = "labelHealthTitle";
             this.labelHealthTitle.Size = new System.Drawing.Size(328, 18);
-            this.labelHealthTitle.Text = "HEALTH CHECKS · HealthCheck.json + live probes";
+            this.labelHealthTitle.Text = "HEALTH CHECKS";
             //
             // gridChecks
             //
@@ -200,12 +197,12 @@ namespace TicketOps.Diagnostics
             // labelJsonCaption
             //
             this.labelJsonCaption.AutoSize = false;
-            this.labelJsonCaption.Font = new System.Drawing.Font("default", 8.5F);
-            this.labelJsonCaption.ForeColor = System.Drawing.Color.FromArgb(106, 118, 134);
+            this.labelJsonCaption.Font = new System.Drawing.Font("default", 8.5F, System.Drawing.FontStyle.Bold);
+            this.labelJsonCaption.ForeColor = System.Drawing.Color.FromArgb(74, 90, 106);
             this.labelJsonCaption.Location = new System.Drawing.Point(24, 290);
             this.labelJsonCaption.Name = "labelJsonCaption";
             this.labelJsonCaption.Size = new System.Drawing.Size(708, 18);
-            this.labelJsonCaption.Text = "Health JSON as a probe sees it · GET /HealthCheck.json is the static manifest (UseFileServer); the live probes are merged in below";
+            this.labelJsonCaption.Text = "HEALTH JSON";
             //
             // textJson
             //
@@ -219,25 +216,6 @@ namespace TicketOps.Diagnostics
             this.textJson.Size = new System.Drawing.Size(708, 120);
             this.textJson.Text = "";
             //
-            // labelLoad
-            //
-            this.labelLoad.AutoSize = false;
-            this.labelLoad.Font = new System.Drawing.Font("default", 9F);
-            this.labelLoad.ForeColor = System.Drawing.Color.FromArgb(106, 118, 134);
-            this.labelLoad.Location = new System.Drawing.Point(24, 440);
-            this.labelLoad.Name = "labelLoad";
-            this.labelLoad.Size = new System.Drawing.Size(330, 18);
-            this.labelLoad.Text = "load test: idle";
-            //
-            // progressLoad
-            //
-            this.progressLoad.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.progressLoad.Location = new System.Drawing.Point(360, 442);
-            this.progressLoad.Maximum = 40;
-            this.progressLoad.Name = "progressLoad";
-            this.progressLoad.Size = new System.Drawing.Size(372, 14);
-            this.progressLoad.Visible = false;
-            //
             // DiagnosticsPage
             //
             this.BackColor = System.Drawing.Color.White;
@@ -248,10 +226,8 @@ namespace TicketOps.Diagnostics
             this.Controls.Add(this.panelHealth);
             this.Controls.Add(this.labelJsonCaption);
             this.Controls.Add(this.textJson);
-            this.Controls.Add(this.labelLoad);
-            this.Controls.Add(this.progressLoad);
             this.Name = "DiagnosticsPage";
-            this.Size = new System.Drawing.Size(756, 476);
+            this.Size = new System.Drawing.Size(756, 444);
             this.panelRuntime.ResumeLayout(false);
             this.panelHealth.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -307,7 +283,5 @@ namespace TicketOps.Diagnostics
         private Wisej.Web.Label labelOverall;
         private Wisej.Web.Label labelJsonCaption;
         private Wisej.Web.TextBox textJson;
-        private Wisej.Web.Label labelLoad;
-        private Wisej.Web.ProgressBar progressLoad;
     }
 }

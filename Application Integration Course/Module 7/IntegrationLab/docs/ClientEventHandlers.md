@@ -9,7 +9,7 @@ that event is meaningful, and forwards a **compact payload** — never the vendo
 |---|---|---|---|---|
 | 1 | `wwwroot/gauge-init.js` | `VendorGauge` (`vendor-gauge.js`) | `rangechange` (one) | `thresholdCrossed { value, level }` — rising edge, once per crossing |
 | 2 | `wwwroot/knob-init.js` | `VendorKnob` jQuery plugin (`jquery-lite.js` + `vendor-knob.js`) | `knobchange` DOM event on the plugin's `<input>` (one) | `valueChanged { value, source }` |
-| 3 | `wwwroot/chart-init.js` | `VendorChart` (`vendor-chart.js` + `vendor-chart.css`) | **all six**: `hover`, `zoom`, `render`, `layout`, `legendclick`, `pointclick` | `pointClicked { index, label, value }` — only `pointclick` |
+| 3 | `wwwroot/chart-init.js` | `VendorChart` (`vendor-chart.js` + `vendor-chart.css`) | `pointclick` (one) | `pointClicked { index, label, value }` |
 
 ## Handler 1 — gauge: `thresholdCrossed` (a business decision)
 
@@ -64,26 +64,18 @@ this._wire = function () {
 ## Handler 3 — chart: `pointClicked` (user drill-down intent)
 
 ```js
-this._wire = function () {                       // subscribe to everything, forward one
+this._wire = function () {                       // ONE vendor callback, attached in one place
     var me = this;
-    this._vendorHandlers = {
-        hover:       function () { me._noise.hover++; },        // stays in the browser
-        zoom:        function () { me._noise.zoom++; },         // stays in the browser
-        render:      function () { me._noise.render++; },       // stays in the browser
-        layout:      function () { me._noise.layout++; },       // stays in the browser
-        legendclick: function () { me._noise.legendclick++; },  // stays in the browser
-        pointclick:  function (e) {                             // the only business event
-            me._forwarded++;
-            me.fireWidgetEvent("pointClicked", { index: e.index, label: e.label, value: e.value });
-        }
+    this._onPointClick = function (e) {          // the only business event
+        me.fireWidgetEvent("pointClicked", { index: e.index, label: e.label, value: e.value });
     };
-    for (var name in this._vendorHandlers) this.widget.on(name, this._vendorHandlers[name]);
+    this.widget.on("pointclick", this._onPointClick);
 };
 ```
 
 The vendor `pointclick` event carries `{ seriesIndex, index, label, value, x, y, domEvent }`; the
-contract keeps three primitives. `getNoiseCount()` returns the counters so the server can show
-"events kept in the browser: N" with `CallAsync("getNoiseCount")` — the proof that filtering happened.
+contract keeps three primitives. The chart's other five vendor events are never subscribed, so they
+stay in the browser.
 
 ### Noise table — what the chart vendor fires vs what reaches .NET
 
@@ -106,7 +98,6 @@ adapter's `update()` therefore destroys the instance and creates a new one — a
 this._createVendor = function (options) {        // create AND wire — the only place both happen
     this.widget = new VendorChart(this.host, { series: options.series, labels: options.labels, theme: options.theme });
     this._theme = options.theme;
-    this._generation++;
     this._wire();
 };
 this.update = function (options, old) {
@@ -115,8 +106,8 @@ this.update = function (options, old) {
 };
 ```
 
-Attaching in `init` only would leave the second instance silent — click "Destroy & recreate chart",
-then a point: `pointClicked` still arrives and `getNoiseCount().generation` reads 2.
+Attaching in `init` only would leave the second instance silent. Set `chart.Theme = "dark"` (in the
+Designer or from code) and a point click still arrives: the recreate path ran the same `_wire()`.
 
 ### Detach on dispose
 
@@ -125,7 +116,9 @@ Every adapter wraps the framework `dispose` and runs `_unwire()` (`off` / jQuery
 
 ## Evidence (what the running app shows)
 
-- **Gauge 104** → one line `← JS→.NET thresholdCrossed e.Data = {"value":104,"level":"high"}`; **Gauge 72** then **Gauge 104** again → again exactly one. Stream → one `warn` and one `high` for 15 readings.
-- **Knob +10** → `valueChanged {"value":60,"source":"server"}`; dragging the dial → `{"value":…,"source":"user"}`.
-- Hover, wheel and legend clicks on the chart → nothing in the log; **Noise counter** → `events kept in the browser: N … forwarded to .NET: M`.
-- **Destroy & recreate chart** → the chart turns dark, the log shows the `{"theme":"dark"}` update, a point click still produces `pointClicked`.
+- The gauge follows live readings (72 → 104 → 72, one every 700 ms). Each cycle the log shows exactly
+  one `← JS→.NET thresholdCrossed e.Data = {"value":85,"level":"warn"}` and one
+  `{"value":102,"level":"high"}`, not one line per reading.
+- Dragging the knob → `← JS→.NET valueChanged e.Data = {"value":…,"source":"user"}` and the dial pulses.
+- Clicking a chart point → `← JS→.NET pointClicked e.Data = {"index":3,"label":"Apr","value":68}`;
+  hover, wheel-zoom and legend clicks add nothing to the log.

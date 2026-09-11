@@ -86,11 +86,10 @@ The dispose wrapper is installed **before** anything that can fail, so a widget 
 |---|---|---|---|
 | `Highlight(day, hour)` | `highlight(day, hour)` | — | ranges validated on the server (`ArgumentOutOfRangeException`) |
 | `ClearHighlight()` | `clearHighlight()` | — | |
-| `Reload()` | `reload()` | — | always resets `dataUrl` to `action=load` first (recovery) |
+| `Reload()` | `reload()` | — | always resets `dataUrl` to `action=load` first |
 | `SetCells(cells)` | `setCells(cells)` | — | validated on the server; server copy updated |
 | `GetCellCountAsync()` | `getCellCount()` | number | `await CallAsync` |
-| `LoadWithActionForTesting(action)` (DEBUG) | `loadWithAction(action)` | — | failure path |
-| — | `getDiagnostics()` | `{created, disposed, vendorInstances}` | leak-test helper |
+| — | `getDiagnostics()` | `{created, disposed, vendorInstances}` | create/dispose test helper |
 
 ### Events (client → server, `WiredEvents`)
 
@@ -101,8 +100,8 @@ The dispose wrapper is installed **before** anything that can fail, so a widget 
 | `error` | `{"phase":"init","status":0,"message":"VendorHeatmap not loaded — check Packages order."}` | `LoadFailed(HeatmapErrorEventArgs)` | vendor `error`, or the adapter itself (`_reportError`) |
 
 `cellhover` is deliberately **not** wired: it fires on every pointer move and would be a round trip each time.
-The server re-validates `day`/`hour` against its grid and logs a contract-check line when the reported value
-differs from its own copy; the .NET event always carries the server value.
+The server re-validates `day`/`hour` against its grid (cells outside it are ignored); the .NET event always carries
+the server value.
 
 ### Endpoint (postback)
 
@@ -113,15 +112,18 @@ differs from its own copy; the .NET event always carries the server value.
 | Query | `action` ∈ `{ "load" }` (required); `days` optional integer 1..14 |
 | 200 | `application/json` · `{"cells":[{"day":0,"hour":0,"value":6.2}, …]}` — one page of data (`days × hours` cells) |
 | 400 | `text/plain` · `Unknown action "x".` / `days must be an integer between 1 and 14.` |
-| DEBUG | `action=corrupt` → `application/json` with an invalid body (the "Malformed data" failure path) |
 
 Only `HeatmapCell` records are serialised (`System.Text.Json`, camelCase). No domain object crosses the wire.
 
 ## Evidence (what the running dashboard shows)
 
-- **Load**: trace `← JS→.NET HTTP GET postback ?action=load` → `→ .NET→JS HTTP 200 application/json {"cells":[…168 cells…]}` → `← JS→.NET loaded {"count":168}` → `• server DataLoaded fired in C#`; status `● loaded`.
-- **Event**: clicking a cell → `← JS→.NET cellSelected {...}` → banner with the **server** value.
-- **Calls**: Highlight peak → `→ .NET→JS Call highlight(d,h)`; Cell count → `→ .NET→JS CallAsync getCellCount()` then `← JS→.NET getCellCount → return 168`.
-- **Background**: Start live updates → `• server Application.StartTask …` then, every 1500 ms, `→ .NET→JS Call setCells(cells)`, `→ .NET→JS setValue(…)` (gauge) and `• server Application.Update(page) push n/40 …`; stops after 40 pushes, on the button, or when the page closes.
-- **Leak test**: Create/dispose ×25 → `Disposed cleanly 25/25` in the stats strip; trace shows `created 25, disposed 25, vendor instances alive 1`.
-- **Failures**: Simulate missing vendor → `error {"phase":"init", … "VendorHeatmap not loaded — check Packages order."}`; Malformed data → `error {"phase":"load","status":200, … "not valid JSON …"}`; Reload data recovers both.
+- **Load**: DevTools → Network shows `…&action=load` → `200 application/json` `{"cells":[…168 cells…]}`; the heatmap
+  draws and the `Requests/min` tile reads 1.
+- **Event**: clicking a cell → banner with the **server** value.
+- **Calls**: Highlight peak → one cell pulses; Cell count → toast "The client widget holds 168 cells."
+- **Background**: Start live updates → every 1500 ms `SetCells` + the gauge value in one `Application.Update(page)`;
+  stops after 40 pushes, on the button, or when the page closes.
+- **Create/dispose test**: Create/dispose ×25 → `Disposed cleanly 25/25`, `VendorHeatmap.liveInstances() == 1`.
+- **Failures**: every adapter or vendor failure is one `error` event → `LoadFailed` → banner + `Errors` tile; the
+  guard clause names a missing vendor script ("VendorHeatmap not loaded — check Packages order."); Reload data
+  fetches the endpoint again.

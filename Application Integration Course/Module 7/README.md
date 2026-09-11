@@ -22,22 +22,15 @@ Requirements already on this machine: .NET 10 SDK, the `Wisej-4` 4.1.0 NuGet pac
 
 ## What to try in the Event Demo window
 
-| Button / gesture | Path | What you should see in the log |
+| Widget | What happens | What you should see in the log |
 |---|---|---|
-| **Gauge 104** | success · gauge | `→ .NET→JS update(options) {"value":104}` then exactly one `← JS→.NET thresholdCrossed e.Data = {"value":104,"level":"high"}` and `• .NET ThresholdCrossed raised via OnWidgetEvent → GaugeThresholdEventArgs { Value=104, Level=high }` — banner + toast. Press it again: nothing (already above). |
-| **Gauge 72** | success · gauge | the value goes down: no event (falling edge). Gauge 104 again → one event again. |
-| **Knob +10** | success · knob (server-driven) | `update(options) {"value":60}` then `valueChanged e.Data = {"value":60,"source":"server"}` and `• .NET OnValueChanged page-level WidgetEvent switch → KnobValueEventArgs { Value=60, Source=server }` |
-| **drag the knob** | success · knob (user-driven) | `valueChanged {"value":…,"source":"user"}` per value step, the dial pulses (`Call("pulse")`) |
-| **click a chart point** | success · chart | `← JS→.NET pointClicked e.Data = {"index":3,"label":"Apr","value":68}` then `• .NET PointClicked raised via OnWebEvent → ChartPointEventArgs { Index=3, Label=Apr, Value=68 }` + toast |
-| **hover / wheel-zoom / click the legend** on the chart | communication (kept local) | nothing in the log — those vendor events stay in the browser |
-| **Chart: new data** | success · chart | `update(options) {"labels":[…],"series":[…]}` — the vendor re-renders; its `render` event stays local |
-| **Destroy & recreate chart** | lifecycle | `update(options) {"theme":"dark"} → adapter destroys + recreates … and re-wires`; the chart turns dark; **click a point: `pointClicked` still arrives** (same `wire()` from init and from the recreate path) |
-| **Noise counter** | communication (proof) | `CallAsync("getNoiseCount")` → `events kept in the browser: N (hover … zoom … render … layout … legend …) · forwarded to .NET: M` under the chart, and `vendor instance #2` after a recreate |
-| **Bad payload** | failure | `→ .NET→JS Call("fireBadPayload")`, `← JS→.NET pointClicked e.Data = {"index":-1}`, `✖ rejected pointClicked rejected: index out of range (-1; 0..5)` — no .NET event, the page stays alive |
-| **▶ Stream** | progress | a `Timer` replays 15 gauge readings; `thresholdCrossed` fires **once** with `warn` and **once** with `high`, not 15 times |
-| **Clear log** | housekeeping | empties the log and hides the banner |
+| **Gauge** | follows live boiler readings (72 → 104 → 72, one every 700 ms) set by the server | once per cycle `← JS→.NET thresholdCrossed e.Data = {"value":85,"level":"warn"}` and `{"value":102,"level":"high"}` — one event per crossing, not per reading; the high crossing raises an "operator notified" toast |
+| **Knob** | drag the dial | `← JS→.NET valueChanged e.Data = {"value":…,"source":"user"}` per value step; the server commits the value and the dial pulses (`Call("pulse")`) |
+| **Chart** | click a point | `← JS→.NET pointClicked e.Data = {"index":3,"label":"Apr","value":68}` and a drill-down toast |
+| **Chart** | hover, wheel-zoom, click the legend | nothing — those vendor events stay in the browser |
 
-The banner under the log always shows the **last .NET event raised** (or the last rejection).
+A payload that fails server validation is logged as `✖ rejected …` with the reason, and no .NET
+event is raised.
 
 ## Deliverables
 
@@ -58,9 +51,9 @@ IntegrationLab/
 ├─ Widgets/
 │  ├─ GaugeWidget.cs               : Widget — OnWidgetEvent → typed ThresholdCrossed
 │  ├─ KnobWidget.cs                : Widget — state + TryReadValueChanged; the PAGE handles WidgetEvent
-│  ├─ ChartWidget.cs               : Widget — OnWebEvent (+ base call) → typed PointClicked; CallAsync noise counter
+│  ├─ ChartWidget.cs               : Widget — OnWebEvent (+ base call) → typed PointClicked
 │  ├─ PayloadReader.cs             guarded reads of untrusted dynamic fields
-│  └─ TraceEventArgs.cs            log lines for the UI
+│  └─ TraceEventArgs.cs            log lines for the WidgetEvent log
 ├─ wwwroot/
 │  ├─ gauge-init.js / knob-init.js / chart-init.js   the three client adapters (InitScript, embedded)
 │  ├─ vendor-gauge.js, jquery-lite.js, vendor-knob.js  shared "third-party" libraries (Packages)
@@ -78,7 +71,7 @@ IntegrationLab/
   vendor's internals (the app would switch on vendor names and dig through vendor objects). The
   wrapper picks the events that are **business decisions or server-owned state changes** —
   `thresholdCrossed`, `valueChanged`, `pointClicked` — decides in the browser when they are
-  meaningful (rising edge, once), and sends a small payload. "Noise counter" shows the ratio.
+  meaningful (rising edge, once), and sends a small payload.
 - **What is the difference between `WidgetEvent` and `OnWebEvent`?**
   `WidgetEvent` (virtual `OnWidgetEvent(WidgetEventArgs)`) is the single catch-all of a
   `Wisej.Web.Widget`: it only ever receives the `{Type, Data}` pairs the wrapper sent with
@@ -100,6 +93,4 @@ IntegrationLab/
 - `ChartWidget.OnWebEvent`: the incoming `widgetEvent` parameters are read as `e.Parameters.Event = { type, data }`
   (derived from the client source: `fireWidgetEvent` → `fireDataEvent("widgetEvent", {type, data})`, wired as
   `widgetEvent(Event)`), with a flat `{ type, data }` fallback; if neither matches, the event goes to base and
-  `OnWidgetEvent` handles it — the log line says which path ran.
-- `CallAsync("getNoiseCount")` (`Noise counter`) returns the adapter's counter object as `dynamic`; the
-  continuation runs in the `async void` click handler.
+  `OnWidgetEvent` handles it with the same validation.

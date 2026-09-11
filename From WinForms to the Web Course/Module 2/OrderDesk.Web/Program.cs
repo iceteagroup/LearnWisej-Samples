@@ -11,7 +11,7 @@ namespace OrderDesk
     {
         static void Main(NameValueCollection args)
         {
-            Application.MainPage = new MainPage();
+            new OrdersForm().Show();
         }
     }
 }

@@ -20,17 +20,11 @@ namespace EnterpriseOps.Security
         }
 
         public string TenantId { get; }
-        public string UserName { get; private set; }
-        public Role Role { get; private set; }
+        public string UserName { get; }
+        public Role Role { get; }
 
-        /// <summary>Identifies the session in the trace; every command gets its own id on top of it.</summary>
+        /// <summary>Identifies the session in the log; every command gets its own id on top of it.</summary>
         public string SessionCorrelationId { get; }
-
-        public void SwitchUser(string userName, Role role)
-        {
-            UserName = userName;
-            Role = role;
-        }
 
         public static string NewCorrelationId() => Guid.NewGuid().ToString("N").Substring(0, 8);
 

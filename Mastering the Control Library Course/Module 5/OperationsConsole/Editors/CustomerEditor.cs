@@ -10,30 +10,13 @@ using Wisej.Web;
 namespace OperationsConsole.Editors
 {
     /// <summary>
-    /// The reusable customer editor of Module 2 — the point where a handful of controls becomes an
-    /// application-level component.
-    ///
-    /// It owns its labels, its six value-matched editors, ONE <see cref="ErrorProvider"/> (field errors),
-    /// a <see cref="ToolTip"/> and a <see cref="HelpTip"/> (guidance), and the three commands
-    /// (<c>btnValidate</c>, <c>btnReset</c>, <c>btnSave</c>). Everything else in the application talks to
-    /// it through a small public surface — <see cref="Customer"/>, <see cref="LoadCustomer"/>,
-    /// <see cref="ValidateContent"/>, <see cref="SaveAsync"/>, <see cref="Reset"/>, <see cref="IsDirty"/>,
-    /// <see cref="Saved"/> and <see cref="ValidationFailed"/> — and never learns how the email rule works.
-    ///
-    /// The six-step validation flow of the reading is implemented in exactly this order:
-    ///   1. editor properties (MaxLength, Minimum/Maximum, MinDate/MaxDate, DropDownList) — see the designer;
-    ///   2. typed values instead of parsing (<see cref="ReadFromEditors"/>);
-    ///   3. field validation in each editor's Validating event (one named validator per rule);
-    ///   4. form-level then service-level validation on Save;
-    ///   5. on failure: stay on the screen, focus the first invalid control, explain;
-    ///   6. on success: a non-blocking confirmation and a status update.
+    /// The reusable customer editor: six value-matched editors, one <see cref="ErrorProvider"/> driven by named
+    /// validators, a <see cref="ToolTip"/> for guidance, and the Save / Reset / Validate commands.
+    /// The host page talks to it only through <see cref="Service"/>, <see cref="Customer"/>, <see cref="IsDirty"/>,
+    /// <see cref="LoadCustomer"/>, <see cref="ValidateContent"/>, <see cref="SaveAsync"/> and <see cref="Reset"/>.
     /// </summary>
     public partial class CustomerEditor : UserControl
     {
-        private static readonly Color OkColor = Color.FromArgb(31, 157, 87);
-        private static readonly Color HintColor = Color.FromArgb(90, 107, 125);
-        private static readonly Color BusyColor = Color.FromArgb(232, 161, 60);
-
         private readonly IList<OptionItem> _statusOptions = CustomerService.StatusOptions();
         private readonly IList<OptionItem> _customerTypeOptions = CustomerService.CustomerTypeOptions();
 
@@ -42,22 +25,20 @@ namespace OperationsConsole.Editors
         /// <summary>The last saved (or loaded) snapshot: what Reset restores and what IsDirty compares against.</summary>
         private CustomerModel _baseline;
 
-        /// <summary>True while a save is running: the second click of a double click is swallowed here.</summary>
+        /// <summary>True while a save is running, so a second Save cannot submit twice.</summary>
         private bool _busy;
 
-        /// <summary>True while Load() writes into the editors, so the Validating / SelectedIndexChanged handlers stay quiet.</summary>
+        /// <summary>True while LoadCustomer writes into the editors, so the change handlers stay quiet.</summary>
         private bool _loading;
 
         public CustomerEditor()
         {
             InitializeComponent();
 
-            // Step 1 — editor properties that make impossible values impossible.
-            // These two depend on "today", so they cannot be constants in the designer file.
+            // these two depend on "today", so they are set here rather than in the designer
             dtpStartDate.MinDate = new DateTime(2000, 1, 1);
             dtpStartDate.MaxDate = DateTime.Today.AddYears(1);
 
-            // ComboBox lists: DisplayMember/ValueMember are set in the designer, the data comes from the service.
             cboStatus.DataSource = _statusOptions;
             cboCustomerType.DataSource = _customerTypeOptions;
 
@@ -65,33 +46,21 @@ namespace OperationsConsole.Editors
         }
 
         // ------------------------------------------------------------------------------------------------
-        // Public surface — everything the host page is allowed to know
+        // Public surface
         // ------------------------------------------------------------------------------------------------
 
-        /// <summary>
-        /// The service the editor saves through. The hosting page assigns its own instance so the
-        /// "Simulate service failure" checkbox and the editor share one back end.
-        /// </summary>
+        /// <summary>The service the editor saves through; the hosting page assigns its own instance.</summary>
         public CustomerService Service
         {
             get => _service;
             set => _service = value ?? new CustomerService();
         }
 
-        /// <summary>The customer as the editors currently hold it (typed values, no parsing).</summary>
+        /// <summary>The customer as the editors currently hold it.</summary>
         public CustomerModel Customer => ReadFromEditors();
 
-        /// <summary>True when the user changed one of the six fields since the last Load / Save.</summary>
+        /// <summary>True when the user changed one of the six fields since the last load or save.</summary>
         public bool IsDirty => !ReadFromEditors().HasSameValues(_baseline);
-
-        /// <summary>Raised after the service committed the record — the host reads <see cref="Customer"/>.</summary>
-        public event EventHandler Saved;
-
-        /// <summary>Raised when <see cref="ValidateContent"/> found at least one field error.</summary>
-        public event EventHandler ValidationFailed;
-
-        /// <summary>The result of the last <see cref="ValidateContent"/> call, for the host's log lines.</summary>
-        public ValidationResult LastValidation { get; private set; }
 
         /// <summary>Fills the editors from a model and makes it the baseline for Reset / IsDirty.</summary>
         public void LoadCustomer(CustomerModel customer)
@@ -115,14 +84,11 @@ namespace OperationsConsole.Editors
 
             _baseline = model;
             errorProvider.Clear();
-            RefreshState(model);
         }
 
         /// <summary>
-        /// Form-level validation (step 4a): runs every named validator, marks each offending control with its
-        /// own ErrorProvider message, focuses the first invalid control and returns what the host can read.
-        /// Named <c>ValidateContent</c> so it cannot be confused with the validation members a
-        /// <see cref="ContainerControl"/> already exposes.
+        /// Runs every named validator, marks each invalid control with its own message, focuses the first
+        /// invalid control and returns the result.
         /// </summary>
         public ValidationResult ValidateContent()
         {
@@ -141,35 +107,17 @@ namespace OperationsConsole.Editors
                 result.Add(dtpStartDate, errorProvider.GetError(dtpStartDate));
 
             result.FocusFirstInvalid();
-            LastValidation = result;
-
-            ConsoleLog.Add("CustomerEditor.ValidateContent() → " + result.Summary
-                + (result.IsValid ? "" : " · first invalid: " + result.Errors[0].ControlName));
-
-            foreach (var error in result.Errors)
-                ConsoleLog.Add("   ✗ " + error.ControlName + " — " + error.Message);
-
             return result;
         }
 
-        /// <summary>
-        /// The explicit Save path of the reading: <b>validate, persist, refresh state, notify</b>.
-        /// The commands are disabled and <c>btnSave.ShowLoader</c> is on for the whole call (try / finally),
-        /// so a second click while it runs cannot submit twice. Returns true when the record was committed.
-        /// </summary>
+        /// <summary>Validate, persist, refresh state, notify. Returns true when the record was saved.</summary>
         public async Task<bool> SaveAsync()
         {
-            ConsoleLog.Control(btnSave.Name);
+            ShellStatus.Control(btnSave.Name);
 
             if (_busy)
-            {
-                // this is the guarantee behind "Save twice does nothing twice" — the disabled buttons are the
-                // visible half of it, this flag is the half that survives a click that was already in flight
-                ConsoleLog.Add("btnSave ignored — a save is already running (busy state)");
                 return false;
-            }
 
-            // step 4a — form-level validation
             var validation = ValidateContent();
             if (!validation.IsValid)
             {
@@ -177,14 +125,12 @@ namespace OperationsConsole.Editors
                 return false;
             }
 
-            var customer = ReadFromEditors();   // carries the baseline id: an update stays an update
+            var customer = ReadFromEditors();
 
-            // step 4b — service-level validation (rules that need the whole store, not one screen)
             var serviceErrors = _service.ValidateForSave(customer);
             if (serviceErrors.Count > 0)
             {
-                ConsoleLog.Add("✗ service validation rejected the save — " + serviceErrors[0]);
-                ConsoleLog.Status("The customer was not saved — " + serviceErrors[0], StatusLevel.Warning);
+                ShellStatus.Show("The customer was not saved — " + serviceErrors[0], StatusLevel.Warning);
                 AlertBox.Show(serviceErrors[0] + " Change the email address and save again.",
                     MessageBoxIcon.Warning, alignment: ContentAlignment.TopRight, autoCloseDelay: 5000);
                 return false;
@@ -195,23 +141,16 @@ namespace OperationsConsole.Editors
             {
                 var stored = await _service.SaveAsync(customer);
 
-                // step: refresh state — the id and the save stamp the service produced
                 _baseline = stored.Clone();
-                RefreshState(stored);
-                ConsoleLog.Record(stored.Id);
+                ShellStatus.Record(stored.Id);
 
-                // step 6 — notify without interrupting: a Toast, not a MessageBox
-                ConsoleLog.Status("Customer " + stored.Name + " saved as " + stored.Id + ".", StatusLevel.Ok);
+                ShellStatus.Show("Customer " + stored.Name + " saved as " + stored.Id + ".", StatusLevel.Ok);
                 ShowToast("Customer " + stored.Name + " saved as " + stored.Id + ".", "icon-check");
-                Saved?.Invoke(this, EventArgs.Empty);
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // one friendly sentence for the user, the exception details for the Event log only
-                ConsoleLog.Add("✗ CustomerService.SaveAsync threw " + ex.GetType().Name);
-                ConsoleLog.Add("   " + ex.Message);
-                ConsoleLog.Status("The customer could not be saved — nothing was changed.", StatusLevel.Error);
+                ShellStatus.Show("The customer could not be saved — nothing was changed.", StatusLevel.Error);
                 AlertBox.Show("The customer could not be saved. Nothing was changed — please try again in a moment.",
                     MessageBoxIcon.Error, alignment: ContentAlignment.TopRight, autoCloseDelay: 5000);
                 return false;
@@ -219,24 +158,20 @@ namespace OperationsConsole.Editors
             finally
             {
                 SetBusy(false);
+                Application.Update(this);   // past an await: push the re-enabled buttons and the result to the browser
             }
         }
 
         /// <summary>Puts the last saved (or loaded) values back and clears every error mark.</summary>
         public void Reset()
         {
-            var restored = _baseline?.Clone() ?? _service.CreateBlank();
-            LoadCustomer(restored);
-
-            ConsoleLog.Add("CustomerEditor.Reset() → restored " + (restored.IsNew ? "the blank record" : restored.Id)
-                + ", ErrorProvider cleared");
-            ConsoleLog.Status("Reset to the last saved values.", StatusLevel.Ok);
+            LoadCustomer(_baseline?.Clone() ?? _service.CreateBlank());
+            ShellStatus.Show("Reset to the last saved values.", StatusLevel.Ok);
         }
 
         // ------------------------------------------------------------------------------------------------
-        // Step 3 — field validation: one named validator per rule, called from the editor's Validating event.
-        // A validator sets or clears exactly ONE ErrorProvider message on exactly ONE control, and it never
-        // cancels the event: the user is allowed to leave a field that is not finished yet.
+        // Field validation: one named validator per rule, called from the editor's Validating event.
+        // A validator sets or clears one ErrorProvider message and never cancels the event.
         // ------------------------------------------------------------------------------------------------
 
         private void txtName_Validating(object sender, System.ComponentModel.CancelEventArgs e)
@@ -263,18 +198,11 @@ namespace OperationsConsole.Editors
             ValidateStartDate();
         }
 
-        /// <summary>
-        /// The credit-limit and start-date rules depend on the status, so changing the status re-runs them:
-        /// switching Active → Prospect must clear a mark that is no longer true.
-        /// </summary>
+        /// <summary>The credit-limit and start-date rules depend on the status, so a status change re-runs them.</summary>
         private void cboStatus_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_loading) return;
 
-            ConsoleLog.Add("cboStatus → stored key \"" + SelectedKey(cboStatus) + "\" (display text \""
-                + CustomerService.TextOf(_statusOptions, SelectedKey(cboStatus)) + "\")");
-
-            // only re-run the rules that read the status; do not mark fields the user has not touched
             if (errorProvider.GetError(numCreditLimit).Length > 0 || numCreditLimit.Value > 0)
                 ValidateCreditLimit();
 
@@ -282,7 +210,6 @@ namespace OperationsConsole.Editors
                 ValidateStartDate();
         }
 
-        /// <summary>Required field. The editor cannot express "not empty", so this is the first real validator.</summary>
         private bool ValidateRequiredName()
         {
             var name = (txtName.Text ?? "").Trim();
@@ -296,10 +223,6 @@ namespace OperationsConsole.Editors
             return Pass(txtName);
         }
 
-        /// <summary>
-        /// Email shape. <c>MaxLength</c> and <c>CharacterCasing.Lower</c> already bound and normalise the text;
-        /// the shape still needs a rule, and the rule sets or clears one message on <c>txtEmail</c>.
-        /// </summary>
         private bool ValidateEmail()
         {
             var email = (txtEmail.Text ?? "").Trim();
@@ -313,10 +236,7 @@ namespace OperationsConsole.Editors
             return Pass(txtEmail);
         }
 
-        /// <summary>
-        /// Business range. 0 … 250,000 is already enforced by <c>Minimum</c> / <c>Maximum</c>, so this validator
-        /// only carries what the control cannot express: what the range means for THIS status.
-        /// </summary>
+        /// <summary>0 … 250,000 is enforced by Minimum / Maximum; this carries what the range means for the status.</summary>
         private bool ValidateCreditLimit()
         {
             var limit = numCreditLimit.Value;
@@ -331,10 +251,7 @@ namespace OperationsConsole.Editors
             return Pass(numCreditLimit);
         }
 
-        /// <summary>
-        /// Date rule. <c>MinDate</c> / <c>MaxDate</c> already exclude an out-of-era date and anything beyond a
-        /// year from now, so the reachable rule is the business one: an active customer cannot start in the future.
-        /// </summary>
+        /// <summary>MinDate / MaxDate exclude out-of-range dates; this is the business rule on top.</summary>
         private bool ValidateStartDate()
         {
             var start = dtpStartDate.Value.Date;
@@ -357,7 +274,7 @@ namespace OperationsConsole.Editors
 
         private bool Pass(Control control)
         {
-            errorProvider.SetError(control, "");   // "" is how an ErrorProvider message is cleared
+            errorProvider.SetError(control, "");
             return true;
         }
 
@@ -376,7 +293,7 @@ namespace OperationsConsole.Editors
         }
 
         // ------------------------------------------------------------------------------------------------
-        // Commands — short handlers that call the named methods above
+        // Commands
         // ------------------------------------------------------------------------------------------------
 
         private async void btnSave_Click(object sender, EventArgs e)
@@ -384,44 +301,37 @@ namespace OperationsConsole.Editors
             await SaveAsync();
         }
 
-        /// <summary>
-        /// The one place a <see cref="MessageBox"/> is justified in this module: discarding the user's typing
-        /// is a decision, not a status message, so it blocks until the user answers.
-        /// </summary>
+        /// <summary>Discarding the user's typing is a decision, so this is the one place a MessageBox is used.</summary>
         private async void btnReset_Click(object sender, EventArgs e)
         {
-            ConsoleLog.Control(btnReset.Name);
+            ShellStatus.Control(btnReset.Name);
 
             if (IsDirty)
             {
-                ConsoleLog.Add("btnReset → the form is dirty, asking for a confirmation (MessageBox)");
                 var answer = await MessageBox.ShowAsync(
                     "Discard the changes and go back to the last saved values?", "Reset",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (answer != DialogResult.Yes)
                 {
-                    ConsoleLog.Add("btnReset → the user kept the changes");
-                    ConsoleLog.Status("Reset cancelled — your changes are still here.", StatusLevel.Warning);
+                    ShellStatus.Show("Reset cancelled — your changes are still here.", StatusLevel.Warning);
+                    Application.Update(this);   // past an await: push the status to the browser
                     return;
                 }
             }
-            else
-            {
-                ConsoleLog.Add("btnReset → nothing was changed, no confirmation needed");
-            }
 
             Reset();
+            Application.Update(this);   // may be past an await: push the restored values to the browser
         }
 
         private void btnValidate_Click(object sender, EventArgs e)
         {
-            ConsoleLog.Control(btnValidate.Name);
+            ShellStatus.Control(btnValidate.Name);
 
             var result = ValidateContent();
             if (result.IsValid)
             {
-                ConsoleLog.Status("Validation passed — " + result.Summary + ".", StatusLevel.Ok);
+                ShellStatus.Show("Validation passed — " + result.Summary + ".", StatusLevel.Ok);
                 ShowToast("Validation passed: " + result.Summary + ".", "icon-check");
             }
             else
@@ -434,14 +344,12 @@ namespace OperationsConsole.Editors
         // Feedback and state
         // ------------------------------------------------------------------------------------------------
 
-        /// <summary>Step 5: keep the user on the screen, say how many fields need work, mark them, focus the first.</summary>
         private void ReportValidationFailure(ValidationResult result)
         {
-            ConsoleLog.Status(result.Summary + " — the marked fields explain what to fix.", StatusLevel.Warning);
+            ShellStatus.Show(result.Summary + " — the marked fields explain what to fix.", StatusLevel.Warning);
             AlertBox.Show(result.Summary.Substring(0, 1).ToUpperInvariant() + result.Summary.Substring(1)
                 + ". The red marks beside the fields say what to change.",
                 MessageBoxIcon.Warning, alignment: ContentAlignment.TopRight, autoCloseDelay: 4000);
-            ValidationFailed?.Invoke(this, EventArgs.Empty);
         }
 
         private static void ShowToast(string text, string icon)
@@ -453,10 +361,7 @@ namespace OperationsConsole.Editors
             }.Show();
         }
 
-        /// <summary>
-        /// Busy state: all three commands off and the loader on <c>btnSave</c> while the service call runs.
-        /// Disabled buttons and busy feedback are part of reliability, not decoration.
-        /// </summary>
+        /// <summary>All three commands off and the loader on Save while the service call runs.</summary>
         private void SetBusy(bool busy)
         {
             _busy = busy;
@@ -465,39 +370,14 @@ namespace OperationsConsole.Editors
             btnReset.Enabled = !busy;
             btnValidate.Enabled = !busy;
             btnSave.ShowLoader = busy;
-
-            lblBusy.Text = busy
-                ? "Saving… Save, Reset and Validate are disabled."
-                : "Idle — the three commands are enabled.";
-            lblBusy.ForeColor = busy ? BusyColor : HintColor;
+            lblBusy.Text = busy ? "Saving…" : "";
 
             if (busy)
-            {
-                ConsoleLog.Add("busy state on — btnSave.ShowLoader = true, btnSave / btnReset / btnValidate disabled");
-                ConsoleLog.Status("Saving the customer…", StatusLevel.Warning);
-            }
-            else
-            {
-                ConsoleLog.Add("busy state off — the three commands are enabled again");
-            }
-        }
-
-        /// <summary>The state refresh of the Save path: the record id and the save stamp the service produced.</summary>
-        private void RefreshState(CustomerModel model)
-        {
-            lblRecordId.Text = model.IsNew
-                ? "Record: — (new customer, not saved yet)"
-                : "Record: " + model.Id + " · status " + model.StatusKey + " · type " + model.CustomerTypeKey;
-
-            lblSavedStamp.Text = model.SavedAt.HasValue
-                ? "Last saved: " + model.SavedAt.Value.ToString("HH:mm:ss") + " · " + _service.Count + " record(s) in memory"
-                : "Last saved: —";
-
-            lblRecordId.ForeColor = model.IsNew ? HintColor : OkColor;
+                ShellStatus.Show("Saving the customer…", StatusLevel.Warning);
         }
 
         // ------------------------------------------------------------------------------------------------
-        // Step 2 — typed values: nothing here parses a date or a number out of text
+        // Typed values
         // ------------------------------------------------------------------------------------------------
 
         private CustomerModel ReadFromEditors()
@@ -515,7 +395,7 @@ namespace OperationsConsole.Editors
             };
         }
 
-        /// <summary>The STORED key of a bound ComboBox, never its display text.</summary>
+        /// <summary>The stored key of a bound ComboBox, never its display text.</summary>
         private static string SelectedKey(ComboBox combo)
         {
             if (combo.SelectedItem is OptionItem option)
@@ -524,11 +404,7 @@ namespace OperationsConsole.Editors
             return combo.SelectedValue as string ?? "";
         }
 
-        /// <summary>
-        /// Selects an item by its STORED key. <c>SelectedValue</c> is the data-binding route
-        /// (<c>ValueMember = "Key"</c>); the index lookup behind it keeps the editor deterministic
-        /// whatever the binding does, and is also what makes "ACT" → "Active" a one-way mapping.
-        /// </summary>
+        /// <summary>Selects an item by its stored key.</summary>
         private static void SelectStoredKey(ComboBox combo, IList<OptionItem> options, string key)
         {
             combo.SelectedValue = key;

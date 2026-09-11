@@ -22,8 +22,8 @@ So the sample splits the responsibility in two:
 `Services/Jobs/JobProgressObserver.cs`
 
 ```csharp
-_store.Changed        += (s, e) => { Interlocked.Increment(ref _events); _dirty = true; };  // worker thread
-_notifications.Published += (s, e) => { …same… };
+_store.Changed           += (s, e) => _dirty = true;   // worker thread
+_notifications.Published += (s, e) => _dirty = true;
 ```
 
 Those handlers run on the queue worker, which has **no session**. They set a flag. That is all they are
@@ -39,11 +39,11 @@ private void PushLoop()
         if (_dirty)
         {
             _dirty = false;
-            _refresh(this);                 // rebind the grid, bar, status, detail, bell
+            _refresh();                     // rebind the grid, bar, status, detail, bell
             Application.Update(_target);    // one flush
         }
         else if (idle.Elapsed > IdleTimeout) break;
-        Thread.Sleep(Throttled ? 400 : 5);
+        Thread.Sleep(MinPushIntervalMs);
     }
 }
 ```
@@ -60,37 +60,17 @@ Details that matter in production:
 
 ## What the observer paints
 
-`ImportCenterPage.RefreshFromObserver` → `RefreshAll()`:
+`ImportCenterPage.RefreshAll()`:
 
 | Control | Source |
 |---|---|
 | `dgvJobs` | `ImportService.ListJobRows` — a `JobQueueRow` projection, tenant-scoped |
 | `prgJob` / `lblPercent` | `JobRecord.Percent` of the active job |
-| `lblStatus` / `lblBanner` | `JobRecord.Status` + `Message` (green / amber / red) |
+| `lblStatus` (status bar) / `lblBanner` | `JobRecord.Status` + `Message` |
 | `pnlJobDetail` | `JobRecord.History` + `Result` (repainted only when the history grew) |
 | `lstNotifications` / `btnBell` | the notification records for this user |
-| `lstTrace` | **new** history entries only, copied once each |
-
-## The anti-pattern, measured
-
-The **Anti-pattern: push every row** button starts `contoso_flood_sample.csv` with
-`PublishEveryRow = true` *and* sets `observer.Throttled = false`, so the loop pushes back to back, one
-refresh + `Application.Update` after another, with no pause. The counters are reset when the job starts and
-printed when it finishes. Verified run (2026-09-10):
-
-```
-Observer: IMP-3043 finished · 3 change event(s) → 2 push(es) in 0.6 s (3.3 pushes/s) · throttled …
-Observer: IMP-3044 finished · 212 change event(s) → 6 push(es) in 1.5 s (4.1 pushes/s) · UNTHROTTLED …
-```
-
-Same information, but the unthrottled loop never rests: each push is a full grid rebuild and a WebSocket
-flush, and it runs as often as the server can complete one (a 1,000-row import with per-row events would keep
-the session busy for its whole duration). The throttled loop coalesces the same 212 events into a handful of
-pushes and idles in between — and "row 417 written" is not something a user wants to know anyway.
 
 ## Evidence in the running app
 
 - Start `contoso_q2.csv` and watch `prgJob`: it moves in ten steps (one per batch), not in a thousand.
-- The trace gains roughly one `Job:` line per batch, and the `Observer:` line at the end states the ratio.
-- Click **Anti-pattern: push every row** and compare the two `Observer:` lines. Throttling restores itself
-  when the flood job finishes.
+- The job detail's status history gains one `Job:` line per batch — the milestones the observer pushed.

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using TicketOps.Data;
@@ -18,17 +17,10 @@ namespace TicketOps.Services
     /// </summary>
     public sealed class HealthCheckService : IHealthCheckService
     {
-        private sealed class Override
-        {
-            public DependencyStatus Status;
-            public string Detail;
-        }
-
         private readonly IHealthCheckSource _source;
         private readonly ITicketRepository _repository;
         private readonly IRuntimeInfo _runtime;
         private readonly ILog _log;
-        private readonly Dictionary<string, Override> _overrides = new Dictionary<string, Override>(StringComparer.OrdinalIgnoreCase);
 
         public HealthCheckService(IHealthCheckSource source, ITicketRepository repository, IRuntimeInfo runtime, ILog log)
         {
@@ -40,7 +32,6 @@ namespace TicketOps.Services
 
         public async Task<HealthReport> CheckAsync()
         {
-            _log.Info(LogLayer.Service, "HealthCheckService.CheckAsync", "→ IHealthCheckSource.Load() (HealthCheck.json: what the build declares)");
             var report = _source.Load();
 
             foreach (var check in report.Checks)
@@ -48,39 +39,14 @@ namespace TicketOps.Services
 
             report.Refresh();
 
-            string summary = report.ToString();
-            if (report.Status == HealthStatus.Healthy)
-                _log.Info(LogLayer.Service, "HealthCheckService.CheckAsync", summary);
-            else
-                _log.Warn(LogLayer.Service, "HealthCheckService.CheckAsync", summary + (report.IsServing() ? " (still serving)" : " (out of rotation)"));
+            if (report.Status != HealthStatus.Healthy)
+                _log.Warn(LogLayer.Service, "HealthCheckService.CheckAsync", report + (report.IsServing() ? " (still serving)" : " (out of rotation)"));
 
             return report;
         }
 
-        public void OverrideDependency(string name, DependencyStatus status, string detail)
-        {
-            _overrides[name] = new Override { Status = status, Detail = detail };
-            _log.Warn(LogLayer.Service, "HealthCheckService.OverrideDependency", $"{name} forced to {status} — {detail} (lab switch, this session only)");
-        }
-
-        public void ClearOverride(string name)
-        {
-            if (_overrides.Remove(name))
-                _log.Info(LogLayer.Service, "HealthCheckService.ClearOverride", $"{name} probes live again");
-        }
-
-        public bool IsOverridden(string name) => _overrides.ContainsKey(name);
-
         private async Task ProbeAsync(DependencyCheck check)
         {
-            if (_overrides.TryGetValue(check.Name, out var forced))
-            {
-                check.Status = forced.Status;
-                check.Detail = forced.Detail;
-                _log.Warn(LogLayer.Service, "HealthCheckService.Probe", $"{check.Name} → {check.Status} (simulated: {check.Detail})");
-                return;
-            }
-
             switch ((check.Name ?? "").ToLowerInvariant())
             {
                 case "database":
@@ -101,14 +67,9 @@ namespace TicketOps.Services
                     check.Detail = "declared in HealthCheck.json (no live probe)";
                     break;
             }
-
-            if (check.Status == DependencyStatus.OK)
-                _log.Info(LogLayer.Service, "HealthCheckService.Probe", $"{check.Name} → OK ({check.Detail})");
-            else
-                _log.Warn(LogLayer.Service, "HealthCheckService.Probe", $"{check.Name} → {check.Status} ({check.Detail})");
         }
 
-        /// <summary>Readiness: can this node reach its ticket store? The repository throws like a real driver; the probe turns that into Unhealthy.</summary>
+        /// <summary>Readiness: can this node reach its ticket store? A driver exception becomes Unhealthy, never a crash.</summary>
         private async Task ProbeDatabaseAsync(DependencyCheck check)
         {
             try
@@ -119,8 +80,8 @@ namespace TicketOps.Services
             }
             catch (Exception ex)
             {
-                // The driver's message (host, table) is already in the log from the data layer; the report gets a safe sentence.
-                _log.Warn(LogLayer.Service, "HealthCheckService.Probe", $"database probe caught {ex.GetType().Name} → reported as Unhealthy, not thrown");
+                // The driver's message (host, table) goes to the log; the report gets a safe sentence.
+                _log.Error(LogLayer.Service, "HealthCheckService.Probe", ex, "database probe failed → reported as Unhealthy, not thrown");
                 check.Status = DependencyStatus.Unhealthy;
                 check.Detail = "ticket store unreachable";
             }

@@ -1,4 +1,4 @@
-namespace OrderDesk.Dialogs            // ✓ was: namespace LegacyOrderDesk
+namespace OrderDesk.Dialogs
 {
     partial class EditOrderDialog
     {
@@ -11,9 +11,8 @@ namespace OrderDesk.Dialogs            // ✓ was: namespace LegacyOrderDesk
             base.Dispose(disposing);
         }
 
-        #region Wisej.NET Designer generated code   (was: Windows Form Designer generated code)
+        #region Wisej.NET Designer generated code
 
-        // "System.Windows.Forms." → "Wisej.Web." everywhere; the only line the compiler rejected is tagged ✓ was.
         private void InitializeComponent()
         {
             this.customerLabel = new Wisej.Web.Label();
@@ -49,7 +48,7 @@ namespace OrderDesk.Dialogs            // ✓ was: namespace LegacyOrderDesk
             this.Controls.Add(this.statusLabel); this.Controls.Add(this.statusComboBox);
             this.Controls.Add(this.poLabel); this.Controls.Add(this.poTextBox);
             this.Controls.Add(this.cancelButton); this.Controls.Add(this.saveButton);
-            this.FormBorderStyle = Wisej.Web.FormBorderStyle.Fixed;         // ✓ was: FormBorderStyle.FixedDialog (CS0117 — Wisej has Fixed / FixedToolWindow)
+            this.FormBorderStyle = Wisej.Web.FormBorderStyle.Fixed;
             this.MaximizeBox = false; this.MinimizeBox = false;
             this.Name = "EditOrderDialog";
             this.StartPosition = Wisej.Web.FormStartPosition.CenterParent;

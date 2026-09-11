@@ -16,18 +16,10 @@ namespace OrderDesk.Domain
         public List<string> General { get; } = new List<string>();
 
         public bool HasErrors => Errors.Count > 0 || General.Count > 0;
-
-        /// <summary>One line for the trace: "Customer: Customer is required. · PoNumber: PO number is required."</summary>
-        public string Describe()
-        {
-            if (!HasErrors) return "valid";
-            var parts = Errors.Select(e => $"{e.Key}: {e.Value}").Concat(General.Select(g => "order: " + g));
-            return string.Join(" · ", parts);
-        }
     }
 
     /// <summary>
-    /// Module 5: the order rules taken OUT of EditOrderDialog.saveButton_Click. On the desktop the
+    /// The order rules taken OUT of EditOrderDialog.saveButton_Click. On the desktop the
     /// rule ("Select a customer.") lived inside the form and could only ever run there; here the
     /// same rules serve the dialog, a batch import or a web API, and they always run on the server
     /// where the data is — a browser can be bypassed, this class cannot.

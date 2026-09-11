@@ -9,32 +9,11 @@ namespace EnterpriseOps.Interop
 {
     #region Event args (the small, named payloads the client is allowed to send)
 
-    public sealed class PaletteReadyEventArgs : EventArgs
-    {
-        public PaletteReadyEventArgs(string hotkey, string contractVersion) { Hotkey = hotkey; ContractVersion = contractVersion; }
-        public string Hotkey { get; }
-        public string ContractVersion { get; }
-    }
-
-    public sealed class PaletteCommandEventArgs : EventArgs
-    {
-        public PaletteCommandEventArgs(string commandName, string entityId, string code, int elapsedMs)
-        {
-            CommandName = commandName; EntityId = entityId; Code = code; ElapsedMs = elapsedMs;
-        }
-        public string CommandName { get; }
-        public string EntityId { get; }
-        public string Code { get; }
-        public int ElapsedMs { get; }
-    }
-
     public sealed class CapabilityReportEventArgs : EventArgs
     {
-        public CapabilityReportEventArgs(string report, bool forged) { Report = report; Forged = forged; }
+        public CapabilityReportEventArgs(string report) { Report = report; }
         /// <summary>The raw <c>key=value;key=value</c> string. Untrusted: the service decides what to keep.</summary>
         public string Report { get; }
-        /// <summary>True when the demo button asked the script to add keys the server does not know.</summary>
-        public bool Forged { get; }
     }
 
     public sealed class PaletteErrorEventArgs : EventArgs
@@ -47,15 +26,14 @@ namespace EnterpriseOps.Interop
     #endregion
 
     /// <summary>
-    /// The host control for the browser-side command palette (the walkthrough's
-    /// <c>commandPaletteHost1</c> on <c>CommandCenterShell</c>).
+    /// The host control for the browser-side command palette on <c>CommandCenterShell</c>.
     ///
     /// It is a <see cref="Wisej.Web.Widget"/> rather than a plain UserControl because that is the
     /// verified way to ship page-level JavaScript in Wisej.NET: a <b>Package</b> loads the palette
     /// script from the project folder (<c>Interop/palette.client.js</c> → <c>/Interop/palette.client.js</c>)
     /// and an <b>InitScript</b> (an embedded resource) wires the wrapper to it.
     ///
-    /// LIFECYCLE — the review question "what happens before the target widget exists?":
+    /// LIFECYCLE — "what happens before the target widget exists?":
     ///   • the script attaches its document keydown handler inside <c>init()</c>, i.e. after the
     ///     client widget has been created — never on page load;
     ///   • every server → client call here goes through <see cref="Send"/>, which checks
@@ -65,7 +43,7 @@ namespace EnterpriseOps.Interop
     ///     attach has a matching detach, so a closed screen leaves nothing behind on document.
     /// </summary>
     [ToolboxItem(true)]
-    [DefaultEvent("PaletteReady")]
+    [DefaultEvent("CapabilitiesReported")]
     [Description("Hosts the Ctrl+K command palette and the browser capability probe, and calls back through the interop contract.")]
     public class CommandPaletteHost : Widget
     {
@@ -83,7 +61,7 @@ namespace EnterpriseOps.Interop
             this.InitScript = GetResourceString("EnterpriseOps.Interop.command-palette-host.js");
 
             // The only events the browser may raise. Anything else is not part of the contract.
-            this.WiredEvents = new[] { "paletteReady", "paletteOpened", "paletteClosed", "commandRun", "capabilities", "error" };
+            this.WiredEvents = new[] { "paletteReady", "capabilities", "error" };
 
             this.Size = new System.Drawing.Size(620, 230);
             PushOptions();
@@ -140,19 +118,12 @@ namespace EnterpriseOps.Interop
         [Browsable(false)]
         public bool PaletteReady { get; private set; }
 
-        [Browsable(false)] public int DeferredCalls { get; private set; }
-
         #endregion
 
         #region Events surfaced to the page
 
-        public event EventHandler<PaletteReadyEventArgs> Ready;
-        public event EventHandler<PaletteCommandEventArgs> CommandRun;
         public event EventHandler<CapabilityReportEventArgs> CapabilitiesReported;
         public event EventHandler<PaletteErrorEventArgs> PaletteError;
-
-        /// <summary>Raised for the opened/closed telemetry, so the page can trace the browser's view.</summary>
-        public event EventHandler<PaletteErrorEventArgs> PaletteState;
 
         #endregion
 
@@ -206,63 +177,35 @@ namespace EnterpriseOps.Interop
 
         #region Server → client callbacks (all lifecycle-guarded)
 
-        /// <summary>Opens the palette from the server (the toolbar button, or a keyboard-less device).</summary>
-        public void OpenPalette() => Send("paletteOpen", () => this.Call("paletteOpen"));
+        /// <summary>Opens the palette from the server (for a keyboard-less device).</summary>
+        public void OpenPalette() => Send(() => this.Call("paletteOpen"));
 
-        public void ClosePalette() => Send("paletteClose", () => this.Call("paletteClose"));
-
-        /// <summary>
-        /// Asks the SCRIPT to run a command, so the round trip really goes browser → WebMethod.
-        /// Used by the bottom bar, including the deliberately malformed payloads.
-        /// </summary>
-        public void RunFromClient(string commandName, string entityId)
-            => Send($"paletteRun({commandName}, {(string.IsNullOrEmpty(entityId) ? "—" : entityId)})",
-                    () => this.Call("paletteRun", commandName ?? "", entityId ?? ""));
-
-        /// <summary>Same, but the script sends a correlation id that breaks the contract's shape.</summary>
-        public void RunWithBadCorrelation(string commandName, string entityId)
-            => Send("paletteRunBadCorrelation", () => this.Call("paletteRunRaw", commandName ?? "", entityId ?? "", "not-a-corr-id"));
-
-        /// <summary>
-        /// ⚠ Asks the script to call the trusting server method with a claimed role and a claimed
-        /// new status in the payload. Only the anti-pattern demo uses it.
-        /// </summary>
-        public void RunTrustedFromClient(string commandName, string entityId, string claimedRole, string claimedStatus)
-            => Send("paletteRunTrusted ⚠",
-                    () => this.Call("paletteRunTrusted", commandName ?? "", entityId ?? "", claimedRole ?? "", claimedStatus ?? ""));
+        public void ClosePalette() => Send(() => this.Call("paletteClose"));
 
         /// <summary>Re-runs feature detection in the browser and re-sends the report.</summary>
-        public void CollectCapabilities() => Send("paletteCollect", () => this.Call("paletteCollect"));
+        public void CollectCapabilities() => Send(() => this.Call("paletteCollect"));
 
-        /// <summary>Sends a report with keys the server never published, to show what happens to them.</summary>
-        public void SendForgedCapabilities() => Send("paletteForge", () => this.Call("paletteForge"));
-
-        /// <summary>Shows the last server answer in the palette's resting card.</summary>
+        /// <summary>Shows a server answer in the palette's footer and resting card.</summary>
         public void ShowResult(string code, string message)
-            => Send("paletteShowResult", () => this.Call("paletteShowResult", code ?? "", message ?? ""));
+            => Send(() => this.Call("paletteShowResult", code ?? "", message ?? ""));
 
         /// <summary>
         /// The lifecycle gate. Before the client widget exists there is nothing to call, so the
-        /// call is remembered instead of thrown away — and the page can see how many were deferred.
+        /// call is remembered instead of thrown away, and sent when the client raises paletteReady.
         /// </summary>
-        private void Send(string label, Action call)
+        private void Send(Action call)
         {
             if (this.IsDisposed) return;
 
             if (!PaletteReady || !this.IsLoaded)
             {
-                DeferredCalls++;
                 _pending.Add(call);
-                Deferred?.Invoke(this, new PaletteErrorEventArgs("deferred", label));
                 return;
             }
 
             try { call(); }
             catch (ObjectDisposedException) { }
         }
-
-        /// <summary>Raised when a server → client call arrived before the client widget existed.</summary>
-        public event EventHandler<PaletteErrorEventArgs> Deferred;
 
         private void FlushPending()
         {
@@ -288,25 +231,11 @@ namespace EnterpriseOps.Interop
             {
                 case "paletteReady":
                     PaletteReady = true;
-                    Ready?.Invoke(this, new PaletteReadyEventArgs(Str(data?.hotkey), Str(data?.contractVersion)));
                     FlushPending();
                     break;
 
-                case "paletteOpened":
-                    PaletteState?.Invoke(this, new PaletteErrorEventArgs("opened", Str(data?.via)));
-                    break;
-
-                case "paletteClosed":
-                    PaletteState?.Invoke(this, new PaletteErrorEventArgs("closed", Str(data?.via)));
-                    break;
-
-                case "commandRun":
-                    CommandRun?.Invoke(this, new PaletteCommandEventArgs(
-                        Str(data?.command), Str(data?.entityId), Str(data?.code), Int(data?.elapsed)));
-                    break;
-
                 case "capabilities":
-                    CapabilitiesReported?.Invoke(this, new CapabilityReportEventArgs(Str(data?.report), Bool(data?.forged)));
+                    CapabilitiesReported?.Invoke(this, new CapabilityReportEventArgs(Str(data?.report)));
                     break;
 
                 case "error":
@@ -332,17 +261,5 @@ namespace EnterpriseOps.Interop
 
         private static string Str(object value)
             => value == null ? "" : Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
-
-        private static int Int(object value)
-        {
-            try { return value == null ? 0 : Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture); }
-            catch (Exception) { return 0; }
-        }
-
-        private static bool Bool(object value)
-        {
-            try { return value != null && Convert.ToBoolean(value, System.Globalization.CultureInfo.InvariantCulture); }
-            catch (Exception) { return false; }
-        }
     }
 }

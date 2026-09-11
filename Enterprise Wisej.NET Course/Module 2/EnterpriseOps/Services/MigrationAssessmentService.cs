@@ -104,12 +104,6 @@ namespace EnterpriseOps.Services
                 row.State = state;
         }
 
-        public void ResetRows()
-        {
-            foreach (var row in _dossier)
-                row.State = DossierRowState.Open;
-        }
-
         /// <summary>The modernization decision memo, written from evidence — the last harness run, the steps, the theme state.</summary>
         public string BuildDecisionMemo(CommandContext ctx, IReadOnlyList<MigrationStep> steps, HarnessResult lastHarness, ThemeService theme)
         {

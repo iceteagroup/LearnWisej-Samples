@@ -55,21 +55,9 @@ result.width    // 480
 result.Width    // null — the member does not exist; no exception, no warning, just wrong data
 ```
 
-The **Camel-case pitfall** button runs `GetSelectedStateWrongCaseAsync`, which deliberately reads
-`result.Width` and `result.Value`, and prints both reads next to each other:
-
-```
-← JS→.NET  result                       {"value":72,"isAboveThreshold":false,"width":480,"height":244,"isAnimating":false}
-• server   result.Width  (PascalCase)   null  ← the member is "width"; no error, just wrong data
-• server   result.Value  (PascalCase)   null  ← the member is "value"; no error, just wrong data
-• server   result.width  (camelCase)    480
-• server   result.value  (camelCase)    72
-```
-
-The result box shows `wrong: {"value":0,…,"width":0,…}` against `right: {"value":72,…,"width":480,…}`.
 Depending on the dynamic implementation a missing member may throw a binder exception instead of
-yielding `null`; the method catches both and reports which one happened. Either way the fix is the
-same: map once, by JavaScript names, into the DTO, and never touch the dynamic object again.
+yielding `null`. Either way the fix is the same: map once, by JavaScript names, into the DTO
+(`GetSelectedStateAsync` does exactly that), and never touch the dynamic object again.
 
 Other values to check in every contract: **dates** (send ISO strings or ticks, not `DateTime`
 objects you have not tested), **numbers beyond 2^53** (`long` ids lose precision in JavaScript —
@@ -77,23 +65,13 @@ send them as strings), **enums** (decide once: number or name).
 
 ## What must never cross the wire
 
-`Contracts/DomainWorkOrder.cs` exists only as the counter-example. It is a persistence-style entity
-with sixteen properties, a `Lines` collection and a `Customer` navigation object. The
-**Leak a domain object** button assigns one to `Options.debugDump`:
-
-```
-→ .NET→JS  update(options)     {"debugDump":{… 1180 chars …}}  ← domain object leaked on purpose
-• server   serialized (peek)   "customer":{"id":907,"name":"Northfield Energy Cooperative","email":"ops@northfield-energy.example","phone":…
-← JS→.NET  leakDetected        {"bytes":1180,"keys":26,"sample":"internalRemarks, approvedBy, customer.email, customer.taxId, customer.creditLimit"}
-• server   LeakDetected fired in C#   browser holds 1180 bytes, 26 keys incl. internalRemarks, approvedBy, customer.email, customer.taxId, customer.creditLimit
-→ .NET→JS  update(options)     {"debugDump":null}  (cleaned up)
-```
-
-The browser now holds internal remarks, the approver, the customer's tax id and credit limit —
-because an entity with a navigation property serializes the navigation target too. Nothing in the
-gauge needed any of it. The safe habit: **never pass a domain object across the wire, only an object
-built for the crossing.** Anything security-sensitive, anything the widget does not render, anything
-that changes when the database schema changes stays on the server.
+A persistence-style entity — a work order with a `Lines` collection and a `Customer` navigation
+property — serializes everything it references when it is placed in `Options` or passed to `Call`:
+internal remarks, the approver, the customer's e-mail, tax id and credit limit. The gauge needs none
+of it. An entity with a navigation property serializes the navigation target too, so the safe habit
+is: **never pass a domain object across the wire, only an object built for the crossing.** Anything
+security-sensitive, anything the widget does not render, anything that changes when the database
+schema changes stays on the server.
 
 Checklist for any object placed in `Options`, passed to `Call`, or returned from a client function:
 
@@ -115,11 +93,13 @@ Small DTOs are stable because they change rarely. When they do:
 | change a type (`int` → `string`) | **no** | breaking — validation on the receiving side must change too |
 | change semantics (`value` is now Celsius) | **no** | breaking even though the JSON looks identical — document it, version it |
 
-A DTO with five properties is versioned in minutes. A DTO that mirrors `DomainWorkOrder` would
-change every time the entity does, and every change would be a chance to break the client silently.
+A DTO with five properties is versioned in minutes. A DTO that mirrors a domain entity would change
+every time the entity does, and every change would be a chance to break the client silently.
 
 ## Evidence
 
-- **Get selected state** → result box `GaugeStateDto ← await CallAsync("getSelectedState")` with the camelCase JSON; the server-state line under it shows the authoritative `Value`, and `isAnimating` is only ever visible in the DTO because the server does not own it.
-- **Camel-case pitfall** → the five trace lines above and the `wrong:` / `right:` comparison; orange "no error, just zeros" banner.
-- **Leak a domain object** → the leak lines above, a red banner with the byte count and the sensitive keys the browser can read, then the automatic cleanup (`{"debugDump":null}`) and status `recovered`.
+- **Get selected state** → the command trace shows `→ await CallAsync("getSelectedState")` and then
+  `← result {"value":72,"isAboveThreshold":false,"width":480,"height":244,"isAnimating":false}`: the
+  camelCase wire shape of `GaugeStateDto`. Click it right after **Reset animation** and `isAnimating`
+  is `true`: client-only state the server can only ask for.
+- **Read rendered size** → `← result {"width":480,"height":244}`, mapped into `RenderedSize`.

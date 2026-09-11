@@ -5,17 +5,9 @@ using Wisej.Web;
 namespace OperationsConsole.Shell
 {
     /// <summary>
-    /// The compact status strip that used to be copied under every section header.
-    /// <para>
-    /// It exposes exactly the same public surface as <see cref="RecordHeader"/> — <see cref="Title"/>,
-    /// <see cref="RecordCount"/>, <see cref="LastRefresh"/> and <see cref="RefreshRequested"/> — and builds a
-    /// completely different layout out of it (one composed monospace line and a small refresh button instead of
-    /// four positioned controls). That is the point of the reuse boundary: the consumer sets three values and
-    /// listens to one event; how those values are rendered is nobody else's business.
-    /// </para>
-    /// <para>
-    /// Not to be confused with the shell's <c>Wisej.Web.StatusBar</c>: this one belongs to a section page.
-    /// </para>
+    /// The compact status strip of a section page. Same public surface as <see cref="RecordHeader"/> —
+    /// <see cref="Title"/>, <see cref="RecordCount"/>, <see cref="LastRefresh"/> and <see cref="RefreshRequested"/> —
+    /// rendered as one line with a small refresh button.
     /// </summary>
     public partial class StatusStrip : UserControl
     {

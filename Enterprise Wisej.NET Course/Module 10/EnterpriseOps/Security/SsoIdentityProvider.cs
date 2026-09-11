@@ -136,7 +136,7 @@ namespace EnterpriseOps.Security
                     "EnterpriseOps-Managers"),
 
                 Account("l.romero", "Luis Romero", "l.romero@fabrikam.example", "fabrikam",
-                    "Field technician — the walkthrough's denied export",
+                    "Field technician — views and edits work orders",
                     "EnterpriseOps-Technicians"),
 
                 Account("j.kim", "Jae Kim", "j.kim@fabrikam.example", "fabrikam",
@@ -152,7 +152,7 @@ namespace EnterpriseOps.Security
                     "EnterpriseOps-Integration"),
 
                 Account("ana.ops", "Ana Ops", "ana.ops@contoso.example", "contoso",
-                    "Manager on a DIFFERENT tenant — use for the cross-tenant path",
+                    "Manager on the contoso tenant",
                     "EnterpriseOps-Managers"),
 
                 Account("t.novak", "Tomas Novak", "t.novak@fabrikam.example", "fabrikam",

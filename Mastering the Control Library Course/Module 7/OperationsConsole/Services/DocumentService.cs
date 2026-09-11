@@ -5,23 +5,16 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using OperationsConsole.Models;
-using OperationsConsole.Shell;
 
 namespace OperationsConsole.Services
 {
     /// <summary>
-    /// The service boundary of the document explorer (Module 4).
+    /// The service boundary of the document explorer. The tree and the list resolve a stable ID and call one of the
+    /// four methods below. Everything here is in memory — a few hundred generated documents — but every call costs
+    /// time (<see cref="SimulatedLatencyMs"/>) and can fail (<see cref="SimulateFailure"/>).
     /// <para>
-    /// <b>Selection is an event, not a query.</b> Nothing in <c>ListsTreesPage</c> touches data: the tree and
-    /// the list resolve a stable ID and call one of the four methods below. Everything here is in memory —
-    /// a few hundred generated documents — but it behaves like a remote service: every call costs time
-    /// (<see cref="SimulatedLatencyMs"/>), every call is logged, and every call can fail
-    /// (<see cref="SimulateFailure"/>).
-    /// </para>
-    /// <para>
-    /// The catalogue is deliberately awkward on purpose:
-    /// three customers each own a folder called <b>Contracts</b> (IDs 7, 10 and 13), two categories are
-    /// empty, and one top-level branch expands to nothing at all. Only the IDs tell them apart.
+    /// Three customers each own a folder called <b>Contracts</b> (IDs 7, 10 and 13), two categories are empty, and
+    /// one top-level branch has no children. Only the IDs tell them apart.
     /// </para>
     /// </summary>
     public class DocumentService
@@ -32,11 +25,7 @@ namespace OperationsConsole.Services
         /// <summary>A shorter latency for the cheap navigation calls (top categories, children).</summary>
         public const int TreeLatencyMs = 150;
 
-        /// <summary>
-        /// Set by <c>chkSimulateFailure</c> on the page. The next expand, page load or document load throws
-        /// <see cref="InvalidOperationException"/>. It is a one-shot switch: the page clears it after the
-        /// failure so that <b>Retry</b> is a real recovery.
-        /// </summary>
+        /// <summary>When true, every expand, page load and document load throws <see cref="InvalidOperationException"/>.</summary>
         public bool SimulateFailure { get; set; }
 
         // ------------------------------------------------------------------------------------------------
@@ -50,7 +39,6 @@ namespace OperationsConsole.Services
             ThrowIfSimulatingFailure("GetTopCategories()");
 
             var list = Catalog.Where(c => c.ParentId == 0).Select(ToNode).ToList();
-            ConsoleLog.Add("DocumentService.GetTopCategories() → " + list.Count + " categories (top level only)");
             return list;
         }
 
@@ -61,7 +49,6 @@ namespace OperationsConsole.Services
             ThrowIfSimulatingFailure("GetChildren(" + categoryId + ")");
 
             var list = Catalog.Where(c => c.ParentId == categoryId).Select(ToNode).ToList();
-            ConsoleLog.Add("DocumentService.GetChildren(" + categoryId + ") → " + list.Count + " child categories");
             return list;
         }
 
@@ -81,7 +68,6 @@ namespace OperationsConsole.Services
         /// </summary>
         public async Task<DocumentPage> GetDocumentPageAsync(int categoryId)
         {
-            ConsoleLog.Add("DocumentService.GetDocumentPage(" + categoryId + ") — calling (simulated latency " + SimulatedLatencyMs + " ms)");
             await Task.Delay(SimulatedLatencyMs);
             return BuildPage(categoryId);
         }
@@ -96,20 +82,16 @@ namespace OperationsConsole.Services
         /// <summary>Awaitable version of <see cref="GetDocument"/> — used by the selection handlers.</summary>
         public async Task<DocumentModel> GetDocumentAsync(int documentId)
         {
-            ConsoleLog.Add("DocumentService.GetDocument(" + documentId + ") — calling (simulated latency " + SimulatedLatencyMs + " ms)");
             await Task.Delay(SimulatedLatencyMs);
             return BuildDocument(documentId);
         }
 
-        /// <summary>"Contoso ▸ Contracts" for any category ID — used for the detail card and the log lines.</summary>
+        /// <summary>"Contoso ▸ Contracts" for any category ID.</summary>
         public string GetCategoryPath(int categoryId)
         {
             var row = Catalog.FirstOrDefault(c => c.Id == categoryId);
             return row == null ? "—" : row.Path;
         }
-
-        /// <summary>How many documents the whole catalogue holds (shown once in the Event log at startup).</summary>
-        public int TotalDocumentCount => AllDocuments.Count;
 
         // ------------------------------------------------------------------------------------------------
         // The work, kept out of the public methods so the latency/failure wrapper stays readable
@@ -131,7 +113,6 @@ namespace OperationsConsole.Services
                 Total = rows.Count
             };
 
-            ConsoleLog.Add("DocumentService.GetDocumentPage(" + categoryId + ") → " + page.Total + " rows");
             return page;
         }
 
@@ -158,7 +139,6 @@ namespace OperationsConsole.Services
                 IsWarning = row.Summary.IsWarning
             };
 
-            ConsoleLog.Add("DocumentService.GetDocument(" + documentId + ") → " + model.DocumentId + " (" + model.CategoryPath + ")");
             return model;
         }
 
@@ -167,8 +147,7 @@ namespace OperationsConsole.Services
             if (!this.SimulateFailure)
                 return;
 
-            ConsoleLog.Add("DocumentService." + call + " ✗ simulated service failure");
-            throw new InvalidOperationException("Simulated failure in DocumentService." + call + " — the document store did not answer.");
+            throw new InvalidOperationException("DocumentService." + call + ": the document store did not answer.");
         }
 
         private static CategoryNode ToNode(CategoryRow row)

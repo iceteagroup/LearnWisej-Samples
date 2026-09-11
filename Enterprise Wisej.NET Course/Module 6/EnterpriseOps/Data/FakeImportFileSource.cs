@@ -11,18 +11,14 @@ namespace EnterpriseOps.Data
     /// The "file system" the imports read. There is no disk and no network in this sample: every file is
     /// generated deterministically, so the README can promise exactly which rows retry and which rows fail.
     ///
-    /// Four files, one per path the lab demonstrates:
-    ///   contoso_q2.csv          1,000 rows · 10 batches · 12 transient rows · 2 terminal rows   (the video's job)
-    ///   contoso_pilot.csv         300 rows ·  3 batches · clean                                 (success path)
-    ///   contoso_flood_sample.csv  200 rows ·  4 batches · clean                                 (anti-pattern path)
-    ///   contoso_q2_corrupt.csv    unreadable — throws MalformedFileException                    (terminal failure)
+    /// Two files in the drop folder:
+    ///   contoso_q2.csv      1,000 rows · 10 batches · 12 transient rows · 2 terminal rows   (the video's job)
+    ///   contoso_pilot.csv     300 rows ·  3 batches · clean
     /// </summary>
     public sealed class FakeImportFileSource : IImportFileSource
     {
         public const string PrimaryFile = "contoso_q2.csv";
         public const string PilotFile = "contoso_pilot.csv";
-        public const string FloodFile = "contoso_flood_sample.csv";
-        public const string CorruptFile = "contoso_q2_corrupt.csv";
 
         /// <summary>Lines the flaky downstream writer times out on before it succeeds (transient → retried).</summary>
         private static readonly int[] TransientLines =
@@ -51,18 +47,6 @@ namespace EnterpriseOps.Data
                 Description = "Pilot batch — 300 clean rows, 3 batches",
                 RowCount = 300
             },
-            new ImportFileInfo
-            {
-                FileName = FloodFile,
-                Description = "Flood sample — 200 clean rows, 4 small batches (used by the anti-pattern button)",
-                RowCount = 200
-            },
-            new ImportFileInfo
-            {
-                FileName = CorruptFile,
-                Description = "Corrupt export — header row truncated (fails to open)",
-                RowCount = 0, IsMalformed = true
-            },
         };
 
         /// <summary>
@@ -80,13 +64,6 @@ namespace EnterpriseOps.Data
 
                 case PilotFile:
                     return Build(fileName, "WO-PIL", 300, batchSize: 100, batchLatencyMs: 600, withFailures: false);
-
-                case FloodFile:
-                    return Build(fileName, "WO-FLD", 200, batchSize: 50, batchLatencyMs: 250, withFailures: false);
-
-                case CorruptFile:
-                    throw new MalformedFileException(
-                        $"'{fileName}' is not a valid work-order export: the header row ends after 3 of 7 columns (line 1).");
 
                 default:
                     throw new MalformedFileException($"'{fileName}' does not exist in the import drop folder.");

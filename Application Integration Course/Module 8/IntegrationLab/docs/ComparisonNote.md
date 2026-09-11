@@ -56,8 +56,7 @@ Plus the two habits that make the comparison fair:
 
 - **The content type is explicit on every response** (`application/json` for JSON): a JSON body
   served as text confuses some libraries, an HTML body served as JSON confuses all of them.
-- **The postback URL is session-scoped and short-lived**: displayed redacted, never stored, never
-  shared between users.
+- **The postback URL is session-scoped and short-lived**: never stored, never shared between users.
 
 ## Self-check answers
 
@@ -71,7 +70,7 @@ Plus the two habits that make the comparison fair:
 
 ## Evidence
 
-Run the app and click **Reload both**: the left trace triple is `⇄ HTTP GET … → 200
-application/json → dataLoaded`, the middle one is `WebMethod … → return PageResult →
-dataLoaded`. **Oversized page** shows the two error shapes side by side: `400` on the left,
-`ArgumentException → popup, Promise null` on the right.
+Run the app: the Network list shows the left grid's pair `⇄ HTTP GET … → 200 application/json`
+and the middle grid's pair `App.MainPage.GetWorkOrders … → return PageResult`; paging or sorting
+either grid repeats its pair. The error shapes differ the same way: a bad request to the postback
+URL gets `400 {"error"}`, a bad WebMethod call gets `ArgumentException → popup, Promise null`.

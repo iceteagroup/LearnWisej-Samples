@@ -99,23 +99,24 @@ the workflow again with a new correlation id. Two properties follow from that:
 
 ## The failure path the video shows
 
-Select three rows, press **Fail: approval lock on a row** (opens `APR-1042` on the last one), then
-**Reassign 3 selected…**. Two rows are reassigned, one comes back
-`locked by an open approval (APR-1042) — not changed`, and the dialog says *Batch result — 2 succeeded, 1 failed*
-with a **Retry failed rows** button. Press **Recover: complete the approval**, then retry: the third row goes
-through.
+Search `WO-10023`, select **WO-100234**, **WO-100235** and **WO-100236**, keep **s.patel** as the target and press
+**Reassign 3 selected…**. WO-100236 has an approval in flight (`APR-1042`, seeded in `WorkOrderStore`), so two rows
+are reassigned and one comes back `locked by an open approval (APR-1042) — not changed`; the dialog says
+*Batch result — 2 succeeded, 1 failed* with a **Retry failed rows** button. Retrying while the approval is still
+open fails that row again with the same reason — which is the correct answer.
 
-Note that ~61 of the seeded contoso rows already carry an open approval (the escalated ones), so selecting a whole
-page and reassigning it produces a realistic mixed report without pressing any failure button at all.
+Note that ~61 of the seeded contoso rows carry an open approval (the escalated ones), so selecting a whole page and
+reassigning it also produces a realistic mixed report.
 
 ## Evidence in the running app
 
-| Do this | The trace shows |
+The workflow writes to the server log (`System.Diagnostics.Trace`, via `Services/ActivityTrace.cs`):
+
+| Do this | The log shows |
 |---|---|
 | Run a batch of 3 | `Job: batch 4e9d20b7 — reassign 3 to s.patel by ana.ops (Manager) @ contoso` |
 | — per row | `Job: ✓ WO-100234 → reassigned to s.patel (v2 → v3) [ok]` and `Data: commit WO-100234 AssignedTo=s.patel Version 2 → 3` |
 | — a failed row | `Job: ✕ WO-100236 → locked by an open approval (APR-1042) — not changed [approval-lock]` |
 | — the end | `Job: done 4e9d20b7 — 2 succeeded, 1 failed in 1,4xx ms; 3 audit entries written` |
-| **Fail: concurrent edit** then run | `Job: ✕ … → changed by another user (v2 → v3) — refresh and retry [stale-version]` |
-| **Run as ben.tech** then run | `Security: ben.tech (Technician) may not reassign WO-…` for every row, `0 succeeded, N failed` |
+| Another session reassigns a row you still have selected, then run | `Job: ✕ … → changed by another user (v2 → v3) — refresh and retry [stale-version]` |
 | Reassign a row needing a certification the target lacks | `[certification]` — e.g. `j.kim` holds only `hvac` |

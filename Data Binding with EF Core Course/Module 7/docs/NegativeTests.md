@@ -31,9 +31,9 @@ and `Valid_model_produces_no_messages` (the positive case every negative test's 
 ## The database negative case
 
 `DuplicateNumberTests.SaveAsync_with_forceDuplicateNumber_throws_DbUpdateException_wrapping_the_UNIQUE_constraint`
-inserts a ticket through `TicketCommandService.SaveAsync(model, TimeSpan.Zero, forceDuplicateNumber: true)` —
-the same lab prop `chkDuplicateNumber` arms — and asserts the exception type, the inner `SqliteException` type,
-and that its message contains `UNIQUE constraint failed: Tickets.Number`. This is the one negative case that
+inserts a ticket through `TicketCommandService.SaveAsync(model, forceDuplicateNumber: true)` — the overload
+that reuses an existing ticket number instead of generating the next one — and asserts the exception type, the
+inner `SqliteException` type, and that its message contains `UNIQUE constraint failed: Tickets.Number`. This is the one negative case that
 exercises the **database layer**, not the domain layer: `TicketValidator` cannot see it coming (see
 [`DuplicateNumberHandling.md`](DuplicateNumberHandling.md)).
 
@@ -53,6 +53,5 @@ screen.
 
 ## Evidence
 
-- `dotnet build SupportDesk.slnx -nologo -v q` — 0 warnings, 0 errors.
-- `dotnet test SupportDesk.Tests -nologo -v q` — **68 passed**, 0 failed: the 52 carried over from Modules 1–4
-  unchanged, 13 new in `TicketValidatorTests.cs`, 3 new in `DuplicateNumberTests.cs`.
+- `dotnet test SupportDesk.Tests` — the tests carried over from Modules 1–4, plus 13 new in
+  `TicketValidatorTests.cs` and 3 new in `DuplicateNumberTests.cs`.

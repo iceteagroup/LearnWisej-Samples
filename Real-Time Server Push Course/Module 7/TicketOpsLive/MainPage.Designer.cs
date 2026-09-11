@@ -25,47 +25,39 @@ namespace TicketOpsLive
         {
             this.components = new System.ComponentModel.Container();
             this.statusPanel = new Wisej.Web.Panel();
-            this.labelStripCaption = new Wisej.Web.Label();
             this.clockLabel = new Wisej.Web.Label();
             this.connectionLabel = new Wisej.Web.Label();
             this.activityLabel = new Wisej.Web.Label();
             this.labelLoadCaption = new Wisej.Web.Label();
             this.serverLoadBar = new Wisej.Web.ProgressBar();
             this.loadValueLabel = new Wisej.Web.Label();
+            this.startButton = new Wisej.Web.Button();
+            this.stopButton = new Wisej.Web.Button();
             this.featureTabs = new Wisej.Web.TabControl();
             this.tabImport = new Wisej.Web.TabPage();
             this.tabBoard = new Wisej.Web.TabPage();
             this.tabCadence = new Wisej.Web.TabPage();
             this.tabSession = new Wisej.Web.TabPage();
             this.tabHealth = new Wisej.Web.TabPage();
-            // M03 — import monitor
-            this.jobIdLabel = new Wisej.Web.Label();
-            this.elapsedLabel = new Wisej.Web.Label();
             this.importStatusLabel = new Wisej.Web.Label();
+            this.elapsedLabel = new Wisej.Web.Label();
             this.importProgressBar = new Wisej.Web.ProgressBar();
-            this.labelRecordsCaption = new Wisej.Web.Label();
             this.recordsImportedLabel = new Wisej.Web.Label();
-            this.failAt87CheckBox = new Wisej.Web.CheckBox();
             this.importLogListBox = new Wisej.Web.ListBox();
             this.startImportButton = new Wisej.Web.Button();
             this.cancelImportButton = new Wisej.Web.Button();
-            // M05 + M06 — ticket board
+            this.failAt87Button = new Wisej.Web.Button();
             this.labelTenantCaption = new Wisej.Web.Label();
             this.tenantComboBox = new Wisej.Web.ComboBox();
-            this.subscribersLabel = new Wisej.Web.Label();
-            this.ticketsGrid = new Wisej.Web.DataGridView();
-            this.selectedLabel = new Wisej.Web.Label();
             this.escalatedOnlyCheckBox = new Wisej.Web.CheckBox();
-            this.notificationsList = new Wisej.Web.ListBox();
+            this.ticketsGrid = new Wisej.Web.DataGridView();
             this.notificationCountLabel = new Wisej.Web.Label();
-            this.filteredOutLabel = new Wisej.Web.Label();
+            this.notificationsList = new Wisej.Web.ListBox();
             this.publishButton = new Wisej.Web.Button();
-            this.publishOtherButton = new Wisej.Web.Button();
             this.escalateButton = new Wisej.Web.Button();
             this.newTicketsButton = new Wisej.Web.Button();
             this.subscribeButton = new Wisej.Web.Button();
             this.unsubscribeButton = new Wisej.Web.Button();
-            // M04 — cadence
             this.liveModeCheckBox = new Wisej.Web.CheckBox();
             this.labelCadenceCaption = new Wisej.Web.Label();
             this.cadenceComboBox = new Wisej.Web.ComboBox();
@@ -79,12 +71,8 @@ namespace TicketOpsLive
             this.eventsReceivedLabel = new Wisej.Web.Label();
             this.labelUpdatesCaption = new Wisej.Web.Label();
             this.updatesAppliedLabel = new Wisej.Web.Label();
-            this.labelSkippedCaption = new Wisej.Web.Label();
-            this.skippedTicksLabel = new Wisej.Web.Label();
             this.labelLastAppliedCaption = new Wisej.Web.Label();
             this.lastAppliedLabel = new Wisej.Web.Label();
-            this.labelCadenceHint = new Wisej.Web.Label();
-            // M02 — session
             this.diagnosticsGroupBox = new Wisej.Web.GroupBox();
             this.labelTimeCaption = new Wisej.Web.Label();
             this.timeLabel = new Wisej.Web.Label();
@@ -98,12 +86,11 @@ namespace TicketOpsLive
             this.threadLabel = new Wisej.Web.Label();
             this.labelCounterCaption = new Wisej.Web.Label();
             this.counterLabel = new Wisej.Web.Label();
-            this.liveSessionsLabel = new Wisej.Web.Label();
-            this.lifecycleListBox = new Wisej.Web.ListBox();
             this.incrementButton = new Wisej.Web.Button();
             this.backgroundButton = new Wisej.Web.Button();
-            this.faultButton = new Wisej.Web.Button();
-            // M07 — health and configuration
+            this.openSessionButton = new Wisej.Web.Button();
+            this.liveSessionsLabel = new Wisej.Web.Label();
+            this.lifecycleListBox = new Wisej.Web.ListBox();
             this.labelHealthTitle = new Wisej.Web.Label();
             this.websocketModeLabel = new Wisej.Web.Label();
             this.pollingLabel = new Wisej.Web.Label();
@@ -113,20 +100,6 @@ namespace TicketOpsLive
             this.configListBox = new Wisej.Web.ListBox();
             this.labelChecklistTitle = new Wisej.Web.Label();
             this.checklistBox = new Wisej.Web.CheckedListBox();
-            // shared
-            this.labelBanner = new Wisej.Web.Label();
-            this.labelState = new Wisej.Web.Label();
-            this.panelTrace = new Wisej.Web.Panel();
-            this.labelTraceTitle = new Wisej.Web.Label();
-            this.labelStatus = new Wisej.Web.Label();
-            this.listTrace = new Wisej.Web.ListBox();
-            this.labelTraceFooter = new Wisej.Web.Label();
-            this.panelActions = new Wisej.Web.Panel();
-            this.startButton = new Wisej.Web.Button();
-            this.stopButton = new Wisej.Web.Button();
-            this.openSessionButton = new Wisej.Web.Button();
-            this.exitButton = new Wisej.Web.Button();
-            this.clearButton = new Wisej.Web.Button();
             this.refreshTimer = new Wisej.Web.Timer(this.components);
             this.healthTimer = new Wisej.Web.Timer(this.components);
             this.statusPanel.SuspendLayout();
@@ -137,86 +110,104 @@ namespace TicketOpsLive
             this.tabSession.SuspendLayout();
             this.tabHealth.SuspendLayout();
             this.diagnosticsGroupBox.SuspendLayout();
-            this.panelTrace.SuspendLayout();
-            this.panelActions.SuspendLayout();
             this.SuspendLayout();
             //
-            // statusPanel  (the live status strip from Module 1)
+            // statusPanel
             //
-            this.statusPanel.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.statusPanel.BackColor = System.Drawing.Color.White;
             this.statusPanel.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.statusPanel.Controls.Add(this.labelStripCaption);
             this.statusPanel.Controls.Add(this.clockLabel);
             this.statusPanel.Controls.Add(this.connectionLabel);
             this.statusPanel.Controls.Add(this.activityLabel);
             this.statusPanel.Controls.Add(this.labelLoadCaption);
             this.statusPanel.Controls.Add(this.serverLoadBar);
             this.statusPanel.Controls.Add(this.loadValueLabel);
-            this.statusPanel.Location = new System.Drawing.Point(30, 18);
+            this.statusPanel.Controls.Add(this.startButton);
+            this.statusPanel.Controls.Add(this.stopButton);
+            this.statusPanel.Location = new System.Drawing.Point(20, 18);
             this.statusPanel.Name = "statusPanel";
-            this.statusPanel.Size = new System.Drawing.Size(1288, 92);
+            this.statusPanel.Size = new System.Drawing.Size(1000, 80);
             //
-            this.labelStripCaption.AutoSize = false;
-            this.labelStripCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
-            this.labelStripCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelStripCaption.Location = new System.Drawing.Point(16, 8);
-            this.labelStripCaption.Name = "labelStripCaption";
-            this.labelStripCaption.Size = new System.Drawing.Size(300, 18);
-            this.labelStripCaption.Text = "TICKETOPS LIVE · CAPSTONE · STATUS STRIP";
+            // clockLabel
             //
             this.clockLabel.AutoSize = false;
             this.clockLabel.Font = new System.Drawing.Font("monospace", 22F, System.Drawing.FontStyle.Bold);
-            this.clockLabel.Location = new System.Drawing.Point(16, 30);
+            this.clockLabel.Location = new System.Drawing.Point(16, 16);
             this.clockLabel.Name = "clockLabel";
-            this.clockLabel.Size = new System.Drawing.Size(200, 44);
+            this.clockLabel.Size = new System.Drawing.Size(170, 44);
             this.clockLabel.Text = "--:--:--";
             this.clockLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // connectionLabel
             //
             this.connectionLabel.AutoSize = false;
             this.connectionLabel.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.connectionLabel.ForeColor = System.Drawing.Color.FromArgb(232, 161, 60);
-            this.connectionLabel.Location = new System.Drawing.Point(236, 30);
+            this.connectionLabel.Location = new System.Drawing.Point(200, 14);
             this.connectionLabel.Name = "connectionLabel";
-            this.connectionLabel.Size = new System.Drawing.Size(470, 24);
+            this.connectionLabel.Size = new System.Drawing.Size(380, 24);
             this.connectionLabel.Text = "○ connecting…";
+            //
+            // activityLabel
             //
             this.activityLabel.AutoSize = false;
             this.activityLabel.Font = new System.Drawing.Font("monospace", 9F);
             this.activityLabel.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.activityLabel.Location = new System.Drawing.Point(236, 56);
+            this.activityLabel.Location = new System.Drawing.Point(200, 42);
             this.activityLabel.Name = "activityLabel";
-            this.activityLabel.Size = new System.Drawing.Size(470, 22);
+            this.activityLabel.Size = new System.Drawing.Size(380, 22);
             this.activityLabel.Text = "Heartbeat not running";
+            //
+            // labelLoadCaption
             //
             this.labelLoadCaption.AutoSize = false;
             this.labelLoadCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
             this.labelLoadCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelLoadCaption.Location = new System.Drawing.Point(740, 8);
+            this.labelLoadCaption.Location = new System.Drawing.Point(596, 12);
             this.labelLoadCaption.Name = "labelLoadCaption";
-            this.labelLoadCaption.Size = new System.Drawing.Size(220, 18);
-            this.labelLoadCaption.Text = "SERVER LOAD (simulated)";
+            this.labelLoadCaption.Size = new System.Drawing.Size(180, 18);
+            this.labelLoadCaption.Text = "SERVER LOAD";
             //
-            this.serverLoadBar.Location = new System.Drawing.Point(740, 36);
+            // serverLoadBar
+            //
+            this.serverLoadBar.Location = new System.Drawing.Point(596, 36);
             this.serverLoadBar.Name = "serverLoadBar";
-            this.serverLoadBar.Size = new System.Drawing.Size(380, 24);
+            this.serverLoadBar.Size = new System.Drawing.Size(180, 24);
             this.serverLoadBar.Value = 0;
+            //
+            // loadValueLabel
             //
             this.loadValueLabel.AutoSize = false;
             this.loadValueLabel.Font = new System.Drawing.Font("default", 16F, System.Drawing.FontStyle.Bold);
-            this.loadValueLabel.Location = new System.Drawing.Point(1136, 28);
+            this.loadValueLabel.Location = new System.Drawing.Point(780, 30);
             this.loadValueLabel.Name = "loadValueLabel";
-            this.loadValueLabel.Size = new System.Drawing.Size(130, 36);
+            this.loadValueLabel.Size = new System.Drawing.Size(70, 36);
             this.loadValueLabel.Text = "0 %";
             this.loadValueLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
-            // featureTabs  (one tab per module of the course)
+            // startButton
             //
-            this.featureTabs.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
-            this.featureTabs.Location = new System.Drawing.Point(30, 120);
+            this.startButton.Location = new System.Drawing.Point(862, 8);
+            this.startButton.Name = "startButton";
+            this.startButton.Size = new System.Drawing.Size(124, 30);
+            this.startButton.Text = "▶ Start heartbeat";
+            this.startButton.Click += new System.EventHandler(this.startButton_Click);
+            //
+            // stopButton
+            //
+            this.stopButton.Enabled = false;
+            this.stopButton.Location = new System.Drawing.Point(862, 42);
+            this.stopButton.Name = "stopButton";
+            this.stopButton.Size = new System.Drawing.Size(124, 30);
+            this.stopButton.Text = "■ Stop";
+            this.stopButton.Click += new System.EventHandler(this.stopButton_Click);
+            //
+            // featureTabs
+            //
+            this.featureTabs.Location = new System.Drawing.Point(20, 112);
             this.featureTabs.Name = "featureTabs";
             this.featureTabs.SelectedIndex = 0;
-            this.featureTabs.Size = new System.Drawing.Size(700, 568);
+            this.featureTabs.Size = new System.Drawing.Size(1000, 470);
             this.featureTabs.TabPages.Add(this.tabImport);
             this.featureTabs.TabPages.Add(this.tabBoard);
             this.featureTabs.TabPages.Add(this.tabCadence);
@@ -224,113 +215,100 @@ namespace TicketOpsLive
             this.featureTabs.TabPages.Add(this.tabHealth);
             this.featureTabs.SelectedIndexChanged += new System.EventHandler(this.featureTabs_SelectedIndexChanged);
             //
-            // tabImport  (M03 · Background import monitor)
+            // tabImport
             //
             this.tabImport.BackColor = System.Drawing.Color.White;
-            this.tabImport.Controls.Add(this.jobIdLabel);
-            this.tabImport.Controls.Add(this.elapsedLabel);
             this.tabImport.Controls.Add(this.importStatusLabel);
+            this.tabImport.Controls.Add(this.elapsedLabel);
             this.tabImport.Controls.Add(this.importProgressBar);
-            this.tabImport.Controls.Add(this.labelRecordsCaption);
             this.tabImport.Controls.Add(this.recordsImportedLabel);
-            this.tabImport.Controls.Add(this.failAt87CheckBox);
             this.tabImport.Controls.Add(this.importLogListBox);
             this.tabImport.Controls.Add(this.startImportButton);
             this.tabImport.Controls.Add(this.cancelImportButton);
+            this.tabImport.Controls.Add(this.failAt87Button);
             this.tabImport.Name = "tabImport";
             this.tabImport.Text = "Import monitor";
             //
-            this.jobIdLabel.AutoSize = false;
-            this.jobIdLabel.Font = new System.Drawing.Font("monospace", 9F, System.Drawing.FontStyle.Bold);
-            this.jobIdLabel.ForeColor = System.Drawing.Color.FromArgb(21, 79, 143);
-            this.jobIdLabel.Location = new System.Drawing.Point(18, 14);
-            this.jobIdLabel.Name = "jobIdLabel";
-            this.jobIdLabel.Size = new System.Drawing.Size(420, 22);
-            this.jobIdLabel.Text = "Job —";
-            //
-            this.elapsedLabel.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.elapsedLabel.AutoSize = false;
-            this.elapsedLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.elapsedLabel.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.elapsedLabel.Location = new System.Drawing.Point(444, 14);
-            this.elapsedLabel.Name = "elapsedLabel";
-            this.elapsedLabel.Size = new System.Drawing.Size(220, 22);
-            this.elapsedLabel.Text = "elapsed 0.00 s";
-            this.elapsedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // importStatusLabel
             //
             this.importStatusLabel.AutoSize = false;
             this.importStatusLabel.Font = new System.Drawing.Font("default", 11F);
-            this.importStatusLabel.Location = new System.Drawing.Point(18, 40);
+            this.importStatusLabel.Location = new System.Drawing.Point(18, 14);
             this.importStatusLabel.Name = "importStatusLabel";
-            this.importStatusLabel.Size = new System.Drawing.Size(646, 26);
-            this.importStatusLabel.Text = "Idle — click ▶ Start import";
+            this.importStatusLabel.Size = new System.Drawing.Size(600, 26);
+            this.importStatusLabel.Text = "Idle — ready to import";
             //
-            this.importProgressBar.Location = new System.Drawing.Point(18, 72);
+            // elapsedLabel
+            //
+            this.elapsedLabel.AutoSize = false;
+            this.elapsedLabel.Font = new System.Drawing.Font("monospace", 9F, System.Drawing.FontStyle.Bold);
+            this.elapsedLabel.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.elapsedLabel.Location = new System.Drawing.Point(744, 16);
+            this.elapsedLabel.Name = "elapsedLabel";
+            this.elapsedLabel.Size = new System.Drawing.Size(220, 22);
+            this.elapsedLabel.Text = "Elapsed 0.00 s";
+            this.elapsedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            //
+            // importProgressBar
+            //
+            this.importProgressBar.Location = new System.Drawing.Point(18, 50);
             this.importProgressBar.Name = "importProgressBar";
-            this.importProgressBar.Size = new System.Drawing.Size(490, 26);
+            this.importProgressBar.Size = new System.Drawing.Size(790, 24);
             this.importProgressBar.Value = 0;
             //
-            this.labelRecordsCaption.AutoSize = false;
-            this.labelRecordsCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
-            this.labelRecordsCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelRecordsCaption.Location = new System.Drawing.Point(524, 68);
-            this.labelRecordsCaption.Name = "labelRecordsCaption";
-            this.labelRecordsCaption.Size = new System.Drawing.Size(140, 16);
-            this.labelRecordsCaption.Text = "RECORDS IMPORTED";
-            this.labelRecordsCaption.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // recordsImportedLabel
             //
             this.recordsImportedLabel.AutoSize = false;
             this.recordsImportedLabel.Font = new System.Drawing.Font("default", 16F, System.Drawing.FontStyle.Bold);
-            this.recordsImportedLabel.Location = new System.Drawing.Point(524, 82);
+            this.recordsImportedLabel.Location = new System.Drawing.Point(824, 46);
             this.recordsImportedLabel.Name = "recordsImportedLabel";
-            this.recordsImportedLabel.Size = new System.Drawing.Size(140, 28);
-            this.recordsImportedLabel.Text = "0";
+            this.recordsImportedLabel.Size = new System.Drawing.Size(140, 30);
+            this.recordsImportedLabel.Text = "0/200";
             this.recordsImportedLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             //
-            this.failAt87CheckBox.AutoSize = false;
-            this.failAt87CheckBox.Location = new System.Drawing.Point(18, 108);
-            this.failAt87CheckBox.Name = "failAt87CheckBox";
-            this.failAt87CheckBox.Size = new System.Drawing.Size(490, 26);
-            this.failAt87CheckBox.Text = "Throw at record 87 — simulated malformed record";
-            this.failAt87CheckBox.ToolTipText = "Arms the failure path: the task throws, the detail goes to the server log, the UI gets a safe message.";
+            // importLogListBox
             //
-            this.importLogListBox.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
             this.importLogListBox.Font = new System.Drawing.Font("monospace", 9F);
-            this.importLogListBox.Location = new System.Drawing.Point(18, 142);
+            this.importLogListBox.Location = new System.Drawing.Point(18, 88);
             this.importLogListBox.Name = "importLogListBox";
-            this.importLogListBox.Size = new System.Drawing.Size(646, 330);
+            this.importLogListBox.Size = new System.Drawing.Size(740, 330);
             //
-            this.startImportButton.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
-            this.startImportButton.Location = new System.Drawing.Point(18, 482);
+            // startImportButton
+            //
+            this.startImportButton.Location = new System.Drawing.Point(776, 88);
             this.startImportButton.Name = "startImportButton";
-            this.startImportButton.Size = new System.Drawing.Size(150, 36);
-            this.startImportButton.Text = "▶ Start import";
-            this.startImportButton.ToolTipText = "200 records on a task; progress pushed every 10 records.";
+            this.startImportButton.Size = new System.Drawing.Size(188, 36);
+            this.startImportButton.Text = "Start Import";
             this.startImportButton.Click += new System.EventHandler(this.startImportButton_Click);
             //
-            this.cancelImportButton.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
+            // cancelImportButton
+            //
             this.cancelImportButton.Enabled = false;
-            this.cancelImportButton.Location = new System.Drawing.Point(176, 482);
+            this.cancelImportButton.Location = new System.Drawing.Point(776, 132);
             this.cancelImportButton.Name = "cancelImportButton";
-            this.cancelImportButton.Size = new System.Drawing.Size(120, 36);
-            this.cancelImportButton.Text = "■ Cancel";
-            this.cancelImportButton.ToolTipText = "Cooperative: the loop sees the token between two records.";
+            this.cancelImportButton.Size = new System.Drawing.Size(188, 36);
+            this.cancelImportButton.Text = "Cancel Import";
             this.cancelImportButton.Click += new System.EventHandler(this.cancelImportButton_Click);
             //
-            // tabBoard  (M05 + M06 · Live ticket board fed by the global TicketHub)
+            // failAt87Button
+            //
+            this.failAt87Button.ForeColor = System.Drawing.Color.FromArgb(192, 57, 43);
+            this.failAt87Button.Location = new System.Drawing.Point(776, 176);
+            this.failAt87Button.Name = "failAt87Button";
+            this.failAt87Button.Size = new System.Drawing.Size(188, 36);
+            this.failAt87Button.Text = "Fail at 87";
+            this.failAt87Button.Click += new System.EventHandler(this.failAt87Button_Click);
+            //
+            // tabBoard
             //
             this.tabBoard.BackColor = System.Drawing.Color.White;
             this.tabBoard.Controls.Add(this.labelTenantCaption);
             this.tabBoard.Controls.Add(this.tenantComboBox);
-            this.tabBoard.Controls.Add(this.subscribersLabel);
-            this.tabBoard.Controls.Add(this.ticketsGrid);
-            this.tabBoard.Controls.Add(this.selectedLabel);
             this.tabBoard.Controls.Add(this.escalatedOnlyCheckBox);
-            this.tabBoard.Controls.Add(this.notificationsList);
+            this.tabBoard.Controls.Add(this.ticketsGrid);
             this.tabBoard.Controls.Add(this.notificationCountLabel);
-            this.tabBoard.Controls.Add(this.filteredOutLabel);
+            this.tabBoard.Controls.Add(this.notificationsList);
             this.tabBoard.Controls.Add(this.publishButton);
-            this.tabBoard.Controls.Add(this.publishOtherButton);
             this.tabBoard.Controls.Add(this.escalateButton);
             this.tabBoard.Controls.Add(this.newTicketsButton);
             this.tabBoard.Controls.Add(this.subscribeButton);
@@ -338,113 +316,97 @@ namespace TicketOpsLive
             this.tabBoard.Name = "tabBoard";
             this.tabBoard.Text = "Ticket board";
             //
+            // labelTenantCaption
+            //
             this.labelTenantCaption.AutoSize = false;
-            this.labelTenantCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
+            this.labelTenantCaption.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             this.labelTenantCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelTenantCaption.Location = new System.Drawing.Point(18, 20);
+            this.labelTenantCaption.Location = new System.Drawing.Point(18, 16);
             this.labelTenantCaption.Name = "labelTenantCaption";
-            this.labelTenantCaption.Size = new System.Drawing.Size(60, 22);
-            this.labelTenantCaption.Text = "TENANT";
+            this.labelTenantCaption.Size = new System.Drawing.Size(60, 28);
+            this.labelTenantCaption.Text = "Tenant";
+            this.labelTenantCaption.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // tenantComboBox
             //
             this.tenantComboBox.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.tenantComboBox.Location = new System.Drawing.Point(84, 14);
+            this.tenantComboBox.Location = new System.Drawing.Point(80, 14);
             this.tenantComboBox.Name = "tenantComboBox";
-            this.tenantComboBox.Size = new System.Drawing.Size(140, 32);
-            this.tenantComboBox.ToolTipText = "This session's tenant. The hub broadcasts everything; the SESSION decides what to render.";
+            this.tenantComboBox.Size = new System.Drawing.Size(150, 30);
             //
-            this.subscribersLabel.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.subscribersLabel.AutoSize = false;
-            this.subscribersLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.subscribersLabel.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.subscribersLabel.Location = new System.Drawing.Point(240, 20);
-            this.subscribersLabel.Name = "subscribersLabel";
-            this.subscribersLabel.Size = new System.Drawing.Size(424, 22);
-            this.subscribersLabel.Text = "hub subscribers: —";
-            this.subscribersLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            this.ticketsGrid.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.ticketsGrid.Location = new System.Drawing.Point(18, 52);
-            this.ticketsGrid.Name = "ticketsGrid";
-            this.ticketsGrid.Size = new System.Drawing.Size(646, 220);
-            //
-            this.selectedLabel.AutoSize = false;
-            this.selectedLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.selectedLabel.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.selectedLabel.Location = new System.Drawing.Point(18, 278);
-            this.selectedLabel.Name = "selectedLabel";
-            this.selectedLabel.Size = new System.Drawing.Size(450, 22);
-            this.selectedLabel.Text = "selected: none";
+            // escalatedOnlyCheckBox
             //
             this.escalatedOnlyCheckBox.AutoSize = false;
-            this.escalatedOnlyCheckBox.Location = new System.Drawing.Point(474, 274);
+            this.escalatedOnlyCheckBox.Location = new System.Drawing.Point(250, 18);
             this.escalatedOnlyCheckBox.Name = "escalatedOnlyCheckBox";
-            this.escalatedOnlyCheckBox.Size = new System.Drawing.Size(190, 26);
+            this.escalatedOnlyCheckBox.Size = new System.Drawing.Size(160, 24);
             this.escalatedOnlyCheckBox.Text = "Escalated only";
-            this.escalatedOnlyCheckBox.ToolTipText = "The filter is applied to the session's own list; live events keep arriving.";
             //
-            this.notificationsList.Font = new System.Drawing.Font("monospace", 9F);
-            this.notificationsList.Location = new System.Drawing.Point(18, 306);
-            this.notificationsList.Name = "notificationsList";
-            this.notificationsList.Size = new System.Drawing.Size(646, 108);
+            // ticketsGrid
+            //
+            this.ticketsGrid.Location = new System.Drawing.Point(18, 54);
+            this.ticketsGrid.Name = "ticketsGrid";
+            this.ticketsGrid.Size = new System.Drawing.Size(620, 300);
+            //
+            // notificationCountLabel
             //
             this.notificationCountLabel.AutoSize = false;
-            this.notificationCountLabel.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.notificationCountLabel.ForeColor = System.Drawing.Color.FromArgb(31, 157, 87);
-            this.notificationCountLabel.Location = new System.Drawing.Point(18, 418);
+            this.notificationCountLabel.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
+            this.notificationCountLabel.ForeColor = System.Drawing.Color.FromArgb(21, 79, 143);
+            this.notificationCountLabel.Location = new System.Drawing.Point(656, 18);
             this.notificationCountLabel.Name = "notificationCountLabel";
-            this.notificationCountLabel.Size = new System.Drawing.Size(320, 22);
+            this.notificationCountLabel.Size = new System.Drawing.Size(308, 24);
             this.notificationCountLabel.Text = "0 notifications in this session";
             //
-            this.filteredOutLabel.AutoSize = false;
-            this.filteredOutLabel.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.filteredOutLabel.ForeColor = System.Drawing.Color.FromArgb(146, 64, 14);
-            this.filteredOutLabel.Location = new System.Drawing.Point(344, 418);
-            this.filteredOutLabel.Name = "filteredOutLabel";
-            this.filteredOutLabel.Size = new System.Drawing.Size(320, 22);
-            this.filteredOutLabel.Text = "filtered out (wrong tenant): 0";
-            this.filteredOutLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // notificationsList
             //
-            this.publishButton.Location = new System.Drawing.Point(18, 446);
+            this.notificationsList.Font = new System.Drawing.Font("monospace", 9F);
+            this.notificationsList.Location = new System.Drawing.Point(656, 54);
+            this.notificationsList.Name = "notificationsList";
+            this.notificationsList.Size = new System.Drawing.Size(308, 300);
+            //
+            // publishButton
+            //
+            this.publishButton.Location = new System.Drawing.Point(18, 368);
             this.publishButton.Name = "publishButton";
-            this.publishButton.Size = new System.Drawing.Size(170, 34);
-            this.publishButton.Text = "Publish (my tenant)";
+            this.publishButton.Size = new System.Drawing.Size(150, 36);
+            this.publishButton.Text = "Publish Event";
             this.publishButton.Click += new System.EventHandler(this.publishButton_Click);
             //
-            this.publishOtherButton.Location = new System.Drawing.Point(196, 446);
-            this.publishOtherButton.Name = "publishOtherButton";
-            this.publishOtherButton.Size = new System.Drawing.Size(170, 34);
-            this.publishOtherButton.Text = "Publish (other tenant)";
-            this.publishOtherButton.Click += new System.EventHandler(this.publishOtherButton_Click);
+            // escalateButton
             //
-            this.escalateButton.Location = new System.Drawing.Point(374, 446);
+            this.escalateButton.Location = new System.Drawing.Point(176, 368);
             this.escalateButton.Name = "escalateButton";
-            this.escalateButton.Size = new System.Drawing.Size(150, 34);
+            this.escalateButton.Size = new System.Drawing.Size(150, 36);
             this.escalateButton.Text = "Escalate selected";
-            this.escalateButton.ToolTipText = "The only ChangeType that also pops a toast in the sessions that watch this tenant.";
             this.escalateButton.Click += new System.EventHandler(this.escalateButton_Click);
             //
-            this.newTicketsButton.Location = new System.Drawing.Point(532, 446);
+            // newTicketsButton
+            //
+            this.newTicketsButton.Location = new System.Drawing.Point(334, 368);
             this.newTicketsButton.Name = "newTicketsButton";
-            this.newTicketsButton.Size = new System.Drawing.Size(132, 34);
-            this.newTicketsButton.Text = "Simulate 10 ↻";
-            this.newTicketsButton.ToolTipText = "A task publishes 10 tickets through the hub, one per second.";
+            this.newTicketsButton.Size = new System.Drawing.Size(180, 36);
+            this.newTicketsButton.Text = "New ticket events (10)";
             this.newTicketsButton.Click += new System.EventHandler(this.newTicketsButton_Click);
             //
+            // subscribeButton
+            //
             this.subscribeButton.Enabled = false;
-            this.subscribeButton.Location = new System.Drawing.Point(18, 486);
+            this.subscribeButton.Location = new System.Drawing.Point(656, 368);
             this.subscribeButton.Name = "subscribeButton";
-            this.subscribeButton.Size = new System.Drawing.Size(170, 34);
+            this.subscribeButton.Size = new System.Drawing.Size(150, 36);
             this.subscribeButton.Text = "Subscribe";
             this.subscribeButton.Click += new System.EventHandler(this.subscribeButton_Click);
             //
-            this.unsubscribeButton.Location = new System.Drawing.Point(196, 486);
+            // unsubscribeButton
+            //
+            this.unsubscribeButton.Location = new System.Drawing.Point(814, 368);
             this.unsubscribeButton.Name = "unsubscribeButton";
-            this.unsubscribeButton.Size = new System.Drawing.Size(170, 34);
+            this.unsubscribeButton.Size = new System.Drawing.Size(150, 36);
             this.unsubscribeButton.Text = "Unsubscribe";
-            this.unsubscribeButton.ToolTipText = "Every subscription needs an unsubscribe — here it is manual so the count is visible.";
             this.unsubscribeButton.Click += new System.EventHandler(this.unsubscribeButton_Click);
             //
-            // tabCadence  (M04 · update cadence)
+            // tabCadence
             //
             this.tabCadence.BackColor = System.Drawing.Color.White;
             this.tabCadence.Controls.Add(this.liveModeCheckBox);
@@ -460,153 +422,163 @@ namespace TicketOpsLive
             this.tabCadence.Controls.Add(this.eventsReceivedLabel);
             this.tabCadence.Controls.Add(this.labelUpdatesCaption);
             this.tabCadence.Controls.Add(this.updatesAppliedLabel);
-            this.tabCadence.Controls.Add(this.labelSkippedCaption);
-            this.tabCadence.Controls.Add(this.skippedTicksLabel);
             this.tabCadence.Controls.Add(this.labelLastAppliedCaption);
             this.tabCadence.Controls.Add(this.lastAppliedLabel);
-            this.tabCadence.Controls.Add(this.labelCadenceHint);
             this.tabCadence.Name = "tabCadence";
             this.tabCadence.Text = "Cadence";
             //
+            // liveModeCheckBox
+            //
             this.liveModeCheckBox.AutoSize = false;
-            this.liveModeCheckBox.Location = new System.Drawing.Point(18, 16);
+            this.liveModeCheckBox.Location = new System.Drawing.Point(18, 18);
             this.liveModeCheckBox.Name = "liveModeCheckBox";
-            this.liveModeCheckBox.Size = new System.Drawing.Size(420, 26);
-            this.liveModeCheckBox.Text = "Live mode — model simulator + refreshTimer + polling fallback";
-            this.liveModeCheckBox.ToolTipText = "Starts the 50 ms model simulator and the UI refresh timer; requests polling only when there is no WebSocket.";
+            this.liveModeCheckBox.Size = new System.Drawing.Size(160, 26);
+            this.liveModeCheckBox.Text = "Live mode";
+            //
+            // labelCadenceCaption
             //
             this.labelCadenceCaption.AutoSize = false;
-            this.labelCadenceCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
-            this.labelCadenceCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelCadenceCaption.Location = new System.Drawing.Point(18, 56);
+            this.labelCadenceCaption.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
+            this.labelCadenceCaption.Location = new System.Drawing.Point(200, 16);
             this.labelCadenceCaption.Name = "labelCadenceCaption";
-            this.labelCadenceCaption.Size = new System.Drawing.Size(90, 30);
-            this.labelCadenceCaption.Text = "UI CADENCE";
+            this.labelCadenceCaption.Size = new System.Drawing.Size(80, 30);
+            this.labelCadenceCaption.Text = "Cadence";
+            this.labelCadenceCaption.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            //
+            // cadenceComboBox
             //
             this.cadenceComboBox.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.cadenceComboBox.Location = new System.Drawing.Point(114, 52);
+            this.cadenceComboBox.Location = new System.Drawing.Point(284, 14);
             this.cadenceComboBox.Name = "cadenceComboBox";
-            this.cadenceComboBox.Size = new System.Drawing.Size(140, 32);
-            this.cadenceComboBox.ToolTipText = "Reprograms refreshTimer.Interval on the running timer. The model keeps changing every 50 ms whatever you pick.";
+            this.cadenceComboBox.Size = new System.Drawing.Size(130, 32);
+            //
+            // labelOpenCaption
             //
             this.labelOpenCaption.AutoSize = false;
             this.labelOpenCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
             this.labelOpenCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelOpenCaption.Location = new System.Drawing.Point(18, 108);
+            this.labelOpenCaption.Location = new System.Drawing.Point(18, 70);
             this.labelOpenCaption.Name = "labelOpenCaption";
             this.labelOpenCaption.Size = new System.Drawing.Size(200, 18);
             this.labelOpenCaption.Text = "OPEN TICKETS";
+            //
+            // openTicketsLabel
+            //
             this.openTicketsLabel.AutoSize = false;
             this.openTicketsLabel.Font = new System.Drawing.Font("default", 20F, System.Drawing.FontStyle.Bold);
-            this.openTicketsLabel.Location = new System.Drawing.Point(18, 128);
+            this.openTicketsLabel.Location = new System.Drawing.Point(18, 90);
             this.openTicketsLabel.Name = "openTicketsLabel";
             this.openTicketsLabel.Size = new System.Drawing.Size(200, 36);
             this.openTicketsLabel.Text = "—";
             //
+            // labelQueueCaption
+            //
             this.labelQueueCaption.AutoSize = false;
             this.labelQueueCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
             this.labelQueueCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelQueueCaption.Location = new System.Drawing.Point(240, 108);
+            this.labelQueueCaption.Location = new System.Drawing.Point(240, 70);
             this.labelQueueCaption.Name = "labelQueueCaption";
             this.labelQueueCaption.Size = new System.Drawing.Size(200, 18);
             this.labelQueueCaption.Text = "QUEUE DEPTH";
+            //
+            // queueDepthLabel
+            //
             this.queueDepthLabel.AutoSize = false;
             this.queueDepthLabel.Font = new System.Drawing.Font("default", 20F, System.Drawing.FontStyle.Bold);
-            this.queueDepthLabel.Location = new System.Drawing.Point(240, 128);
+            this.queueDepthLabel.Location = new System.Drawing.Point(240, 90);
             this.queueDepthLabel.Name = "queueDepthLabel";
             this.queueDepthLabel.Size = new System.Drawing.Size(200, 36);
             this.queueDepthLabel.Text = "—";
             //
+            // labelWaitCaption
+            //
             this.labelWaitCaption.AutoSize = false;
             this.labelWaitCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
             this.labelWaitCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelWaitCaption.Location = new System.Drawing.Point(462, 108);
+            this.labelWaitCaption.Location = new System.Drawing.Point(462, 70);
             this.labelWaitCaption.Name = "labelWaitCaption";
-            this.labelWaitCaption.Size = new System.Drawing.Size(202, 18);
+            this.labelWaitCaption.Size = new System.Drawing.Size(200, 18);
             this.labelWaitCaption.Text = "AVG WAIT";
+            //
+            // avgWaitLabel
+            //
             this.avgWaitLabel.AutoSize = false;
             this.avgWaitLabel.Font = new System.Drawing.Font("default", 20F, System.Drawing.FontStyle.Bold);
-            this.avgWaitLabel.Location = new System.Drawing.Point(462, 128);
+            this.avgWaitLabel.Location = new System.Drawing.Point(462, 90);
             this.avgWaitLabel.Name = "avgWaitLabel";
-            this.avgWaitLabel.Size = new System.Drawing.Size(202, 36);
+            this.avgWaitLabel.Size = new System.Drawing.Size(200, 36);
             this.avgWaitLabel.Text = "—";
+            //
+            // labelEventsCaption
             //
             this.labelEventsCaption.AutoSize = false;
             this.labelEventsCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
             this.labelEventsCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelEventsCaption.Location = new System.Drawing.Point(18, 196);
+            this.labelEventsCaption.Location = new System.Drawing.Point(18, 150);
             this.labelEventsCaption.Name = "labelEventsCaption";
             this.labelEventsCaption.Size = new System.Drawing.Size(200, 18);
-            this.labelEventsCaption.Text = "EVENTS RECEIVED (model)";
+            this.labelEventsCaption.Text = "EVENTS RECEIVED";
+            //
+            // eventsReceivedLabel
+            //
             this.eventsReceivedLabel.AutoSize = false;
             this.eventsReceivedLabel.Font = new System.Drawing.Font("default", 16F, System.Drawing.FontStyle.Bold);
-            this.eventsReceivedLabel.Location = new System.Drawing.Point(18, 214);
+            this.eventsReceivedLabel.Location = new System.Drawing.Point(18, 170);
             this.eventsReceivedLabel.Name = "eventsReceivedLabel";
             this.eventsReceivedLabel.Size = new System.Drawing.Size(200, 30);
             this.eventsReceivedLabel.Text = "0";
             //
+            // labelUpdatesCaption
+            //
             this.labelUpdatesCaption.AutoSize = false;
             this.labelUpdatesCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
             this.labelUpdatesCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelUpdatesCaption.Location = new System.Drawing.Point(240, 196);
+            this.labelUpdatesCaption.Location = new System.Drawing.Point(240, 150);
             this.labelUpdatesCaption.Name = "labelUpdatesCaption";
             this.labelUpdatesCaption.Size = new System.Drawing.Size(200, 18);
-            this.labelUpdatesCaption.Text = "UPDATES APPLIED (UI)";
+            this.labelUpdatesCaption.Text = "UPDATES APPLIED";
+            //
+            // updatesAppliedLabel
+            //
             this.updatesAppliedLabel.AutoSize = false;
             this.updatesAppliedLabel.Font = new System.Drawing.Font("default", 16F, System.Drawing.FontStyle.Bold);
-            this.updatesAppliedLabel.Location = new System.Drawing.Point(240, 214);
+            this.updatesAppliedLabel.Location = new System.Drawing.Point(240, 170);
             this.updatesAppliedLabel.Name = "updatesAppliedLabel";
             this.updatesAppliedLabel.Size = new System.Drawing.Size(200, 30);
             this.updatesAppliedLabel.Text = "0";
             //
-            this.labelSkippedCaption.AutoSize = false;
-            this.labelSkippedCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
-            this.labelSkippedCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelSkippedCaption.Location = new System.Drawing.Point(462, 196);
-            this.labelSkippedCaption.Name = "labelSkippedCaption";
-            this.labelSkippedCaption.Size = new System.Drawing.Size(202, 18);
-            this.labelSkippedCaption.Text = "TICKS REFUSED (overlap)";
-            this.skippedTicksLabel.AutoSize = false;
-            this.skippedTicksLabel.Font = new System.Drawing.Font("default", 16F, System.Drawing.FontStyle.Bold);
-            this.skippedTicksLabel.Location = new System.Drawing.Point(462, 214);
-            this.skippedTicksLabel.Name = "skippedTicksLabel";
-            this.skippedTicksLabel.Size = new System.Drawing.Size(202, 30);
-            this.skippedTicksLabel.Text = "0";
+            // labelLastAppliedCaption
             //
             this.labelLastAppliedCaption.AutoSize = false;
             this.labelLastAppliedCaption.Font = new System.Drawing.Font("default", 8F, System.Drawing.FontStyle.Bold);
             this.labelLastAppliedCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelLastAppliedCaption.Location = new System.Drawing.Point(18, 258);
+            this.labelLastAppliedCaption.Location = new System.Drawing.Point(462, 150);
             this.labelLastAppliedCaption.Name = "labelLastAppliedCaption";
             this.labelLastAppliedCaption.Size = new System.Drawing.Size(200, 18);
             this.labelLastAppliedCaption.Text = "LAST APPLIED";
+            //
+            // lastAppliedLabel
+            //
             this.lastAppliedLabel.AutoSize = false;
             this.lastAppliedLabel.Font = new System.Drawing.Font("monospace", 11F);
-            this.lastAppliedLabel.Location = new System.Drawing.Point(18, 276);
+            this.lastAppliedLabel.Location = new System.Drawing.Point(462, 172);
             this.lastAppliedLabel.Name = "lastAppliedLabel";
-            this.lastAppliedLabel.Size = new System.Drawing.Size(300, 26);
+            this.lastAppliedLabel.Size = new System.Drawing.Size(200, 26);
             this.lastAppliedLabel.Text = "—";
             //
-            this.labelCadenceHint.AutoSize = false;
-            this.labelCadenceHint.Font = new System.Drawing.Font("default", 9F);
-            this.labelCadenceHint.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelCadenceHint.Location = new System.Drawing.Point(18, 316);
-            this.labelCadenceHint.Name = "labelCadenceHint";
-            this.labelCadenceHint.Size = new System.Drawing.Size(646, 80);
-            this.labelCadenceHint.Text = "The simulator changes the model every 50 ms and only sets a dirty flag; refreshTimer_Tick applies ONE snapshot per tick and its changes ride back on that timer request — no Application.Update() is needed for a timer refresh. Model cadence, UI cadence, push cadence and polling cadence are four different numbers.";
-            this.labelCadenceHint.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            //
-            // tabSession  (M02 · session inspector and lifecycle)
+            // tabSession
             //
             this.tabSession.BackColor = System.Drawing.Color.White;
             this.tabSession.Controls.Add(this.diagnosticsGroupBox);
-            this.tabSession.Controls.Add(this.liveSessionsLabel);
-            this.tabSession.Controls.Add(this.lifecycleListBox);
             this.tabSession.Controls.Add(this.incrementButton);
             this.tabSession.Controls.Add(this.backgroundButton);
-            this.tabSession.Controls.Add(this.faultButton);
+            this.tabSession.Controls.Add(this.openSessionButton);
+            this.tabSession.Controls.Add(this.liveSessionsLabel);
+            this.tabSession.Controls.Add(this.lifecycleListBox);
             this.tabSession.Name = "tabSession";
             this.tabSession.Text = "Session";
+            //
+            // diagnosticsGroupBox
             //
             this.diagnosticsGroupBox.Controls.Add(this.labelTimeCaption);
             this.diagnosticsGroupBox.Controls.Add(this.timeLabel);
@@ -622,133 +594,165 @@ namespace TicketOpsLive
             this.diagnosticsGroupBox.Controls.Add(this.counterLabel);
             this.diagnosticsGroupBox.Location = new System.Drawing.Point(18, 14);
             this.diagnosticsGroupBox.Name = "diagnosticsGroupBox";
-            this.diagnosticsGroupBox.Size = new System.Drawing.Size(646, 216);
-            this.diagnosticsGroupBox.Text = "Session inspector";
+            this.diagnosticsGroupBox.Size = new System.Drawing.Size(460, 200);
+            this.diagnosticsGroupBox.Text = "Session Inspector";
+            //
+            // labelTimeCaption
             //
             this.labelTimeCaption.AutoSize = false;
-            this.labelTimeCaption.Font = new System.Drawing.Font("monospace", 9F);
+            this.labelTimeCaption.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
             this.labelTimeCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelTimeCaption.Location = new System.Drawing.Point(20, 22);
+            this.labelTimeCaption.Location = new System.Drawing.Point(16, 30);
             this.labelTimeCaption.Name = "labelTimeCaption";
-            this.labelTimeCaption.Size = new System.Drawing.Size(190, 22);
-            this.labelTimeCaption.Text = "current time";
+            this.labelTimeCaption.Size = new System.Drawing.Size(110, 22);
+            this.labelTimeCaption.Text = "Time";
+            //
+            // timeLabel
+            //
             this.timeLabel.AutoSize = false;
             this.timeLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.timeLabel.Location = new System.Drawing.Point(216, 22);
+            this.timeLabel.Location = new System.Drawing.Point(130, 30);
             this.timeLabel.Name = "timeLabel";
-            this.timeLabel.Size = new System.Drawing.Size(410, 22);
+            this.timeLabel.Size = new System.Drawing.Size(314, 22);
             this.timeLabel.Text = "—";
             //
+            // labelClientCaption
+            //
             this.labelClientCaption.AutoSize = false;
-            this.labelClientCaption.Font = new System.Drawing.Font("monospace", 9F);
+            this.labelClientCaption.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
             this.labelClientCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelClientCaption.Location = new System.Drawing.Point(20, 50);
+            this.labelClientCaption.Location = new System.Drawing.Point(16, 56);
             this.labelClientCaption.Name = "labelClientCaption";
-            this.labelClientCaption.Size = new System.Drawing.Size(190, 22);
-            this.labelClientCaption.Text = "ClientId (the browser)";
+            this.labelClientCaption.Size = new System.Drawing.Size(110, 22);
+            this.labelClientCaption.Text = "Client id";
+            //
+            // clientIdLabel
+            //
             this.clientIdLabel.AutoSize = false;
             this.clientIdLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.clientIdLabel.Location = new System.Drawing.Point(216, 50);
+            this.clientIdLabel.Location = new System.Drawing.Point(130, 56);
             this.clientIdLabel.Name = "clientIdLabel";
-            this.clientIdLabel.Size = new System.Drawing.Size(410, 22);
+            this.clientIdLabel.Size = new System.Drawing.Size(314, 22);
             this.clientIdLabel.Text = "—";
             //
+            // labelSessionCaption
+            //
             this.labelSessionCaption.AutoSize = false;
-            this.labelSessionCaption.Font = new System.Drawing.Font("monospace", 9F);
+            this.labelSessionCaption.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
             this.labelSessionCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelSessionCaption.Location = new System.Drawing.Point(20, 78);
+            this.labelSessionCaption.Location = new System.Drawing.Point(16, 82);
             this.labelSessionCaption.Name = "labelSessionCaption";
-            this.labelSessionCaption.Size = new System.Drawing.Size(190, 22);
-            this.labelSessionCaption.Text = "SessionId (this tab)";
+            this.labelSessionCaption.Size = new System.Drawing.Size(110, 22);
+            this.labelSessionCaption.Text = "Session id";
+            //
+            // sessionIdLabel
+            //
             this.sessionIdLabel.AutoSize = false;
             this.sessionIdLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.sessionIdLabel.Location = new System.Drawing.Point(216, 78);
+            this.sessionIdLabel.Location = new System.Drawing.Point(130, 82);
             this.sessionIdLabel.Name = "sessionIdLabel";
-            this.sessionIdLabel.Size = new System.Drawing.Size(410, 22);
+            this.sessionIdLabel.Size = new System.Drawing.Size(314, 22);
             this.sessionIdLabel.Text = "—";
             //
+            // labelBrowserCaption
+            //
             this.labelBrowserCaption.AutoSize = false;
-            this.labelBrowserCaption.Font = new System.Drawing.Font("monospace", 9F);
+            this.labelBrowserCaption.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
             this.labelBrowserCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelBrowserCaption.Location = new System.Drawing.Point(20, 106);
+            this.labelBrowserCaption.Location = new System.Drawing.Point(16, 108);
             this.labelBrowserCaption.Name = "labelBrowserCaption";
-            this.labelBrowserCaption.Size = new System.Drawing.Size(190, 22);
-            this.labelBrowserCaption.Text = "Application.Browser";
+            this.labelBrowserCaption.Size = new System.Drawing.Size(110, 22);
+            this.labelBrowserCaption.Text = "Browser";
+            //
+            // browserLabel
+            //
             this.browserLabel.AutoSize = false;
             this.browserLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.browserLabel.Location = new System.Drawing.Point(216, 106);
+            this.browserLabel.Location = new System.Drawing.Point(130, 108);
             this.browserLabel.Name = "browserLabel";
-            this.browserLabel.Size = new System.Drawing.Size(410, 22);
+            this.browserLabel.Size = new System.Drawing.Size(314, 22);
             this.browserLabel.Text = "—";
             //
+            // labelThreadCaption
+            //
             this.labelThreadCaption.AutoSize = false;
-            this.labelThreadCaption.Font = new System.Drawing.Font("monospace", 9F);
+            this.labelThreadCaption.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
             this.labelThreadCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelThreadCaption.Location = new System.Drawing.Point(20, 134);
+            this.labelThreadCaption.Location = new System.Drawing.Point(16, 134);
             this.labelThreadCaption.Name = "labelThreadCaption";
-            this.labelThreadCaption.Size = new System.Drawing.Size(190, 22);
-            this.labelThreadCaption.Text = "server thread";
+            this.labelThreadCaption.Size = new System.Drawing.Size(110, 22);
+            this.labelThreadCaption.Text = "Server thread";
+            //
+            // threadLabel
+            //
             this.threadLabel.AutoSize = false;
             this.threadLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.threadLabel.ForeColor = System.Drawing.Color.FromArgb(21, 79, 143);
-            this.threadLabel.Location = new System.Drawing.Point(216, 134);
+            this.threadLabel.Location = new System.Drawing.Point(130, 134);
             this.threadLabel.Name = "threadLabel";
-            this.threadLabel.Size = new System.Drawing.Size(410, 22);
+            this.threadLabel.Size = new System.Drawing.Size(314, 22);
             this.threadLabel.Text = "—";
             //
+            // labelCounterCaption
+            //
             this.labelCounterCaption.AutoSize = false;
-            this.labelCounterCaption.Font = new System.Drawing.Font("monospace", 9F, System.Drawing.FontStyle.Bold);
-            this.labelCounterCaption.ForeColor = System.Drawing.Color.FromArgb(31, 157, 87);
-            this.labelCounterCaption.Location = new System.Drawing.Point(20, 168);
+            this.labelCounterCaption.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
+            this.labelCounterCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.labelCounterCaption.Location = new System.Drawing.Point(16, 160);
             this.labelCounterCaption.Name = "labelCounterCaption";
-            this.labelCounterCaption.Size = new System.Drawing.Size(190, 22);
-            this.labelCounterCaption.Text = "Session.Counter ✓";
+            this.labelCounterCaption.Size = new System.Drawing.Size(110, 22);
+            this.labelCounterCaption.Text = "Counter";
+            //
+            // counterLabel
+            //
             this.counterLabel.AutoSize = false;
             this.counterLabel.Font = new System.Drawing.Font("monospace", 9F, System.Drawing.FontStyle.Bold);
-            this.counterLabel.ForeColor = System.Drawing.Color.FromArgb(31, 157, 87);
-            this.counterLabel.Location = new System.Drawing.Point(216, 168);
+            this.counterLabel.Location = new System.Drawing.Point(130, 160);
             this.counterLabel.Name = "counterLabel";
-            this.counterLabel.Size = new System.Drawing.Size(410, 22);
-            this.counterLabel.Text = "0 ← Application.Session.Counter (this session only)";
+            this.counterLabel.Size = new System.Drawing.Size(314, 22);
+            this.counterLabel.Text = "0";
             //
-            this.liveSessionsLabel.AutoSize = false;
-            this.liveSessionsLabel.Font = new System.Drawing.Font("monospace", 9F);
-            this.liveSessionsLabel.ForeColor = System.Drawing.Color.FromArgb(21, 79, 143);
-            this.liveSessionsLabel.Location = new System.Drawing.Point(18, 238);
-            this.liveSessionsLabel.Name = "liveSessionsLabel";
-            this.liveSessionsLabel.Size = new System.Drawing.Size(646, 22);
-            this.liveSessionsLabel.Text = "live sessions: —";
+            // incrementButton
             //
-            this.lifecycleListBox.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lifecycleListBox.Font = new System.Drawing.Font("monospace", 9F);
-            this.lifecycleListBox.Location = new System.Drawing.Point(18, 266);
-            this.lifecycleListBox.Name = "lifecycleListBox";
-            this.lifecycleListBox.Size = new System.Drawing.Size(646, 206);
-            //
-            this.incrementButton.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
-            this.incrementButton.Location = new System.Drawing.Point(18, 482);
+            this.incrementButton.Location = new System.Drawing.Point(18, 228);
             this.incrementButton.Name = "incrementButton";
-            this.incrementButton.Size = new System.Drawing.Size(170, 36);
-            this.incrementButton.Text = "Session counter +1";
+            this.incrementButton.Size = new System.Drawing.Size(130, 36);
+            this.incrementButton.Text = "Counter +1";
             this.incrementButton.Click += new System.EventHandler(this.incrementButton_Click);
             //
-            this.backgroundButton.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
-            this.backgroundButton.Location = new System.Drawing.Point(196, 482);
+            // backgroundButton
+            //
+            this.backgroundButton.Location = new System.Drawing.Point(156, 228);
             this.backgroundButton.Name = "backgroundButton";
-            this.backgroundButton.Size = new System.Drawing.Size(170, 36);
+            this.backgroundButton.Size = new System.Drawing.Size(190, 36);
             this.backgroundButton.Text = "Background update";
-            this.backgroundButton.ToolTipText = "Captures Application.Current, waits 1.5 s on a task, then pushes with Application.Update(context, …).";
             this.backgroundButton.Click += new System.EventHandler(this.backgroundButton_Click);
             //
-            this.faultButton.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left;
-            this.faultButton.Location = new System.Drawing.Point(374, 482);
-            this.faultButton.Name = "faultButton";
-            this.faultButton.Size = new System.Drawing.Size(170, 36);
-            this.faultButton.Text = "Background fault";
-            this.faultButton.ToolTipText = "The task throws: caught inside, logged with the session id, safe message pushed.";
-            this.faultButton.Click += new System.EventHandler(this.faultButton_Click);
+            // openSessionButton
             //
-            // tabHealth  (M07 · real-time health, configuration and the production checklist)
+            this.openSessionButton.Location = new System.Drawing.Point(18, 272);
+            this.openSessionButton.Name = "openSessionButton";
+            this.openSessionButton.Size = new System.Drawing.Size(190, 36);
+            this.openSessionButton.Text = "Open second window";
+            this.openSessionButton.Click += new System.EventHandler(this.openSessionButton_Click);
+            //
+            // liveSessionsLabel
+            //
+            this.liveSessionsLabel.AutoSize = false;
+            this.liveSessionsLabel.Font = new System.Drawing.Font("monospace", 9F, System.Drawing.FontStyle.Bold);
+            this.liveSessionsLabel.ForeColor = System.Drawing.Color.FromArgb(21, 79, 143);
+            this.liveSessionsLabel.Location = new System.Drawing.Point(500, 18);
+            this.liveSessionsLabel.Name = "liveSessionsLabel";
+            this.liveSessionsLabel.Size = new System.Drawing.Size(464, 20);
+            this.liveSessionsLabel.Text = "Live sessions: —";
+            //
+            // lifecycleListBox
+            //
+            this.lifecycleListBox.Font = new System.Drawing.Font("monospace", 9F);
+            this.lifecycleListBox.Location = new System.Drawing.Point(500, 44);
+            this.lifecycleListBox.Name = "lifecycleListBox";
+            this.lifecycleListBox.Size = new System.Drawing.Size(464, 374);
+            //
+            // tabHealth
             //
             this.tabHealth.BackColor = System.Drawing.Color.White;
             this.tabHealth.Controls.Add(this.labelHealthTitle);
@@ -763,12 +767,16 @@ namespace TicketOpsLive
             this.tabHealth.Name = "tabHealth";
             this.tabHealth.Text = "Health · config";
             //
+            // labelHealthTitle
+            //
             this.labelHealthTitle.AutoSize = false;
             this.labelHealthTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
             this.labelHealthTitle.Location = new System.Drawing.Point(18, 12);
             this.labelHealthTitle.Name = "labelHealthTitle";
-            this.labelHealthTitle.Size = new System.Drawing.Size(646, 26);
-            this.labelHealthTitle.Text = "Real-time health  ·  refreshed by healthTimer every 2 s";
+            this.labelHealthTitle.Size = new System.Drawing.Size(400, 26);
+            this.labelHealthTitle.Text = "Real-Time Health";
+            //
+            // websocketModeLabel
             //
             this.websocketModeLabel.AutoSize = false;
             this.websocketModeLabel.Font = new System.Drawing.Font("default", 11F, System.Drawing.FontStyle.Bold);
@@ -777,12 +785,16 @@ namespace TicketOpsLive
             this.websocketModeLabel.Size = new System.Drawing.Size(320, 26);
             this.websocketModeLabel.Text = "—";
             //
+            // pollingLabel
+            //
             this.pollingLabel.AutoSize = false;
             this.pollingLabel.Font = new System.Drawing.Font("default", 11F, System.Drawing.FontStyle.Bold);
             this.pollingLabel.Location = new System.Drawing.Point(344, 44);
             this.pollingLabel.Name = "pollingLabel";
             this.pollingLabel.Size = new System.Drawing.Size(320, 26);
             this.pollingLabel.Text = "—";
+            //
+            // subscriptionCountLabel
             //
             this.subscriptionCountLabel.AutoSize = false;
             this.subscriptionCountLabel.Font = new System.Drawing.Font("monospace", 9F);
@@ -792,162 +804,54 @@ namespace TicketOpsLive
             this.subscriptionCountLabel.Size = new System.Drawing.Size(320, 22);
             this.subscriptionCountLabel.Text = "—";
             //
+            // updateRateLabel
+            //
             this.updateRateLabel.AutoSize = false;
             this.updateRateLabel.Font = new System.Drawing.Font("monospace", 9F);
             this.updateRateLabel.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
             this.updateRateLabel.Location = new System.Drawing.Point(344, 74);
             this.updateRateLabel.Name = "updateRateLabel";
-            this.updateRateLabel.Size = new System.Drawing.Size(320, 22);
+            this.updateRateLabel.Size = new System.Drawing.Size(620, 22);
             this.updateRateLabel.Text = "—";
+            //
+            // labelConfigTitle
             //
             this.labelConfigTitle.AutoSize = false;
             this.labelConfigTitle.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.labelConfigTitle.Location = new System.Drawing.Point(18, 106);
+            this.labelConfigTitle.Location = new System.Drawing.Point(18, 108);
             this.labelConfigTitle.Name = "labelConfigTitle";
-            this.labelConfigTitle.Size = new System.Drawing.Size(646, 24);
-            this.labelConfigTitle.Text = "Effective configuration  ·  Default.json + HealthCheck.json (read-only)";
+            this.labelConfigTitle.Size = new System.Drawing.Size(470, 24);
+            this.labelConfigTitle.Text = "Configuration";
+            //
+            // configListBox
             //
             this.configListBox.Font = new System.Drawing.Font("monospace", 9F);
-            this.configListBox.Location = new System.Drawing.Point(18, 132);
+            this.configListBox.Location = new System.Drawing.Point(18, 134);
             this.configListBox.Name = "configListBox";
-            this.configListBox.Size = new System.Drawing.Size(646, 160);
+            this.configListBox.Size = new System.Drawing.Size(470, 284);
+            //
+            // labelChecklistTitle
             //
             this.labelChecklistTitle.AutoSize = false;
             this.labelChecklistTitle.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.labelChecklistTitle.Location = new System.Drawing.Point(18, 300);
+            this.labelChecklistTitle.Location = new System.Drawing.Point(504, 108);
             this.labelChecklistTitle.Name = "labelChecklistTitle";
-            this.labelChecklistTitle.Size = new System.Drawing.Size(646, 24);
-            this.labelChecklistTitle.Text = "Performance checklist  ·  tick an item to log where this app satisfies it";
+            this.labelChecklistTitle.Size = new System.Drawing.Size(460, 24);
+            this.labelChecklistTitle.Text = "Production checklist";
             //
-            this.checklistBox.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
+            // checklistBox
+            //
             this.checklistBox.CheckOnClick = true;
-            this.checklistBox.Font = new System.Drawing.Font("monospace", 9F);
-            this.checklistBox.Location = new System.Drawing.Point(18, 326);
+            this.checklistBox.Location = new System.Drawing.Point(504, 134);
             this.checklistBox.Name = "checklistBox";
-            this.checklistBox.Size = new System.Drawing.Size(646, 194);
+            this.checklistBox.Size = new System.Drawing.Size(460, 284);
             //
-            // panelTrace  (Server → Browser live push trace)
-            //
-            this.panelTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.panelTrace.BackColor = System.Drawing.Color.White;
-            this.panelTrace.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.panelTrace.Controls.Add(this.labelTraceTitle);
-            this.panelTrace.Controls.Add(this.labelStatus);
-            this.panelTrace.Controls.Add(this.listTrace);
-            this.panelTrace.Controls.Add(this.labelBanner);
-            this.panelTrace.Controls.Add(this.labelState);
-            this.panelTrace.Controls.Add(this.labelTraceFooter);
-            this.panelTrace.Location = new System.Drawing.Point(748, 120);
-            this.panelTrace.Name = "panelTrace";
-            this.panelTrace.Size = new System.Drawing.Size(570, 568);
-            //
-            this.labelTraceTitle.AutoSize = false;
-            this.labelTraceTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.labelTraceTitle.Location = new System.Drawing.Point(20, 12);
-            this.labelTraceTitle.Name = "labelTraceTitle";
-            this.labelTraceTitle.Size = new System.Drawing.Size(330, 28);
-            this.labelTraceTitle.Text = "Server → Browser  ·  live push trace";
-            //
-            this.labelStatus.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.labelStatus.AutoSize = false;
-            this.labelStatus.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.labelStatus.ForeColor = System.Drawing.Color.FromArgb(31, 157, 87);
-            this.labelStatus.Location = new System.Drawing.Point(356, 14);
-            this.labelStatus.Name = "labelStatus";
-            this.labelStatus.Size = new System.Drawing.Size(194, 24);
-            this.labelStatus.Text = "● ready";
-            this.labelStatus.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
-            this.listTrace.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.listTrace.Font = new System.Drawing.Font("monospace", 9F);
-            this.listTrace.Location = new System.Drawing.Point(20, 46);
-            this.listTrace.Name = "listTrace";
-            this.listTrace.Size = new System.Drawing.Size(530, 350);
-            //
-            this.labelBanner.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.labelBanner.AutoSize = false;
-            this.labelBanner.BackColor = System.Drawing.Color.FromArgb(253, 236, 234);
-            this.labelBanner.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.labelBanner.ForeColor = System.Drawing.Color.FromArgb(178, 59, 39);
-            this.labelBanner.Location = new System.Drawing.Point(20, 404);
-            this.labelBanner.Name = "labelBanner";
-            this.labelBanner.Padding = new Wisej.Web.Padding(12, 0, 12, 0);
-            this.labelBanner.Size = new System.Drawing.Size(530, 44);
-            this.labelBanner.Text = "";
-            this.labelBanner.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.labelBanner.Visible = false;
-            //
-            this.labelState.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.labelState.AutoSize = false;
-            this.labelState.Font = new System.Drawing.Font("monospace", 9F);
-            this.labelState.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelState.Location = new System.Drawing.Point(20, 452);
-            this.labelState.Name = "labelState";
-            this.labelState.Size = new System.Drawing.Size(530, 82);
-            this.labelState.Text = "";
-            this.labelState.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            //
-            this.labelTraceFooter.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.labelTraceFooter.AutoSize = false;
-            this.labelTraceFooter.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.labelTraceFooter.Location = new System.Drawing.Point(20, 536);
-            this.labelTraceFooter.Name = "labelTraceFooter";
-            this.labelTraceFooter.Size = new System.Drawing.Size(530, 22);
-            this.labelTraceFooter.Text = "→ push = Application.Update   ·   ← request = the browser asked   ·   • server = decision";
-            //
-            // panelActions
-            //
-            this.panelActions.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.panelActions.Controls.Add(this.startButton);
-            this.panelActions.Controls.Add(this.stopButton);
-            this.panelActions.Controls.Add(this.openSessionButton);
-            this.panelActions.Controls.Add(this.exitButton);
-            this.panelActions.Controls.Add(this.clearButton);
-            this.panelActions.Location = new System.Drawing.Point(30, 700);
-            this.panelActions.Name = "panelActions";
-            this.panelActions.Size = new System.Drawing.Size(1288, 44);
-            //
-            this.startButton.Location = new System.Drawing.Point(0, 4);
-            this.startButton.Name = "startButton";
-            this.startButton.Size = new System.Drawing.Size(160, 36);
-            this.startButton.Text = "▶ Start heartbeat";
-            this.startButton.ToolTipText = "One push per second from a task: clock, load, activity. A second click is refused.";
-            this.startButton.Click += new System.EventHandler(this.startButton_Click);
-            //
-            this.stopButton.Enabled = false;
-            this.stopButton.Location = new System.Drawing.Point(168, 4);
-            this.stopButton.Name = "stopButton";
-            this.stopButton.Size = new System.Drawing.Size(100, 36);
-            this.stopButton.Text = "■ Stop";
-            this.stopButton.Click += new System.EventHandler(this.stopButton_Click);
-            //
-            this.openSessionButton.Location = new System.Drawing.Point(292, 4);
-            this.openSessionButton.Name = "openSessionButton";
-            this.openSessionButton.Size = new System.Drawing.Size(200, 36);
-            this.openSessionButton.Text = "Open another session ↗";
-            this.openSessionButton.ToolTipText = "A second tab: same ClientId (the browser), a new SessionId, its own page and counters.";
-            this.openSessionButton.Click += new System.EventHandler(this.openSessionButton_Click);
-            //
-            this.exitButton.Location = new System.Drawing.Point(500, 4);
-            this.exitButton.Name = "exitButton";
-            this.exitButton.Size = new System.Drawing.Size(170, 36);
-            this.exitButton.Text = "End this session";
-            this.exitButton.ToolTipText = "Application.Exit() → ApplicationExit runs the one cleanup: hub and registry unsubscribed, loops stopped.";
-            this.exitButton.Click += new System.EventHandler(this.exitButton_Click);
-            //
-            this.clearButton.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
-            this.clearButton.Location = new System.Drawing.Point(1178, 4);
-            this.clearButton.Name = "clearButton";
-            this.clearButton.Size = new System.Drawing.Size(110, 36);
-            this.clearButton.Text = "Clear trace";
-            this.clearButton.Click += new System.EventHandler(this.clearButton_Click);
-            //
-            // refreshTimer  (UI cadence of the dashboard — a Component with no visual surface)
+            // refreshTimer
             //
             this.refreshTimer.Interval = 1000;
             this.refreshTimer.Tick += new System.EventHandler(this.refreshTimer_Tick);
             //
-            // healthTimer  (refreshes the health snapshot every 2 s)
+            // healthTimer
             //
             this.healthTimer.Interval = 2000;
             this.healthTimer.Tick += new System.EventHandler(this.healthTimer_Tick);
@@ -957,11 +861,9 @@ namespace TicketOpsLive
             this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
             this.Controls.Add(this.statusPanel);
             this.Controls.Add(this.featureTabs);
-            this.Controls.Add(this.panelTrace);
-            this.Controls.Add(this.panelActions);
             this.Name = "MainPage";
-            this.Size = new System.Drawing.Size(1348, 760);
-            this.Text = "TicketOps Live — Production Review";
+            this.Size = new System.Drawing.Size(1040, 600);
+            this.Text = "TicketOps Live";
             this.Load += new System.EventHandler(this.MainPage_Load);
             this.statusPanel.ResumeLayout(false);
             this.tabImport.ResumeLayout(false);
@@ -971,48 +873,41 @@ namespace TicketOpsLive
             this.tabHealth.ResumeLayout(false);
             this.diagnosticsGroupBox.ResumeLayout(false);
             this.featureTabs.ResumeLayout(false);
-            this.panelTrace.ResumeLayout(false);
-            this.panelActions.ResumeLayout(false);
             this.ResumeLayout(false);
         }
 
         #endregion
 
         private Wisej.Web.Panel statusPanel;
-        private Wisej.Web.Label labelStripCaption;
         private Wisej.Web.Label clockLabel;
         private Wisej.Web.Label connectionLabel;
         private Wisej.Web.Label activityLabel;
         private Wisej.Web.Label labelLoadCaption;
         private Wisej.Web.ProgressBar serverLoadBar;
         private Wisej.Web.Label loadValueLabel;
+        private Wisej.Web.Button startButton;
+        private Wisej.Web.Button stopButton;
         private Wisej.Web.TabControl featureTabs;
         private Wisej.Web.TabPage tabImport;
         private Wisej.Web.TabPage tabBoard;
         private Wisej.Web.TabPage tabCadence;
         private Wisej.Web.TabPage tabSession;
         private Wisej.Web.TabPage tabHealth;
-        private Wisej.Web.Label jobIdLabel;
-        private Wisej.Web.Label elapsedLabel;
         private Wisej.Web.Label importStatusLabel;
+        private Wisej.Web.Label elapsedLabel;
         private Wisej.Web.ProgressBar importProgressBar;
-        private Wisej.Web.Label labelRecordsCaption;
         private Wisej.Web.Label recordsImportedLabel;
-        private Wisej.Web.CheckBox failAt87CheckBox;
         private Wisej.Web.ListBox importLogListBox;
         private Wisej.Web.Button startImportButton;
         private Wisej.Web.Button cancelImportButton;
+        private Wisej.Web.Button failAt87Button;
         private Wisej.Web.Label labelTenantCaption;
         private Wisej.Web.ComboBox tenantComboBox;
-        private Wisej.Web.Label subscribersLabel;
-        private Wisej.Web.DataGridView ticketsGrid;
-        private Wisej.Web.Label selectedLabel;
         private Wisej.Web.CheckBox escalatedOnlyCheckBox;
-        private Wisej.Web.ListBox notificationsList;
+        private Wisej.Web.DataGridView ticketsGrid;
         private Wisej.Web.Label notificationCountLabel;
-        private Wisej.Web.Label filteredOutLabel;
+        private Wisej.Web.ListBox notificationsList;
         private Wisej.Web.Button publishButton;
-        private Wisej.Web.Button publishOtherButton;
         private Wisej.Web.Button escalateButton;
         private Wisej.Web.Button newTicketsButton;
         private Wisej.Web.Button subscribeButton;
@@ -1030,11 +925,8 @@ namespace TicketOpsLive
         private Wisej.Web.Label eventsReceivedLabel;
         private Wisej.Web.Label labelUpdatesCaption;
         private Wisej.Web.Label updatesAppliedLabel;
-        private Wisej.Web.Label labelSkippedCaption;
-        private Wisej.Web.Label skippedTicksLabel;
         private Wisej.Web.Label labelLastAppliedCaption;
         private Wisej.Web.Label lastAppliedLabel;
-        private Wisej.Web.Label labelCadenceHint;
         private Wisej.Web.GroupBox diagnosticsGroupBox;
         private Wisej.Web.Label labelTimeCaption;
         private Wisej.Web.Label timeLabel;
@@ -1048,11 +940,11 @@ namespace TicketOpsLive
         private Wisej.Web.Label threadLabel;
         private Wisej.Web.Label labelCounterCaption;
         private Wisej.Web.Label counterLabel;
-        private Wisej.Web.Label liveSessionsLabel;
-        private Wisej.Web.ListBox lifecycleListBox;
         private Wisej.Web.Button incrementButton;
         private Wisej.Web.Button backgroundButton;
-        private Wisej.Web.Button faultButton;
+        private Wisej.Web.Button openSessionButton;
+        private Wisej.Web.Label liveSessionsLabel;
+        private Wisej.Web.ListBox lifecycleListBox;
         private Wisej.Web.Label labelHealthTitle;
         private Wisej.Web.Label websocketModeLabel;
         private Wisej.Web.Label pollingLabel;
@@ -1062,19 +954,6 @@ namespace TicketOpsLive
         private Wisej.Web.ListBox configListBox;
         private Wisej.Web.Label labelChecklistTitle;
         private Wisej.Web.CheckedListBox checklistBox;
-        private Wisej.Web.Label labelBanner;
-        private Wisej.Web.Label labelState;
-        private Wisej.Web.Panel panelTrace;
-        private Wisej.Web.Label labelTraceTitle;
-        private Wisej.Web.Label labelStatus;
-        private Wisej.Web.ListBox listTrace;
-        private Wisej.Web.Label labelTraceFooter;
-        private Wisej.Web.Panel panelActions;
-        private Wisej.Web.Button startButton;
-        private Wisej.Web.Button stopButton;
-        private Wisej.Web.Button openSessionButton;
-        private Wisej.Web.Button exitButton;
-        private Wisej.Web.Button clearButton;
         private Wisej.Web.Timer refreshTimer;
         private Wisej.Web.Timer healthTimer;
     }

@@ -26,7 +26,6 @@ namespace TicketOps.Services
 
         public async Task<IReadOnlyList<Ticket>> GetOpenTicketsAsync()
         {
-            _log.Info(LogLayer.Service, "TicketService.GetOpenTicketsAsync", "→ ITicketRepository.GetAllAsync()");
             var all = await _repository.GetAllAsync();
             return all.Where(t => t.Status != TicketStatus.Closed)
                       .OrderByDescending(t => t.Priority)
@@ -34,10 +33,9 @@ namespace TicketOps.Services
                       .ToList();
         }
 
-        public async Task<int> CountAsync()
+        public Task<int> CountAsync()
         {
-            _log.Info(LogLayer.Service, "TicketService.CountAsync", "→ ITicketRepository.CountAsync() (request thread, store may be mid-import)");
-            return await _repository.CountAsync();
+            return _repository.CountAsync();
         }
     }
 }

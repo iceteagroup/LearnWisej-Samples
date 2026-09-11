@@ -8,7 +8,7 @@
   `WorkOrderRules` with the server-side role before any write. The editor's pre-check is a convenience; deleting it
   would change the UX, not the safety.
 - **No partial writes.** The order and its audit entry are staged in one `IWorkOrderTransaction` and committed once.
-  A commit failure rolls back and surfaces as an exception; `RowVersion` proves the row is untouched.
+  A commit failure rolls back and surfaces as an exception; `RowVersion` only moves on commit.
 - **Errors are collected and mapped.** Field and summary errors travel as data (`ValidationResult`) to one display
   method; unexpected failures are logged in full and shown as `Strings.SaveFailed` only.
 - **Rules are testable without a browser.** `ValidationTestCases` runs against the real validator and rules with a
@@ -32,9 +32,9 @@
 
 | Check | Result | Evidence |
 |---|---|---|
-| Every important rule is re-validated on the server | ✔ | `SaveAsync` step 1 + 2; **Bypass: crafted command** is rejected without ever touching the editor |
-| Writes are transactional — no path can leave the record half-saved | ✔ | `tx#n rolled back — 0 rows changed`, `re-read #2002 … unchanged, nothing partial` |
-| Failure paths are visible, logged, explained without leaking internals | ✔ | `sql01:1433` appears in the trace only; the banner shows `Strings.SaveFailed` |
+| Every important rule is re-validated on the server | ✔ | `SaveAsync` step 1 + 2; the role rule (cost above $2,500) is only enforced there |
+| Writes are transactional — no path can leave the record half-saved | ✔ | `IWorkOrderTransaction`: staged writes, one `CommitAsync`, `Dispose` rolls back |
+| Failure paths are visible, logged, explained without leaking internals | ✔ | exception details go to `ILog` only; the banner shows `Strings.SaveFailed` |
 | Business logic is not trapped in event handlers | ✔ | `WorkOrderEditor.cs` contains no rule about a work order; `grep -n "Threshold\|IsLegalTransition" Views/*.cs` finds nothing |
 | The screen remains usable in the Designer | ✔ | `WorkOrderEditor.Designer.cs` holds the whole layout, parameterless constructor present |
 | The deliverable can be reviewed without running the whole course | ✔ | this `docs/` folder + `README.md`; the app runs standalone on port 5105 |

@@ -13,20 +13,10 @@ using Wisej.Web;
 namespace OperationsConsole.Sections
 {
     /// <summary>
-    /// The <b>Orders</b> section — Module 5 · DataGridView Mastery.
-    /// <para>
-    /// One grid, two paths. The <b>bound path</b> puts a filtered working set through <c>ordersSource</c>
-    /// (a <see cref="BindingSource"/>) into <c>ordersGrid</c>, with <c>AutoGenerateColumns</c> off and six columns
-    /// defined on purpose. The <b>virtual path</b> hands the grid only a row count and answers
-    /// <c>CellValueNeeded</c> from <see cref="OrderCache"/>, which fetches whole pages through
-    /// <see cref="OrderService"/> and prefetches in <c>DataRead</c>. The filter strip switches between them without
-    /// changing what the user is looking at.
-    /// </para>
-    /// <para>
-    /// Everything a user can be told happens through the shell (<see cref="ConsoleLog"/>) and the strips composed
-    /// around the grid; every business decision happens in <see cref="OrderService"/>. The cell handlers below are
-    /// deliberately three lines long each — that is the lesson.
-    /// </para>
+    /// The <b>Orders</b> grid. The bound path puts a filtered working set through <c>ordersSource</c> into
+    /// <c>ordersGrid</c> with explicit columns; the virtual path hands the grid a row count and answers
+    /// <c>CellValueNeeded</c> from <see cref="OrderCache"/>. The filter strip switches between them. Every business
+    /// decision happens in <see cref="OrderService"/>.
     /// </summary>
     public partial class DataGridViewPage : UserControl, ISection
     {
@@ -34,7 +24,7 @@ namespace OperationsConsole.Sections
         private readonly OrderCache _orderCache;
         private readonly OrderFilter _filter = new OrderFilter();
 
-        /// <summary>How many rows the bound path is allowed to materialise before it says "narrow the filter".</summary>
+        /// <summary>How many rows the bound path materialises before it asks the user to narrow the filter.</summary>
         private const int BoundRowLimit = 250;
 
         private int _boundMatchCount;
@@ -53,15 +43,9 @@ namespace OperationsConsole.Sections
             ConfigureGrid();
             PopulateStatusFilter();
             ComposeGrid();
-            ApplyEditorChoice();
 
-            ConsoleLog.Add("OrdersService generated " + _orderService.TotalOrders + " orders in memory (bound path shows the filtered set, virtual path shows all of them)");
-            LoadOrders("section opened");
+            LoadOrders();
         }
-
-        // ------------------------------------------------------------------------------------------------------------
-        // ISection
-        // ------------------------------------------------------------------------------------------------------------
 
         /// <inheritdoc/>
         public string Title => "DataGridView";
@@ -69,23 +53,20 @@ namespace OperationsConsole.Sections
         /// <inheritdoc/>
         public void RefreshSection()
         {
-            // the shell's Refresh re-runs exactly what the filter strip currently asks for — nothing is reset behind
-            // the user's back, the cache is primed again and the "last refresh" stamp moves.
-            LoadOrdersAsync("RefreshSection()");
+            LoadOrdersAsync();
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Set-up: grid, filter strip, composition
+        // Set-up
         // ------------------------------------------------------------------------------------------------------------
 
-        /// <summary>Grid-wide settings that are behaviour rather than layout.</summary>
         private void ConfigureGrid()
         {
-            // AutoGenerateColumns stays off for good: the six columns in the designer are the screen's contract with
-            // the user. Add a property to OrderRow tomorrow and this grid does not move.
             ordersGrid.AutoGenerateColumns = false;
 
-            // the friendly empty state — the grid says it, so no message label has to be shown and hidden
+            // the custom editor: a MonthCalendar edits the due-date cells
+            colDueDate.Editor = dueDateCalendar;
+
             ordersGrid.NoDataMessage =
                 "<div style='padding:24px;text-align:center;color:#5a6b7d'>" +
                 "No orders match this filter.<br/>Clear the search box or pick another status.</div>";
@@ -101,54 +82,35 @@ namespace OperationsConsole.Sections
         }
 
         /// <summary>
-        /// The lab's composition step. The grid card holds three children; docking is applied from the last child to
-        /// the first, so the two strips have to sit <i>behind</i> the grid for them to span the full width and for the
-        /// Fill grid to take exactly what is left. <see cref="Control.SendToBack"/> and
-        /// <see cref="Control.BringToFront"/> say that in one line each — and the grid keeps its full API, because it
-        /// is a plain child of a Panel and not hidden inside a UserControl.
+        /// Docking is applied from the last child to the first, so the two strips go behind the grid (they span the
+        /// card) and the Fill grid comes to the front (it takes what is left).
         /// </summary>
         private void ComposeGrid()
         {
-            pnlFilterStrip.SendToBack();    // docked first  → Top strip spans the card
-            pnlGridStatus.SendToBack();     // docked next   → Bottom strip spans the card
-            ordersGrid.BringToFront();      // docked last   → Fill takes the space between them
-
-            ConsoleLog.Add("compose pnlGridCard · dock order = " + DescribeDockOrder(pnlGridCard));
-        }
-
-        /// <summary>The children of a container in the order docking is applied to them (last child first).</summary>
-        private static string DescribeDockOrder(Control parent)
-        {
-            var names = new List<string>();
-            for (var i = parent.Controls.Count - 1; i >= 0; i--)
-                names.Add(parent.Controls[i].Name + " (" + parent.Controls[i].Dock + ")");
-
-            return string.Join(" → ", names);
+            pnlFilterStrip.SendToBack();
+            pnlGridStatus.SendToBack();
+            ordersGrid.BringToFront();
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Loading — the success path, the progress path and the two failure paths
+        // Loading
         // ------------------------------------------------------------------------------------------------------------
 
-        /// <summary>
-        /// The loading state: the grid shows its loader, the commands are disabled, and the work happens after a short
-        /// wait so the state is actually visible. A real query would be awaited here instead of <c>Task.Delay</c>.
-        /// </summary>
-        private async void LoadOrdersAsync(string reason)
+        /// <summary>The loading state: the grid shows its loader and Apply is disabled while the orders load.</summary>
+        private async void LoadOrdersAsync()
         {
             if (_loading)
                 return;
 
             _loading = true;
             SetBusy(true);
-            ConsoleLog.Add("… loading orders (" + reason + ")");
-            ConsoleLog.Status("Loading orders…", StatusLevel.Warning);
-            Application.Update(this);            // push the loader before the wait
+            ShellStatus.Show("Loading orders…", StatusLevel.Warning);
+            Application.Update(this);
 
             try
             {
                 await Task.Delay(400);
-                LoadOrders(reason);
+                LoadOrders();
             }
             finally
             {
@@ -159,13 +121,9 @@ namespace OperationsConsole.Sections
         }
 
         /// <summary>Reads the filter strip and rebuilds the grid on whichever path is selected.</summary>
-        private void LoadOrders(string reason)
+        private void LoadOrders()
         {
             ReadFilterFromStrip();
-
-            ConsoleLog.Add("LoadOrders(" + reason + ") · " + (chkVirtualMode.Checked ? "virtual path" : "bound path") +
-                           " · " + _filter.Describe());
-            _orderService.ResetFetchCount();
 
             try
             {
@@ -176,9 +134,9 @@ namespace OperationsConsole.Sections
 
                 _lastRefresh = DateTime.Now;
             }
-            catch (OrderServiceException ex)
+            catch (OrderServiceException)
             {
-                ReportServiceFailure(ex);
+                ReportServiceFailure();
             }
 
             UpdateStatusStrip();
@@ -190,7 +148,7 @@ namespace OperationsConsole.Sections
             _filter.Status = cboStatus.SelectedItem as string ?? OrderFilter.AllStatuses;
         }
 
-        /// <summary>The bound path: a filtered working set, materialised once, handed to the BindingSource.</summary>
+        /// <summary>The bound path: a filtered working set, handed to the BindingSource.</summary>
         private void ShowBoundOrders()
         {
             LeaveVirtualMode();
@@ -201,27 +159,19 @@ namespace OperationsConsole.Sections
 
             if (page.Rows.Count == 0)
             {
-                ConsoleLog.Add("empty result — ordersGrid.NoDataMessage is what the user sees, not an exception");
-                ConsoleLog.Status("No orders match " + _filter.Describe() + " — clear the filter or search for something else.", StatusLevel.Warning);
+                ShellStatus.Show("No orders match " + _filter.Describe() + ".", StatusLevel.Warning);
             }
             else if (page.TotalCount > page.Rows.Count)
             {
-                // the boundary the module is about: the bound path is for a working set, not for everything
-                ConsoleLog.Add("bound path capped at " + BoundRowLimit + " rows (" + page.TotalCount + " match) — " +
-                               "binding the whole result would create one row object per row");
-                ConsoleLog.Status("Showing the first " + page.Rows.Count + " of " + page.TotalCount.ToString("N0") +
-                                  " matching orders — narrow the filter, or tick Virtual mode to scroll them all.", StatusLevel.Warning);
+                ShellStatus.Show("Showing the first " + page.Rows.Count + " of " + page.TotalCount.ToString("N0") +
+                                 " matching orders — narrow the filter, or tick Virtual mode to scroll them all.", StatusLevel.Warning);
             }
             else
             {
-                ConsoleLog.Status(page.Rows.Count + " orders on the bound path · " + _filter.Describe(), StatusLevel.Ok);
+                ShellStatus.Show(page.Rows.Count + " orders · " + _filter.Describe(), StatusLevel.Ok);
             }
         }
 
-        /// <summary>
-        /// The lab's binding method: columns are designed, the BindingSource holds the list, the grid holds the
-        /// BindingSource. Three lines, and nothing else in the screen knows how the rows were obtained.
-        /// </summary>
         private void BindOrders(IEnumerable<OrderRow> rows)
         {
             ordersGrid.AutoGenerateColumns = false;
@@ -229,10 +179,7 @@ namespace OperationsConsole.Sections
             ordersGrid.DataSource = ordersSource;
         }
 
-        /// <summary>
-        /// The virtual path: no rows are materialised at all. The grid is told how many rows exist and asks for the
-        /// values of the ones it actually shows.
-        /// </summary>
+        /// <summary>The virtual path: the grid is told how many rows exist and asks for the values it shows.</summary>
         private void ShowVirtualOrders()
         {
             ordersGrid.DataSource = null;
@@ -241,21 +188,15 @@ namespace OperationsConsole.Sections
             _orderCache.Reset(_filter);
 
             ordersGrid.VirtualMode = true;
-            colDueDate.ReadOnly = true;     // the cache is a read model; edits stay on the bound path (see docs/GridDecisions.md)
+            colDueDate.ReadOnly = true;     // the cache is a read model; edits stay on the bound path
 
             var count = _orderService.Count(_filter);
             ordersGrid.RowCount = count;
 
             if (count == 0)
-            {
-                ConsoleLog.Add("virtual path · RowCount = 0 — the same friendly empty state, no rows fetched");
-                ConsoleLog.Status("No orders match " + _filter.Describe() + " — clear the filter or search for something else.", StatusLevel.Warning);
-            }
+                ShellStatus.Show("No orders match " + _filter.Describe() + ".", StatusLevel.Warning);
             else
-            {
-                ConsoleLog.Add("virtual path · RowCount = " + count + ", rows created: 0 — values arrive through CellValueNeeded");
-                ConsoleLog.Status(count + " orders on the virtual path · " + _filter.Describe() + " · scroll and watch the fetch count", StatusLevel.Ok);
-            }
+                ShellStatus.Show(count.ToString("N0") + " orders (virtual mode) · " + _filter.Describe(), StatusLevel.Ok);
         }
 
         private void LeaveVirtualMode()
@@ -272,28 +213,20 @@ namespace OperationsConsole.Sections
         private void SetBusy(bool busy)
         {
             ordersGrid.ShowLoader = busy;
-            btnLoadOrders.Enabled = !busy;
             btnApply.Enabled = !busy;
-            btnClearFilter.Enabled = !busy;
-            btnOpenSelected.Enabled = !busy;
-            btnPushDueDate.Enabled = !busy;
-            btnPastDueDate.Enabled = !busy;
-            btnInjectUnsafeStatus.Enabled = !busy;
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // The composed status strip
+        // The status strip
         // ------------------------------------------------------------------------------------------------------------
 
         private void UpdateStatusStrip()
         {
             lblRowCount.Text = ordersGrid.VirtualMode
-                ? "Rows: " + ordersGrid.RowCount.ToString("N0") + " (virtual)"
-                : "Rows: " + ordersSource.Count.ToString("N0") + " of " + _boundMatchCount.ToString("N0") + " (bound)";
+                ? "Rows: " + ordersGrid.RowCount.ToString("N0")
+                : "Rows: " + ordersSource.Count.ToString("N0") + " of " + _boundMatchCount.ToString("N0");
 
-            lblCacheState.Text = ordersGrid.VirtualMode
-                ? "Cache: " + _orderCache.Describe()
-                : "Bound path — the whole filtered set is in memory";
+            lblCacheState.Text = ordersGrid.VirtualMode ? _orderCache.Describe() : "";
 
             lblLastRefresh.Text = "Last refresh: " + (_lastRefresh.HasValue ? _lastRefresh.Value.ToString("HH:mm:ss") : "—");
         }
@@ -303,22 +236,19 @@ namespace OperationsConsole.Sections
             if (order == null)
             {
                 lblSelectedOrder.Text = "Selected: —";
-                ConsoleLog.Record(null);
+                ShellStatus.Record(null);
                 return;
             }
 
             lblSelectedOrder.Text = "Selected: " + order.Number;
-            ConsoleLog.Record(order.Number);
+            ShellStatus.Record(order.Number);
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Grid events — each one hands the work to a named method
+        // Grid events
         // ------------------------------------------------------------------------------------------------------------
 
-        /// <summary>
-        /// Display only: the raw status becomes an encoded badge. The model still holds "On hold"; no rule is decided
-        /// here, and <c>WebUtility.HtmlEncode</c> makes sure text that came from a human is shown, never executed.
-        /// </summary>
+        /// <summary>Display only: the raw status becomes an encoded badge; the model value is untouched.</summary>
         private void ordersGrid_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             if (e.ColumnIndex < 0 || e.ColumnIndex >= ordersGrid.Columns.Count)
@@ -334,7 +264,6 @@ namespace OperationsConsole.Sections
             e.FormattingApplied = true;
         }
 
-        /// <summary>The badge markup. Encoded text, inline colours, nothing that can execute.</summary>
         private static string StatusBadge(string status)
         {
             string fore, back;
@@ -353,34 +282,23 @@ namespace OperationsConsole.Sections
                    fore + ";background-color:" + back + ";\">" + WebUtility.HtmlEncode(status) + "</span>";
         }
 
-        /// <summary>The whole large-data read path: one cell, answered by the cache.</summary>
+        /// <summary>The large-data read path: one cell, answered by the cache.</summary>
         private void ordersGrid_CellValueNeeded(object sender, DataGridViewCellValueEventArgs e)
         {
             e.Value = _orderCache.GetValue(e.RowIndex, e.ColumnIndex);
         }
 
-        /// <summary>
-        /// The documented hook for building the cache: the client says which block of rows it is about to read, so the
-        /// pages are in memory before the first <c>CellValueNeeded</c> of that block arrives.
-        /// </summary>
+        /// <summary>The client names the block of rows it is about to read, so the pages are fetched ahead of it.</summary>
         private void ordersGrid_DataRead(object sender, DataGridViewDataReadEventArgs e)
         {
-            var before = _orderCache.Fetches;
-            var ok = _orderCache.Prefetch(e.FirstIndex, e.LastIndex);
-
-            ConsoleLog.Add("DataRead rows " + e.FirstIndex + "–" + e.LastIndex + " → " +
-                           (_orderCache.Fetches - before) + " page fetch(es) · " + _orderCache.Describe());
-
-            if (!ok)
-                ReportServiceFailure(_orderCache.LastError);
+            if (!_orderCache.Prefetch(e.FirstIndex, e.LastIndex))
+                ReportServiceFailure();
 
             UpdateStatusStrip();
         }
 
         private void ordersGrid_SelectionChanged(object sender, EventArgs e)
         {
-            // the grid re-selects a row while it is being rebuilt; resolving an order then would only make the cache
-            // fetch a page nobody asked for
             if (_loading || _writingCell)
                 return;
 
@@ -388,24 +306,19 @@ namespace OperationsConsole.Sections
         }
 
         /// <summary>
-        /// The command column. Wisej.NET 4.1 raises <c>CellClick</c> — "fired when any part of a cell is clicked" —
-        /// where WinForms has a separate <c>CellContentClick</c>; the handler keeps the lab's name.
-        /// It reads the row's stable ID and calls the service. No business data is read out of the cell text.
+        /// The command column. Wisej.NET 4.1 raises <c>CellClick</c> where WinForms has <c>CellContentClick</c>; the
+        /// handler keeps the lab's name and calls the service by the row's order ID.
         /// </summary>
         private void ordersGrid_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex != colOpen.Index)
                 return;
 
-            ConsoleLog.Control(colOpen.Name);
+            ShellStatus.Control(colOpen.Name);
             OpenOrder(OrderNumberAt(e.RowIndex));
         }
 
-        /// <summary>
-        /// The custom editor's first half: copy the stored value into the editor. A <see cref="MonthCalendar"/> has no
-        /// change event the grid listens to, so the round trip is done by hand — this is the "editor that never
-        /// commits" bug, solved.
-        /// </summary>
+        /// <summary>Copies the stored due date into the MonthCalendar editor.</summary>
         private void ordersGrid_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             if (e.RowIndex < 0 || e.ColumnIndex != colDueDate.Index)
@@ -421,22 +334,14 @@ namespace OperationsConsole.Sections
             _editingOrderNumber = order.Number;
             _editingOriginalDueDate = order.DueDate;
 
-            if (chkCalendarEditor.Checked)
-            {
-                dueDateCalendar.SelectionStart = order.DueDate;
-                dueDateCalendar.SelectionEnd = order.DueDate;
-            }
+            dueDateCalendar.SelectionStart = order.DueDate;
+            dueDateCalendar.SelectionEnd = order.DueDate;
 
-            ConsoleLog.Control(colDueDate.Name);
-            ConsoleLog.Record(order.Number);
-            ConsoleLog.Add("CellBeginEdit " + order.Number + " · stored due date " + order.DueDate.ToString("yyyy-MM-dd") +
-                           " → " + (chkCalendarEditor.Checked ? "MonthCalendar (custom editor)" : "DateTimePicker column (built-in editor)"));
+            ShellStatus.Control(colDueDate.Name);
+            ShellStatus.Record(order.Number);
         }
 
-        /// <summary>
-        /// The custom editor's second half: take the edited value back out and let the service decide. Rejection is a
-        /// normal answer — the old value goes back into the cell and the user is told why.
-        /// </summary>
+        /// <summary>Takes the edited date out of the MonthCalendar and lets the service decide.</summary>
         private void ordersGrid_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             if (_writingCell)
@@ -451,188 +356,44 @@ namespace OperationsConsole.Sections
             if (string.IsNullOrEmpty(number))
                 return;
 
-            var edited = EditedDueDate(e.RowIndex, original);
-            ConsoleLog.Add("CellEndEdit " + number + " · editor returned " + edited.ToString("yyyy-MM-dd"));
-
-            if (edited.Date == original.Date)
-            {
-                ConsoleLog.Add("… unchanged — no service call");
+            var edited = dueDateCalendar.SelectionStart.Date;
+            if (edited == original.Date)
                 return;
-            }
 
             ApplyDueDate(number, edited, e.RowIndex, original);
         }
 
-        /// <summary>Where the edited value comes from: the custom editor when it is switched on, the cell otherwise.</summary>
-        private DateTime EditedDueDate(int rowIndex, DateTime fallback)
-        {
-            if (chkCalendarEditor.Checked)
-                return dueDateCalendar.SelectionStart.Date;
-
-            var value = ordersGrid.Rows[rowIndex].Cells[colDueDate.Index].Value;
-            if (value is DateTime date)
-                return date.Date;
-
-            DateTime parsed;
-            if (value != null && DateTime.TryParse(Convert.ToString(value), out parsed))
-                return parsed.Date;
-
-            return fallback;
-        }
-
         // ------------------------------------------------------------------------------------------------------------
-        // Commands — one path each, every one of them clickable
+        // Filter strip
         // ------------------------------------------------------------------------------------------------------------
-
-        private void btnLoadOrders_Click(object sender, EventArgs e)
-        {
-            ConsoleLog.Control(btnLoadOrders.Name);
-            LoadOrdersAsync("btnLoadOrders");
-        }
 
         private void btnApply_Click(object sender, EventArgs e)
         {
-            ConsoleLog.Control(btnApply.Name);
-            LoadOrdersAsync("btnApply · filter strip");
-        }
-
-        private void btnClearFilter_Click(object sender, EventArgs e)
-        {
-            ConsoleLog.Control(btnClearFilter.Name);
-            txtSearch.Text = "";
-            cboStatus.SelectedIndex = 0;
-            LoadOrdersAsync("btnClearFilter");
+            ShellStatus.Control(btnApply.Name);
+            LoadOrdersAsync();
         }
 
         private void chkVirtualMode_CheckedChanged(object sender, EventArgs e)
         {
-            ConsoleLog.Control(chkVirtualMode.Name);
-            ConsoleLog.Add(chkVirtualMode.Checked
-                ? "switching to the virtual path — VirtualMode = true, RowCount from the service, values through OrderCache"
-                : "switching to the bound path — the filtered set is materialised once into ordersSource");
-            LoadOrdersAsync("chkVirtualMode");
-        }
-
-        private void chkCalendarEditor_CheckedChanged(object sender, EventArgs e)
-        {
-            ConsoleLog.Control(chkCalendarEditor.Name);
-            ApplyEditorChoice();
-        }
-
-        /// <summary>
-        /// Assigns (or clears) the custom editor. <c>DataGridViewColumn.Editor</c> takes any control; clearing it puts
-        /// the typed <see cref="DataGridViewDateTimePickerColumn"/>'s own editor back, so both halves of the lab step
-        /// stay demonstrable side by side.
-        /// </summary>
-        private void ApplyEditorChoice()
-        {
-            colDueDate.Editor = chkCalendarEditor.Checked ? dueDateCalendar : null;
-
-            ConsoleLog.Add(chkCalendarEditor.Checked
-                ? "colDueDate.Editor = dueDateCalendar (MonthCalendar) — CellBeginEdit / CellEndEdit move the value"
-                : "colDueDate.Editor = null — the DataGridViewDateTimePickerColumn edits the cell itself");
-            ConsoleLog.Status(chkCalendarEditor.Checked
-                ? "Due-date cells are edited by a MonthCalendar; Tab, Enter or a click elsewhere commits."
-                : "Due-date cells are edited by the built-in date picker.", StatusLevel.Ok);
-        }
-
-        private void btnOpenSelected_Click(object sender, EventArgs e)
-        {
-            ConsoleLog.Control(btnOpenSelected.Name);
-
-            var order = CurrentOrder();
-            if (order == null)
-            {
-                ConsoleLog.Status("Select an order first — click a row, then Open.", StatusLevel.Warning);
-                return;
-            }
-
-            OpenOrder(order.Number);
-        }
-
-        private void btnPushDueDate_Click(object sender, EventArgs e)
-        {
-            ConsoleLog.Control(btnPushDueDate.Name);
-
-            var order = CurrentOrder();
-            if (order == null)
-            {
-                ConsoleLog.Status("Select an order first — click a row, then move its due date.", StatusLevel.Warning);
-                return;
-            }
-
-            // never before today: the same rule the service enforces, so the success path really succeeds
-            var start = order.DueDate < DateTime.Today ? DateTime.Today : order.DueDate;
-            ApplyDueDate(order.Number, start.AddDays(7), CurrentRowIndex(), order.DueDate);
-        }
-
-        private void btnPastDueDate_Click(object sender, EventArgs e)
-        {
-            ConsoleLog.Control(btnPastDueDate.Name);
-
-            var order = CurrentOrder();
-            if (order == null)
-            {
-                ConsoleLog.Status("Select an order first — click a row, then try the rejected edit.", StatusLevel.Warning);
-                return;
-            }
-
-            // deliberately invalid — the same call the in-cell editor makes, so the rejection is the real one
-            ApplyDueDate(order.Number, DateTime.Today.AddDays(-7), CurrentRowIndex(), order.DueDate);
-        }
-
-        private void btnInjectUnsafeStatus_Click(object sender, EventArgs e)
-        {
-            ConsoleLog.Control(btnInjectUnsafeStatus.Name);
-
-            var order = CurrentOrder();
-            if (order == null)
-            {
-                ConsoleLog.Status("Select an order first — the demo rewrites the status of the selected row.", StatusLevel.Warning);
-                return;
-            }
-
-            try
-            {
-                // what a careless import (or a hostile one) could put in a status field
-                _orderService.SetStatus(order.Number, "On hold <script>alert('xss')</script>");
-                RefreshCell(CurrentRowIndex(), colStatus.Index);
-
-                ConsoleLog.Add("status of " + order.Number + " now contains markup — CellFormatting encodes it, the badge shows the text, nothing runs");
-                ConsoleLog.Status("The unsafe status is displayed as text: WebUtility.HtmlEncode in CellFormatting is what makes AllowHtml safe.", StatusLevel.Warning);
-                new Toast("The markup is shown as text, not executed.", "icon-warning")
-                { AutoCloseDelay = 4000, Alignment = ContentAlignment.TopRight }.Show();
-            }
-            catch (OrderServiceException ex)
-            {
-                ReportServiceFailure(ex);
-            }
+            ShellStatus.Control(chkVirtualMode.Name);
+            LoadOrdersAsync();
         }
 
         private void chkSimulateFailure_CheckedChanged(object sender, EventArgs e)
         {
-            ConsoleLog.Control(chkSimulateFailure.Name);
-
             _orderService.SimulateFailure = chkSimulateFailure.Checked;
             _orderCache.ClearError();
-
-            ConsoleLog.Add(chkSimulateFailure.Checked
-                ? "OrderService.SimulateFailure = true — the next call throws; nothing on screen is destroyed"
-                : "OrderService.SimulateFailure = false — the service answers again (recovery: press Load orders)");
-            ConsoleLog.Status(chkSimulateFailure.Checked
-                ? "The orders service will fail on the next call."
-                : "The orders service is available again — press Load orders.", chkSimulateFailure.Checked ? StatusLevel.Warning : StatusLevel.Ok);
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Business calls — the only three places this screen talks to the service
+        // Business calls
         // ------------------------------------------------------------------------------------------------------------
 
         private void OpenOrder(string number)
         {
             if (string.IsNullOrEmpty(number))
             {
-                ConsoleLog.Status("That row is still loading — try again in a moment.", StatusLevel.Warning);
+                ShellStatus.Show("That row is still loading — try again in a moment.", StatusLevel.Warning);
                 return;
             }
 
@@ -641,26 +402,25 @@ namespace OperationsConsole.Sections
                 var order = _orderService.GetOrder(number);
                 if (order == null)
                 {
-                    ConsoleLog.Status("Order " + number + " is no longer available. Refresh the list.", StatusLevel.Warning);
+                    ShellStatus.Show("Order " + number + " is no longer available. Refresh the list.", StatusLevel.Warning);
                     return;
                 }
 
                 ShowSelectedOrder(order);
-                ConsoleLog.Status("Order " + order.Number + " · " + order.Customer + " · " + order.Status +
-                                  " · due " + order.DueDate.ToString("d") + " · " + order.Total.ToString("C2"), StatusLevel.Ok);
+                ShellStatus.Show("Order " + order.Number + " · " + order.Customer + " · " + order.Status +
+                                 " · due " + order.DueDate.ToString("d") + " · " + order.Total.ToString("C2"), StatusLevel.Ok);
                 new Toast("Opened " + order.Number + " — " + order.Customer, "icon-info")
                 { AutoCloseDelay = 3000, Alignment = ContentAlignment.TopRight }.Show();
             }
-            catch (OrderServiceException ex)
+            catch (OrderServiceException)
             {
-                ReportServiceFailure(ex);
+                ReportServiceFailure();
             }
         }
 
         /// <summary>
-        /// The one place a due date is written, whether the value came from the in-cell editor or from the command
-        /// row. Accepted → the cell keeps the new value; rejected → the stored value goes back and the user is told
-        /// why; the service unreachable → a friendly message and the grid is left exactly as it was.
+        /// Writes a due date through the service. Accepted → the cell keeps the new value; rejected → the stored value
+        /// goes back and the user is told why; the service unreachable → the grid is left as it was.
         /// </summary>
         private void ApplyDueDate(string number, DateTime dueDate, int rowIndex, DateTime storedDueDate)
         {
@@ -671,33 +431,26 @@ namespace OperationsConsole.Sections
                 if (result.Accepted)
                 {
                     WriteDueDateCell(rowIndex, dueDate);
-                    ConsoleLog.Add("✓ " + result.Message);
-                    ConsoleLog.Status(result.Message, StatusLevel.Ok);
+                    ShellStatus.Show(result.Message, StatusLevel.Ok);
                     new Toast(result.Message, "icon-check")
                     { AutoCloseDelay = 3000, Alignment = ContentAlignment.TopRight }.Show();
                 }
                 else
                 {
-                    WriteDueDateCell(rowIndex, storedDueDate);      // the edit is undone on screen, not just refused
-                    ConsoleLog.Add("✗ rejected edit — " + result.Message);
-                    ConsoleLog.Status(result.Message, StatusLevel.Error);
+                    WriteDueDateCell(rowIndex, storedDueDate);
+                    ShellStatus.Show(result.Message, StatusLevel.Error);
                     new Toast(result.Message, "icon-warning")
                     { AutoCloseDelay = 5000, Alignment = ContentAlignment.TopRight }.Show();
                 }
             }
-            catch (OrderServiceException ex)
+            catch (OrderServiceException)
             {
                 WriteDueDateCell(rowIndex, storedDueDate);
-                ReportServiceFailure(ex);
+                ReportServiceFailure();
             }
         }
 
-        /// <summary>
-        /// Puts a value back on screen. On the bound path the cell is written and the binding carries it to the row.
-        /// On the virtual path there is no cell object to write: the change lives in the service, so the cache is
-        /// dropped and the visible block is read again — a page fetch you can watch in the Event log, which is exactly
-        /// what a write does to a cached read model. The guard keeps <c>CellEndEdit</c> off our own write.
-        /// </summary>
+        /// <summary>Puts a value back on screen; the guard keeps <c>CellEndEdit</c> off our own write.</summary>
         private void WriteDueDateCell(int rowIndex, DateTime value)
         {
             if (rowIndex < 0)
@@ -707,7 +460,7 @@ namespace OperationsConsole.Sections
             try
             {
                 if (ordersGrid.VirtualMode)
-                    ReloadVirtualRows("a due date changed");
+                    ReloadVirtualRows();
                 else if (rowIndex < ordersGrid.Rows.Count)
                     ordersGrid.Rows[rowIndex].Cells[colDueDate.Index].Value = value;
             }
@@ -717,53 +470,20 @@ namespace OperationsConsole.Sections
             }
         }
 
-        /// <summary>Re-reads one cell after the model behind it changed.</summary>
-        private void RefreshCell(int rowIndex, int columnIndex)
-        {
-            if (rowIndex < 0)
-                return;
-
-            if (ordersGrid.VirtualMode)
-            {
-                ReloadVirtualRows("a status changed");
-            }
-            else if (rowIndex < ordersGrid.Rows.Count)
-            {
-                var order = ordersGrid.Rows[rowIndex].DataBoundItem as OrderRow;
-                if (order != null)
-                    ordersGrid.Rows[rowIndex].Cells[columnIndex].Value = OrderColumns.ValueOf(order, columnIndex);
-            }
-        }
-
-        /// <summary>
-        /// Throws the cached pages away and makes the grid ask for the visible block again. Dropping the whole cache
-        /// after a write is the safe default: a page is only a snapshot, and a stale row is worse than one fetch.
-        /// </summary>
-        private void ReloadVirtualRows(string reason)
+        /// <summary>Throws the cached pages away and makes the grid ask for the visible block again.</summary>
+        private void ReloadVirtualRows()
         {
             var count = ordersGrid.RowCount;
 
             _orderCache.Reset(_filter);
             ordersGrid.RowCount = 0;
             ordersGrid.RowCount = count;
-
-            ConsoleLog.Add("virtual path re-read (" + reason + ") — the cache was dropped, the visible block is fetched again");
         }
 
-        /// <summary>One friendly sentence for the user; the type and the message go to the Event log only.</summary>
-        private void ReportServiceFailure(Exception ex)
+        /// <summary>One friendly sentence for the user; no exception text.</summary>
+        private void ReportServiceFailure()
         {
-            ConsoleLog.Add("✗ the orders service did not answer — " + ex.GetType().Name);
-            ConsoleLog.Add("   " + ex.Message);
-            ReportServiceFailure((string)null);
-        }
-
-        private void ReportServiceFailure(string logged)
-        {
-            if (!string.IsNullOrEmpty(logged))
-                ConsoleLog.Add("✗ the orders service did not answer — " + logged);
-
-            ConsoleLog.Status("The orders service is not answering. The list on screen is unchanged — clear the simulated failure and press Load orders.", StatusLevel.Error);
+            ShellStatus.Show("The orders service is not answering. The list on screen is unchanged — try again in a moment.", StatusLevel.Error);
             new Toast("Orders could not be loaded. Please try again.", "icon-error")
             { AutoCloseDelay = 5000, Alignment = ContentAlignment.TopRight }.Show();
 
@@ -771,13 +491,11 @@ namespace OperationsConsole.Sections
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Row helpers — one place that turns a grid row index into an order, on either path
+        // Row helpers
         // ------------------------------------------------------------------------------------------------------------
 
         private int CurrentRowIndex()
         {
-            // CurrentRow works on both paths: in virtual mode the grid still hands out a row object for the current
-            // cell (DataGridViewRow.IsVirtual), it simply has no bound item behind it.
             var row = ordersGrid.CurrentRow;
             if (row != null)
                 return row.Index;

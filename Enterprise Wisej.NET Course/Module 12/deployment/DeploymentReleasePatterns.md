@@ -47,7 +47,7 @@ side by side, because they are the two halves of the same contract. The full del
 |---|---|---|
 | What requires sticky sessions? | Rich **in-process** session state: a Wisej.NET session lives in one node's memory, and its WebSocket stays open to that node. | `LoadBalancerNotes.md` |
 | Where are secrets stored? | In the platform's secret store, injected as `EnterpriseOps__*` environment variables at deploy time. Never in `appsettings*.json`, never in the image. | `../EnterpriseOps/docs/EnvironmentConfiguration.md` |
-| How do operations know a node is unhealthy? | `GET /healthz` answers 503 after a critical check fails; the balancer evicts it after `unhealthyThreshold` probes; the dashboard, the trace and the monitoring alert all say which check failed. | `../EnterpriseOps/docs/HealthCheck.md` |
+| How do operations know a node is unhealthy? | `GET /healthz` answers 503 after a critical check fails; the balancer evicts it after `unhealthyThreshold` probes; the dashboard, the server log and the monitoring alert all say which check failed. | `../EnterpriseOps/docs/HealthCheck.md` |
 
 ## Choosing a target
 

@@ -51,10 +51,10 @@ twelve line numbers, not "the import failed".
   and writes a `Security:` line when it happens.
 - **`Changed` event** for observers — raised on whatever thread changed the store, which is normally the
   queue worker and therefore has **no Wisej session**. Handlers must not touch controls.
-- **Row-level events are not history.** `Apply` records a history entry only when `progress.IsMilestone`
-  is true. A thousand rows do not belong in a status history.
+- **Milestones only.** The job publishes a milestone per batch, never per row, so the history stays short:
+  a thousand rows do not belong in a status history.
 - In production this is a table. Here it is a `Dictionary<Guid, JobRecord>` behind a lock, owned by the
-  **process** (`JobInfrastructure`) and not by any session — which is the whole reason a reopened page
+  **process** (`JobInfrastructure`) and not by any session — which is the whole reason a new session
   finds its job again.
 
 ## Evidence in the running app
@@ -62,7 +62,6 @@ twelve line numbers, not "the import failed".
 - Start `contoso_q2.csv`, then select the job: **Job detail** lists every transition with its timestamp —
   `Queued`, `Worker picked up IMP-…`, `Import started.`, `Validated 1,000 rows · 10 batches of 100.`,
   `Processed batch 1 of 10 …` and the final state. That list is `JobRecord.History`, not a UI log.
-- The grid shows only tenant `contoso`. The trace's first `Data:` line names how many jobs of other tenants
-  the store refused to return (the seeded `fabrikam` import is one of them).
-- Press **Reopen**: the page is disposed and rebuilt, and the new page prints
-  `UI → re-attached to IMP-… (Running · 60 %)`. The record was in the store the whole time.
+- The grid shows only tenant `contoso`; the seeded `fabrikam` import is in the store and never appears.
+- Close the browser tab mid-import and open the app again: the new session selects the running job and
+  toasts `While you were away: IMP-… reached 60%.` The record was in the store the whole time.

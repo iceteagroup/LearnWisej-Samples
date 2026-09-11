@@ -30,13 +30,6 @@ namespace EnterpriseOps.Services
 
         public IReadOnlyList<string> Diff() => ThemeMap.Diff(Baseline, Current);
 
-        /// <summary>The state right after the package upgrade: the 3.x theme folder is ignored by the 4.x engine.</summary>
-        public void ResetToUnmapped()
-        {
-            Current = _store.UnmappedAfterUpgrade();
-            _trace.Data($"ThemeStore → current theme = {Current.Name}");
-        }
-
         /// <summary>Fallback point "theme folder copy": the pre-step copy of Themes/Blue-2019 is back; the engine still shows its defaults until the mixin is mapped.</summary>
         public void RestoreFolderCopy()
         {

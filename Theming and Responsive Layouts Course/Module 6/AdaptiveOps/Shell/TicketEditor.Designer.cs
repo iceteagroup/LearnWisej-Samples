@@ -40,7 +40,6 @@ namespace AdaptiveOps.Shell
             this.lblMessage = new Wisej.Web.Label();
             this.btnSave = new Wisej.Web.Button();
             this.btnClose = new Wisej.Web.Button();
-            this.lblDetailsHint = new Wisej.Web.Label();
             this.SuspendLayout();
             //
             // lblDetailsTitle / lblDetailsSubtitle
@@ -170,18 +169,6 @@ namespace AdaptiveOps.Shell
             this.btnClose.Visible = false;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             //
-            // lblDetailsHint
-            //
-            this.lblDetailsHint.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
-            this.lblDetailsHint.AutoEllipsis = true;
-            this.lblDetailsHint.AutoSize = false;
-            this.lblDetailsHint.ForeColor = System.Drawing.Color.FromArgb(103, 112, 133);
-            this.lblDetailsHint.Location = new System.Drawing.Point(218, 532);
-            this.lblDetailsHint.Name = "lblDetailsHint";
-            this.lblDetailsHint.Size = new System.Drawing.Size(100, 32);
-            this.lblDetailsHint.Text = "Server-side validation";
-            this.lblDetailsHint.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            //
             // TicketEditor
             //
             // MinimumSize keeps the form usable when the details region is docked under the grid on Tablet
@@ -204,7 +191,6 @@ namespace AdaptiveOps.Shell
             this.Controls.Add(this.lblMessage);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnClose);
-            this.Controls.Add(this.lblDetailsHint);
             this.MinimumSize = new System.Drawing.Size(0, 440);
             this.Name = "TicketEditor";
             this.Size = new System.Drawing.Size(330, 576);
@@ -230,6 +216,5 @@ namespace AdaptiveOps.Shell
         private Wisej.Web.Label lblMessage;
         private Wisej.Web.Button btnSave;
         private Wisej.Web.Button btnClose;
-        private Wisej.Web.Label lblDetailsHint;
     }
 }

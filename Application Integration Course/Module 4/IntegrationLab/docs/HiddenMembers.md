@@ -72,14 +72,12 @@ needs inside the override).
 | `Value`, `Minimum`, `Maximum`, `Caption`, `AnimationEnabled`, `Threshold` | public, categorized, described | the API |
 | `ValueChanged`, `ThresholdExceeded`, `WidgetError` | public events | the API |
 | `IsLoaded` | inherited, visible | harmless, occasionally useful ("has the browser created the vendor yet?") |
-| `Trace` | public event, `[Browsable(false)]` | diagnostics for labs and support; not in the Properties window |
-| `ToJson()` | public method | diagnostics: the compact JSON the adapter receives |
 | `VendorPackageName`, `VendorPackageSource`, `VendorVersion` | public constants | read-only facts, useful for a health check page or a deployment script |
 | `Size`, `Location`, `Anchor`, `Visible`, … | inherited from `Control` | ordinary layout; a gauge is a control like any other |
 
 ## Evidence in the running app
 
-- Open `DemoPage.Designer.cs`: the two gauge sections contain only `Caption`, `Location`, `Name`, `Size`,
-  `Value` (plus `Maximum`, `Threshold` for the second) and event hook-ups.
+- Open `DemoPage.Designer.cs`: the gauge section contains only `Caption`, `Location`, `Name`, `Size`,
+  `Value` and event hook-ups.
 - Open `DemoPage.cs`: no `Options`, no `Call`, no `InitScript`, no `Packages` (see `DemoPage.md`).
 - Try to add `this.simpleGauge1.InitScript = "x";` to `DemoPage.cs`: it does not compile.

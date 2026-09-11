@@ -43,7 +43,7 @@ namespace EnterpriseOps.Data
             return row.Version;
         }
 
-        /// <summary>Compensation for the anti-pattern demo and for a failed persist: put the row back.</summary>
+        /// <summary>Compensation for a failed persist: put the row back.</summary>
         public void Revert(int id, WorkOrderStatus status, int version)
         {
             var row = Find(id);

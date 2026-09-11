@@ -48,9 +48,9 @@ Conventions used in `WorkOrderValidator` and `WorkOrderRules`:
 
 When the store refuses the commit, the log and the user get two different things:
 
-| Goes to `ILog.Error` (the trace) | Goes to the screen |
+| Goes to `ILog.Error` (the server log) | Goes to the screen |
 |---|---|
-| `DataOutageException` type, `timeout connecting to sql01:1433 (TicketOps.dbo.WorkOrders …)`, which pipeline step failed, `tx#n rolled back` | `Strings.SaveFailed` — one calm sentence that promises the edits are still there and says what to do |
+| the exception type and message (host names, table names, the stack), `tx#n rolled back` | `Strings.SaveFailed` — one calm sentence that promises the edits are still there and says what to do |
 
 Why it matters: host names, table names and stack traces are a security leak and give the user nothing they can act
 on. `Strings.cs` is the only source of user-facing failure text; handlers never show `ex.Message`.
@@ -59,22 +59,22 @@ on. `Strings.cs` is the only source of user-facing failure text; handlers never 
 
 After a failed save the editor must be exactly as the user left it:
 
-- `ReportFailure` changes the status line, the banner and shows a toast — it never resets a field.
-- `VerifyNothingPartialAsync` reloads the **grid** to prove the store did not change, but it suppresses the
-  selection-changed fill (`_loadingGrid`), so the editor keeps the unsaved values. The message says so: "Your changes are still here".
-- Recovery is the same button (**Recover the data store**): it retries the very same command, and the success path
-  takes over — glyphs cleared, panel hidden, status "● Work order #2002 saved.", grid shows `v2`.
+- `ReportFailure` changes the status line, the banner and shows a toast — it never resets a field. The message says
+  so: "Your changes are still here".
+- Recovery is the same **Save** button: it sends the very same values again, and the success path takes over —
+  glyphs cleared, panel hidden, status "● Work order #2002 saved.".
 
 ## 5. Do not confuse hints with guards
 
 A disabled button, a hidden Cost field, a spin box `Maximum` — all are UX hints. In this app the cost spin box
 deliberately allows 1,000,000 and the hours spin box 100,000, so the reviewer can see the *rule* reject the value,
-not the control. The **Bypass: crafted command** button drives the point home: a command that never touched the
-editor is rejected by the server's role rule, and the summary panel explains why in the same words a normal save would use.
+not the control. The role rule makes the same point: as a Technician, a cost of 9,500 passes every field check
+(it is in range) and is still rejected by the server, and the summary panel explains why in plain words.
 
 ## Evidence
 
-- **Save with empty title**: red glyph beside Title (hover: "Title is required."), panel "1 problem needs attention · • Title — Title is required.", status **● 1 problem found — nothing was saved**, no `[DATA] tx#…` line.
-- **Save 1,200 hours**: glyph beside Estimated hours; panel "• Hours — Hours must be between 0 and 999."
-- **Edit closed #2006**: no glyph anywhere (every field is valid); panel "• Closed work orders cannot be edited. Ask a Supervisor to reopen it."
-- **Simulate write outage**: no glyph, no panel; red banner + toast with `Strings.SaveFailed`, status **● Save failed — your changes are still here**; the trace holds the `sql01:1433` detail the screen never showed.
+- Clear the title, **Save**: red glyph beside Title (hover: "Title is required."), panel "1 problem needs attention · • Title — Title is required.", status **● 1 problem found — nothing was saved**.
+- Set 1,200 estimated hours, **Save**: glyph beside Estimated hours; panel "• Hours — Hours must be between 0 and 999."
+- Select closed #2006, change the title, **Save**: no glyph anywhere (every field is valid); panel "• Closed work orders cannot be edited. Ask a Supervisor to reopen it."
+- As a Technician, set the cost of #2002 to 9,500, **Save**: no glyph; panel "• Only a Supervisor may set a cost above $2,500."
+- A failed commit: no glyph, no panel; red banner + toast with `Strings.SaveFailed`, status **● Save failed — your changes are still here**; the detail is in the server log only.

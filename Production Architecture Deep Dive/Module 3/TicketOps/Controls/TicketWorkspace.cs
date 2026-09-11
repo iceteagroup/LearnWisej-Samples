@@ -27,7 +27,7 @@ namespace TicketOps.Controls
     }
 
     /// <summary>
-    /// TicketOps Console · the responsive Ticket Workspace (Module 3).
+    /// TicketOps Console · the responsive Ticket Workspace.
     ///
     /// One UserControl, four regions, one engine per container:
     ///   outer shell   Dock          header Top · toolbar Top · navigation Left · status Bottom · body Fill
@@ -56,7 +56,6 @@ namespace TicketOps.Controls
         private int? _selectedId;
         private string _activeChip;
         private string _appliedProfile = ProfileDesktop;
-        private string _pinnedProfile;
         private bool _phoneShowsTask;
         private bool _suppressSelection;
 
@@ -92,18 +91,9 @@ namespace TicketOps.Controls
         /// <summary>Raised whenever the workspace wants the host's StatusBanner updated.</summary>
         public event EventHandler<WorkspaceStatusEventArgs> StatusChanged;
 
-        /// <summary>Raised after a profile layout was applied (real or preview); the argument is the profile name.</summary>
-        public event EventHandler<string> ProfileApplied;
-
-        /// <summary>The profile whose layout is currently on screen.</summary>
-        public string AppliedProfile => _appliedProfile;
-
-        /// <summary>True while a preview pins the layout and real profile changes are ignored.</summary>
-        public bool IsPinned => _pinnedProfile != null;
-
         /// <summary>
-        /// Gives a Designer-placed instance its dependencies (the same way the trace panel gets its log) and
-        /// starts following the session's responsive profile. Unsubscribed in Dispose (Designer file).
+        /// Gives a Designer-placed instance its dependencies and starts following the session's responsive
+        /// profile. Unsubscribed in Dispose (Designer file).
         /// </summary>
         public void Attach(ITicketService tickets, ILog log)
         {
@@ -119,67 +109,28 @@ namespace TicketOps.Controls
         }
 
         /// <summary>Loads the grid and the activity feed through the service (called once from the host's Load).</summary>
-        public Task LoadAsync() => RefreshAsync("initial load");
+        public Task LoadAsync() => RefreshAsync();
 
-        /// <summary>Apply the browser's real profile and follow it from now on.</summary>
-        public void FollowBrowser()
+        /// <summary>Applies the layout of the browser's current profile.</summary>
+        public void ApplyActiveProfile()
         {
-            _pinnedProfile = null;
             ApplyResponsiveProfile(Application.ActiveProfile.Name);
-        }
-
-        /// <summary>Apply a profile's layout on demand and ignore real changes until <see cref="FollowBrowser"/>.</summary>
-        public void PreviewProfile(string profileName)
-        {
-            _pinnedProfile = profileName;
-            ApplyResponsiveProfile(profileName);
-        }
-
-        /// <summary>"selected #1003, draft title "…", chip High" — the state that must survive a profile switch.</summary>
-        public string DescribeState()
-        {
-            string selected = _selectedId.HasValue ? "#" + _selectedId.Value : "none";
-            string chip = _activeChip ?? "none";
-            return $"selected {selected}, draft title \"{this.txtTitle.Text}\", search \"{this.searchTickets.Query}\", chip {chip}, side tab {this.tabActivity.SelectedIndex}";
         }
 
         #endregion
 
-        #region Client profile → layout (the module's core)
+        #region Client profile → layout
 
         private void Application_ResponsiveProfileChanged(object sender, ResponsiveProfileChangedEventArgs e)
         {
             try
             {
-                string previous = e.PreviousProfile != null ? e.PreviousProfile.Name : "?";
-                string current = e.CurrentProfile != null ? e.CurrentProfile.Name : Application.ActiveProfile.Name;
-                var size = Application.Browser.Size;
-                _log.Info(LogLayer.Client, "TicketWorkspace.ResponsiveProfileChanged",
-                    $"{previous} → {current} · browser {size.Width}×{size.Height} px · device {Application.Browser.Device}");
-
-                if (_pinnedProfile != null)
-                {
-                    _log.Info(LogLayer.UI, "TicketWorkspace.ResponsiveProfileChanged",
-                        $"preview pinned to {_pinnedProfile} — the browser's {current} layout waits until \"Live\" is chosen");
-                    return;
-                }
-
                 OnResponsiveProfileChanged(sender, e);
             }
             catch (Exception ex)
             {
                 ReportFailure("TicketWorkspace.ResponsiveProfileChanged", ex);
             }
-        }
-
-        /// <summary>
-        /// The control-level twin of the Application event (wired in the Designer). It only reports, so the
-        /// reviewer can see whether Control.ResponsiveProfileChanged fires for a UserControl as well.
-        /// </summary>
-        private void TicketWorkspace_ResponsiveProfileChanged(object sender, ResponsiveProfileChangedEventArgs e)
-        {
-            string current = e.CurrentProfile != null ? e.CurrentProfile.Name : "?";
-            _log.Info(LogLayer.Client, "TicketWorkspace.Control.ResponsiveProfileChanged", $"control-level event fired too → {current}");
         }
 
         /// <summary>The lab's handler: read the active profile, delegate to one named arrangement.</summary>
@@ -189,19 +140,13 @@ namespace TicketOps.Controls
         }
 
         /// <summary>
-        /// Maps a profile name to an arrangement of the SAME panels. The switch reads like the table in the
-        /// applied guide; anything longer than a property toggle lives in a named method.
+        /// Maps a profile name to an arrangement of the SAME panels. Anything longer than a property toggle
+        /// lives in a named method.
         /// </summary>
         public void ApplyResponsiveProfile(string profileName)
         {
-            string stateBefore = DescribeState();
-
             switch (profileName)
             {
-                case ProfileDesktop:
-                    ShowAllPanels();            // full layout: nav, list, detail and activity at once
-                    break;
-
                 case ProfileTablet:
                     CollapseActivityToTab();    // same feed, reachable through a tab to reclaim width
                     break;
@@ -211,23 +156,14 @@ namespace TicketOps.Controls
                     break;
 
                 default:
-                    // A name the JSON does not define (or a built-in one such as "Small Desktop"): never leave
-                    // the screen half-arranged — fall back to the desktop layout and say so.
-                    _log.Warn(LogLayer.UI, "TicketWorkspace.ApplyResponsiveProfile",
-                        $"\"{profileName}\" is not Desktop / Tablet / Phone — not defined in ClientProfiles.json → desktop layout as the safe fallback");
-                    ShowAllPanels();
-                    _appliedProfile = profileName;
-                    this.lblStatus.Text = $"Active profile: {profileName} (fallback: desktop layout)";
-                    Notify("unknown profile", StatusKind.Warning, string.Format(Strings.UnknownProfile, profileName));
-                    ProfileApplied?.Invoke(this, profileName);
-                    return;
+                    // Desktop, or a name the JSON does not define (e.g. the built-in "Small Desktop"):
+                    // never leave the screen half-arranged.
+                    ShowAllPanels();            // full layout: nav, list, detail and activity at once
+                    break;
             }
 
             _appliedProfile = profileName;
             this.lblStatus.Text = $"Active profile: {profileName}";
-            _log.Info(LogLayer.UI, "TicketWorkspace.ApplyResponsiveProfile",
-                $"{profileName} → {DescribeLayout(profileName)} · state kept (moved, not rebuilt): {stateBefore}");
-            ProfileApplied?.Invoke(this, profileName);
         }
 
         /// <summary>Desktop: everything visible; list and side pane 3 : 2; detail over activity.</summary>
@@ -318,7 +254,6 @@ namespace TicketOps.Controls
             this.pnlActivity.Parent = this.flexSide;
             this.flexSide.SetFillWeight(this.pnlDetail, 3);
             this.flexSide.SetFillWeight(this.pnlActivity, 2);
-            _log.Info(LogLayer.UI, "TicketWorkspace.MovePanelsToFlex", "pnlDetail, pnlActivity → flexSide (re-parented, widget state intact)");
         }
 
         /// <summary>Re-parents the detail and activity panels into the two tab pages (tablet, phone). Same instances.</summary>
@@ -331,7 +266,6 @@ namespace TicketOps.Controls
             this.pnlDetail.Dock = DockStyle.Fill;
             this.pnlActivity.Parent = this.tabPageActivity;
             this.pnlActivity.Dock = DockStyle.Fill;
-            _log.Info(LogLayer.UI, "TicketWorkspace.MovePanelsToTabs", "pnlDetail → tabPageDetails, pnlActivity → tabPageActivity (re-parented, widget state intact)");
         }
 
         private void SetNavigationCompact(bool compact)
@@ -343,27 +277,16 @@ namespace TicketOps.Controls
             this.lblNavSettings.Text = compact ? "⚙" : "⚙   Settings";
         }
 
-        private static string DescribeLayout(string profileName)
-        {
-            switch (profileName)
-            {
-                case ProfileTablet: return "nav compact (56 px) · Assignee column hidden · list : side = 1 : 1 · detail + activity in tabs";
-                case ProfilePhone: return "nav + toolbar hidden · one pane at a time · Back button · detail + activity in tabs";
-                default: return "nav 150 px · list : side = 3 : 2 · detail : activity = 3 : 2 · every panel visible";
-            }
-        }
-
         #endregion
 
         #region Data → UI and UI → data
 
         /// <summary>Reloads the grid (with the current filter) and the activity feed through the service.</summary>
-        public async Task RefreshAsync(string reason)
+        private async Task RefreshAsync()
         {
             try
             {
                 Notify("loading", StatusKind.Busy, null);
-                _log.Info(LogLayer.UI, "TicketWorkspace.Refresh", $"{reason} → ITicketService.SearchAsync {CurrentFilter()} + GetActivityAsync");
 
                 var tickets = await _tickets.SearchAsync(CurrentFilter());
                 if (!tickets.Succeeded)
@@ -378,7 +301,6 @@ namespace TicketOps.Controls
                     FillActivity(events.Value);
 
                 Notify("ready", StatusKind.Success, null);
-                _log.Info(LogLayer.UI, "TicketWorkspace.Refresh", $"{_rows.Count} tickets, {(events.Succeeded ? events.Value.Count : 0)} events shown");
             }
             catch (Exception ex)
             {
@@ -386,14 +308,12 @@ namespace TicketOps.Controls
             }
         }
 
-        /// <summary>Runs a ticket search through the service (also the failure path when the query is too short).</summary>
-        public async Task SearchTicketsAsync(string query)
+        /// <summary>Runs a ticket search through the service (a query that is too short comes back as a failed result).</summary>
+        private async Task SearchTicketsAsync(string query)
         {
             try
             {
-                var filter = CurrentFilter(query);
-                _log.Info(LogLayer.UI, "TicketWorkspace.SearchTickets", $"→ ITicketService.SearchAsync {filter}");
-                var result = await _tickets.SearchAsync(filter);
+                var result = await _tickets.SearchAsync(CurrentFilter(query));
                 ShowResult(result);
                 if (result.Succeeded)
                     FillGrid(result.Value);
@@ -493,25 +413,15 @@ namespace TicketOps.Controls
         private void ShowResult<T>(OperationResult<T> result)
         {
             if (result.Succeeded)
-            {
                 Notify(result.Message, StatusKind.Success, null);
-                _log.Info(LogLayer.UI, "TicketWorkspace.ShowResult", $"OK · {result.Message}");
-            }
             else
-            {
-                // Expected outcome: the service explained it in words the user may read.
                 Notify("not applied", StatusKind.Warning, result.Message);
-                _log.Warn(LogLayer.UI, "TicketWorkspace.ShowResult", $"FAIL · {result.Message}");
-            }
         }
 
-        /// <summary>
-        /// Unexpected failure: details go to the log (with the exception type and message), the user sees one
-        /// generic sentence. Nothing internal leaks through the banner.
-        /// </summary>
+        /// <summary>Unexpected failure: the details go to the log, the user sees one safe sentence.</summary>
         private void ReportFailure(string source, Exception ex)
         {
-            _log.Error(LogLayer.UI, source, ex, $"caught {ex.GetType().Name} — user sees the safe message");
+            _log.Error(LogLayer.UI, source, ex);
             Notify("failed", StatusKind.Error, "✖ " + Strings.ActionFailed);
             AlertBox.Show(Strings.ActionFailed, MessageBoxIcon.Error,
                 alignment: System.Drawing.ContentAlignment.TopRight, autoCloseDelay: 4000);
@@ -524,7 +434,7 @@ namespace TicketOps.Controls
 
         #endregion
 
-        #region Thin handlers
+        #region Handlers
 
         private void gridTickets_SelectionChanged(object sender, EventArgs e)
         {
@@ -535,9 +445,7 @@ namespace TicketOps.Controls
             if (row == null || row.Index < 0 || row.Index >= _rows.Count)
                 return;
 
-            var t = _rows[row.Index];
-            FillDetail(t);
-            _log.Info(LogLayer.UI, "TicketWorkspace.gridTickets_SelectionChanged", $"#{t.Id} → detail form (display only, no service call)");
+            FillDetail(_rows[row.Index]);
 
             if (_appliedProfile == ProfilePhone)
                 ShowPhonePage(true);            // phone: selecting a row IS the navigation
@@ -549,14 +457,13 @@ namespace TicketOps.Controls
         {
             try
             {
-                var draft = ReadDraftFromForm();                                       // UI → data
-                _log.Info(LogLayer.UI, "TicketWorkspace.btnSave_Click", $"→ ITicketService.SaveAsync {draft}");
-                var result = await _tickets.SaveAsync(draft);                         // the decision lives in the service
-                ShowResult(result);                                                    // data → UI
+                var draft = ReadDraftFromForm();
+                var result = await _tickets.SaveAsync(draft);
+                ShowResult(result);
                 if (result.Succeeded)
                 {
                     _selectedId = result.Value.Id;
-                    await RefreshAsync($"saved #{result.Value.Id}");
+                    await RefreshAsync();
                 }
             }
             catch (Exception ex)
@@ -575,13 +482,12 @@ namespace TicketOps.Controls
                     return;
                 }
 
-                _log.Info(LogLayer.UI, "TicketWorkspace.btnClose_Click", $"→ ITicketService.CloseAsync(#{_selectedId})");
                 var result = await _tickets.CloseAsync(_selectedId.Value);
                 ShowResult(result);
                 if (result.Succeeded)
                 {
                     ClearDetail();
-                    await RefreshAsync("closed a ticket");
+                    await RefreshAsync();
                     if (_appliedProfile == ProfilePhone)
                         ShowPhonePage(false);
                 }
@@ -600,7 +506,6 @@ namespace TicketOps.Controls
             _suppressSelection = false;
 
             ClearDetail();
-            _log.Info(LogLayer.UI, "TicketWorkspace.btnNewTicket_Click", "editor cleared (display only, no service call)");
 
             if (_appliedProfile == ProfilePhone)
                 ShowPhonePage(true);
@@ -611,13 +516,11 @@ namespace TicketOps.Controls
 
         private void btnBack_Click(object sender, EventArgs e)
         {
-            _log.Info(LogLayer.UI, "TicketWorkspace.btnBack_Click", $"phone: back to the list — edits in progress stay in the hidden editor ({DescribeState()})");
             ShowPhonePage(false);
         }
 
         private async void searchTickets_SearchRequested(object sender, SearchEventArgs e)
         {
-            _log.Info(LogLayer.UI, "TicketWorkspace.searchTickets_SearchRequested", $"SearchBar #1 raised SearchRequested(\"{e.Query}\")");
             await SearchTicketsAsync(e.Query);
         }
 
@@ -625,7 +528,6 @@ namespace TicketOps.Controls
         {
             try
             {
-                _log.Info(LogLayer.UI, "TicketWorkspace.searchActivity_SearchRequested", $"SearchBar #2 raised SearchRequested(\"{e.Query}\") → ITicketService.GetActivityAsync");
                 var result = await _tickets.GetActivityAsync(e.Query);
                 ShowResult(result);
                 if (result.Succeeded)
@@ -647,8 +549,7 @@ namespace TicketOps.Controls
                     Text = chip,
                     Size = new System.Drawing.Size(chip.Length > 6 ? 104 : 78, 28),
                     Margin = new Padding(0, 0, 6, 6),
-                    Tag = chip,
-                    ToolTipText = $"FlowLayoutPanel chip: filters through ITicketService.SearchAsync (chip \"{chip}\")"
+                    Tag = chip
                 };
                 button.Click += this.chip_Click;
                 this.flowChips.Controls.Add(button);
@@ -667,7 +568,6 @@ namespace TicketOps.Controls
                     if (c is Button b)
                         b.Text = (string)b.Tag == _activeChip ? "✓ " + (string)b.Tag : (string)b.Tag;
 
-                _log.Info(LogLayer.UI, "TicketWorkspace.chip_Click", _activeChip == null ? "chip cleared" : $"chip \"{_activeChip}\" on");
                 await SearchTicketsAsync(this.searchTickets.Query);
             }
             catch (Exception ex)
@@ -688,7 +588,6 @@ namespace TicketOps.Controls
                     item.BackColor = active ? System.Drawing.Color.FromArgb(31, 66, 110) : System.Drawing.Color.FromArgb(15, 36, 64);
                 }
             }
-            _log.Info(LogLayer.UI, "TicketWorkspace.lblNav_Click", $"navigation → {(string)clicked.Tag} (other screens are outside this module; the workspace stays)");
         }
 
         #endregion

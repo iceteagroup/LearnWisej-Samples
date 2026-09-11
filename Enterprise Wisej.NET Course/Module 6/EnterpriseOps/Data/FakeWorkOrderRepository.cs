@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using EnterpriseOps.Domain;
 using EnterpriseOps.Services.Jobs;
 
@@ -22,7 +20,6 @@ namespace EnterpriseOps.Data
         private readonly object _gate = new object();
         private readonly Dictionary<string, WorkOrder> _byKey = new Dictionary<string, WorkOrder>(StringComparer.Ordinal);
         private int _nextId = 1;
-        private long _writes;
 
         public FakeWorkOrderRepository()
         {
@@ -47,21 +44,6 @@ namespace EnterpriseOps.Data
                 _byKey[Key(wo.TenantId, wo.ExternalRef)] = wo;
             }
         }
-
-        /// <summary>Total rows in the fake table — the page shows it so an import's effect is countable.</summary>
-        public int Count
-        {
-            get { lock (_gate) return _byKey.Count; }
-        }
-
-        public int CountFor(string tenantId)
-        {
-            lock (_gate)
-                return _byKey.Values.Count(w => w.TenantId == tenantId);
-        }
-
-        /// <summary>Successful row writes since the process started (retries included once they succeed).</summary>
-        public long Writes => Interlocked.Read(ref _writes);
 
         /// <summary>
         /// Writes one row.
@@ -89,7 +71,6 @@ namespace EnterpriseOps.Data
             lock (_gate)
             {
                 string key = Key(tenantId, row.ExternalRef);
-                Interlocked.Increment(ref _writes);
 
                 if (_byKey.TryGetValue(key, out var existing))
                 {

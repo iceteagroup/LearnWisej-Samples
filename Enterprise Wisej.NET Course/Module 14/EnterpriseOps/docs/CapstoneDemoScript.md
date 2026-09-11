@@ -5,9 +5,6 @@
 The capstone is delivered as a **production architecture review**, not a feature demo. Each stop pairs a
 working screen with a failure path, because the review is about what happens when things go wrong.
 
-Run it with the trace card visible at all times: it is the evidence that the handler asked and the service
-decided.
-
 ```bash
 cd "D:/Projects/LearnWisej-Samples/Enterprise Wisej.NET Course/Module 14/EnterpriseOps"
 dotnet run -f net10.0 --urls http://localhost:5214
@@ -19,10 +16,9 @@ Total: about twelve minutes, plus questions. Say the sentence in **bold** at eac
 
 **"One process, many sessions — nothing about a user is static."**
 
-- Point at the header: tenant, signed-in user, correlation id.
+- Point at the signed-in user and the correlation id in the dark footer.
 - `Program.Main` creates one `SessionContext` per browser session and parks it in `Application.Session`;
-  `ServiceRegistry` builds that session's services. The trace opens with
-  `Service: session services ready · tenant contoso · docs …`.
+  `ServiceRegistry` builds that session's services.
 - Show `Security/Permissions.cs`: the permission matrix **is** static — immutable reference data. The
   distinction between a static constant and static state is the one the review checklist enforces (Q2).
 
@@ -34,8 +30,7 @@ catalog and one permission matrix.
 **"Every command is authorized in the service, versioned in the store and audited either way."**
 
 - Select a work order that is `InProgress` or `Escalated`; press **✓ Approve selected**.
-- Read the trace top to bottom: `UI → btnApprove_Click`, `Service: ApproveWorkOrderCommand #… v… corr=…`,
-  `Security: ApproveWorkOrder granted to ana.ops`, `Data: update work_order #… → v…`, `Data: audit ← …`.
+- Walk `WorkOrderService.ApproveAsync` in order: authorize, validate, write with the expected version, audit.
 - The footer shows the audit line; the KPI cards recompute from `DashboardService`.
 
 **Expected question:** "Where is the authorization?" — In `WorkOrderService.ApproveAsync`, before the read.
@@ -45,14 +40,13 @@ The handler cannot skip it, because the handler cannot reach the store.
 
 **"The review is about what happens when things go wrong."**
 
-- **Stale version:** with a row selected, press **Fail: stale version**. Another session bumps the row's
-  version; the approve carries the version the screen saw and the store refuses it. Red banner: *"#… changed
-  while you were looking at it (you saw v3, it is now v4)."* The denial is audited.
-- **Recovery:** **Recover: reload queue**, then approve again. Same code path, current version, success.
-- **Permission denied:** **Switch to ben.tech**, then **✓ Approve selected**. The service refuses,
-  `Security: ApproveWorkOrder denied — ben.tech (Technician) is not allowed to approve work orders`, and the
-  refusal is written to the audit log. A denial nobody records is an invisible attack.
-- Switch back to `ana.ops`.
+- **Stale version:** open the Command Center in a second browser, approve a row there, then approve the same
+  row in the first browser. The approve carries the version the screen saw and the store refuses it. Red
+  banner: *"#… changed while you were looking at it (you saw v3, it is now v4)."* The denial is audited.
+- **Recovery:** **⟳ Refresh**, then approve again. Same code path, current version, success.
+- **Permission denied:** show `PermissionService` and the refusal branch of `ApproveAsync`: a Technician is
+  refused in the service and the refusal is written to the audit log. A denial nobody records is an
+  invisible attack.
 
 ## Stop 4 · Operations (2 min)
 
@@ -72,10 +66,10 @@ The handler cannot skip it, because the handler cannot reach the store.
 
 - **Capstone review →**, then **✓ Verify package**. Every deliverable is checked against the file on disk:
   its size, and the section that proves it is really that deliverable. Green: *ready to submit*.
-- **Documentation index** tab: `docs/index.json` read back, every path resolved. The trace shows the
-  `resources/list` answer a documentation MCP endpoint would return.
-- **Fail: missing document** → an indexed document that is not on disk. The index turns red (*would answer
-  404*) and the package stops passing. Press it again to recover.
+- **Documentation index** tab: `docs/index.json` read back, every path resolved — the list a documentation
+  MCP endpoint would serve.
+- An indexed document that is not on disk turns the index red (*would answer 404*) and the package stops
+  passing — the reason open item 1 of the readiness statement is not listed in the index yet.
 
 ## Stop 6 · The AI review gate (3 min)
 
@@ -106,6 +100,5 @@ not that it does not. Answer it in the decision record; do not delete the findin
 | Symptom | Cause | What to do |
 |---|---|---|
 | the package tab shows `docs/ folder not found` | the app was started from somewhere other than the project folder | stop, `cd` into `EnterpriseOps`, run again |
-| **Approve** is disabled | no row selected, or signed in as `ben.tech` | select a row; switch back to `ana.ops` |
+| **Approve** is disabled | no row selected | select a row |
 | every approve is refused with "only work that is InProgress or Escalated" | the selected row is `Completed` or `New` | change the filter to **Open** and pick another row |
-| the trace is empty | it was cleared | it is per session; keep demonstrating, it refills |

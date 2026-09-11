@@ -47,14 +47,14 @@ as the value forced into `OriginalValue`, so the retry's WHERE clause matches th
 
 ## Reproducing the conflict
 
-**One session (page button).** Click **Edit ticket**, leave the dialog open, click **Simulate: another
-operator changes it** on the page — `TicketCommandService.SimulateAnotherOperatorChangeAsync` updates the
-same row (`Status = Closed`, `Priority = High`) through a brand-new context, stamping a fresh `RowVersion`.
-Click **Save** in the still-open editor: its `model.RowVersion` is now stale, and the conflict dialog opens.
+**Two browser sessions (lab step 5).** Open the app in two tabs (or a second private window — a different
+Wisej.NET session). In both, select the same row and click **Edit Ticket**. In tab 1 change the status and
+Save — an ordinary, successful save that stamps a fresh `RowVersion`. In tab 2 change the priority and
+Save: its `model.RowVersion` is now stale, and it gets the conflict dialog instead.
 
-**Two browser sessions.** Open the app in two tabs (or a second private window — a different Wisej.NET
-session). In both, **Edit ticket** on the same row. Save the first — an ordinary, successful save. Save the
-second: its `RowVersion` is now stale for the same reason, and it gets the conflict dialog instead.
+**In the tests.** `ConcurrencyAndTransactionsTests` reproduces the same thing without a browser: its
+private helper `ChangeAsAnotherOperatorAsync` updates the row (`Status = Closed`, `Priority = High`)
+through a separate context between `LoadEditModelAsync` and `SaveAsync`.
 
 ## The conflict list
 
@@ -107,12 +107,13 @@ value / Database value / Original value), explains what happened in a label, and
 
 - **Reload** — always offered. `ShowConflictDialogAsync` re-runs `LoadEditorAsync()`: new lookups, the
   fresh `Ticket` row, the new `RowVersion`. The dialog's own `DialogResult` is `OK` either way; the actual
-  decision is read from `ConflictDialog.Choice`. The **editor stays open** with the fresh values, and the
-  trace says so (`Reload complete — the editor now shows the database's values and the new RowVersion;
-  still open`).
-- **Overwrite** — visible only when `ConflictResolution.CanOverwrite(role)` is true (`role == UserRole.Supervisor`).
-  `TicketEditorForm.OverwriteAsync` calls `Commands.SaveAsync(model, latency, forceDuplicateNumber: false,
-  conflicts.DatabaseRowVersion)` — the database's *current* token becomes `OriginalValue`, so this retry is
+  decision is read from `ConflictDialog.Choice`. The **editor stays open** with the fresh values. If the
+  row was deleted by another user, the dialog says so and Reload closes the editor with `OK` so the grid
+  refreshes.
+- **Overwrite** — visible only when `ConflictResolution.CanOverwrite(role)` is true (`role == UserRole.Supervisor`)
+  and the row still exists. `TicketEditorForm.OverwriteAsync` calls `Commands.SaveAsync(model,
+  forceDuplicateNumber: false, databaseRowVersion)` with `conflicts.DatabaseRowVersion` — the database's
+  *current* token becomes `OriginalValue`, so this retry is
   expected to succeed even though someone else changed the row in between. The **editor closes with OK**
   after a successful Overwrite, and the parent grid refreshes.
 - **Cancel** — the editor stays open, exactly as it was; nothing is saved.
@@ -140,8 +141,8 @@ conflict Status: yours 'Resolved' · database 'Closed' · original 'Closed'
 ```
 
 Note that `Priority` shows up as a conflict even though the test only edited `Status` — the operator's edit
-model still carries whatever `Priority` it loaded, and `SimulateAnotherOperatorChangeAsync` changed
-`Priority` too, so the save attempt disagrees with the database on both fields at once. This is realistic:
+model still carries whatever `Priority` it loaded, and the test's `ChangeAsAnotherOperatorAsync` helper
+changed `Priority` too, so the save attempt disagrees with the database on both fields at once. This is realistic:
 a conflict is not "the one field you touched", it is every field where your save and the database's current
 row disagree.
 

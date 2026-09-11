@@ -8,14 +8,13 @@ namespace IntegrationLab.Widgets
     /// </summary>
     public class DataLoadedEventArgs : EventArgs
     {
-        public DataLoadedEventArgs(int count, int total, int page, int pages, int elapsed, string via)
+        public DataLoadedEventArgs(int count, int total, int page, int pages, int elapsed)
         {
             this.Count = count;
             this.Total = total;
             this.Page = page;
             this.Pages = pages;
             this.Elapsed = elapsed;
-            this.Via = via;
         }
 
         /// <summary>Rows in the page that was rendered.</summary>
@@ -29,9 +28,6 @@ namespace IntegrationLab.Widgets
 
         /// <summary>Client-measured round trip in milliseconds.</summary>
         public int Elapsed { get; }
-
-        /// <summary>Which transport / call shape the client used (for the trace).</summary>
-        public string Via { get; }
     }
 
     /// <summary>
@@ -40,19 +36,17 @@ namespace IntegrationLab.Widgets
     /// </summary>
     public class GridErrorEventArgs : EventArgs
     {
-        public GridErrorEventArgs(int status, string message, string phase, string via)
+        public GridErrorEventArgs(int status, string message, string phase)
         {
             this.Status = status;
             this.Message = message;
             this.Phase = phase;
-            this.Via = via;
         }
 
         /// <summary>HTTP status code, or 0 when the failure was not an HTTP response.</summary>
         public int Status { get; }
         public string Message { get; }
         public string Phase { get; }
-        public string Via { get; }
     }
 
     public class RowClickedEventArgs : EventArgs
@@ -61,9 +55,9 @@ namespace IntegrationLab.Widgets
         public string Id { get; }
     }
 
-    public enum TraceDirection { ServerToClient, ClientToServer, Server, Http }
+    public enum TraceDirection { ServerToClient, ClientToServer, Http }
 
-    /// <summary>One line of the client/server trace shown by the lab UI.</summary>
+    /// <summary>One request, response or call, for the page's Network list.</summary>
     public class TraceEventArgs : EventArgs
     {
         public TraceEventArgs(TraceDirection direction, string name, string payload)

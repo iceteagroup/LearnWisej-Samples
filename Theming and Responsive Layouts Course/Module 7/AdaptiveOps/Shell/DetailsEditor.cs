@@ -34,9 +34,6 @@ namespace AdaptiveOps.Shell
         /// <summary>Id of the ticket being edited, or null.</summary>
         public string TicketId => _ticketId;
 
-        /// <summary>The footer label the governance review checks for "validation announced as text".</summary>
-        public Label ValidationLabel => this.lblValidation;
-
         /// <summary>
         /// Compact mode for the phone dialog: the text editors take the <c>compact-editor</c> appearance
         /// (28 px, tighter padding) and the rows shrink. Idempotent.
@@ -107,9 +104,6 @@ namespace AdaptiveOps.Shell
             };
         }
 
-        /// <summary>Blanks the title so the server rejects the next save (the failure path of earlier modules, reused by the review).</summary>
-        public void BlankTitle() => this.txtTitle.Text = string.Empty;
-
         /// <summary>
         /// Shows a server-side rejection: the field named by the exception turns invalid (theme state +
         /// InvalidMessage tooltip) and the footer label announces the message with an icon.
@@ -153,7 +147,7 @@ namespace AdaptiveOps.Shell
             this.dtpDue.Invalid = false;
             this.dtpDue.InvalidMessage = string.Empty;
             this.lblValidation.ImageSource = string.Empty;
-            this.lblValidation.Text = "Validation runs on the server.";
+            this.lblValidation.Text = string.Empty;
             this.lblValidation.RemoveState("error");
         }
 

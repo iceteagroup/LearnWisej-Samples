@@ -3,8 +3,8 @@
 Deliverable 5 of Module 10. The whole surface of a Wisej.NET application, turned into review items that are
 checked on every release rather than remembered occasionally.
 
-The list also exists as code — `Security/HardeningChecklist.cs` — so the running application can count it and
-the two cannot drift apart. Treat it as living code: add an item every time a review finds a gap, and record
+The list also exists as code — `Security/HardeningChecklist.cs` — next to the code it describes, so the two
+cannot drift apart. Treat it as living code: add an item every time a review finds a gap, and record
 who checked each item for each release in the table at the bottom.
 
 State: **done** proven in this sample · **sample** demonstrated but only meaningful once hosted for real ·
@@ -14,33 +14,28 @@ State: **done** proven in this sample · **sample** demonstrated but only meanin
 
 | # | Item | State | Evidence |
 |---|---|:--:|---|
-| H1 | Every control with `AllowHtml = true` is inventoried and its text source is known | done | **AllowHtml review** button — reflection over the live control tree, not a list someone typed |
+| H1 | Every control with `AllowHtml = true` is inventoried and its text source is known | done | the surface inventory below |
 | H2 | Untrusted text is escaped, or sanitized against an allow-list, before it reaches an HTML surface | done | `Security/HtmlText.cs`; the decision is taken in `NoteRenderService`, not in the screen |
-| H3 | Grid columns, tooltips, toasts and list items count as HTML surfaces too | done | `SecurityReviewService` inspects `DataGridViewColumn` as well as controls |
+| H3 | Grid columns, tooltips, toasts and list items count as HTML surfaces too | done | `colUser` and `colDetail` are in the inventory below |
 | H4 | Sanitizing happens at render time, never at storage time | done | `InMemoryNoteStore` stores the bytes that arrived; encoding is chosen per surface |
 
 ### The AllowHtml review
 
 In Wisej.NET an `AllowHtml` property exists on far more types than most teams expect: `Label`, `ButtonBase`,
 `ListBox`, `ComboBox`, `GroupBox`, `TabPage`, `TreeNode`, `MenuItem`, `ToolTip`, `Toast`, `ListViewItem`,
-`DataGridViewColumn` and `DataGridViewCell`, among others. That is why the review is automated rather than
-written down: `SecurityReviewService.Review` walks the running screen, finds every surface with a public
-`bool AllowHtml`, and pairs it with a declared text source.
-
-Reflection cannot know where a surface's text comes from, so that judgement is declared once in
-`SecurityReviewService.TextSources` and reviewed like code. Anything not declared is reported as
-"constant text written by the developer" — so a control added later still appears in the report for judgement.
+`DataGridViewColumn` and `DataGridViewCell`, among others. So the review covers every `.Designer.cs` file and
+every line of code that sets `AllowHtml`, and pairs each surface with the source of its text. A control
+added later goes through the same review.
 
 Surfaces on this screen whose text is **not** author-written:
 
 | Surface | Text source | Protection |
 |---|---|---|
-| `lblNote` | a customer note from a public portal | `AllowHtml = false` by default; the allow-list sanitizer when formatting is wanted |
+| `lblNote` | a customer note from a public portal | `AllowHtml = false`, chosen by `NoteRenderService`; the allow-list sanitizer if formatting is ever wanted |
 | `lblNoteSource` | note author and origin | `AllowHtml = false` |
-| `lstTrace` | service text quoting provider group names and user ids | `AllowHtml = false` |
 | `colDetail`, `colUser` | audit detail and user ids | `AllowHtml = false` |
-| `lblUser`, `lblTenant` | the `name` and `tid` claims | `AllowHtml = false` |
-| `lblBanner` | service messages quoting permission names | `AllowHtml = false` |
+| `lblBanner`, `lblStatusBar` | service messages quoting user ids and permission names | `AllowHtml = false` |
+| `lstIdentities`, `lstClaims` (sign-in gate) | directory names and claim values | `AllowHtml = false` |
 
 The sanitizer in `HtmlText.Sanitize` is an allow-list of `b, i, em, strong, br` with **all attributes dropped**,
 so an `onerror`, a `style` or a `javascript:` href cannot survive it. It is small enough to read in a lab; in
@@ -77,7 +72,7 @@ production use a maintained library (HtmlSanitizer / AngleSharp) instead of a re
 
 | # | Item | State | Evidence |
 |---|---|:--:|---|
-| L1 | No password, token, cookie, claim value or full personal record in any log line | done | `ActivityTrace` writes subject ids, tenants and permission names only; `NoteRenderService.Preview` truncates payloads |
+| L1 | No password, token, cookie, claim value or full personal record in any log line | done | `ActivityTrace` writes subject ids, tenants and permission names only; `NoteRenderService` logs the tag names of a payload, never the payload |
 | L2 | Every sensitive command writes an audit entry with a correlation id, including denials | done | `PermissionService.Demand` + `AuditLog` — visible in `dgvAudit` |
 | L3 | Audit storage is durable, append-only and tamper-evident (hash chain or signed sequence) | deployment | the in-memory log is none of these — `AuditLogScreen.md` says what is missing |
 | L4 | Repeated denials from one subject raise an alert | deployment | filter **Result: DENIED** shows the data the alert would watch |
@@ -96,10 +91,10 @@ production use a maintained library (HtmlSanitizer / AngleSharp) instead of a re
 |---|---|:--:|---|
 | I1 | The gate sits in front of every entry point, not only the main page | done | `SessionContext.BeginCommand` throws when unauthenticated, so no service can be called without it |
 | I2 | Services read identity from the session context — never from a control, query string or hidden field | done | every service method takes a `CommandContext` and nothing else identity-shaped |
-| I3 | Authorization is enforced in services, not in the UI | done | **Break the UI: enable Export** proves it |
+| I3 | Authorization is enforced in services, not in the UI | done | a Technician's **Export data** click is refused by `ExportService` and audited DENIED |
 | I4 | A long-running session can reload roles without a new login | done | `SessionContext.RefreshPermissions` |
 | I5 | An unknown directory group grants nothing and is reported | done | sign in as `t.novak` |
-| I6 | Tenant isolation is checked before any role lookup | done | `TenantGuard`, and **Fail: cross-tenant approve** |
+| I6 | Tenant isolation is checked before any role lookup | done | `TenantGuard`, called first inside `PermissionService.Demand` |
 
 ## Reverse proxy
 

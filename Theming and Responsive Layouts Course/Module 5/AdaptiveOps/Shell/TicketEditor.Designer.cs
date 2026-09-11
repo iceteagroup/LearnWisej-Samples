@@ -39,7 +39,6 @@ namespace AdaptiveOps.Shell
             this.lblNotesCaption = new Wisej.Web.Label();
             this.txtNotes = new Wisej.Web.TextBox();
             this.btnSave = new Wisej.Web.Button();
-            this.lblHint = new Wisej.Web.Label();
             this.table.SuspendLayout();
             this.SuspendLayout();
             //
@@ -70,7 +69,6 @@ namespace AdaptiveOps.Shell
             this.table.Controls.Add(this.lblNotesCaption, 0, 7);
             this.table.Controls.Add(this.txtNotes, 0, 8);
             this.table.Controls.Add(this.btnSave, 0, 9);
-            this.table.Controls.Add(this.lblHint, 1, 9);
             this.table.Dock = Wisej.Web.DockStyle.Fill;
             this.table.GrowStyle = Wisej.Web.TableLayoutPanelGrowStyle.FixedSize;
             this.table.Name = "table";
@@ -194,22 +192,13 @@ namespace AdaptiveOps.Shell
             this.txtNotes.Size = new System.Drawing.Size(292, 120);
             this.txtNotes.Watermark = "Anything the next agent needs";
             //
-            // btnSave / lblHint  (row 9: the button keeps its own size in the 140-px column, the hint fills the editor column)
+            // btnSave  (row 9: keeps its own size in the 140-px column)
             //
             this.btnSave.Margin = new Wisej.Web.Padding(0);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(100, 32);
             this.btnSave.Text = "Save";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
-            this.lblHint.AutoEllipsis = true;
-            this.lblHint.AutoSize = false;
-            this.lblHint.Dock = Wisej.Web.DockStyle.Fill;
-            this.lblHint.ForeColor = System.Drawing.Color.FromArgb(103, 112, 133);
-            this.lblHint.Margin = new Wisej.Web.Padding(0);
-            this.lblHint.Name = "lblHint";
-            this.lblHint.Size = new System.Drawing.Size(160, 32);
-            this.lblHint.Text = "Validation runs on the server.";
-            this.lblHint.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // TicketEditor
             //
@@ -238,6 +227,5 @@ namespace AdaptiveOps.Shell
         private Wisej.Web.Label lblNotesCaption;
         private Wisej.Web.TextBox txtNotes;
         private Wisej.Web.Button btnSave;
-        private Wisej.Web.Label lblHint;
     }
 }

@@ -99,12 +99,11 @@ Permission is checked **before** the target is resolved. Otherwise a user who ma
 tell the difference between `INVALID_TARGET` and `INVALID_STATE` and use the boundary as a probe for
 which work orders exist in a tenant they cannot see.
 
-## 6. The second endpoint (deliberately wrong)
+## 6. There is no second endpoint
 
-`App.MainPage.RunTrustedClientCommand(commandName, entityId, claimedRole, claimedStatus)` is the
-anti-pattern kept for the lab. It has **no contract**: it believes the role and the new status the
-browser sends. It exists so the audit log can show what that costs (`TAMPERED`) and so the recovery
-path has something to undo. It is never called by the contract path, and it would never ship.
+`RunClientCommand` is the only execution endpoint. A method that accepted a role or a new status
+from the browser would have **no contract** at all — it would believe whatever the payload claims.
+That is the anti-pattern the walkthrough warns about, and this project does not contain one.
 
 ## 7. Versioning
 
@@ -117,12 +116,16 @@ its version explicitly. `ContractVersion` travels in every result to make that v
 
 ## Evidence — what the running app shows
 
+The session is `ben.tech` (Technician) in tenant `contoso`; the palette targets `WO-1040`. "Server
+log" is the `System.Diagnostics.Trace` output of `ActivityTrace`. The three codes the palette cannot
+produce are reproduced by hand-editing the payload in the browser's dev tools — which is the point.
+
 | Path | How to reproduce | What proves it |
 | --- | --- | --- |
-| Happy path | user `ana.ops`, target `WO-1040`, **Run approve** | trace `Interop: ExecuteFromClient…` → `Security: … ALLOWED` → `Service: WorkOrderService.Approve → InProgress` → audit `ALLOWED` |
-| `UNKNOWN_COMMAND` | **Unknown command** | trace `catalogue lookup 'workorder.delete' → not found · no service called` |
-| `MALFORMED_PAYLOAD` | **Malformed payload** | trace `payload rejected by the contract before any service ran · entityId is longer than 12 characters` — no `Security:` line at all |
-| `PERMISSION_DENIED` | switch user to `ben.tech`, **Run approve** | trace `Security: PermissionService ben.tech (Technician, role from session) → WorkOrder.Approve → DENIED`; banner `the command never ran`; audit `DENIED` |
-| `INVALID_TARGET` | **Other tenant's WO** | the id is well-formed and the user is permitted; the trace shows `Data: … Find(tenant=contoso, id=1060) → not found` |
-| `INVALID_STATE` | **Closed work order** (`WO-1041` is seeded `Completed`) | trace `Service: WorkOrderService.Approve rejected: Completed is not approvable` |
-| Contract version | any command | the palette footer and every result carry `1.0` |
+| Happy path | Ctrl+K → *escalate* → Enter | server log `Interop: ExecuteFromClient…` → `Security: … ALLOWED` → `Service: WorkOrderService.Escalate → Escalated` → `Audit: ALLOWED` |
+| `PERMISSION_DENIED` | Ctrl+K → *approve* → Enter (the walkthrough's path) | banner *You can't approve work order.* · `PERMISSION_DENIED · … the command never ran`; server log `Security: PermissionService ben.tech (Technician, role from session) → WorkOrder.Approve → DENIED`; `Audit: DENIED` |
+| `INVALID_STATE` | run *escalate* a second time | server log `Service: WorkOrderService.Escalate rejected: already Escalated` |
+| `UNKNOWN_COMMAND` | dev tools: `App.MainPage.RunClientCommandAsync("workorder.delete", "WO-1040", "0000abcd")` | server log `catalogue lookup 'workorder.delete' → not found · no service called` |
+| `MALFORMED_PAYLOAD` | dev tools: `App.MainPage.RunClientCommandAsync("workorder.approve", "WO-1040-INJECT", "not-a-corr")` | server log `payload rejected by the contract before any service ran · entityId is longer than 12 characters` — no `Security:` line at all |
+| `INVALID_TARGET` | dev tools: `App.MainPage.RunClientCommandAsync("workorder.escalate", "WO-1060", "0000abcd")` | the id is well-formed and the user is permitted; server log `Data: … Find(tenant=contoso, id=1060) → not found` |
+| Contract version | any command | every result carries `ContractVersion: "1.0"` |

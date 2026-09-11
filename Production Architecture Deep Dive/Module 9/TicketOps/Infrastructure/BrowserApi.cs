@@ -61,8 +61,6 @@ namespace TicketOps.Infrastructure
     /// Clipboard: the server already owns the text, so nothing coming back needs trusting — only the
     /// yes/no. <c>navigator.clipboard.writeText</c> needs a recent user gesture and a secure context
     /// (https or localhost); when it rejects, the screen shows a fallback instead of failing silently.
-    /// <see cref="SimulateClipboardDenied"/> makes the script reject with NotAllowedError so the lab can
-    /// show that path on demand.
     /// </summary>
     public sealed class BrowserApi
     {
@@ -73,12 +71,9 @@ namespace TicketOps.Infrastructure
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
-        /// <summary>Lab switch: when true, the client script rejects the write as the browser would when permission is denied.</summary>
-        public bool SimulateClipboardDenied { get; set; }
-
         /// <summary>
         /// Interop point: server → browser → server. Asks the browser to copy <paramref name="text"/> and awaits its
-        /// answer. Runs <c>ticketOps.copyToClipboard(text, options)</c> from the embedded script (Platform/ticketops.interop.js);
+        /// answer. Runs <c>ticketOps.copyToClipboard(text)</c> from the embedded script (Platform/ticketops.interop.js);
         /// the expression returns a Promise that always resolves to <c>{ ok, reason, detail }</c>, and
         /// <see cref="Application.EvalAsync"/> hands the resolved value back here.
         /// </summary>
@@ -88,20 +83,13 @@ namespace TicketOps.Infrastructure
 
             // Escaping: the text becomes a JavaScript string literal through the JSON serializer — quotes,
             // backslashes, line breaks and < > & are escaped, so nothing in it can become script.
-            string literal = JsonSerializer.Serialize(text);
-            string options = SimulateClipboardDenied ? "{ simulateDenied: true }" : "{}";
-            string expression = "ticketOps.copyToClipboard(" + literal + ", " + options + ")";
-
-            _log.Info(LogLayer.Client, "BrowserApi.CopyToClipboardAsync",
-                $"→ ticketOps.copyToClipboard({text.Length} chars{(SimulateClipboardDenied ? ", simulateDenied" : "")}) — Application.EvalAsync, awaiting the browser");
+            string expression = "ticketOps.copyToClipboard(" + JsonSerializer.Serialize(text) + ")";
 
             // Application.EvalAsync takes an EXPRESSION (never "return …"); a returned Promise is awaited.
             dynamic answer = await Application.EvalAsync(expression);
             var outcome = ClipboardOutcome.From((object)answer);
 
-            if (outcome.Copied)
-                _log.Info(LogLayer.Client, "navigator.clipboard.writeText", "resolved → ok (the browser confirmed the copy)");
-            else
+            if (!outcome.Copied)
                 _log.Warn(LogLayer.Client, "navigator.clipboard.writeText", $"rejected: {outcome.Reason} — {outcome.Detail}");
 
             return outcome;

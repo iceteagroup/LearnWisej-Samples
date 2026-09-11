@@ -95,16 +95,9 @@ action without copy-paste.
 
 ## Every path, visible, nothing leaked
 
-| Path | Trace (right card) | What the user sees |
+| Path | How to reach it | What the user sees |
 |---|---|---|
-| Success | `[UI] → SaveAsync` · `[SVC] valid → UpsertAsync` · `[DATA] #1041 written` · `[UI] OK · Ticket #1041 saved.` | **● Ticket #1041 saved.**, grid refreshed |
-| Validation | `[SVC] ⚠ rejected: Title is required.` (no `[DATA]` line) | orange banner **Title is required.** |
-| Domain rule | `[DOMAIN] ⚠ Ticket.CanClose — #1042 rejected: Log hours before closing.` | orange banner **Log hours before closing.** |
-| Data failure | `[DATA] ✖ outage: SELECT * FROM Tickets failed — timeout connecting to sql01:1433 (TicketOps.dbo.Tickets)` · `[UI] ✖ caught DataOutageException — user sees the safe message` | red banner **The action could not be completed. Check the log for details.** — the host name and table never reach the screen |
-| Recovery | `[UI] outage OFF → refresh (recovery)` · `[DATA] 6 rows` | **● ready** |
-
-## Evidence
-
-Run the app, press the four bottom-bar buttons in order and compare the trace with the table above.
-The "Load 200 tickets" button proves the same thin handler scales: two hundred saves go through
-`ITicketService.SaveAsync`, the handler is still the same nine lines, and the Timer only paces the work.
+| Success | edit #1041, **Save ticket** | **● Ticket #1041 saved.**, grid refreshed |
+| Validation | clear the title, **Save ticket** | orange banner **Title is required.**; nothing is persisted |
+| Domain rule | select #1042 (no hours logged), **Close ticket** | orange banner **Log hours before closing.** |
+| Unexpected failure | any exception thrown below the handler (e.g. the data store is down) | red banner and toast **The action could not be completed. Check the log for details.**; the exception type, message and stack go to `ILog` (the server console) and never reach the screen |

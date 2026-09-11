@@ -2,20 +2,19 @@
 
 One runnable Wisej.NET 4 application per module, built from the course's lesson guide, lab guide and walkthrough
 video. All seven build pieces of the same application, **TicketOps Live** (a Web Page Application named
-`TicketOpsLive` with a `MainPage`, exactly as the lab guide asks). Every sample follows the same layout: the module's
-feature on the left, a **Server → Browser · live push trace** on the right, and a button bar that exercises the
-success path, a progress path, at least one failure path and the recovery. Each folder has its own `README.md`
-(what to click, lab tasks → code, self-check answers) and a `docs/` folder with the lab deliverables.
+`TicketOpsLive` with a `MainPage`, exactly as the lab guide asks). Each screen shows only what the module's lab guide
+and walkthrough video build. Each folder has its own `README.md` (what to try, lab tasks → code, self-check answers);
+modules whose lab or video asks for a written deliverable keep it in `docs/`.
 
 Requirements already on this machine: .NET 10 SDK and the `Wisej-4` 4.1.0 NuGet package. Nothing is deployed anywhere.
 
 | Module | Folder | What it builds | Run |
 |---|---|---|---|
-| 1 · WebSocket Push vs. Polling | `Module 1` | live status strip + simulated heartbeat (`Application.StartTask` → `Application.Update`), the three update mechanisms side by side, polling fallback, cadence experiment (100 pushes vs 10) | `dotnet run -f net10.0 --urls http://localhost:5301` |
-| 2 · Who Owns the UI | `Module 2` | session inspector + lifecycle logger: `Application.Session` counter vs the static-field trap, `Application.Current` captured for out-of-bound updates, `ApplicationExit` cleanup, a global session registry that stores no page references | `http://localhost:5302` |
-| 3 · Progress Without Refresh | `Module 3` | background import monitor: 200 records, push every 10, cooperative cancellation, simulated failure at record 87, `finally` restores the UI, JobId correlation, the blocking-handler anti-pattern | `http://localhost:5303` |
+| 1 · WebSocket Push vs. Polling | `Module 1` | live status strip + simulated heartbeat (`Application.StartTask` → `Application.Update`), in-request Refresh, a 5-step server event pushed live, an update trace, polling fallback | `dotnet run -f net10.0 --urls http://localhost:5301` |
+| 2 · Who Owns the UI | `Module 2` | session inspector + lifecycle logger: a per-session `Application.Session` counter, `Application.Current` captured for out-of-bound updates, `ApplicationExit` cleanup, a global session registry that stores no page references | `http://localhost:5302` |
+| 3 · Progress Without Refresh | `Module 3` | background import monitor: 200 records, push every 10, cooperative cancellation, Fail at 87 button, `finally` restores the UI, elapsed time and a summary line with a JobId | `http://localhost:5303` |
 | 4 · When Push Is Not Enough | `Module 4` | update-cadence panel: `Wisej.Web.Timer` refresh at 250 ms / 1 s / 5 s, model events faster than the UI, dirty-flag coalescing, overlap guard, polling start/stop with live mode | `http://localhost:5304` |
-| 5 · Live Ticket Board | `Module 5` | `DataGridView` bound through `BindingSource` to a `BindingList<Ticket>`, rows added and updated in place, selection preserved, "updated" marker, conflict warning, Escalated filter, the rebind anti-pattern | `http://localhost:5305` |
+| 5 · Live Ticket Board | `Module 5` | `DataGridView` bound through `BindingSource` to a `BindingList<Ticket>`, rows added and updated in place, selection preserved, "updated" marker, conflict warning, Escalated filter | `http://localhost:5305` |
 | 6 · From One Session to Many | `Module 6` | global `TicketHub` singleton (thread-safe, snapshots, `TicketChanged` with tenant metadata) feeding many sessions through `Application.Update(context, …)`, tenant filtering, per-session notification count, unsubscribe on exit | `http://localhost:5306` |
 | 7 · Production Review (capstone) | `Module 7` | the complete TicketOps Live: status strip, session diagnostics, import monitor, cadence controls, ticket board, TicketHub, real-time health panel (push vs fallback), `Default.json` / `HealthCheck.json` review, production checklist, demo script | `http://localhost:5307` |
 
