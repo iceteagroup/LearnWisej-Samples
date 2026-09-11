@@ -1,6 +1,0 @@
-Order,Customer,Owner,Total,Status,Date
-2001,"Northwind Traders","Dana",1250.00,Open,2026-09-10
-2002,"Contoso Ltd","Priya",980.50,Shipped,2026-09-09
-2003,"Fabrikam Inc","Sam",415.00,Open,2026-09-09
-2004,"Initech","Kelly",2200.00,Open,2026-09-08
-2005,"Globex Corp","",640.00,Invoiced,2026-09-08

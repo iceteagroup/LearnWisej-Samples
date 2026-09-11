@@ -1,6 +1,0 @@
-{
-	"url": "Default.html",
-	"startup": "OrderDesk.Program.Main, OrderDesk",
-	"theme": "Bootstrap-4",
-	"debug": true
-}
