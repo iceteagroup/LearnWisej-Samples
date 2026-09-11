@@ -2,14 +2,8 @@ namespace WisejTrainingApp.Views
 {
     partial class DashboardView
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -25,316 +19,217 @@ namespace WisejTrainingApp.Views
         {
             this.lblPageTitle = new Wisej.Web.Label();
             this.lblPageDescription = new Wisej.Web.Label();
-            this.cardOpen = new Wisej.Web.Panel();
-            this.lblOpenValue = new Wisej.Web.Label();
+            this.pnlOpenCard = new Wisej.Web.Panel();
             this.lblOpenCaption = new Wisej.Web.Label();
-            this.cardInProgress = new Wisej.Web.Panel();
-            this.lblInProgressValue = new Wisej.Web.Label();
+            this.lblOpenValue = new Wisej.Web.Label();
+            this.pnlInProgressCard = new Wisej.Web.Panel();
             this.lblInProgressCaption = new Wisej.Web.Label();
-            this.cardClosed = new Wisej.Web.Panel();
-            this.lblClosedValue = new Wisej.Web.Label();
+            this.lblInProgressValue = new Wisej.Web.Label();
+            this.pnlClosedCard = new Wisej.Web.Panel();
             this.lblClosedCaption = new Wisej.Web.Label();
-            this.cardCustomers = new Wisej.Web.Panel();
-            this.lblCustomersValue = new Wisej.Web.Label();
-            this.lblCustomersCaption = new Wisej.Web.Label();
-            this.cardCommands = new Wisej.Web.Panel();
+            this.lblClosedValue = new Wisej.Web.Label();
+            this.pnlCommands = new Wisej.Web.Panel();
             this.lblCommandsTitle = new Wisej.Web.Label();
-            this.btnCreateTicket = new Wisej.Web.Button();
-            this.btnEditTicket = new Wisej.Web.Button();
-            this.btnCloseTicket = new Wisej.Web.Button();
-            this.lblCommandsHint = new Wisej.Web.Label();
-            this.cardActivity = new Wisej.Web.Panel();
+            this.btnNewTicket = new Wisej.Web.Button();
+            this.btnRefresh = new Wisej.Web.Button();
+            this.pnlActivity = new Wisej.Web.Panel();
             this.lblActivityTitle = new Wisej.Web.Label();
             this.lstActivity = new Wisej.Web.ListBox();
-            this.btnClearActivity = new Wisej.Web.Button();
-            this.cardOpen.SuspendLayout();
-            this.cardInProgress.SuspendLayout();
-            this.cardClosed.SuspendLayout();
-            this.cardCustomers.SuspendLayout();
-            this.cardCommands.SuspendLayout();
-            this.cardActivity.SuspendLayout();
+            this.pnlOpenCard.SuspendLayout();
+            this.pnlInProgressCard.SuspendLayout();
+            this.pnlClosedCard.SuspendLayout();
+            this.pnlCommands.SuspendLayout();
+            this.pnlActivity.SuspendLayout();
             this.SuspendLayout();
             //
-            // lblPageTitle  (rule 1: the page title is obvious — 18 pt bold at 32,24 on every page)
+            // lblPageTitle
             //
-            this.lblPageTitle.AutoSize = false;
+            this.lblPageTitle.AutoSize = true;
             this.lblPageTitle.Font = new System.Drawing.Font("default", 18F, System.Drawing.FontStyle.Bold);
-            this.lblPageTitle.Location = new System.Drawing.Point(32, 24);
+            this.lblPageTitle.Location = new System.Drawing.Point(0, 0);
             this.lblPageTitle.Name = "lblPageTitle";
-            this.lblPageTitle.Size = new System.Drawing.Size(600, 34);
             this.lblPageTitle.Text = "Dashboard";
             //
             // lblPageDescription
             //
-            this.lblPageDescription.AutoSize = false;
-            this.lblPageDescription.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblPageDescription.Location = new System.Drawing.Point(32, 60);
+            this.lblPageDescription.AutoSize = true;
+            this.lblPageDescription.Location = new System.Drawing.Point(0, 38);
             this.lblPageDescription.Name = "lblPageDescription";
-            this.lblPageDescription.Size = new System.Drawing.Size(1000, 22);
-            this.lblPageDescription.Text = "Ticket metrics at a glance, the commands you use most, and what happened recently.";
+            this.lblPageDescription.Text = "Today's ticket queue at a glance.";
             //
-            // cardOpen  (metric cards: 250 × 110 at y = 100, 24 px apart → x = 32, 306, 580, 854)
+            // pnlOpenCard
             //
-            this.cardOpen.BackColor = System.Drawing.Color.White;
-            this.cardOpen.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.cardOpen.Controls.Add(this.lblOpenValue);
-            this.cardOpen.Controls.Add(this.lblOpenCaption);
-            this.cardOpen.Location = new System.Drawing.Point(32, 100);
-            this.cardOpen.Name = "cardOpen";
-            this.cardOpen.Size = new System.Drawing.Size(250, 110);
-            //
-            // lblOpenValue
-            //
-            this.lblOpenValue.AutoSize = false;
-            this.lblOpenValue.Font = new System.Drawing.Font("default", 26F, System.Drawing.FontStyle.Bold);
-            this.lblOpenValue.ForeColor = System.Drawing.Color.FromArgb(224, 86, 59);
-            this.lblOpenValue.Location = new System.Drawing.Point(20, 14);
-            this.lblOpenValue.Name = "lblOpenValue";
-            this.lblOpenValue.Size = new System.Drawing.Size(210, 52);
-            this.lblOpenValue.Text = "0";
+            this.pnlOpenCard.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.pnlOpenCard.Controls.Add(this.lblOpenCaption);
+            this.pnlOpenCard.Controls.Add(this.lblOpenValue);
+            this.pnlOpenCard.Location = new System.Drawing.Point(0, 76);
+            this.pnlOpenCard.Name = "pnlOpenCard";
+            this.pnlOpenCard.Size = new System.Drawing.Size(200, 96);
             //
             // lblOpenCaption
             //
-            this.lblOpenCaption.AutoSize = false;
-            this.lblOpenCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblOpenCaption.Location = new System.Drawing.Point(20, 70);
+            this.lblOpenCaption.AutoSize = true;
+            this.lblOpenCaption.Location = new System.Drawing.Point(16, 12);
             this.lblOpenCaption.Name = "lblOpenCaption";
-            this.lblOpenCaption.Size = new System.Drawing.Size(210, 22);
-            this.lblOpenCaption.Text = "Open tickets";
+            this.lblOpenCaption.Text = "Open";
             //
-            // cardInProgress
+            // lblOpenValue
             //
-            this.cardInProgress.BackColor = System.Drawing.Color.White;
-            this.cardInProgress.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.cardInProgress.Controls.Add(this.lblInProgressValue);
-            this.cardInProgress.Controls.Add(this.lblInProgressCaption);
-            this.cardInProgress.Location = new System.Drawing.Point(306, 100);
-            this.cardInProgress.Name = "cardInProgress";
-            this.cardInProgress.Size = new System.Drawing.Size(250, 110);
+            this.lblOpenValue.AutoSize = true;
+            this.lblOpenValue.Font = new System.Drawing.Font("default", 26F, System.Drawing.FontStyle.Bold);
+            this.lblOpenValue.Location = new System.Drawing.Point(16, 36);
+            this.lblOpenValue.Name = "lblOpenValue";
+            this.lblOpenValue.Text = "0";
             //
-            // lblInProgressValue
+            // pnlInProgressCard
             //
-            this.lblInProgressValue.AutoSize = false;
-            this.lblInProgressValue.Font = new System.Drawing.Font("default", 26F, System.Drawing.FontStyle.Bold);
-            this.lblInProgressValue.ForeColor = System.Drawing.Color.FromArgb(232, 161, 60);
-            this.lblInProgressValue.Location = new System.Drawing.Point(20, 14);
-            this.lblInProgressValue.Name = "lblInProgressValue";
-            this.lblInProgressValue.Size = new System.Drawing.Size(210, 52);
-            this.lblInProgressValue.Text = "0";
+            this.pnlInProgressCard.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.pnlInProgressCard.Controls.Add(this.lblInProgressCaption);
+            this.pnlInProgressCard.Controls.Add(this.lblInProgressValue);
+            this.pnlInProgressCard.Location = new System.Drawing.Point(216, 76);
+            this.pnlInProgressCard.Name = "pnlInProgressCard";
+            this.pnlInProgressCard.Size = new System.Drawing.Size(200, 96);
             //
             // lblInProgressCaption
             //
-            this.lblInProgressCaption.AutoSize = false;
-            this.lblInProgressCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblInProgressCaption.Location = new System.Drawing.Point(20, 70);
+            this.lblInProgressCaption.AutoSize = true;
+            this.lblInProgressCaption.Location = new System.Drawing.Point(16, 12);
             this.lblInProgressCaption.Name = "lblInProgressCaption";
-            this.lblInProgressCaption.Size = new System.Drawing.Size(210, 22);
-            this.lblInProgressCaption.Text = "In progress";
+            this.lblInProgressCaption.Text = "In Progress";
             //
-            // cardClosed
+            // lblInProgressValue
             //
-            this.cardClosed.BackColor = System.Drawing.Color.White;
-            this.cardClosed.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.cardClosed.Controls.Add(this.lblClosedValue);
-            this.cardClosed.Controls.Add(this.lblClosedCaption);
-            this.cardClosed.Location = new System.Drawing.Point(580, 100);
-            this.cardClosed.Name = "cardClosed";
-            this.cardClosed.Size = new System.Drawing.Size(250, 110);
+            this.lblInProgressValue.AutoSize = true;
+            this.lblInProgressValue.Font = new System.Drawing.Font("default", 26F, System.Drawing.FontStyle.Bold);
+            this.lblInProgressValue.Location = new System.Drawing.Point(16, 36);
+            this.lblInProgressValue.Name = "lblInProgressValue";
+            this.lblInProgressValue.Text = "0";
             //
-            // lblClosedValue
+            // pnlClosedCard
             //
-            this.lblClosedValue.AutoSize = false;
-            this.lblClosedValue.Font = new System.Drawing.Font("default", 26F, System.Drawing.FontStyle.Bold);
-            this.lblClosedValue.ForeColor = System.Drawing.Color.FromArgb(31, 157, 87);
-            this.lblClosedValue.Location = new System.Drawing.Point(20, 14);
-            this.lblClosedValue.Name = "lblClosedValue";
-            this.lblClosedValue.Size = new System.Drawing.Size(210, 52);
-            this.lblClosedValue.Text = "0";
+            this.pnlClosedCard.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.pnlClosedCard.Controls.Add(this.lblClosedCaption);
+            this.pnlClosedCard.Controls.Add(this.lblClosedValue);
+            this.pnlClosedCard.Location = new System.Drawing.Point(432, 76);
+            this.pnlClosedCard.Name = "pnlClosedCard";
+            this.pnlClosedCard.Size = new System.Drawing.Size(200, 96);
             //
             // lblClosedCaption
             //
-            this.lblClosedCaption.AutoSize = false;
-            this.lblClosedCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblClosedCaption.Location = new System.Drawing.Point(20, 70);
+            this.lblClosedCaption.AutoSize = true;
+            this.lblClosedCaption.Location = new System.Drawing.Point(16, 12);
             this.lblClosedCaption.Name = "lblClosedCaption";
-            this.lblClosedCaption.Size = new System.Drawing.Size(210, 22);
             this.lblClosedCaption.Text = "Closed";
             //
-            // cardCustomers
+            // lblClosedValue
             //
-            this.cardCustomers.BackColor = System.Drawing.Color.White;
-            this.cardCustomers.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.cardCustomers.Controls.Add(this.lblCustomersValue);
-            this.cardCustomers.Controls.Add(this.lblCustomersCaption);
-            this.cardCustomers.Location = new System.Drawing.Point(854, 100);
-            this.cardCustomers.Name = "cardCustomers";
-            this.cardCustomers.Size = new System.Drawing.Size(250, 110);
+            this.lblClosedValue.AutoSize = true;
+            this.lblClosedValue.Font = new System.Drawing.Font("default", 26F, System.Drawing.FontStyle.Bold);
+            this.lblClosedValue.Location = new System.Drawing.Point(16, 36);
+            this.lblClosedValue.Name = "lblClosedValue";
+            this.lblClosedValue.Text = "0";
             //
-            // lblCustomersValue
+            // pnlCommands
             //
-            this.lblCustomersValue.AutoSize = false;
-            this.lblCustomersValue.Font = new System.Drawing.Font("default", 26F, System.Drawing.FontStyle.Bold);
-            this.lblCustomersValue.Location = new System.Drawing.Point(20, 14);
-            this.lblCustomersValue.Name = "lblCustomersValue";
-            this.lblCustomersValue.Size = new System.Drawing.Size(210, 52);
-            this.lblCustomersValue.Text = "0";
-            //
-            // lblCustomersCaption
-            //
-            this.lblCustomersCaption.AutoSize = false;
-            this.lblCustomersCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblCustomersCaption.Location = new System.Drawing.Point(20, 70);
-            this.lblCustomersCaption.Name = "lblCustomersCaption";
-            this.lblCustomersCaption.Size = new System.Drawing.Size(210, 22);
-            this.lblCustomersCaption.Text = "Customers";
-            //
-            // cardCommands  (row 2 · 524 × 170 at 32,234 — two metric cards plus one gap wide)
-            //
-            this.cardCommands.BackColor = System.Drawing.Color.White;
-            this.cardCommands.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.cardCommands.Controls.Add(this.lblCommandsTitle);
-            this.cardCommands.Controls.Add(this.btnCreateTicket);
-            this.cardCommands.Controls.Add(this.btnEditTicket);
-            this.cardCommands.Controls.Add(this.btnCloseTicket);
-            this.cardCommands.Controls.Add(this.lblCommandsHint);
-            this.cardCommands.Location = new System.Drawing.Point(32, 234);
-            this.cardCommands.Name = "cardCommands";
-            this.cardCommands.Size = new System.Drawing.Size(524, 170);
+            this.pnlCommands.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.pnlCommands.Controls.Add(this.lblCommandsTitle);
+            this.pnlCommands.Controls.Add(this.btnNewTicket);
+            this.pnlCommands.Controls.Add(this.btnRefresh);
+            this.pnlCommands.Location = new System.Drawing.Point(0, 188);
+            this.pnlCommands.Name = "pnlCommands";
+            this.pnlCommands.Size = new System.Drawing.Size(308, 110);
             //
             // lblCommandsTitle
             //
-            this.lblCommandsTitle.AutoSize = false;
-            this.lblCommandsTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblCommandsTitle.Location = new System.Drawing.Point(20, 14);
+            this.lblCommandsTitle.AutoSize = true;
+            this.lblCommandsTitle.Font = new System.Drawing.Font("default", 11F, System.Drawing.FontStyle.Bold);
+            this.lblCommandsTitle.Location = new System.Drawing.Point(16, 12);
             this.lblCommandsTitle.Name = "lblCommandsTitle";
-            this.lblCommandsTitle.Size = new System.Drawing.Size(484, 28);
             this.lblCommandsTitle.Text = "Commands";
             //
-            // btnCreateTicket  (grouped commands: 150 × 36, 12 px apart, near the content they affect)
+            // btnNewTicket
             //
-            this.btnCreateTicket.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.btnCreateTicket.Location = new System.Drawing.Point(20, 56);
-            this.btnCreateTicket.Name = "btnCreateTicket";
-            this.btnCreateTicket.Size = new System.Drawing.Size(150, 36);
-            this.btnCreateTicket.Text = "Create ticket";
-            this.btnCreateTicket.ToolTipText = "Opens the Module 5 TicketDialog; Save goes through ValidateForm and TicketService.AddTicket.";
-            this.btnCreateTicket.Click += new System.EventHandler(this.btnCreateTicket_Click);
+            this.btnNewTicket.Location = new System.Drawing.Point(16, 50);
+            this.btnNewTicket.Name = "btnNewTicket";
+            this.btnNewTicket.Size = new System.Drawing.Size(130, 34);
+            this.btnNewTicket.Text = "New Ticket";
+            this.btnNewTicket.Click += new System.EventHandler(this.btnNewTicket_Click);
             //
-            // btnEditTicket
+            // btnRefresh
             //
-            this.btnEditTicket.Location = new System.Drawing.Point(182, 56);
-            this.btnEditTicket.Name = "btnEditTicket";
-            this.btnEditTicket.Size = new System.Drawing.Size(150, 36);
-            this.btnEditTicket.Text = "Edit ticket";
-            this.btnEditTicket.ToolTipText = "Goes to the ticket queue, where a row can be selected and edited.";
-            this.btnEditTicket.Click += new System.EventHandler(this.btnEditTicket_Click);
+            this.btnRefresh.Location = new System.Drawing.Point(158, 50);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(130, 34);
+            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
             //
-            // btnCloseTicket
+            // pnlActivity
             //
-            this.btnCloseTicket.Location = new System.Drawing.Point(344, 56);
-            this.btnCloseTicket.Name = "btnCloseTicket";
-            this.btnCloseTicket.Size = new System.Drawing.Size(150, 36);
-            this.btnCloseTicket.Text = "Close ticket";
-            this.btnCloseTicket.ToolTipText = "Closes the oldest ticket that is not Closed yet, after a Yes/No confirmation.";
-            this.btnCloseTicket.Click += new System.EventHandler(this.btnCloseTicket_Click);
-            //
-            // lblCommandsHint
-            //
-            this.lblCommandsHint.AutoSize = false;
-            this.lblCommandsHint.Font = new System.Drawing.Font("monospace", 9F);
-            this.lblCommandsHint.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblCommandsHint.Location = new System.Drawing.Point(20, 104);
-            this.lblCommandsHint.Name = "lblCommandsHint";
-            this.lblCommandsHint.Size = new System.Drawing.Size(484, 50);
-            this.lblCommandsHint.Text = "Same TicketService + TicketDialog as the Tickets page.\nCreate → dialog · Edit → queue · Close → YesNo confirm";
-            this.lblCommandsHint.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            //
-            // cardActivity  (row 2 · 524 wide at 580,234 · anchored so it grows with the window)
-            //
-            this.cardActivity.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.cardActivity.BackColor = System.Drawing.Color.White;
-            this.cardActivity.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.cardActivity.Controls.Add(this.lblActivityTitle);
-            this.cardActivity.Controls.Add(this.lstActivity);
-            this.cardActivity.Controls.Add(this.btnClearActivity);
-            this.cardActivity.Location = new System.Drawing.Point(580, 234);
-            this.cardActivity.Name = "cardActivity";
-            this.cardActivity.Size = new System.Drawing.Size(524, 362);
+            this.pnlActivity.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.pnlActivity.Controls.Add(this.lblActivityTitle);
+            this.pnlActivity.Controls.Add(this.lstActivity);
+            this.pnlActivity.Location = new System.Drawing.Point(324, 188);
+            this.pnlActivity.Name = "pnlActivity";
+            this.pnlActivity.Size = new System.Drawing.Size(308, 250);
             //
             // lblActivityTitle
             //
-            this.lblActivityTitle.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lblActivityTitle.AutoSize = false;
-            this.lblActivityTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblActivityTitle.Location = new System.Drawing.Point(20, 14);
+            this.lblActivityTitle.AutoSize = true;
+            this.lblActivityTitle.Font = new System.Drawing.Font("default", 11F, System.Drawing.FontStyle.Bold);
+            this.lblActivityTitle.Location = new System.Drawing.Point(16, 12);
             this.lblActivityTitle.Name = "lblActivityTitle";
-            this.lblActivityTitle.Size = new System.Drawing.Size(484, 28);
-            this.lblActivityTitle.Text = "Recent activity  ·  navigation, theme changes, ticket actions";
+            this.lblActivityTitle.Text = "Recent activity";
             //
-            // lstActivity  (the event log — fed only by MainWindow.AddActivity)
+            // lstActivity
             //
-            this.lstActivity.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Left | Wisej.Web.AnchorStyles.Right;
-            this.lstActivity.Font = new System.Drawing.Font("monospace", 9F);
-            this.lstActivity.Location = new System.Drawing.Point(20, 52);
+            this.lstActivity.Location = new System.Drawing.Point(16, 44);
             this.lstActivity.Name = "lstActivity";
-            this.lstActivity.Size = new System.Drawing.Size(484, 254);
-            //
-            // btnClearActivity
-            //
-            this.btnClearActivity.Anchor = Wisej.Web.AnchorStyles.Bottom | Wisej.Web.AnchorStyles.Right;
-            this.btnClearActivity.Location = new System.Drawing.Point(394, 314);
-            this.btnClearActivity.Name = "btnClearActivity";
-            this.btnClearActivity.Size = new System.Drawing.Size(110, 32);
-            this.btnClearActivity.Text = "Clear";
-            this.btnClearActivity.Click += new System.EventHandler(this.btnClearActivity_Click);
+            this.lstActivity.Size = new System.Drawing.Size(274, 190);
             //
             // DashboardView
             //
-            this.BackColor = System.Drawing.Color.FromArgb(238, 242, 247);
-            this.Controls.Add(this.lblPageTitle);
+            this.Controls.Add(this.pnlActivity);
+            this.Controls.Add(this.pnlCommands);
+            this.Controls.Add(this.pnlClosedCard);
+            this.Controls.Add(this.pnlInProgressCard);
+            this.Controls.Add(this.pnlOpenCard);
             this.Controls.Add(this.lblPageDescription);
-            this.Controls.Add(this.cardOpen);
-            this.Controls.Add(this.cardInProgress);
-            this.Controls.Add(this.cardClosed);
-            this.Controls.Add(this.cardCustomers);
-            this.Controls.Add(this.cardCommands);
-            this.Controls.Add(this.cardActivity);
+            this.Controls.Add(this.lblPageTitle);
             this.Name = "DashboardView";
-            this.Size = new System.Drawing.Size(1148, 620);
-            this.cardOpen.ResumeLayout(false);
-            this.cardInProgress.ResumeLayout(false);
-            this.cardClosed.ResumeLayout(false);
-            this.cardCustomers.ResumeLayout(false);
-            this.cardCommands.ResumeLayout(false);
-            this.cardActivity.ResumeLayout(false);
+            this.Size = new System.Drawing.Size(660, 460);
+            this.pnlOpenCard.ResumeLayout(false);
+            this.pnlOpenCard.PerformLayout();
+            this.pnlInProgressCard.ResumeLayout(false);
+            this.pnlInProgressCard.PerformLayout();
+            this.pnlClosedCard.ResumeLayout(false);
+            this.pnlClosedCard.PerformLayout();
+            this.pnlCommands.ResumeLayout(false);
+            this.pnlCommands.PerformLayout();
+            this.pnlActivity.ResumeLayout(false);
+            this.pnlActivity.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
         }
 
         #endregion
 
         private Wisej.Web.Label lblPageTitle;
         private Wisej.Web.Label lblPageDescription;
-        private Wisej.Web.Panel cardOpen;
-        private Wisej.Web.Label lblOpenValue;
+        private Wisej.Web.Panel pnlOpenCard;
         private Wisej.Web.Label lblOpenCaption;
-        private Wisej.Web.Panel cardInProgress;
-        private Wisej.Web.Label lblInProgressValue;
+        private Wisej.Web.Label lblOpenValue;
+        private Wisej.Web.Panel pnlInProgressCard;
         private Wisej.Web.Label lblInProgressCaption;
-        private Wisej.Web.Panel cardClosed;
-        private Wisej.Web.Label lblClosedValue;
+        private Wisej.Web.Label lblInProgressValue;
+        private Wisej.Web.Panel pnlClosedCard;
         private Wisej.Web.Label lblClosedCaption;
-        private Wisej.Web.Panel cardCustomers;
-        private Wisej.Web.Label lblCustomersValue;
-        private Wisej.Web.Label lblCustomersCaption;
-        private Wisej.Web.Panel cardCommands;
+        private Wisej.Web.Label lblClosedValue;
+        private Wisej.Web.Panel pnlCommands;
         private Wisej.Web.Label lblCommandsTitle;
-        private Wisej.Web.Button btnCreateTicket;
-        private Wisej.Web.Button btnEditTicket;
-        private Wisej.Web.Button btnCloseTicket;
-        private Wisej.Web.Label lblCommandsHint;
-        private Wisej.Web.Panel cardActivity;
+        private Wisej.Web.Button btnNewTicket;
+        private Wisej.Web.Button btnRefresh;
+        private Wisej.Web.Panel pnlActivity;
         private Wisej.Web.Label lblActivityTitle;
         private Wisej.Web.ListBox lstActivity;
-        private Wisej.Web.Button btnClearActivity;
     }
 }

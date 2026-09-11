@@ -13,15 +13,15 @@ Requirements already on this machine: .NET 10 SDK and the `Wisej-4` 4.1.0 NuGet 
 | Module | Folder | What it builds | Run |
 |---|---|---|---|
 | 1 · How Wisej.NET works | `Module 1` | `Window1`: the first app from the walkthrough — `lblTitle` "What's your name?", `txtName`, `btnSayHello`, `lblStatus` greeting | `dotnet run -f net10.0 --urls http://localhost:5081` |
-| 2 · Designer, properties & events | `Module 2` | `DashboardWindow`: title/status labels, three service indicators, Start / Stop / Reset / Refresh, `lstEventLog` + `AddLog` | `http://localhost:5082` |
+| 2 · Designer, properties & events | `Module 2` | `DashboardWindow`: `lblTitle`, `lblStatus`, `pnlServices` with three service labels, Start / Stop / Reset / Refresh, `lstEventLog` + `AddLog` | `http://localhost:5082` |
 | 3 · Application shell & navigation | `Module 3` | `MainPage : Page` shell: docked header / nav / content / status, four `UserControl` views, one `NavigateTo`, view-only Settings for a Support Agent | `http://localhost:5083` |
 | 4 · Data binding & layout | `Module 4` | `TicketsWindow`: `Ticket` + `TicketService`, `SplitContainer`, `dgvTickets` bound through a `BindingSource`, detail controls, `btnSaveTicket` | `http://localhost:5084` |
-| 5 · Dialogs & validation | `Module 5` | the ticket screen + one `TicketDialog` for New and Edit, `ValidateForm`, `DialogResult.OK`, delete confirmation, refresh only after a successful save | `http://localhost:5085` |
-| 6 · State, background work & errors | `Module 6` | `JobsWindow`: Start Import / Export, Cancel, progress bar, job log, `async`/`await` + `try/catch/finally`, safe messages, session vs static state | `http://localhost:5086` |
-| 7 · Theming & UI modernization | `Module 7` | `MainWindow`: theme selector (`Application.LoadTheme`), active nav state, metric cards, grouped commands, recent activity — ticket logic untouched | `http://localhost:5087` |
-| 8 · JavaScript widget | `Module 8` | `StatusPage`: `widStatus` (`Wisej.Web.Widget`) fed by a C# `StatusService`, `Widgets/statusGauge.js` + `.css`, data card, Refresh, `gaugeClick` event | `http://localhost:5088` |
-| 9 · Configuration, security & deployment | `Module 9` | `ReleaseReviewWindow`: required/optional release checklist, environment & target, role-gated review backed by a server check, secrets from secure config, troubleshooting log | `http://localhost:5089` |
-| 10 · Capstone | `Module 10` | `Window1` mini helpdesk: nav shell, ticket CRUD with `TicketDialog` + `TicketValidator` + `TicketService`, dashboard cards, jobs, architecture / code-review / deployment / next-steps screens | `http://localhost:5090` |
+| 5 · Dialogs & validation | `Module 5` | the ticket grid + one `TicketDialog` for New and Edit, `ValidateForm`, `DialogResult.OK`, refresh only after a successful save | `http://localhost:5085` |
+| 6 · State, background work & errors | `Module 6` | `JobsWindow`: Start Import / Export, Cancel, progress bar, job log, `async`/`await` + `try/catch/finally`, safe messages, per-session state | `http://localhost:5086` |
+| 7 · Theming & UI modernization | `Module 7` | `MainWindow`: theme selector (`Application.LoadTheme`), active nav state, metric cards, grouped commands, recent activity — Module 5 ticket logic reused unchanged | `http://localhost:5087` |
+| 8 · JavaScript widget | `Module 8` | `StatusPage`: `widStatus` (`Wisej.Web.Widget`) fed by a C# `StatusService`, `Widgets/statusGauge.js` + `.css`, data card, Refresh / Set Healthy / Warning / Critical, `gaugeClick` event | `http://localhost:5088` |
+| 9 · Configuration, security & deployment | `Module 9` | `ReleaseReviewWindow`: release info, required / optional checklist, deployment notes, role-gated review with a server-side re-check, license key from secure config, troubleshooting log | `http://localhost:5089` |
+| 10 · Capstone | `Module 10` | `Window1` mini helpdesk: left-nav shell (Dashboard, Tickets, Architecture, Code Review, Deployment, Next Steps), ticket CRUD with `TicketDialog` + `TicketValidator` + `TicketService` over a fake repository, dashboard counts, notes screens | `http://localhost:5090` |
 
 Run any module from its `WisejTrainingApp` project folder. The projects multi-target `net10.0-windows` and
 `net10.0`, so `dotnet run` needs a framework (`-f net10.0`, or `-f net10.0-windows`), e.g.

@@ -23,87 +23,56 @@ namespace WisejTrainingApp.Dialogs
 
         private void InitializeComponent()
         {
-            this.lblDialogHeading = new Wisej.Web.Label();
-            this.lblTitleCaption = new Wisej.Web.Label();
+            this.lblTitleField = new Wisej.Web.Label();
             this.txtTitle = new Wisej.Web.TextBox();
-            this.lblCustomerCaption = new Wisej.Web.Label();
+            this.lblCustomerField = new Wisej.Web.Label();
             this.txtCustomer = new Wisej.Web.TextBox();
-            this.lblStatusCaption = new Wisej.Web.Label();
+            this.lblStatusField = new Wisej.Web.Label();
             this.cboStatus = new Wisej.Web.ComboBox();
-            this.lblPriorityCaption = new Wisej.Web.Label();
+            this.lblPriorityField = new Wisej.Web.Label();
             this.cboPriority = new Wisej.Web.ComboBox();
-            this.lblAssignedToCaption = new Wisej.Web.Label();
+            this.lblAssignedToField = new Wisej.Web.Label();
             this.txtAssignedTo = new Wisej.Web.TextBox();
-            this.lblDescriptionCaption = new Wisej.Web.Label();
+            this.lblDescriptionField = new Wisej.Web.Label();
             this.txtDescription = new Wisej.Web.TextBox();
-            this.lblValidation = new Wisej.Web.Label();
             this.btnSave = new Wisej.Web.Button();
             this.btnCancel = new Wisej.Web.Button();
             this.SuspendLayout();
             //
-            // lblDialogHeading
+            // lblTitleField
             //
-            this.lblDialogHeading.AutoSize = false;
-            this.lblDialogHeading.Font = new System.Drawing.Font("default", 14F, System.Drawing.FontStyle.Bold);
-            this.lblDialogHeading.Location = new System.Drawing.Point(24, 16);
-            this.lblDialogHeading.Name = "lblDialogHeading";
-            this.lblDialogHeading.Size = new System.Drawing.Size(460, 30);
-            this.lblDialogHeading.Text = "New ticket";
-            //
-            // lblTitleCaption
-            //
-            this.lblTitleCaption.AutoSize = false;
-            this.lblTitleCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblTitleCaption.Location = new System.Drawing.Point(24, 56);
-            this.lblTitleCaption.Name = "lblTitleCaption";
-            this.lblTitleCaption.Size = new System.Drawing.Size(460, 20);
-            this.lblTitleCaption.Text = "Title *";
+            this.lblTitleField.AutoSize = true;
+            this.lblTitleField.Location = new System.Drawing.Point(20, 16);
+            this.lblTitleField.Name = "lblTitleField";
+            this.lblTitleField.Text = "Title *";
             //
             // txtTitle
             //
-            this.txtTitle.Location = new System.Drawing.Point(24, 78);
+            this.txtTitle.Location = new System.Drawing.Point(20, 38);
             this.txtTitle.Name = "txtTitle";
-            this.txtTitle.Size = new System.Drawing.Size(460, 34);
-            this.txtTitle.Watermark = "What is the problem?";
+            this.txtTitle.Size = new System.Drawing.Size(360, 30);
+            this.txtTitle.TabIndex = 0;
             //
-            // lblCustomerCaption
+            // lblCustomerField
             //
-            this.lblCustomerCaption.AutoSize = false;
-            this.lblCustomerCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblCustomerCaption.Location = new System.Drawing.Point(24, 122);
-            this.lblCustomerCaption.Name = "lblCustomerCaption";
-            this.lblCustomerCaption.Size = new System.Drawing.Size(224, 20);
-            this.lblCustomerCaption.Text = "Customer *";
+            this.lblCustomerField.AutoSize = true;
+            this.lblCustomerField.Location = new System.Drawing.Point(20, 76);
+            this.lblCustomerField.Name = "lblCustomerField";
+            this.lblCustomerField.Text = "Customer";
             //
             // txtCustomer
             //
-            this.txtCustomer.Location = new System.Drawing.Point(24, 144);
+            this.txtCustomer.Location = new System.Drawing.Point(20, 98);
             this.txtCustomer.Name = "txtCustomer";
-            this.txtCustomer.Size = new System.Drawing.Size(224, 34);
+            this.txtCustomer.Size = new System.Drawing.Size(360, 30);
+            this.txtCustomer.TabIndex = 1;
             //
-            // lblAssignedToCaption
+            // lblStatusField
             //
-            this.lblAssignedToCaption.AutoSize = false;
-            this.lblAssignedToCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblAssignedToCaption.Location = new System.Drawing.Point(260, 122);
-            this.lblAssignedToCaption.Name = "lblAssignedToCaption";
-            this.lblAssignedToCaption.Size = new System.Drawing.Size(224, 20);
-            this.lblAssignedToCaption.Text = "Assigned to";
-            //
-            // txtAssignedTo
-            //
-            this.txtAssignedTo.Location = new System.Drawing.Point(260, 144);
-            this.txtAssignedTo.Name = "txtAssignedTo";
-            this.txtAssignedTo.Size = new System.Drawing.Size(224, 34);
-            //
-            // lblStatusCaption
-            //
-            this.lblStatusCaption.AutoSize = false;
-            this.lblStatusCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblStatusCaption.Location = new System.Drawing.Point(24, 188);
-            this.lblStatusCaption.Name = "lblStatusCaption";
-            this.lblStatusCaption.Size = new System.Drawing.Size(224, 20);
-            this.lblStatusCaption.Text = "Status *";
+            this.lblStatusField.AutoSize = true;
+            this.lblStatusField.Location = new System.Drawing.Point(20, 136);
+            this.lblStatusField.Name = "lblStatusField";
+            this.lblStatusField.Text = "Status *";
             //
             // cboStatus
             //
@@ -112,18 +81,17 @@ namespace WisejTrainingApp.Dialogs
             "Open",
             "In Progress",
             "Closed"});
-            this.cboStatus.Location = new System.Drawing.Point(24, 210);
+            this.cboStatus.Location = new System.Drawing.Point(20, 158);
             this.cboStatus.Name = "cboStatus";
-            this.cboStatus.Size = new System.Drawing.Size(224, 34);
+            this.cboStatus.Size = new System.Drawing.Size(172, 30);
+            this.cboStatus.TabIndex = 2;
             //
-            // lblPriorityCaption
+            // lblPriorityField
             //
-            this.lblPriorityCaption.AutoSize = false;
-            this.lblPriorityCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblPriorityCaption.Location = new System.Drawing.Point(260, 188);
-            this.lblPriorityCaption.Name = "lblPriorityCaption";
-            this.lblPriorityCaption.Size = new System.Drawing.Size(224, 20);
-            this.lblPriorityCaption.Text = "Priority *";
+            this.lblPriorityField.AutoSize = true;
+            this.lblPriorityField.Location = new System.Drawing.Point(208, 136);
+            this.lblPriorityField.Name = "lblPriorityField";
+            this.lblPriorityField.Text = "Priority";
             //
             // cboPriority
             //
@@ -132,50 +100,55 @@ namespace WisejTrainingApp.Dialogs
             "Low",
             "Medium",
             "High"});
-            this.cboPriority.Location = new System.Drawing.Point(260, 210);
+            this.cboPriority.Location = new System.Drawing.Point(208, 158);
             this.cboPriority.Name = "cboPriority";
-            this.cboPriority.Size = new System.Drawing.Size(224, 34);
+            this.cboPriority.Size = new System.Drawing.Size(172, 30);
+            this.cboPriority.TabIndex = 3;
             //
-            // lblDescriptionCaption
+            // lblAssignedToField
             //
-            this.lblDescriptionCaption.AutoSize = false;
-            this.lblDescriptionCaption.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblDescriptionCaption.Location = new System.Drawing.Point(24, 254);
-            this.lblDescriptionCaption.Name = "lblDescriptionCaption";
-            this.lblDescriptionCaption.Size = new System.Drawing.Size(460, 20);
-            this.lblDescriptionCaption.Text = "Description";
+            this.lblAssignedToField.AutoSize = true;
+            this.lblAssignedToField.Location = new System.Drawing.Point(20, 196);
+            this.lblAssignedToField.Name = "lblAssignedToField";
+            this.lblAssignedToField.Text = "Assigned To";
+            //
+            // txtAssignedTo
+            //
+            this.txtAssignedTo.Location = new System.Drawing.Point(20, 218);
+            this.txtAssignedTo.Name = "txtAssignedTo";
+            this.txtAssignedTo.Size = new System.Drawing.Size(360, 30);
+            this.txtAssignedTo.TabIndex = 4;
+            //
+            // lblDescriptionField
+            //
+            this.lblDescriptionField.AutoSize = true;
+            this.lblDescriptionField.Location = new System.Drawing.Point(20, 256);
+            this.lblDescriptionField.Name = "lblDescriptionField";
+            this.lblDescriptionField.Text = "Description";
             //
             // txtDescription
             //
-            this.txtDescription.Location = new System.Drawing.Point(24, 276);
+            this.txtDescription.Location = new System.Drawing.Point(20, 278);
             this.txtDescription.Multiline = true;
             this.txtDescription.Name = "txtDescription";
-            this.txtDescription.Size = new System.Drawing.Size(460, 90);
-            //
-            // lblValidation  (ValidateForm writes the reason here)
-            //
-            this.lblValidation.AutoSize = false;
-            this.lblValidation.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.lblValidation.ForeColor = System.Drawing.Color.FromArgb(224, 86, 59);
-            this.lblValidation.Location = new System.Drawing.Point(24, 378);
-            this.lblValidation.Name = "lblValidation";
-            this.lblValidation.Size = new System.Drawing.Size(460, 24);
-            this.lblValidation.Text = "";
+            this.txtDescription.Size = new System.Drawing.Size(360, 90);
+            this.txtDescription.TabIndex = 5;
             //
             // btnSave
             //
-            this.btnSave.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.btnSave.Location = new System.Drawing.Point(258, 414);
+            this.btnSave.Location = new System.Drawing.Point(180, 388);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(110, 36);
+            this.btnSave.Size = new System.Drawing.Size(96, 34);
+            this.btnSave.TabIndex = 6;
             this.btnSave.Text = "Save";
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             //
             // btnCancel
             //
-            this.btnCancel.Location = new System.Drawing.Point(374, 414);
+            this.btnCancel.Location = new System.Drawing.Point(284, 388);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(110, 36);
+            this.btnCancel.Size = new System.Drawing.Size(96, 34);
+            this.btnCancel.TabIndex = 7;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             //
@@ -183,48 +156,42 @@ namespace WisejTrainingApp.Dialogs
             //
             this.AcceptButton = this.btnSave;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(508, 470);
-            this.Controls.Add(this.lblDialogHeading);
-            this.Controls.Add(this.lblTitleCaption);
-            this.Controls.Add(this.txtTitle);
-            this.Controls.Add(this.lblCustomerCaption);
-            this.Controls.Add(this.txtCustomer);
-            this.Controls.Add(this.lblAssignedToCaption);
-            this.Controls.Add(this.txtAssignedTo);
-            this.Controls.Add(this.lblStatusCaption);
-            this.Controls.Add(this.cboStatus);
-            this.Controls.Add(this.lblPriorityCaption);
-            this.Controls.Add(this.cboPriority);
-            this.Controls.Add(this.lblDescriptionCaption);
-            this.Controls.Add(this.txtDescription);
-            this.Controls.Add(this.lblValidation);
-            this.Controls.Add(this.btnSave);
+            this.ClientSize = new System.Drawing.Size(400, 440);
             this.Controls.Add(this.btnCancel);
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.txtDescription);
+            this.Controls.Add(this.lblDescriptionField);
+            this.Controls.Add(this.txtAssignedTo);
+            this.Controls.Add(this.lblAssignedToField);
+            this.Controls.Add(this.cboPriority);
+            this.Controls.Add(this.lblPriorityField);
+            this.Controls.Add(this.cboStatus);
+            this.Controls.Add(this.lblStatusField);
+            this.Controls.Add(this.txtCustomer);
+            this.Controls.Add(this.lblCustomerField);
+            this.Controls.Add(this.txtTitle);
+            this.Controls.Add(this.lblTitleField);
             this.Name = "TicketDialog";
-            this.ShowInTaskbar = false;
             this.StartPosition = Wisej.Web.FormStartPosition.CenterParent;
-            this.Text = "Ticket";
+            this.Text = "Create Ticket";
             this.ResumeLayout(false);
+            this.PerformLayout();
         }
 
         #endregion
 
-        private Wisej.Web.Label lblDialogHeading;
-        private Wisej.Web.Label lblTitleCaption;
+        private Wisej.Web.Label lblTitleField;
         private Wisej.Web.TextBox txtTitle;
-        private Wisej.Web.Label lblCustomerCaption;
+        private Wisej.Web.Label lblCustomerField;
         private Wisej.Web.TextBox txtCustomer;
-        private Wisej.Web.Label lblStatusCaption;
+        private Wisej.Web.Label lblStatusField;
         private Wisej.Web.ComboBox cboStatus;
-        private Wisej.Web.Label lblPriorityCaption;
+        private Wisej.Web.Label lblPriorityField;
         private Wisej.Web.ComboBox cboPriority;
-        private Wisej.Web.Label lblAssignedToCaption;
+        private Wisej.Web.Label lblAssignedToField;
         private Wisej.Web.TextBox txtAssignedTo;
-        private Wisej.Web.Label lblDescriptionCaption;
+        private Wisej.Web.Label lblDescriptionField;
         private Wisej.Web.TextBox txtDescription;
-        private Wisej.Web.Label lblValidation;
         private Wisej.Web.Button btnSave;
         private Wisej.Web.Button btnCancel;
     }
