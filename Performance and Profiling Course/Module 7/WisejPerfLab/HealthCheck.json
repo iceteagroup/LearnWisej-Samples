@@ -1,0 +1,8 @@
+{
+  "enabled": true,
+  "maxMemory": 70,
+  "maxSessions": 150,
+  "maxCPU": 85,
+  "returnCode": 503,
+  "retryAfter": 10
+}
