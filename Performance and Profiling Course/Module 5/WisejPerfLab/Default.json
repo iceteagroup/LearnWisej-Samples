@@ -1,0 +1,7 @@
+{
+	"url": "Default.html",
+	"startup": "WisejPerfLab.Program.Main, WisejPerfLab",
+	"theme": "Bootstrap-4",
+	"sessionTimeout": 1800,
+	"debug": true
+}

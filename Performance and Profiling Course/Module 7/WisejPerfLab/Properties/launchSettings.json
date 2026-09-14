@@ -1,0 +1,12 @@
+{
+	"profiles": {
+		"WisejPerfLab": {
+			"commandName": "Project",
+			"launchBrowser": true,
+			"applicationUrl": "http://localhost:5807",
+			"environmentVariables": {
+				"WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+			}
+		}
+	}
+}
