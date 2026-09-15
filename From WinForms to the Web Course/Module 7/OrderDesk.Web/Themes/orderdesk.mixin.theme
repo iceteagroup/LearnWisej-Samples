@@ -22,6 +22,9 @@
 				"default": {
 					"styles": {
 						"radius": 14
+					},
+					"properties": {
+						"padding": [5, 8, 5, 8]
 					}
 				}
 			}

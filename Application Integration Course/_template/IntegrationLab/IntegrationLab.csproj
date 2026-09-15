@@ -17,8 +17,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- The client adapter ships inside the assembly: the server hands it to the widget as InitScript. -->
-    <EmbeddedResource Include="wwwroot\temperature-gauge.js" LogicalName="IntegrationLab.wwwroot.temperature-gauge.js" />
+    <!--
+      The client adapter ships inside the assembly: the server hands it to the widget as InitScript.
+      Add one line per adapter you write, e.g.
+
+      <EmbeddedResource Include="wwwroot\temperature-gauge.js" LogicalName="IntegrationLab.wwwroot.temperature-gauge.js" />
+    -->
   </ItemGroup>
 
   <ItemGroup>

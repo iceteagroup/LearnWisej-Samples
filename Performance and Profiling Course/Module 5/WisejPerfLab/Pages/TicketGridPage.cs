@@ -132,7 +132,7 @@ namespace WisejPerfLab.Pages
                 lblGridStatus.Text =
                     $"{_rowCount:N0} rows   {_cache.Describe()}   " + PerfBudget.Describe(Scenario, UserAction, elapsed);
                 _shell.SetStatus(PerfBudget.StateFor(Scenario, UserAction, elapsed),
-                    $"Tickets/Search {PerfBudget.Describe(Scenario, UserAction, elapsed)} — {_rowCount:N0} rows, {_cache.QueryCount:N0} statements");
+                    $"Tickets/Search {PerfBudget.Describe(Scenario, UserAction, elapsed)} — {_rowCount:N0} rows");
             }
             catch (DatabaseUnavailableException ex)
             {
