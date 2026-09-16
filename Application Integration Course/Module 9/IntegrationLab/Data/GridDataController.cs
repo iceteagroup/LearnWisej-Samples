@@ -88,7 +88,12 @@ namespace IntegrationLab.Data
                                     measure = result.Measure,
                                     rowKeys = result.RowKeys,
                                     columnKeys = result.ColumnKeys,
+                                    // A WebMethod return value is NOT camel-cased by Wisej.NET (unlike Options), so
+                                    // PivotCell would reach the vendor as {Row,Column,Value} and every cell would read
+                                    // as empty. The wire names are spelled out here, like the fields around them.
                                     cells = result.Cells
+                                        .Select(c => new { row = c.Row, column = c.Column, value = c.Value })
+                                        .ToList()
                                 },
                                 $"({result.RowKeys.Count}×{result.ColumnKeys.Count}, {result.Cells.Count} cells)");
                         }

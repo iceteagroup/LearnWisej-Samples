@@ -43,7 +43,7 @@ namespace WisejTrainingApp
             this.pnlHeader.Controls.Add(this.lblAppTitle);
             this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1100, 56);
+            this.pnlHeader.Size = new System.Drawing.Size(1000, 56);
             //
             // lblAppTitle
             //
@@ -124,13 +124,13 @@ namespace WisejTrainingApp
             this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Padding = new Wisej.Web.Padding(12, 0, 12, 0);
-            this.lblStatus.Size = new System.Drawing.Size(1100, 28);
+            this.lblStatus.Size = new System.Drawing.Size(1000, 28);
             this.lblStatus.Text = "Ready.";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // Window1
             //
-            this.ClientSize = new System.Drawing.Size(1100, 680);
+            this.ClientSize = new System.Drawing.Size(1000, 660);
             this.Controls.Add(this.pnlContent);
             this.Controls.Add(this.pnlNav);
             this.Controls.Add(this.lblStatus);

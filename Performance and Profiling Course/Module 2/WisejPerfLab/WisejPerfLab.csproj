@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    WisejPerfLab — Performance &amp; Profiling course lab (Module 2).
+    Multi-targets net10.0-windows and net10.0 (Kestrel). Run with:
+      dotnet run -f net10.0 -&#45;urls http://localhost:580N   (from this folder; Module N → 580N)
+    Every measurement in this course is taken in Release:
+      dotnet run -c Release -f net10.0 -&#45;urls http://localhost:580N
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <RootNamespace>WisejPerfLab</RootNamespace>
+    <NoWarn>CA1416;WFO1000;CS7022</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="Default.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Web.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+    <None Remove="favicon.ico" />
+    <None Remove="App_Data\**" />
+    <Content Remove="App_Data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Default.html">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.0" />
+    <!-- The dashboard load chart (Chart.js wrapped as a server-side component). -->
+    <PackageReference Include="Wisej-4-ChartJS" Version="4.1.0" />
+    <!-- The lab dataset lives in a local SQLite file so the Database profiler tool has real queries to trace. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
+  </ItemGroup>
+
+</Project>

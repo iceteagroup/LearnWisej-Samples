@@ -89,7 +89,7 @@ There is no separate narrow screen: the workflow does not change, only how much 
 
 ## 5. Evidence — what the running app shows
 
-| What the note claims | What you see at <http://localhost:5703> |
+| What the note claims | What you see at <http://localhost:5705> |
 |---|---|
 | ToolBar Top / StatusBar Bottom / SplitContainer Fill | The ToolBar spans the top, the StatusBar the bottom, the split area sits between them; nothing overlaps at any width. |
 | Navigation in `Panel1`, `TabControl` in `Panel2` | The list on the left and the six tabs on the right; the splitter stops at 180 px. |
