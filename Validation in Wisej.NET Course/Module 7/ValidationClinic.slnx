@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ValidationClinic/ValidationClinic.csproj" />
+  <Project Path="ValidationClinic.Tests/ValidationClinic.Tests.csproj" />
+</Solution>

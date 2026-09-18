@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "ValidationClinic.Program.Main, ValidationClinic",
+  "theme": "Bootstrap-4",
+  "debug": true,
+  "sessionTimeout": 1800
+}

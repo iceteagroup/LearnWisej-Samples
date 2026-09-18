@@ -5,7 +5,7 @@ e-learning platform for [Wisej.NET](https://wisej.com/). Every course folder con
 Wisej.NET 4 application per module, built from that module's lesson guide, lab guide and walkthrough
 video, so you can open the lab, run the finished solution next to it, click through it and compare.
 
-![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4) ![Wisej.NET 4.1](https://img.shields.io/badge/Wisej.NET-4.1.0-0078D4) ![Samples](https://img.shields.io/badge/runnable%20samples-97-2EA44F)
+![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4) ![Wisej.NET 4.1](https://img.shields.io/badge/Wisej.NET-4.1.0-0078D4) ![Samples](https://img.shields.io/badge/runnable%20samples-95-2EA44F)
 
 ## Courses
 
@@ -14,11 +14,11 @@ video, so you can open the lab, run the finished solution next to it, click thro
 | [Foundations Course](./Foundations%20Course) | 10 | `WisejTrainingApp` | 5081–5090 | Your first windows, designer, navigation shell, data binding, dialogs, background work, theming, a JavaScript widget, deployment, and a mini helpdesk capstone |
 | [Mastering the Control Library Course](./Mastering%20the%20Control%20Library%20Course) | 7 | `OperationsConsole` | 5701–5707 | An Operations Console that grows module by module: editors and validation, containers and layouts, trees and lists, `DataGridView` mastery, charts and documents, a custom widget |
 | [Theming and Responsive Layouts Course](./Theming%20and%20Responsive%20Layouts%20Course) | 7 | `AdaptiveOps` | 5501–5507 | An Adaptive Operations Console: theme JSON, Theme Builder, CSS and states, Dock/Anchor, Flow/Table/Flex layouts, `ClientProfiles.json`, accessibility and performance |
+| [Validation in Wisej.NET Course](./Validation%20in%20Wisej.NET%20Course) | 7 | `ValidationClinic` | 5901–5907 | Field events, ErrorProvider feedback, the Validation extender, custom rules, bound model errors, grid validation and a complete Save pipeline |
 | [Data Binding with EF Core Course](./Data%20Binding%20with%20EF%20Core%20Course) | 7 | `SupportDesk` | 5401–5407 | A Support Desk Data Console on EF Core 10 + SQLite: DI bridge and context lifetimes, modeling and migrations, `BindingSource` grids, CRUD editors, validation, async and performance, concurrency |
 | [Real-Time Server Push Course](./Real-Time%20Server%20Push%20Course) | 7 | `TicketOpsLive` | 5301–5307 | TicketOps Live: WebSocket push vs polling, session ownership, progress without refresh, update cadence, a live ticket board, one hub feeding many sessions, production review |
 | [Application Integration Course](./Application%20Integration%20Course) | 10 | `IntegrationLab` | 5071–5080 | JavaScript widgets in Wisej.NET: one-off `Widget`s, reusable widget classes, custom controls with theme mixins, `Call`/`CallAsync`/`EvalAsync`, events and contracts, data endpoints, complex data widgets, a heatmap capstone |
 | [From WinForms to the Web Course](./From%20WinForms%20to%20the%20Web%20Course) | 7 | `OrderDesk.Web` | 5601–5607 | Migrating **LegacyOrderDesk** (WinForms) to the web: discovery and risk mapping, project conversion, forms and modal workflow, sessions and statics, grids and performance, files and reports, secure deployment |
-| [WinForms to Web Course](./WinForms%20to%20Web%20Course) | 7 | `OrderDesk.Web` | 5101–5107 | An earlier cut of the same migration course with the same LegacyOrderDesk → OrderDesk.Web storyline |
 | [Production Architecture Deep Dive](./Production%20Architecture%20Deep%20Dive) | 12 | `TicketOps` | 5101–5112 | The TicketOps Console built the production way: project structure, startup and session state, responsive composition, data workflows, safe save pipelines, modal transactions, background sync, DI, interop, localization, security, deployment |
 | [Enterprise Wisej.NET Course](./Enterprise%20Wisej.NET%20Course) | 14 | `EnterpriseOps` | 5201–5214 | The EnterpriseOps Command Center, a multi-tenant field-service system: governance, migration strategy, tenancy and concurrency, EF Core transactions, high-volume UX, background pipelines, wizards, custom components, secure interop, SSO and audit, observability, cloud release engineering, PWA/offline, AI-assisted delivery |
 | [Performance & Profiling Course](./Performance%20and%20Profiling%20Course) | 7 | `WisejPerfLab` | 5801–5807 | WisejPerfLab, a support desk over 50,000 tickets, made fast with evidence: scenarios and a budget, the Visual Studio profiling workflow, the CPU hot path, session leaks and allocations, a virtual grid and a lazy tree, one query per page and a non-blocking export, then a capacity model and a health check |
@@ -45,15 +45,13 @@ dotnet run -f net10.0 --urls http://localhost:5084
 ```
 
 Then open the printed URL in a browser. Each course README lists the port assigned to every module,
-so several modules can run side by side. Note that the **WinForms to Web Course** and the
-**Production Architecture Deep Dive** share the 5101–5107 range, so run one of them at a time or pass
-a different `--urls`.
+so several modules can run side by side.
 
-Modules with unit tests (the Data Binding course) run them with `dotnet test` from the module folder.
+Modules with unit tests (the Data Binding course and Validation capstone) run them with `dotnet test` from the module folder.
 
 ## How a sample is laid out
 
-All ninety-seven samples follow the same frame so that a learner who has finished one module knows where to
+All 95 samples follow the same frame so that a learner who has finished one module knows where to
 look in the next:
 
 - **The lab screen** on the left, built with the control names the lab guide uses.
@@ -66,7 +64,7 @@ look in the next:
   checklists, migration logs, demo scripts.
 
 Courses that build one application across modules (Control Library, Data Binding, Real-Time Push,
-Theming, the two WinForms migrations, Production Architecture, Enterprise) are cumulative: each
+Theming, Validation, WinForms to the Web, Production Architecture, Enterprise, Performance & Profiling) are cumulative: each
 `Module N` folder is the complete application as it stands at the end of module N, and the last module
 is the finished capstone.
 
@@ -84,7 +82,7 @@ writing a new sample for it.
 The courses ship no commercial or third-party libraries, so the samples carry small self-contained
 stand-ins where a real product would go: JavaScript "vendor" gauges, knobs, charts, grids and heatmaps
 for the Application Integration course, a minimal `.xlsx` writer and a single-page PDF writer for the
-migration courses, an in-memory order store seeded with the orders shown in the videos. The
+migration course, an in-memory order store seeded with the orders shown in the videos. The
 [`orders.csv`](./orders.csv) at the repository root is the file used for the CSV upload labs. Swap in a
 real library and only the adapter or service class changes.
 

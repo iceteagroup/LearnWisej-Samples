@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "ValidationClinic": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:5901",
+      "environmentVariables": {
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+      }
+    }
+  }
+}
