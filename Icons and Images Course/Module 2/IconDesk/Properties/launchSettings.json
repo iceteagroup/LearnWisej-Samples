@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "IconDesk": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:6202",
+      "environmentVariables": {
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+      }
+    }
+  }
+}
