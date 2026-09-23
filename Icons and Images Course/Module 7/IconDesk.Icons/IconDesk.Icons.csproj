@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    IconDesk.Icons - the project's own icon pack, built the same way the official Wisej-4 packs
+    are: one assembly, every icon an embedded SVG, and a static catalog of resource.wx strings so
+    callers never type a path.
+
+    It references Wisej-4 for nothing at run time. The pack is deliberately a plain class library
+    with no Wisej dependency at all, so it can be consumed by any application and tested without a
+    session.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <RootNamespace>IconDesk.Icons</RootNamespace>
+    <AssemblyName>IconDesk.Icons</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <NoWarn>CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Manifest names come out as IconDesk.Icons.Resources.<file>.svg, which Wisej.NET serves at
+      resource.wx/IconDesk.Icons/<file>.svg - the assembly name, then the file.
+    -->
+    <EmbeddedResource Include="Resources/**/*" />
+  </ItemGroup>
+
+</Project>

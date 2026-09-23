@@ -1,0 +1,51 @@
+/*
+  IconDesk icon font.
+
+  A stylesheet of named classes whose glyphs come from a font, referenced from Default.html and
+  used inside AllowHtml content. The glyphs here are Unicode characters rendered by the system
+  font rather than a bespoke webfont: the lab has to run with no internet access and without
+  shipping a binary nobody can inspect. Swapping in a real family is one @font-face rule and a
+  change of content values - everything else on the page stays exactly as it is.
+
+      @font-face { font-family: "IconDesk"; src: url("icondesk.woff2") format("woff2"); }
+      .idi { font-family: "IconDesk"; }
+      .idi-edit::before { content: "\e001"; }
+*/
+
+.idi {
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    display: inline-block;
+    text-align: center;
+    width: 1.35em;
+    /* Sized in em so one class works in a 13px grid cell and in a 20px card heading. */
+    font-size: 1.05em;
+    color: #5a6b7d;
+}
+
+/* Interactive glyphs get a hit area a thumb can find and a visible hover state. */
+.idi-action {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
+
+.idi-action:hover {
+    background: rgba(21, 101, 216, .12);
+    color: #1565d8;
+}
+
+.idi-danger:hover {
+    background: rgba(217, 58, 58, .14);
+    color: #d93a3a;
+}
+
+.idi-edit::before     { content: "\270E"; }
+.idi-delete::before   { content: "\2716"; }
+.idi-refresh::before  { content: "\27F3"; }
+.idi-settings::before { content: "\2699"; }
+.idi-star::before     { content: "\2605"; }
+.idi-export::before   { content: "\2B07"; }
+.idi-info::before     { content: "\24D8"; }
+.idi-warning::before  { content: "\26A0"; }
