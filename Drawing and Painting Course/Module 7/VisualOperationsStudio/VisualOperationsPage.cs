@@ -40,6 +40,7 @@ namespace VisualOperationsStudio
             ConfigureGauge(this.gaugeCycle, this.model.CycleTime, 60, 75);
 
             PublishReadings();
+            RefreshComparisonSurfaces();
             this.lblStatus.Text = $"Ready. Three gauges, and {this.model.Machines.Count:N0} machines with two painted columns.";
         }
 
@@ -167,6 +168,7 @@ namespace VisualOperationsStudio
             this.gaugeCycle.Value = this.model.CycleTime.Reading;
 
             PublishReadings();
+            RefreshComparisonSurfaces();
 
             return Gauges.Sum(gauge => gauge.RepaintCount);
         }
@@ -245,6 +247,96 @@ namespace VisualOperationsStudio
                 this.listReport.Items.RemoveAt(0);
 
             this.listReport.SelectedIndex = this.listReport.Items.Count - 1;
+        }
+
+        // ── the Module 1 surfaces, still reading the same model ─────────────────
+
+        /// <summary>
+        /// The Canvas has its laid-out size by Load, so the first scene is drawn here. Redraw then
+        /// rebuilds it after every browser resize, because the browser keeps no bitmap of its own.
+        /// </summary>
+        private void VisualOperationsPage_Load(object sender, EventArgs e)
+        {
+            DrawCanvasScene();
+        }
+
+        /// <summary>
+        /// Surfaces 1, 3 and 4 from Module 1, refreshed from the reading the gauges paint. Surface 2,
+        /// the inline Paint handler, is now the TelemetryGauge control itself.
+        /// </summary>
+        private void RefreshComparisonSurfaces()
+        {
+            RefreshPlainSurface();          // surface 1 - text and a value, no pixels of ours
+            DrawCanvasScene();              // surface 3 - commands the browser executes
+            RefreshOffScreenSurface();      // surface 4 - image bytes, no control involved
+        }
+
+        // ── surface 1: no pixels of ours ────────────────────────────────────────
+
+        private void RefreshPlainSurface()
+        {
+            this.lblReading.Text = $"{this.model.SpindleLoad.Reading:0} %";
+            this.progressReading.Value = (int)Math.Round(this.model.SpindleLoad.Reading);
+        }
+
+        // ── surface 3: the browser draws what the server tells it to ────────────
+
+        private void canvasSurface_Redraw(object sender, EventArgs e)
+        {
+            DrawCanvasScene();
+        }
+
+        /// <summary>
+        /// Rebuilds the whole canvas scene from the model. A Redraw handler that only patches the last
+        /// change is broken by the first resize, because the browser bitmap is gone by then.
+        /// </summary>
+        private void DrawCanvasScene()
+        {
+            var w = this.canvasSurface.Width;
+            var h = this.canvasSurface.Height;
+            if (w <= 0 || h <= 0)
+                return;
+
+            this.canvasSurface.ClearRect(0, 0, w, h);
+
+            this.canvasSurface.FillStyle = System.Drawing.Color.WhiteSmoke;
+            this.canvasSurface.FillRect(0, 0, w, h);
+
+            this.canvasSurface.FillStyle = System.Drawing.Color.MediumPurple;
+            this.canvasSurface.FillRect(0, 0, (int)(w * this.model.SpindleLoad.Reading / 100.0), h);
+        }
+
+        // ── surface 4: an image, produced with no control involved ──────────────
+
+        private void RefreshOffScreenSurface()
+        {
+            try
+            {
+                var previous = this.picExport.Image;
+                this.picExport.Image = RenderOffScreen(320, 60);
+                previous?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                this.picExport.Image = null;
+                this.lblStatus.Text = $"Off-screen image not available: {ex.Message}. The other surfaces still show {this.model.SpindleLoad.Reading:0} %.";
+            }
+        }
+
+        private System.Drawing.Image RenderOffScreen(int width, int height)
+        {
+            if (width <= 0 || height <= 0)
+                throw new ArgumentOutOfRangeException(nameof(width), "the off-screen bitmap needs a positive size");
+
+            var bitmap = new System.Drawing.Bitmap(width, height);
+            using (var g = System.Drawing.Graphics.FromImage(bitmap))
+            using (var fill = new System.Drawing.SolidBrush(System.Drawing.Color.Goldenrod))
+            {
+                g.Clear(System.Drawing.Color.White);
+                g.FillRectangle(fill, 0, 0, (float)(width * this.model.SpindleLoad.Reading / 100.0), height);
+            }
+
+            return bitmap;
         }
     }
 }

@@ -4,6 +4,11 @@ Local lab build for **Module 6 · System.Drawing.Managed and Cross-Platform Rend
 `TopologyImageRenderer` turns the same topology model into PNG bytes with no Wisej control and no
 session involved: a `Bitmap`, a `Graphics` over it, pens, brushes and a `GraphicsPath`, a font resolved
 through a fallback chain, and `Application.Download` handing the bytes to the browser.
+The three remaining Module 1 surfaces - `Label` + `ProgressBar`, a `Wisej.Web.Canvas` and an
+off-screen `Bitmap` in a `PictureBox` - stay on the operations page under the gauges, so the same
+reading can still be compared across surfaces. Surface 2, the inline `Paint` handler, is now the
+`TelemetryGauge` control itself.
+
 This folder is the complete application at this point in the course, with its own solution and port.
 
 ## Run it

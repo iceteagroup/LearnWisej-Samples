@@ -4,6 +4,11 @@ Local lab build for **Module 3 · DataGridView Cell Painting**. The operations g
 generated `MachineStatus` rows, with `UserPaint` on the Health and Trend columns only and one guarded
 `CellPaint` handler behind both. A third column renders the same severity through `AllowHtml`, so the
 two approaches can be compared on the same scroll.
+The three remaining Module 1 surfaces - `Label` + `ProgressBar`, a `Wisej.Web.Canvas` and an
+off-screen `Bitmap` in a `PictureBox` - stay on the operations page under the gauges, so the same
+reading can still be compared across surfaces. Surface 2, the inline `Paint` handler, is now the
+`TelemetryGauge` control itself.
+
 This folder is the complete application at this point in the course, with its own solution and port.
 
 ## Run it

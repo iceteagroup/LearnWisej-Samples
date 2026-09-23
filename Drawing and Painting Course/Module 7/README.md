@@ -5,6 +5,11 @@ sits behind all four surfaces — the painted gauges, the painted grid cells, th
 PNG export — with a shared geometry layer, a `RenderMetrics` recorder, one measured optimisation, four
 degraded paths that are actually executed, an accessible table of every value the graphics show, and a
 test project for the geometry.
+The three remaining Module 1 surfaces - `Label` + `ProgressBar`, a `Wisej.Web.Canvas` and an
+off-screen `Bitmap` in a `PictureBox` - stay on the operations page under the gauges, so the same
+reading can still be compared across surfaces. Surface 2, the inline `Paint` handler, is now the
+`TelemetryGauge` control itself.
+
 This folder is the complete application at the end of the course.
 
 ## Run it

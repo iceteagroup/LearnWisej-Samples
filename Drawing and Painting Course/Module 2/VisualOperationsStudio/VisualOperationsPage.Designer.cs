@@ -24,6 +24,20 @@ namespace VisualOperationsStudio
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            this.pnlSurfaces = new Wisej.Web.Panel();
+            this.lblSurfacesHeader = new Wisej.Web.Label();
+            this.layoutSurfaces = new Wisej.Web.TableLayoutPanel();
+            this.pnlSurface1 = new Wisej.Web.Panel();
+            this.lblSurface1 = new Wisej.Web.Label();
+            this.pnlPlain = new Wisej.Web.Panel();
+            this.lblReading = new Wisej.Web.Label();
+            this.progressReading = new Wisej.Web.ProgressBar();
+            this.pnlSurface3 = new Wisej.Web.Panel();
+            this.lblSurface3 = new Wisej.Web.Label();
+            this.canvasSurface = new Wisej.Web.Canvas();
+            this.pnlSurface4 = new Wisej.Web.Panel();
+            this.lblSurface4 = new Wisej.Web.Label();
+            this.picExport = new Wisej.Web.PictureBox();
             this.pnlHeader = new Wisej.Web.Panel();
             this.lblMachine = new Wisej.Web.Label();
             this.lblSubtitle = new Wisej.Web.Label();
@@ -211,12 +225,135 @@ namespace VisualOperationsStudio
             this.pnlBody.Controls.Add(this.pnlGauges);
             this.pnlBody.Controls.Add(this.pnlText);
             //
+            // lblSurfacesHeader
+            //
+            this.lblSurfacesHeader.AutoSize = false;
+            this.lblSurfacesHeader.Dock = Wisej.Web.DockStyle.Top;
+            this.lblSurfacesHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
+            this.lblSurfacesHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
+            this.lblSurfacesHeader.Name = "lblSurfacesHeader";
+            this.lblSurfacesHeader.Size = new System.Drawing.Size(1080, 24);
+            this.lblSurfacesHeader.Text = "The same spindle reading on the other three surfaces - surface 2 is the painted TelemetryGauge above";
+            //
+            // lblSurface1
+            //
+            this.lblSurface1.AutoSize = false;
+            this.lblSurface1.Dock = Wisej.Web.DockStyle.Top;
+            this.lblSurface1.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
+            this.lblSurface1.Name = "lblSurface1";
+            this.lblSurface1.Size = new System.Drawing.Size(200, 22);
+            this.lblSurface1.Text = "1 - Label + ProgressBar";
+            //
+            // progressReading
+            //
+            this.progressReading.Dock = Wisej.Web.DockStyle.Top;
+            this.progressReading.Maximum = 100;
+            this.progressReading.Minimum = 0;
+            this.progressReading.Name = "progressReading";
+            this.progressReading.Size = new System.Drawing.Size(200, 24);
+            this.progressReading.Value = 34;
+            //
+            // lblReading
+            //
+            this.lblReading.AutoSize = false;
+            this.lblReading.Dock = Wisej.Web.DockStyle.Top;
+            this.lblReading.Font = new System.Drawing.Font("default", 13F, System.Drawing.FontStyle.Bold);
+            this.lblReading.Name = "lblReading";
+            this.lblReading.Size = new System.Drawing.Size(200, 30);
+            this.lblReading.Text = "34 %";
+            //
+            // pnlPlain
+            //
+            this.pnlPlain.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlPlain.Name = "pnlPlain";
+            this.pnlPlain.Controls.Add(this.progressReading);
+            this.pnlPlain.Controls.Add(this.lblReading);
+            //
+            // pnlSurface1
+            //
+            this.pnlSurface1.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlSurface1.Name = "pnlSurface1";
+            this.pnlSurface1.Padding = new Wisej.Web.Padding(8, 0, 8, 0);
+            this.pnlSurface1.Controls.Add(this.pnlPlain);
+            this.pnlSurface1.Controls.Add(this.lblSurface1);
+            //
+            // lblSurface3
+            //
+            this.lblSurface3.AutoSize = false;
+            this.lblSurface3.Dock = Wisej.Web.DockStyle.Top;
+            this.lblSurface3.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
+            this.lblSurface3.Name = "lblSurface3";
+            this.lblSurface3.Size = new System.Drawing.Size(200, 22);
+            this.lblSurface3.Text = "3 - Wisej.Web.Canvas";
+            //
+            // canvasSurface
+            //
+            this.canvasSurface.Dock = Wisej.Web.DockStyle.Fill;
+            this.canvasSurface.Name = "canvasSurface";
+            this.canvasSurface.Redraw += this.canvasSurface_Redraw;
+            //
+            // pnlSurface3
+            //
+            this.pnlSurface3.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlSurface3.Name = "pnlSurface3";
+            this.pnlSurface3.Padding = new Wisej.Web.Padding(8, 0, 8, 0);
+            this.pnlSurface3.Controls.Add(this.canvasSurface);
+            this.pnlSurface3.Controls.Add(this.lblSurface3);
+            //
+            // lblSurface4
+            //
+            this.lblSurface4.AutoSize = false;
+            this.lblSurface4.Dock = Wisej.Web.DockStyle.Top;
+            this.lblSurface4.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
+            this.lblSurface4.Name = "lblSurface4";
+            this.lblSurface4.Size = new System.Drawing.Size(200, 22);
+            this.lblSurface4.Text = "4 - Bitmap + Graphics.FromImage";
+            //
+            // picExport
+            //
+            this.picExport.Dock = Wisej.Web.DockStyle.Fill;
+            this.picExport.Name = "picExport";
+            this.picExport.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
+            //
+            // pnlSurface4
+            //
+            this.pnlSurface4.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlSurface4.Name = "pnlSurface4";
+            this.pnlSurface4.Padding = new Wisej.Web.Padding(8, 0, 8, 0);
+            this.pnlSurface4.Controls.Add(this.picExport);
+            this.pnlSurface4.Controls.Add(this.lblSurface4);
+            //
+            // layoutSurfaces
+            //
+            this.layoutSurfaces.ColumnCount = 3;
+            this.layoutSurfaces.RowCount = 1;
+            this.layoutSurfaces.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 33.34F));
+            this.layoutSurfaces.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 33.33F));
+            this.layoutSurfaces.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 33.33F));
+            this.layoutSurfaces.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Percent, 100F));
+            this.layoutSurfaces.Dock = Wisej.Web.DockStyle.Fill;
+            this.layoutSurfaces.Name = "layoutSurfaces";
+            this.layoutSurfaces.Controls.Add(this.pnlSurface1, 0, 0);
+            this.layoutSurfaces.Controls.Add(this.pnlSurface3, 1, 0);
+            this.layoutSurfaces.Controls.Add(this.pnlSurface4, 2, 0);
+            //
+            // pnlSurfaces
+            //
+            this.pnlSurfaces.Dock = Wisej.Web.DockStyle.Bottom;
+            this.pnlSurfaces.Name = "pnlSurfaces";
+            this.pnlSurfaces.Padding = new Wisej.Web.Padding(12, 4, 12, 8);
+            this.pnlSurfaces.Size = new System.Drawing.Size(1080, 150);
+            this.pnlSurfaces.Controls.Add(this.layoutSurfaces);
+            this.pnlSurfaces.Controls.Add(this.lblSurfacesHeader);
+            //
             // VisualOperationsPage
             //
             this.Name = "VisualOperationsPage";
+            this.Load += this.VisualOperationsPage_Load;
             this.Size = new System.Drawing.Size(1080, 660);
             this.Text = "VisualOperationsStudio - Operations";
             this.Controls.Add(this.pnlBody);
+            this.Controls.Add(this.pnlSurfaces);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.pnlActions);
             this.Controls.Add(this.pnlHeader);
@@ -226,6 +363,20 @@ namespace VisualOperationsStudio
         #endregion
 
         private Wisej.Web.Panel pnlHeader;
+        private Wisej.Web.Panel pnlSurfaces;
+        private Wisej.Web.Label lblSurfacesHeader;
+        private Wisej.Web.TableLayoutPanel layoutSurfaces;
+        private Wisej.Web.Panel pnlSurface1;
+        private Wisej.Web.Label lblSurface1;
+        private Wisej.Web.Panel pnlPlain;
+        private Wisej.Web.Label lblReading;
+        private Wisej.Web.ProgressBar progressReading;
+        private Wisej.Web.Panel pnlSurface3;
+        private Wisej.Web.Label lblSurface3;
+        private Wisej.Web.Canvas canvasSurface;
+        private Wisej.Web.Panel pnlSurface4;
+        private Wisej.Web.Label lblSurface4;
+        private Wisej.Web.PictureBox picExport;
         private Wisej.Web.Label lblMachine;
         private Wisej.Web.Label lblSubtitle;
         private Wisej.Web.Label lblStatus;
