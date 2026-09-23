@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IconDesk mark. Multi-coloured on purpose: the ?color= suffix in Module 3 cannot
+     recolour artwork like this, which is exactly the point that lesson makes. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <rect x="3" y="7" width="42" height="34" rx="5" fill="#1565d8"/>
+  <rect x="3" y="7" width="42" height="9" rx="5" fill="#0d47a1"/>
+  <circle cx="9.5" cy="11.5" r="1.7" fill="#ffffff" opacity=".85"/>
+  <circle cx="15" cy="11.5" r="1.7" fill="#ffffff" opacity=".55"/>
+  <rect x="9" y="22" width="12" height="12" rx="2.5" fill="#ffd166"/>
+  <rect x="27" y="22" width="12" height="12" rx="6" fill="#1fae5a"/>
+</svg>

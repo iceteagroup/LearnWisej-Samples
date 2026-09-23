@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    IconDesk - Icons & Images in Wisej.NET course lab (one project per module).
+    Multi-targets net10.0-windows and net10.0 (Kestrel). Run with:
+      dotnet run -f net10.0 with urls http://localhost:620N   (from this folder; N = module number)
+
+    Wisej-4 is pinned to 4.1.4 because the official icon packs used from Module 4 on
+    depend on it; 4.1.0 causes a NU1605 package downgrade error.
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <RootNamespace>IconDesk</RootNamespace>
+    <NoWarn>CA1416;WFO1000;CS7022</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="Default.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="Web.config">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Default.html">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+    <!-- Files the browser fetches by relative URL, so they must sit beside the application. -->
+    <Content Include="Images\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Module 5. Every file under Assets/ is compiled into the assembly, so it deploys with the
+      application and cannot go missing on a target machine. LogicalName puts each one under the
+      IconDesk.Resources prefix, which is what Wisej.NET serves as
+      resource.wx/IconDesk/<file> - the same URL shape the icon packs in Module 4 use.
+
+      The source files live in Assets/ rather than Resources/ on purpose: Resources/ beside the
+      running application is where a deployment-time override goes, and the lab writes one there.
+      Keeping the two apart means the override cannot overwrite the original.
+    -->
+    <EmbeddedResource Include="Assets/**/*" LogicalName="IconDesk.Resources.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.4" />
+    <!--
+      The two official icon packs compared in Module 4. Each one is a single assembly holding
+      every icon as an embedded SVG; nothing is copied into the project. Both depend on
+      Wisej-4 4.1.4, which is why this solution pins that version.
+    -->
+    <PackageReference Include="Wisej-4-FontAwesome" Version="4.1.4" />
+    <PackageReference Include="Wisej-4-MaterialDesign" Version="4.1.4" />
+  </ItemGroup>
+
+</Project>

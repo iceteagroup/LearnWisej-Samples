@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="IconDesk/IconDesk.csproj" />
+  <Project Path="IconDesk.Icons/IconDesk.Icons.csproj" />
+</Solution>

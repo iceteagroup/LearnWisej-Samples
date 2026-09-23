@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "IconDesk.Program.Main, IconDesk",
+  "theme": "Bootstrap-4",
+  "debug": true,
+  "sessionTimeout": 1800
+}
