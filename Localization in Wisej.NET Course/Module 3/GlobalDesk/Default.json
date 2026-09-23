@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "GlobalDesk.Program.Main, GlobalDesk",
+  "theme": "Bootstrap-4",
+  "debug": true,
+  "sessionTimeout": 1800
+}
