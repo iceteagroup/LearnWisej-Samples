@@ -48,6 +48,14 @@ The API is close but not identical. What is missing or different, verified again
 Never add a direct `System.Drawing.Common` reference beside it. Quick check: if `Graphics.Save()`
 suddenly compiles, something else is supplying the types.
 
+**A cosmetic quirk in the PNG export.** Filling and stroking a `GraphicsPath` rectangle and then
+drawing text leaves one or two stray pixels in the image's **last column**, on the scanline of the
+box's bottom edge — one pair per node in `TopologyImageRenderer`. Neither the box nor the text
+produces it alone, reordering the `MeasureString` calls does not help, and the pixels sit inside
+the bitmap, so clipping cannot remove them. It is a `Managed.System.Drawing` rasterisation
+artifact, not a coordinate mistake: 9 pixels out of 1.44 M in a 1600x900 export. Left alone on
+purpose — do not contort the renderer chasing it, and do not treat it as a regression.
+
 ## Grid cell painting
 
 `UserPaint` is the switch and there is no default: `DataGridViewColumn.UserPaint = true` (or per cell),
