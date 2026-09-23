@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "VisualOperationsStudio": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:6003",
+      "environmentVariables": {
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+      }
+    }
+  }
+}

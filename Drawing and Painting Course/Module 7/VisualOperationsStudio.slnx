@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="VisualOperationsStudio/VisualOperationsStudio.csproj" />
+  <Project Path="VisualOperationsStudio.Tests/VisualOperationsStudio.Tests.csproj" />
+</Solution>

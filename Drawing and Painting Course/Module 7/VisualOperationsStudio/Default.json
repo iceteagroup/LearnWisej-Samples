@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "VisualOperationsStudio.Program.Main, VisualOperationsStudio",
+  "theme": "Bootstrap-4",
+  "debug": true,
+  "sessionTimeout": 1800
+}

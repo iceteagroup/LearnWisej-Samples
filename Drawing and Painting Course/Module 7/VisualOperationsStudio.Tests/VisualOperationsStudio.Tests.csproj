@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>VisualOperationsStudio.Tests</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <!-- The geometry layer is ordinary arithmetic over System.Drawing types: no Wisej session,
+         no licence and no browser are needed to test it. -->
+    <PackageReference Include="Managed.System.Drawing" Version="4.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../VisualOperationsStudio/Geometry/*.cs" Link="Geometry/%(Filename)%(Extension)" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>
