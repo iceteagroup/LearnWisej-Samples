@@ -29,7 +29,7 @@ Open <http://localhost:6005> and press **Plant topology** on the operations page
 | Release, then resize the browser | The node keeps its new position: `Redraw` calls the same `RenderScene`, which rebuilds the scene from the model. |
 | Click empty space and drag | The selection clears and the viewport pans instead. |
 | Wheel over the surface, then click a node | Zoom happens about the pointer, and selection still lands on the right node, because `ToWorld` accounts for the new zoom. |
-| Watch the list header | It reports `(6 drawn, 1 culled)`: `Outstation` sits outside the visible world rectangle until you pan or zoom out to it. |
+| Watch the line under the list header | It reports `6 drawn, 1 culled`: `Outstation` sits outside the visible world rectangle until you pan or zoom out to it. |
 | `Tab` on the surface, then the arrow keys | The next node is selected and the selected one is nudged — 5 world units, or 20 with `Shift`. No mouse required. |
 
 ## Lab tasks → where in the code

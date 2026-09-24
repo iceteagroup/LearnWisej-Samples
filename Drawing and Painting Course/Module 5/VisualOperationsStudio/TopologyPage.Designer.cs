@@ -29,6 +29,7 @@ namespace VisualOperationsStudio
             this.btnResetView = new Wisej.Web.Button();
             this.pnlNodes = new Wisej.Web.Panel();
             this.lblNodesHeader = new Wisej.Web.Label();
+            this.lblNodesCount = new Wisej.Web.Label();
             this.listNodes = new Wisej.Web.ListBox();
             this.canvasTopology = new Wisej.Web.Canvas();
             this.SuspendLayout();
@@ -124,6 +125,15 @@ namespace VisualOperationsStudio
             this.lblNodesHeader.Size = new System.Drawing.Size(280, 32);
             this.lblNodesHeader.Text = "The same nodes, as a list";
             //
+            // lblNodesCount
+            //
+            this.lblNodesCount.AutoSize = false;
+            this.lblNodesCount.Dock = Wisej.Web.DockStyle.Top;
+            this.lblNodesCount.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
+            this.lblNodesCount.Name = "lblNodesCount";
+            this.lblNodesCount.Padding = new Wisej.Web.Padding(12, 0, 12, 8);
+            this.lblNodesCount.Size = new System.Drawing.Size(280, 24);
+            //
             // listNodes
             //
             this.listNodes.Dock = Wisej.Web.DockStyle.Fill;
@@ -136,6 +146,7 @@ namespace VisualOperationsStudio
             this.pnlNodes.Name = "pnlNodes";
             this.pnlNodes.Size = new System.Drawing.Size(280, 400);
             this.pnlNodes.Controls.Add(this.listNodes);
+            this.pnlNodes.Controls.Add(this.lblNodesCount);
             this.pnlNodes.Controls.Add(this.lblNodesHeader);
             //
             // canvasTopology
@@ -178,6 +189,7 @@ namespace VisualOperationsStudio
         private Wisej.Web.Button btnResetView;
         private Wisej.Web.Panel pnlNodes;
         private Wisej.Web.Label lblNodesHeader;
+        private Wisej.Web.Label lblNodesCount;
         private Wisej.Web.ListBox listNodes;
         private Wisej.Web.Canvas canvasTopology;
     }

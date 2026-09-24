@@ -24,6 +24,7 @@ video, so you can open the lab, run the finished solution next to it, click thro
 | [Performance & Profiling Course](./Performance%20and%20Profiling%20Course) | 7 | `WisejPerfLab` | 5801–5807 | WisejPerfLab, a support desk over 50,000 tickets, made fast with evidence: scenarios and a budget, the Visual Studio profiling workflow, the CPU hot path, session leaks and allocations, a virtual grid and a lazy tree, one query per page and a non-blocking export, then a capacity model and a health check |
 | [Localization in Wisej.NET Course](./Localization%20in%20Wisej.NET%20Course) | 7 | `GlobalDesk` | 6101–6107 | GlobalDesk taken from English to five languages: resource keys and culture-formatted values, designer localization and its German variant, shared translations and composed sentences, a runtime language switch on `CultureChanged`, right-to-left and pseudo-localization, one honest translation round, then a `LocalizationService` and a QA matrix |
 | [Icons & Images Course](./Icons%20and%20Images%20Course) | 7 | `IconDesk` | 6201–6207 | IconDesk, every way Wisej.NET puts a picture on a control: the four image mechanisms behind an `IImage` readout, the raster and vector pipelines, the designer image selector and theme recolouring, two official icon packs compared, embedded resources and deployment overrides, your own icon pack as a class library, then icon fonts and a capstone |
+| [Drawing and Painting Course](./Drawing%20and%20Painting%20Course) | 7 | `VisualOperationsStudio` | 6001–6007 | VisualOperationsStudio, one telemetry and topology model rendered four ways: the drawing architecture and where each pixel is produced, a painted `TelemetryGauge`, `DataGridView` cell painting over 1,000 rows, the HTML5 Canvas model, an interactive canvas with hit testing, drag, pan and zoom, off-session PNG bytes through `System.Drawing.Managed`, then one model and one geometry layer behind all four surfaces |
 
 Each course folder has its own `README.md` with a module-by-module table, and each module folder has
 a `README.md` that tells you what to click, maps the lab steps to the code and answers the self-check
@@ -66,7 +67,8 @@ look in the next:
   checklists, migration logs, demo scripts.
 
 Courses that build one application across modules (Control Library, Data Binding, Real-Time Push,
-Theming, Validation, WinForms to the Web, Production Architecture, Enterprise, Performance & Profiling) are cumulative: each
+Theming, Validation, WinForms to the Web, Production Architecture, Enterprise, Performance & Profiling,
+Localization, Icons & Images, Drawing & Painting) are cumulative: each
 `Module N` folder is the complete application as it stands at the end of module N, and the last module
 is the finished capstone.
 

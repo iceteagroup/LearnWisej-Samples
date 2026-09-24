@@ -274,7 +274,7 @@ namespace VisualOperationsStudio
                 c.Restore();
             }
 
-            this.lblNodesHeader.Text = $"The same nodes, as a list  ({drawn} drawn, {culled} culled)";
+            this.lblNodesCount.Text = $"{drawn} drawn, {culled} culled";
         }
 
         private void DrawNode(Canvas c, NodeModel node)
