@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Dashboard.Welcome" xml:space="preserve">
+    <value>Benvenuto in GlobalDesk</value>
+  </data>
+  <data name="Dashboard.Subtitle" xml:space="preserve">
+    <value>Gestione clienti, nella tua lingua</value>
+  </data>
+  <data name="Dashboard.RecreateEditor" xml:space="preserve">
+    <value>Ricrea l'editor</value>
+  </data>
+  <data name="Dashboard.ShowSystemText" xml:space="preserve">
+    <value>Mostra una finestra di Wisej.NET</value>
+  </data>
+  <data name="Dashboard.LastOrder" xml:space="preserve">
+    <value>Ultimo ordine</value>
+  </data>
+  <data name="Dashboard.Language" xml:space="preserve">
+    <value>Lingua</value>
+  </data>
+  <data name="Dashboard.Fallback" xml:space="preserve">
+    <value>Ripiega su</value>
+  </data>
+  <data name="Dashboard.Contacts" xml:space="preserve">
+    <value>Contatti</value>
+  </data>
+  <data name="Navigation.Customers" xml:space="preserve">
+    <value>Clienti</value>
+  </data>
+  <data name="Navigation.Back" xml:space="preserve">
+    <value>Indietro</value>
+  </data>
+  <data name="CustomerEditor.Title" xml:space="preserve">
+    <value>Cliente</value>
+  </data>
+  <data name="CustomerEditor.Name" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="CustomerEditor.Code" xml:space="preserve">
+    <value>Codice cliente</value>
+  </data>
+  <data name="CustomerEditor.Country" xml:space="preserve">
+    <value>Paese</value>
+  </data>
+  <data name="CustomerEditor.Save" xml:space="preserve">
+    <value>Salva</value>
+  </data>
+  <data name="CustomerEditor.Cancel" xml:space="preserve">
+    <value>Annulla</value>
+  </data>
+  <data name="CustomerEditor.Saved" xml:space="preserve">
+    <value>Cliente salvato.</value>
+  </data>
+  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
+    <value>Impossibile salvare il cliente.</value>
+  </data>
+  <data name="Customer.LastOrder" xml:space="preserve">
+    <value>Ultimo ordine: {0} per {1}</value>
+  </data>
+  <data name="Validation.Required" xml:space="preserve">
+    <value>Questo campo è obbligatorio.</value>
+  </data>
+  <data name="Validation.CodeFormat" xml:space="preserve">
+    <value>Un codice cliente è composto da due lettere e quattro cifre.</value>
+  </data>
+  <data name="Preview.Heading" xml:space="preserve">
+    <value>Gli stessi tre valori, formattati per questa sessione</value>
+  </data>
+  <data name="Preview.Date" xml:space="preserve">
+    <value>Data di scadenza</value>
+  </data>
+  <data name="Preview.Quantity" xml:space="preserve">
+    <value>Unità ordinate</value>
+  </data>
+  <data name="Preview.Amount" xml:space="preserve">
+    <value>Totale ordine</value>
+  </data>
+  <data name="Preview.Culture" xml:space="preserve">
+    <value>Cultura attiva</value>
+  </data>
+  <data name="Contacts.Name" xml:space="preserve">
+    <value>Nome</value>
+  </data>
+  <data name="Contacts.Role" xml:space="preserve">
+    <value>Ruolo</value>
+  </data>
+  <data name="Contacts.Phone" xml:space="preserve">
+    <value>Telefono</value>
+  </data>
+  <data name="Dashboard.Tickets" xml:space="preserve">
+    <value>Ticket aperti</value>
+  </data>
+  <data name="Ticket.New" xml:space="preserve">
+    <value>Nuovo</value>
+  </data>
+  <data name="Ticket.InProgress" xml:space="preserve">
+    <value>In lavorazione</value>
+  </data>
+  <data name="Ticket.Waiting" xml:space="preserve">
+    <value>In attesa del cliente</value>
+  </data>
+  <data name="Ticket.Closed" xml:space="preserve">
+    <value>Chiuso</value>
+  </data>
+  <data name="Dashboard.RunQa" xml:space="preserve">
+    <value>Esegui la matrice QA</value>
+  </data>
+  <data name="Ticket.Reference" xml:space="preserve">
+    <value>Riferimento</value>
+  </data>
+  <data name="Ticket.Status" xml:space="preserve">
+    <value>Stato</value>
+  </data>
+</root>
