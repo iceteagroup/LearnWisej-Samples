@@ -1,108 +1,93 @@
-# Module 4 lab note - the switch, the fallback, and the static field
+# Module 4 lab note - where the session's culture lives, and what a static field would do
 
-## The shape of the switch
+## Where it comes from
 
-The combo box handler does one thing:
+`"culture": "auto"` in `Default.json`. Each session starts from the browser's `Accept-Language`,
+so a German browser lands on German and nobody chose anything. `?lang=de-DE` in the URL overrides
+it for that session only, which is how a support engineer reproduces a customer's screen without
+touching their own browser settings.
+
+A **fixed** culture is the right choice when the application serves one market and the values must
+be unambiguous for everyone reading them - an internal back office where every user is in the same
+country, or a screen whose numbers are compared across users. `auto` is the right default for
+anything customer-facing.
+
+## Where it lives
+
+`Application.CurrentCulture` is **per session**. It is a property of the user in front of this
+browser tab, not of the process.
 
 ```csharp
 Application.CurrentCulture = CultureInfo.GetCultureInfo(name);
 ```
 
-and stops. Everything that has to happen next hangs off `Application.CultureChanged`:
+That one line is the whole handler. Everything else hangs off the event:
 
 ```csharp
-private void Application_CultureChanged(object sender, EventArgs e)
-{
-    ApplyTextResources();      // shared resources: captions follow immediately
-    UpdateCulturePreview();    // culture-sensitive values: reformatted
-    CreateEditor();            // designer resources: only a new instance reads them
-    SyncCultureCombo();        // the combo itself, if something else made the change
-}
+Application.CultureChanged += this.Application_CultureChanged;   // in the constructor
+Application.CultureChanged -= this.Application_CultureChanged;   // in Dispose
 ```
 
-The indirection is the point. A handler that switched the culture and then refreshed everything
-inline would work from exactly one button. With the event, **every** route into a culture change
-gets the same refresh: the `?lang=` URL parameter, the browser's own `Accept-Language`, a saved
-user preference, a support tool. This lab proves it with the URL parameter, and the combo box ends
-up in step without the combo box handler ever running.
+A handler that switched the culture *and* refreshed everything inline would work exactly once,
+from exactly one control. Behind the event, the `?lang=` parameter, a saved user preference and a
+support tool all get the same refresh without knowing the refresh exists.
 
-`SyncCultureCombo` guards against re-entry with a flag, because assigning `SelectedItem` raises
-`SelectedIndexChanged` again. It also handles a culture the application does not list - a French
-browser arriving on `fr-FR` - by adding it rather than leaving the combo blank. That is not an
-error condition: the text falls back to the neutral file and the values are still formatted
-correctly.
+The `-=` in `Dispose` is not tidiness. `Application.CultureChanged` lives as long as the session,
+so every page that was ever open keeps handling culture changes - and touching disposed controls -
+until the session ends.
 
-The page unsubscribes in `Dispose`. `Application.CultureChanged` outlives any one page, and a page
-that forgets is kept alive by the event for the rest of the session.
+## What a static culture field would do
 
-## `culture: auto`, and when a fixed culture is right
+Suppose the culture were cached:
 
-```jsonc
-"culture": "auto"
+```csharp
+private static CultureInfo culture;   // never do this
 ```
 
-Each session starts from the browser's `Accept-Language`, so a German browser lands on German
-without anyone choosing anything, and `?lang=` overrides it for that session.
+Two people are signed in. One is in Hamburg, one in Chicago. The Hamburg user picks German. The
+Chicago user's next click repaints their screen in German, with German date and currency formats,
+in the middle of whatever they were doing.
 
-**A fixed culture is the better choice** when the application serves one market and its values
-must be unambiguous for everyone who reads them - an internal back office where every user is in
-the same country, or a screen whose numbers are compared across users and have to be formatted
-identically. `1.850,75` and `1,850.75` are the same number until two people read them differently
-in the same meeting. `auto` is the right default for anything customer-facing.
+What makes it expensive is not the bug, it is the report. The Chicago user says "the site
+randomly switched to German". There is no correlation to a deploy, no stack trace, no entry in any
+log. It never reproduces in development, because development has one developer and one browser,
+and with one session a static field and a session property behave identically.
 
-## Fallback, made visible
+The same applies to anything derived from the culture - a cached `NumberFormatInfo`, a formatted
+string held in a static, a `ResourceManager` you pinned to a language "for speed".
 
-`de-AT` is in the picker on purpose, and there is no `Strings.de-AT.resx`. Open
-`http://localhost:6104/?lang=de-AT` and the result is worth looking at closely:
+## The three things a switch has to repaint
 
-| | de-DE | de-AT |
+| Kind of text | Where it comes from | What the handler does |
 |---|---|---|
-| Text | Willkommen bei GlobalDesk | Willkommen bei GlobalDesk |
-| Date | Sonntag, 15. März 2026 | Sonntag, 15. März 2026 |
-| Number | `12.500` | `12 500` |
-| Currency | `1.850,75 €` | `€ 1.850,75` |
+| Shared captions | `Strings.resx` via `Texts.Get` | `ApplyTextResources()` - re-reads every key |
+| Values | `DateTime`, `decimal` | `UpdateCulturePreview()` - reformats with the new culture |
+| Designer captions | `CustomerEditor.resx` | `CreateEditor()` - a **new instance**, because `ApplyResources` ran at construction |
 
-Same words, different numbers. The text came from `Strings.de.resx` because .NET tried
-`Strings.de-AT` first, found nothing, and fell back to the language; the **formatting** stayed
-Austrian, because formatting is `de-AT`'s own business. Austria groups thousands with a space and
-puts the euro symbol in front.
+The third is the one that catches people. The walkthrough shows six seconds where the dashboard is
+German and the editor panel is still English, and then says never to ship it. The fix is not
+cleverness, it is doing all three in the same handler so the half-translated state has no frame to
+appear in.
 
-That is the whole "language versus formatting" distinction in one screenshot, and it is why the
-preview panel shows the parent culture: `de-AT - Deutsch (Österreich) (Greift zurück auf de)`.
-Fallback that is visible is fallback you can reason about; fallback that is silent is how a
-half-finished translation ships.
+The rebuild's cost is real: whatever the user had typed in the editor is gone. A production screen
+saves and restores the values around it, or does not offer the switch while an editor is open.
 
-## Why the culture must not live in a static field
+## fr-CA, and what fallback actually covers
 
-`Application.CurrentCulture` is **per session**. It belongs to the user in front of one browser
-tab, not to the process.
+`fr-CA` is in the picker and there is no French resource file. Selecting it gives **English text**
+with **Canadian French formatting**:
 
-Put it in a `static` field instead:
-
-```csharp
-// Wrong, and it will pass every test you write on your own machine.
-public static CultureInfo Culture = CultureInfo.GetCultureInfo("en-US");
+```
+mercredi 23 septembre 2026
+1 234 567,89
+1 850,75 $
 ```
 
-and here is what two users get. Anna in Berlin opens GlobalDesk and picks German; the static field
-becomes `de-DE`. Ben in London is already signed in, reading English, and does nothing at all -
-and his next click renders in German. He has no idea why. He cannot switch back except by picking
-English, which then does the same thing to Anna.
+Two different mechanisms, and only one of them uses resources. Text falls back `fr-CA` → `fr` →
+neutral and stops at the first value it finds. Formatting never consults a resource file at all -
+it comes from the culture's own data, so an untranslated language still gets its own separators,
+its own currency symbol and its own date order.
 
-It is worse than it sounds, for three reasons:
-
-1. **It never reproduces in development.** One developer, one browser, one session - the static
-   field and the session agree perfectly. It only appears with two concurrent users, which is to
-   say in production.
-2. **The symptom does not point at the cause.** The report is "the application randomly changes
-   language", and nobody connects it to a colleague's click.
-3. **It is not only language.** The same field decides how every number and date is formatted, so
-   an amount can be misread as a thousand times larger or smaller depending on who last switched.
-
-The same argument applies to anything else that is per user: the selected customer, the theme, an
-upload in progress. In a server-side web framework, a `static` mutable field is shared by everyone
-who is signed in.
-
-The test that catches it: open the application in two browsers - not two tabs, two browsers or one
-private window - and change the language in one. If anything moves in the other, something is
-static that should not be.
+That is also why a language-region culture is the sharpest fallback test you can run. `de-AT` would
+show German text from `Strings.de.resx` with Austrian formatting: `12 500` and `€ 1.850,75` against
+Germany's `12.500` and `1.850,75 €`.

@@ -1,127 +1,128 @@
-# Module 6 lab note - one honest translation round
+# Module 6 lab note - one translation round, and how to run the next one
 
-Italian went from nothing to complete in this module. What follows is what the round actually
-consisted of and what it cost, because the tooling comparison only means something once you have
-done the work once.
+Adding Italian to GlobalDesk was not a translation task. It was a process with a number attached
+to it, and the number is what made it finishable.
 
-## What "no untranslated key left" means
+## The grid, not the XML
 
-`Strings.it.resx` has **29** entries against the neutral file's **32**. That is not a gap - it is
-the right number, and the difference is the point of the next section.
+Every key down the rows, every language across the columns, one screen. Whether that is ResX
+Resource Manager, the Visual Studio editor or a cloud platform matters less than the shape: a
+translator has to see **all** the languages for a key at once, and a developer has to see which
+cells are empty without opening six files.
 
-## Invariant markers - three keys a translator never sees
+Editing the `.resx` by hand is where rounds go wrong. The XML is a serialization format; the grid
+is the interface.
 
-Three entries in the neutral file are marked invariant, which ResX Resource Manager stores as
-metadata beside the data:
+## The measure
+
+**Untranslated count.** Before the round, four keys had no Italian value. Filter, translate,
+filter again, and the number is zero. Anything else is an opinion.
+
+The number is the deliverable, not the feeling that Italian "looks done".
+
+## What the comments are for
+
+A translator sees a key, a value and a comment. That is all the context there is.
+
+| Key | Value | Why it needs a comment |
+|---|---|---|
+| `CustomerEditor.Open` | Open | The **verb** - open the selected customer. |
+| `Ticket.Open` | Open | The **state** - the ticket is open. |
+| `Customer.LastOrder` | Last order: {0} on {1} | `{0}` is the order number, `{1}` the date. Nothing in the string says so. |
+| `Rail.Culture` | Culture | The .NET sense - language plus regional formatting - not culture as in the arts. |
+| `Dashboard.WelcomeBack` | Welcome back, {0}. | Italian inflects the greeting for the person's gender: *Bentornata* for Ana, *Bentornato* for a man. |
+
+The two `Open` keys are the whole argument for semantic keys in one line. As `"Open"` they are the
+same string and a tool would offer to merge them; as two keys with two comments the Italian comes
+back as **Apri** and **Aperto**, which are not interchangeable.
+
+## What the invariant markers are for
+
+`App.ProductName`, `Product.Framework`, `Format.CustomerCode` and the six `Language.*` entries
+carry an `IsInvariant` marker in the neutral file:
 
 ```xml
-<metadata name="App.Title.IsInvariant" xml:space="preserve">
+<metadata name="App.ProductName.IsInvariant" xml:space="preserve">
   <value>True</value>
 </metadata>
 ```
 
-| Key | Value | Why it must not be translated |
-|---|---|---|
-| `App.Title` | `GlobalDesk` | Product name. Not translated, not declined, not transliterated. |
-| `Product.Framework` | `Wisej.NET` | Third-party product name. Same rule, and it is not ours to change. |
-| `Format.CustomerCode` | `AA0000` | The literal code format, quoted in help text. Translating the letters makes the help wrong. |
+A marked key never reaches a translator, so it cannot come back translated. That is not a
+theoretical risk: a machine draft will happily render **GlobalDesk** as *Scrivania globale* and
+**Wisej.NET** as *Wisej.RETE*, and a reviewer reading 200 rows will not catch it.
 
-A key marked invariant disappears from the translation grid and no language file gets a value for
-it, which is exactly what you want: the translator is not asked, so the translator cannot get it
-wrong, and nobody has to review thirty language files to check that the product name survived.
+The language list is invariant for a different reason. A language list shows every language in
+**its own** language - a German speaker looking for German looks for *Deutsch* - so those values
+are the same in every file on purpose.
 
-The failure this prevents is real and expensive. Product names get "helpfully" translated all the
-time - and a support engineer searching a customer's screenshot for "GlobalDesk" will not find
-"Bureau Mondial".
+## What the review caught
 
-## Comments - context for the keys that cannot be guessed
-
-Seven keys carry a `<comment>`. Three of them are the ones that would otherwise be translated
-wrongly, and the one-word `Open`-style caption the lab warns about has three siblings here:
-
-| Key | Value | Why it is ambiguous without context |
-|---|---|---|
-| `Contacts.Role` | `Role` | A job function, a theatrical part and a security role are three different words in most languages. The comment says "job function such as Purchasing or Finance". |
-| `Dashboard.LastOrder` | `Last order` | Noun phrase (the most recent order) or imperative (order it last)? The comment says which, and that it is a button. |
-| `CustomerEditor.Save` | `Save` | Imperative verb or noun? Italian wants `Salva`, not `Salvataggio`. The comment says "imperative verb - the action". |
-| `Dashboard.Fallback` | `Falls back to` | A sentence fragment completed at run time by a culture name. Without the comment a translator produces something that does not join up. |
-| `Customer.LastOrder` | `Last order: {0} for {1}` | Says what each placeholder is and that word order may change. |
-
-The rule worth carrying away: **a translator sees a spreadsheet, not your screen.** Anything whose
-part of speech, length constraint or surrounding sentence is not obvious from the value alone needs
-a comment. Writing them takes ten minutes and saves a review cycle per language.
-
-## Export, translate, re-import
-
-`docs/translation/Strings.export.csv` is the artefact that goes out and comes back: one row per
-key, the comment, the invariant flag, then one column per language.
+The machine draft of `Customer.LastOrder` came back as:
 
 ```
-Key,Comment,Invariant,en,de,it,ar
-"App.Title","Product name. Invariant - never translated...",X,"GlobalDesk","","",""
-"Dashboard.Welcome","",,"Welcome to GlobalDesk","Willkommen bei GlobalDesk","Benvenuto in GlobalDesk","مرحبا بك..."
+Ultimo ordine: {1} il {0}
 ```
 
-Three things about that file matter more than the format:
+The placeholders are both present, the sentence reads correctly in Italian, and it compiles. It
+would have printed the order **date** where the number belongs and the number where the date
+belongs, in production, in one language, on one screen.
 
-1. **The comment travels with the string.** A translator who has to ask what `Role` means has
-   already cost more than the comment did.
-2. **The invariant column is visible.** The translator can see that the blank is deliberate.
-3. **Every language is in one file.** A translator working on Italian can see the German, which is
-   often the fastest way to resolve an ambiguity the comment missed.
+Placeholders are the first thing to check in a diff, every time:
 
-Re-importing produces a `.resx` diff, and the diff is the review. Things worth stopping on:
+- both present,
+- not renumbered,
+- in an order the sentence actually needs.
 
-- **Placeholders.** `{0}` and `{1}` present, in a sensible order, not turned into `{0 }` by a
-  spreadsheet. This is the single most common breakage and it throws `FormatException` at run time,
-  not at build time.
-- **Entries that should not have changed.** A diff touching `App.Title` means the invariant flag
-  was lost somewhere in the round trip.
-- **Whitespace and trailing full stops.** `Cliente salvato.` keeps the stop; `Salva` does not gain
-  one.
-- **Encoding.** The Arabic and the Italian accented characters have to survive. A CSV opened and
-  re-saved by the wrong spreadsheet is where this goes wrong, silently.
+## Read the diff like code
 
-Commit the round as **one change**. A reviewer can then read "Italian translation round" as a
-single diff instead of finding stray `.resx` edits scattered through six feature commits.
+The tool saves as you type. That makes `git diff Strings.it.resx` the review, and the round should
+be one commit with the values, the comments and the invariant markers together - not a commit per
+save.
 
-## The three ways of doing this, compared
+Things that show up in a diff and nowhere else: a key quietly renamed, a value with a trailing
+space, an entity that got double-escaped on a round trip, a comment deleted because the tool
+thought the row was empty.
 
-| | Visual Studio's `.resx` editor | ResX Resource Manager | A cloud TMS |
+## Finish the round on the screen, not in the grid
+
+`Texts.UntranslatedKeys()` asks the running application the same question the filter asks the
+grid: which keys still come back with the neutral value? The rail reports the count, and the
+tooltip names them.
+
+It exists because fallback is silent. A key missing from `Strings.it.resx` renders in English and
+the Italian screen still looks complete - the grid is the only place it looks wrong, and only if
+somebody opens the grid.
+
+**The report is a heuristic, not a verdict.** Italian legitimately writes **Email**, and *Ana* is
+*Ana* in every language, so both are counted as "same as neutral" while being perfectly correct.
+That is why the label is amber rather than red: it exists to make a reviewer look at a short list,
+not to fail a build.
+
+The two reports this course has built see different failures and neither sees the other's:
+
+| Report | Finds | Misses |
+|---|---|---|
+| Missing-key marker `[Key]` | a key nobody ever wrote | a key that exists and was never translated |
+| Untranslated / same-as-neutral | a key that fell back to English | a key nobody ever wrote |
+| Pseudo-localized pass | a string that never went through a resource at all | both of the above |
+
+Run all three.
+
+## Choosing a tool
+
+| | Visual Studio `.resx` editor | ResX Resource Manager | Cloud TMS |
 |---|---|---|---|
-| Cost | free, already installed | free VS extension | per-seat or per-word |
-| Sees all languages at once | no - one file per tab | **yes, a grid** | yes |
-| Shows untranslated keys | no | **yes, a filter** | yes |
-| Comments | yes, one column | yes, in the grid | yes |
-| Invariant marking | no | **yes** | usually |
-| Non-developers can use it | no | no - it lives in Visual Studio | **yes** |
-| Translation memory, glossary | no | no | **yes** |
-| Review workflow | pull request | pull request | built in |
-| Where the truth lives | the repository | the repository | **the platform** |
+| Languages on screen at once | one | all | all |
+| Untranslated filter | no | yes | yes |
+| Comments visible while translating | yes | yes | yes |
+| Needs Visual Studio | yes | extension or standalone | no |
+| Translator can work without a developer | no | with the standalone build | yes |
+| Review as a code diff | yes | yes | needs an export step |
+| Translation memory, glossary, vendors | no | no | yes |
 
-**Visual Studio's editor** is fine for adding a key while you are writing the code that uses it.
-It is unusable as a translation tool: one language per tab, no way to see what is missing, and
-finding the untranslated keys means reading two files side by side.
+For a team whose translators are not developers, the deciding line is the second-to-last one. A
+cloud platform is where translators can work on their own; the cost is that the review stops being
+a `git diff` unless you export the round back into the repository and read it there.
 
-**ResX Resource Manager** is the right default for a developer-run translation round, and it is
-what this module used. The grid, the untranslated filter and the invariant flag are exactly the
-three things the job needs, the `.resx` files stay the source of truth, and every change is an
-ordinary diff in an ordinary pull request. Its limit is who can use it: it is a Visual Studio
-extension, so a translator who is not a developer cannot.
-
-**A cloud TMS** is what you move to when translators are not developers - and that is the real
-trigger, not the number of languages. It buys translation memory (the second product reuses the
-first's strings), a glossary, and a review workflow that does not involve teaching a translator
-git. What it costs is that the platform becomes the source of truth and the repository becomes a
-copy; export and import become a scheduled job someone has to own, and "which version is right"
-becomes a question you can now ask.
-
-**For a team whose translators are not developers**, the honest recommendation is: start with ResX
-Resource Manager while the developers are still doing the translating, and move to a TMS the first
-time you hand a language to someone outside the team. Do not start with a TMS for two languages a
-developer can handle - the integration is more work than the translation. Do not stay on `.resx`
-round-trips once a professional translator is involved, because emailing spreadsheets is how
-placeholders get broken and how the fourth language quietly falls a release behind.
-
-Whichever you choose, keep the comments and the invariant markers in the `.resx` files. They are
-the part that survives a change of tooling.
+For this project - six languages, one developer doing the imports - ResX Resource Manager is
+enough, and the diff stays where the rest of the review already happens.

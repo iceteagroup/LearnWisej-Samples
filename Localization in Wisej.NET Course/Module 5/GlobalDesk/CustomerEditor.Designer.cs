@@ -1,3 +1,6 @@
+using System.Drawing;
+using Wisej.Web;
+
 namespace GlobalDesk
 {
     partial class CustomerEditor
@@ -16,16 +19,13 @@ namespace GlobalDesk
         #region Wisej.NET Designer generated code
 
         //
-        // This is what the designer writes once Localizable is set to true.
+        // Still Localizable. What changed in Module 5 is what the German file has to carry: the
+        // row flows and the buttons are AutoSize with a MinimumSize, so a longer caption changes
+        // nothing but itself. Compare CustomerEditor.de.resx with the one in Module 4 - the Size
+        // and Location overrides are gone.
         //
-        // Every localizable property - Text, Size, Location, RightToLeft and the rest - moves out
-        // of this file and into CustomerEditor.resx, and ApplyResources puts it back at run time
-        // from whichever .resx matches the current culture. Nothing below says "Save" or "150, 38";
-        // it says "look up btnSave".
-        //
-        // The consequence that catches everyone: ApplyResources runs here, in InitializeComponent,
-        // which means it runs when the control is CONSTRUCTED. A culture change afterwards does
-        // not re-run it. That is why the page has a Recreate button.
+        // Nothing here sets RightToLeft either. The control's RightToLeftLayout is set in the
+        // constructor and every child inherits.
         //
         private void InitializeComponent()
         {
@@ -33,116 +33,155 @@ namespace GlobalDesk
             System.ComponentModel.ComponentResourceManager resources =
                 new System.ComponentModel.ComponentResourceManager(typeof(CustomerEditor));
 
-            this.lblTitle = new Wisej.Web.Label();
-            this.lblName = new Wisej.Web.Label();
-            this.txtName = new Wisej.Web.TextBox();
-            this.lblCode = new Wisej.Web.Label();
-            this.txtCode = new Wisej.Web.TextBox();
-            this.lblCountry = new Wisej.Web.Label();
-            this.cboCountry = new Wisej.Web.ComboBox();
+            this.pnlCodeRow = new Wisej.Web.FlowLayoutPanel();
+            this.lblCustomerCode = new Wisej.Web.Label();
+            this.txtCustomerCode = new Wisej.Web.TextBox();
+            this.pnlGridHost = new Wisej.Web.Panel();
+            this.gridContacts = new Wisej.Web.DataGridView();
+            this.colContact = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colCompany = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colCity = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.pnlButtons = new Wisej.Web.FlowLayoutPanel();
             this.btnSave = new Wisej.Web.Button();
             this.btnCancel = new Wisej.Web.Button();
-            this.lblMessage = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblTitle
+            // the customer code row
             //
-            resources.ApplyResources(this.lblTitle, "lblTitle");
-            this.lblTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Name = "lblTitle";
+            resources.ApplyResources(this.lblCustomerCode, "lblCustomerCode");
+            this.lblCustomerCode.Name = "lblCustomerCode";
+            this.lblCustomerCode.AutoSize = true;
+            this.lblCustomerCode.MinimumSize = new Size(148, 34);
+            this.lblCustomerCode.Font = Desk.Px(13, FontStyle.Bold);
+            this.lblCustomerCode.ForeColor = Desk.FieldInk;
+            this.lblCustomerCode.TextAlign = ContentAlignment.MiddleLeft;
+
+            this.txtCustomerCode.Name = "txtCustomerCode";
+            this.txtCustomerCode.Size = new Size(190, 34);
+            this.txtCustomerCode.Font = Desk.Mono(14);
+            this.txtCustomerCode.ForeColor = Desk.Body;
+            this.txtCustomerCode.CssStyle = "border:1.5px solid #c9d4e0;border-radius:6px";
             //
-            // lblName
+            // A customer code is an identifier: typed, read aloud, quoted in an email and compared
+            // character by character. Latin letters and digits are NEUTRAL characters in the
+            // bidirectional algorithm, so inside a right-to-left paragraph the run may be
+            // reordered. Pin it, and it reads the same for every user in every language.
             //
-            resources.ApplyResources(this.lblName, "lblName");
-            this.lblName.Name = "lblName";
+            // Names and addresses are the opposite case - they are prose and must mirror.
+            this.txtCustomerCode.RightToLeft = Wisej.Web.RightToLeft.No;
+
+            this.pnlCodeRow.Name = "pnlCodeRow";
+            this.pnlCodeRow.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlCodeRow.Size = new Size(1150, 44);
+            this.pnlCodeRow.FlowDirection = Wisej.Web.FlowDirection.LeftToRight;
+            this.pnlCodeRow.WrapContents = true;
+            this.pnlCodeRow.Controls.Add(this.lblCustomerCode);
+            this.pnlCodeRow.Controls.Add(this.txtCustomerCode);
             //
-            // txtName
+            // the contacts grid
             //
-            resources.ApplyResources(this.txtName, "txtName");
-            this.txtName.Name = "txtName";
+            this.colContact.Name = "colContact";
+            this.colContact.Width = 170;
+
+            this.colCompany.Name = "colCompany";
+            this.colCompany.AutoSizeMode = Wisej.Web.DataGridViewAutoSizeColumnMode.Fill;
+
+            this.colCity.Name = "colCity";
+            this.colCity.Width = 120;
+
+            this.gridContacts.Name = "gridContacts";
+            this.gridContacts.Dock = Wisej.Web.DockStyle.Fill;
+            this.gridContacts.AllowUserToAddRows = false;
+            this.gridContacts.AllowUserToDeleteRows = false;
+            this.gridContacts.AllowUserToResizeRows = false;
+            this.gridContacts.ReadOnly = true;
+            this.gridContacts.RowHeadersVisible = false;
+            this.gridContacts.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
+            this.gridContacts.ColumnHeadersHeight = 28;
+            this.gridContacts.RowTemplate.Height = 32;
+            this.gridContacts.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.gridContacts.Font = Desk.Px(12.5F);
+            this.gridContacts.ColumnHeadersDefaultCellStyle.BackColor = Desk.CardHead;
+            this.gridContacts.ColumnHeadersDefaultCellStyle.ForeColor = Desk.Muted;
+            this.gridContacts.ColumnHeadersDefaultCellStyle.Font = Desk.Px(11, FontStyle.Bold);
+            // Header alignment is left because the neutral culture reads left to right. Under an
+            // RTL culture the grid mirrors this on its own - see docs/RtlTests.md for what it
+            // does and does not decide for you.
+            this.gridContacts.ColumnHeadersDefaultCellStyle.Alignment = Wisej.Web.DataGridViewContentAlignment.MiddleLeft;
+            this.gridContacts.Columns.Add(this.colContact);
+            this.gridContacts.Columns.Add(this.colCompany);
+            this.gridContacts.Columns.Add(this.colCity);
+
+            // Tall enough for the header and the three rows, and no taller: the grid is a list of
+            // contacts, not the whole screen.
+            this.pnlGridHost.Name = "pnlGridHost";
+            this.pnlGridHost.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlGridHost.Size = new Size(1150, 152);
+            this.pnlGridHost.BackColor = Color.White;
+            this.pnlGridHost.Padding = new Wisej.Web.Padding(0, 12, 0, 12);
+            this.pnlGridHost.Controls.Add(this.gridContacts);
             //
-            // lblCode
+            // the button row
             //
-            resources.ApplyResources(this.lblCode, "lblCode");
-            this.lblCode.Name = "lblCode";
-            //
-            // txtCode
-            //
-            resources.ApplyResources(this.txtCode, "txtCode");
-            this.txtCode.Name = "txtCode";
-            // THE ONE EXCEPTION ON THIS SCREEN.
-            //
-            // A customer code is an identifier, not prose: AT0417 is typed, read aloud, quoted in
-            // an email and compared character by character. Under an RTL layout the browser would
-            // reorder it on screen - the letters and the digits are neutral characters and take
-            // their direction from the paragraph - so a user reading it back would say the wrong
-            // thing. Forcing LTR here keeps the identifier identical in every language.
-            //
-            // The same applies to IBANs, part numbers, licence keys and anything a user has to
-            // transcribe. It does NOT apply to names or addresses, which are prose and must
-            // mirror.
-            this.txtCode.RightToLeft = Wisej.Web.RightToLeft.No;
-            //
-            // lblCountry
-            //
-            resources.ApplyResources(this.lblCountry, "lblCountry");
-            this.lblCountry.Name = "lblCountry";
-            //
-            // cboCountry
-            //
-            resources.ApplyResources(this.cboCountry, "cboCountry");
-            this.cboCountry.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.cboCountry.Name = "cboCountry";
-            //
-            // btnSave
-            //
+            // AutoSize with a MinimumSize, in a FlowLayoutPanel that wraps. A caption half as long
+            // again pushes the next button along, or onto a second row in a narrow window - it
+            // never clips and never needs a per-language Size.
+            SetActionButton(this.btnSave, "btnSave", primary: true);
             resources.ApplyResources(this.btnSave, "btnSave");
-            this.btnSave.Name = "btnSave";
             this.btnSave.Click += this.btnSave_Click;
-            //
-            // btnCancel
-            //
+
+            SetActionButton(this.btnCancel, "btnCancel", primary: false);
             resources.ApplyResources(this.btnCancel, "btnCancel");
-            this.btnCancel.Name = "btnCancel";
             this.btnCancel.Click += this.btnCancel_Click;
-            //
-            // lblMessage
-            //
-            resources.ApplyResources(this.lblMessage, "lblMessage");
-            this.lblMessage.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
-            this.lblMessage.Name = "lblMessage";
+
+            this.pnlButtons.Name = "pnlButtons";
+            this.pnlButtons.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlButtons.Size = new Size(1150, 48);
+            this.pnlButtons.FlowDirection = Wisej.Web.FlowDirection.LeftToRight;
+            this.pnlButtons.WrapContents = true;
+            this.pnlButtons.Controls.Add(this.btnSave);
+            this.pnlButtons.Controls.Add(this.btnCancel);
             //
             // CustomerEditor
             //
             resources.ApplyResources(this, "$this");
             this.Name = "CustomerEditor";
-            // Module 5: the editor mirrors with the page. Its children stay on
-            // RightToLeft.Inherit - except txtCode, below.
-            this.RightToLeftLayout = true;
-            this.Controls.Add(this.lblMessage);
-            this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.cboCountry);
-            this.Controls.Add(this.lblCountry);
-            this.Controls.Add(this.txtCode);
-            this.Controls.Add(this.lblCode);
-            this.Controls.Add(this.txtName);
-            this.Controls.Add(this.lblName);
-            this.Controls.Add(this.lblTitle);
+            this.BackColor = Color.White;
+            // Docked Top, so the control added last is the one nearest the top: the code row,
+            // then the contacts, then the actions.
+            this.Controls.Add(this.pnlButtons);
+            this.Controls.Add(this.pnlGridHost);
+            this.Controls.Add(this.pnlCodeRow);
             this.ResumeLayout(false);
+        }
+
+        private static void SetActionButton(Wisej.Web.Button button, string name, bool primary)
+        {
+            button.Name = name;
+            button.AutoSize = true;
+            button.MinimumSize = new Size(96, 34);
+            button.Margin = new Wisej.Web.Padding(0, 0, 10, 0);
+            button.Padding = new Wisej.Web.Padding(18, 0, 18, 0);
+            button.Font = Desk.Px(13, FontStyle.Bold);
+            button.BackColor = primary ? Desk.Accent : Color.White;
+            button.ForeColor = primary ? Color.White : Desk.FieldInk;
+            button.CssStyle = primary
+                ? "border:1px solid #1565d8;border-radius:7px"
+                : "border:1px solid #cdd9e6;border-radius:7px";
         }
 
         #endregion
 
-        private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblName;
-        private Wisej.Web.TextBox txtName;
-        private Wisej.Web.Label lblCode;
-        private Wisej.Web.TextBox txtCode;
-        private Wisej.Web.Label lblCountry;
-        private Wisej.Web.ComboBox cboCountry;
+        private Wisej.Web.FlowLayoutPanel pnlCodeRow;
+        private Wisej.Web.Label lblCustomerCode;
+        private Wisej.Web.TextBox txtCustomerCode;
+        private Wisej.Web.Panel pnlGridHost;
+        private Wisej.Web.DataGridView gridContacts;
+        private Wisej.Web.DataGridViewTextBoxColumn colContact;
+        private Wisej.Web.DataGridViewTextBoxColumn colCompany;
+        private Wisej.Web.DataGridViewTextBoxColumn colCity;
+        private Wisej.Web.FlowLayoutPanel pnlButtons;
         private Wisej.Web.Button btnSave;
         private Wisej.Web.Button btnCancel;
-        private Wisej.Web.Label lblMessage;
     }
 }

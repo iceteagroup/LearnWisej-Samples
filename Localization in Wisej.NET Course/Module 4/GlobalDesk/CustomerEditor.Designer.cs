@@ -1,3 +1,6 @@
+using System.Drawing;
+using Wisej.Web;
+
 namespace GlobalDesk
 {
     partial class CustomerEditor
@@ -16,16 +19,10 @@ namespace GlobalDesk
         #region Wisej.NET Designer generated code
 
         //
-        // This is what the designer writes once Localizable is set to true.
-        //
-        // Every localizable property - Text, Size, Location, RightToLeft and the rest - moves out
-        // of this file and into CustomerEditor.resx, and ApplyResources puts it back at run time
-        // from whichever .resx matches the current culture. Nothing below says "Save" or "150, 38";
-        // it says "look up btnSave".
-        //
-        // The consequence that catches everyone: ApplyResources runs here, in InitializeComponent,
-        // which means it runs when the control is CONSTRUCTED. A culture change afterwards does
-        // not re-run it. That is why the page has a Recreate button.
+        // Still Localizable, as Module 2 made it: every designed caption, size and position lives
+        // in CustomerEditor.resx and its German companion, and ApplyResources puts them on the
+        // controls when the control is CONSTRUCTED. The dashboard's CultureChanged handler is the
+        // other half of that sentence - it builds a new one.
         //
         private void InitializeComponent()
         {
@@ -33,101 +30,122 @@ namespace GlobalDesk
             System.ComponentModel.ComponentResourceManager resources =
                 new System.ComponentModel.ComponentResourceManager(typeof(CustomerEditor));
 
-            this.lblTitle = new Wisej.Web.Label();
-            this.lblName = new Wisej.Web.Label();
-            this.txtName = new Wisej.Web.TextBox();
+            this.pnlHeader = new Wisej.Web.Panel();
+            this.lblPanelTitle = new Wisej.Web.Label();
+            this.lblBadge = new Wisej.Web.Label();
+            this.lblCompany = new Wisej.Web.Label();
+            this.txtCompany = new Wisej.Web.TextBox();
             this.lblCode = new Wisej.Web.Label();
             this.txtCode = new Wisej.Web.TextBox();
-            this.lblCountry = new Wisej.Web.Label();
-            this.cboCountry = new Wisej.Web.ComboBox();
             this.btnSave = new Wisej.Web.Button();
             this.btnCancel = new Wisej.Web.Button();
-            this.lblMessage = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblTitle
+            // the panel header
             //
-            resources.ApplyResources(this.lblTitle, "lblTitle");
-            this.lblTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Name = "lblTitle";
+            resources.ApplyResources(this.lblPanelTitle, "lblPanelTitle");
+            this.lblPanelTitle.Name = "lblPanelTitle";
+            this.lblPanelTitle.AutoSize = false;
+            this.lblPanelTitle.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblPanelTitle.Font = Desk.Px(12, FontStyle.Bold);
+            this.lblPanelTitle.ForeColor = Desk.Muted;
+            this.lblPanelTitle.TextAlign = ContentAlignment.MiddleLeft;
+
+            // Set by the page after a rebuild: it reports which culture this instance was built
+            // for, which is a fact about the instance rather than a designed caption.
+            this.lblBadge.Name = "lblBadge";
+            this.lblBadge.AutoSize = true;
+            this.lblBadge.Visible = false;
+            this.lblBadge.Dock = Wisej.Web.DockStyle.Right;
+            this.lblBadge.Font = Desk.Px(11, FontStyle.Bold);
+            this.lblBadge.ForeColor = Color.White;
+            this.lblBadge.Padding = new Wisej.Web.Padding(9, 2, 9, 2);
+            this.lblBadge.TextAlign = ContentAlignment.MiddleCenter;
+
+            this.pnlHeader.Name = "pnlHeader";
+            this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlHeader.Size = new Size(472, 32);
+            this.pnlHeader.BackColor = Color.White;
+            this.pnlHeader.Padding = new Wisej.Web.Padding(16, 3, 10, 3);
+            this.pnlHeader.CssStyle = "border-bottom:1px solid #e6ecf3";
+            this.pnlHeader.Controls.Add(this.lblPanelTitle);
+            this.pnlHeader.Controls.Add(this.lblBadge);
             //
-            // lblName
+            // the two fields
             //
-            resources.ApplyResources(this.lblName, "lblName");
-            this.lblName.Name = "lblName";
-            //
-            // txtName
-            //
-            resources.ApplyResources(this.txtName, "txtName");
-            this.txtName.Name = "txtName";
-            //
-            // lblCode
-            //
+            resources.ApplyResources(this.lblCompany, "lblCompany");
+            SetFieldLabel(this.lblCompany, "lblCompany");
+            resources.ApplyResources(this.txtCompany, "txtCompany");
+            SetField(this.txtCompany, "txtCompany", mono: false);
+
             resources.ApplyResources(this.lblCode, "lblCode");
-            this.lblCode.Name = "lblCode";
-            //
-            // txtCode
-            //
+            SetFieldLabel(this.lblCode, "lblCode");
             resources.ApplyResources(this.txtCode, "txtCode");
-            this.txtCode.Name = "txtCode";
-            //
-            // lblCountry
-            //
-            resources.ApplyResources(this.lblCountry, "lblCountry");
-            this.lblCountry.Name = "lblCountry";
-            //
-            // cboCountry
-            //
-            resources.ApplyResources(this.cboCountry, "cboCountry");
-            this.cboCountry.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.cboCountry.Name = "cboCountry";
+            SetField(this.txtCode, "txtCode", mono: true);
             //
             // btnSave
             //
             resources.ApplyResources(this.btnSave, "btnSave");
             this.btnSave.Name = "btnSave";
+            this.btnSave.BackColor = Desk.Accent;
+            this.btnSave.ForeColor = Color.White;
+            this.btnSave.Font = Desk.Px(13.5F, FontStyle.Bold);
+            this.btnSave.CssStyle = "border:1px solid #1565d8;border-radius:6px";
             this.btnSave.Click += this.btnSave_Click;
             //
             // btnCancel
             //
             resources.ApplyResources(this.btnCancel, "btnCancel");
             this.btnCancel.Name = "btnCancel";
+            this.btnCancel.BackColor = Color.White;
+            this.btnCancel.ForeColor = Desk.FieldInk;
+            this.btnCancel.Font = Desk.Px(13.5F, FontStyle.Bold);
+            this.btnCancel.CssStyle = "border:1px solid #c9d5e2;border-radius:6px";
             this.btnCancel.Click += this.btnCancel_Click;
-            //
-            // lblMessage
-            //
-            resources.ApplyResources(this.lblMessage, "lblMessage");
-            this.lblMessage.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
-            this.lblMessage.Name = "lblMessage";
             //
             // CustomerEditor
             //
             resources.ApplyResources(this, "$this");
             this.Name = "CustomerEditor";
-            this.Controls.Add(this.lblMessage);
-            this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.cboCountry);
-            this.Controls.Add(this.lblCountry);
-            this.Controls.Add(this.txtCode);
+            this.BackColor = Color.White;
+            this.CssStyle = "border:1px solid #dbe3ec;border-radius:8px";
+            this.Controls.Add(this.lblCompany);
+            this.Controls.Add(this.txtCompany);
             this.Controls.Add(this.lblCode);
-            this.Controls.Add(this.txtName);
-            this.Controls.Add(this.lblName);
-            this.Controls.Add(this.lblTitle);
+            this.Controls.Add(this.txtCode);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnCancel);
+            this.Controls.Add(this.pnlHeader);
             this.ResumeLayout(false);
+        }
+
+        private static void SetFieldLabel(Wisej.Web.Label label, string name)
+        {
+            label.Name = name;
+            label.AutoSize = false;
+            label.Font = Desk.Px(12.5F, FontStyle.Bold);
+            label.ForeColor = Desk.Muted;
+            label.TextAlign = ContentAlignment.MiddleLeft;
+        }
+
+        private static void SetField(Wisej.Web.TextBox box, string name, bool mono)
+        {
+            box.Name = name;
+            box.Font = mono ? Desk.Mono(13.5F) : Desk.Px(13.5F);
+            box.ForeColor = Desk.Body;
+            box.CssStyle = "border:1px solid #c9d5e2;border-radius:5px";
         }
 
         #endregion
 
-        private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblName;
-        private Wisej.Web.TextBox txtName;
+        private Wisej.Web.Panel pnlHeader;
+        private Wisej.Web.Label lblPanelTitle;
+        private Wisej.Web.Label lblBadge;
+        private Wisej.Web.Label lblCompany;
+        private Wisej.Web.TextBox txtCompany;
         private Wisej.Web.Label lblCode;
         private Wisej.Web.TextBox txtCode;
-        private Wisej.Web.Label lblCountry;
-        private Wisej.Web.ComboBox cboCountry;
         private Wisej.Web.Button btnSave;
         private Wisej.Web.Button btnCancel;
-        private Wisej.Web.Label lblMessage;
     }
 }

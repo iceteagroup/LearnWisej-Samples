@@ -58,115 +58,172 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="App.ProductName" xml:space="preserve">
+    <value>GlobalDesk</value>
+  </data>
+  <data name="Product.Framework" xml:space="preserve">
+    <value>Wisej.NET</value>
+  </data>
+  <data name="Format.CustomerCode" xml:space="preserve">
+    <value>AA0000</value>
+  </data>
   <data name="App.Title" xml:space="preserve">
-    <value>[GlobalDeskë ~~~]</value>
+    <value>[[GlobalDesk — Service desk ~~~~~~~~~~]]</value>
   </data>
-  <data name="Dashboard.Welcome" xml:space="preserve">
-    <value>[Welcomeë to GlobalDeskë ~~~]</value>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>[[Service desk ~~~~~]]</value>
   </data>
-  <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>[Customerë operationsë, in yourë languageë ~~~]</value>
-  </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>[Recreateë the editorë ~~~]</value>
-  </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>[Showë a Wisejë.NET dialogë ~~~]</value>
-  </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>[Lastë orderë ~~~]</value>
+  <data name="Dashboard.WelcomeBack" xml:space="preserve">
+    <value>[[Welcome back, {0}. ~~~~~~~]]</value>
   </data>
   <data name="Dashboard.Language" xml:space="preserve">
-    <value>[Languageë ~~~]</value>
+    <value>[[Language ~~~]]</value>
   </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>[Fallsë backë to ~~~]</value>
+  <data name="User.DisplayName" xml:space="preserve">
+    <value>[[Ana ~~~]]</value>
   </data>
-  <data name="Dashboard.Contacts" xml:space="preserve">
-    <value>[Contactsë ~~~]</value>
+  <data name="Rail.Culture" xml:space="preserve">
+    <value>[[Culture ~~~]]</value>
   </data>
-  <data name="Navigation.Customers" xml:space="preserve">
-    <value>[Customersë ~~~]</value>
+  <data name="Culture.Neutral" xml:space="preserve">
+    <value>[[neutral resource ~~~~~~]]</value>
   </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>[Backë ~~~]</value>
+  <data name="Culture.Untranslated" xml:space="preserve">
+    <value>[[{0} untranslated ~~~~~~]]</value>
   </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>[Customerë ~~~]</value>
+  <data name="Nav.Customers" xml:space="preserve">
+    <value>[[Customers ~~~~]]</value>
   </data>
-  <data name="CustomerEditor.Name" xml:space="preserve">
-    <value>[Nameë ~~~]</value>
+  <data name="Nav.Tickets" xml:space="preserve">
+    <value>[[Tickets ~~~]]</value>
   </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>[Customerë codeë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>[Countryë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Save" xml:space="preserve">
-    <value>[Saveë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Cancel" xml:space="preserve">
-    <value>[Cancelë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Saved" xml:space="preserve">
-    <value>[Customerë savedë. ~~~]</value>
-  </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>[The customerë couldë not be savedë. ~~~]</value>
-  </data>
-  <data name="Customer.LastOrder" xml:space="preserve">
-    <value>[Lastë orderë: {0} for {1} ~~~]</value>
-  </data>
-  <data name="Validation.Required" xml:space="preserve">
-    <value>[Thisë fieldë is requiredë. ~~~]</value>
-  </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>[A customerë codeë is two lettersë and fourë digitsë. ~~~]</value>
-  </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>[The sameë threeë valuesë, formattedë for thisë sessionë ~~~]</value>
+  <data name="Preview.Title" xml:space="preserve">
+    <value>[[Culture preview ~~~~~~]]</value>
   </data>
   <data name="Preview.Date" xml:space="preserve">
-    <value>[Due dateë ~~~]</value>
+    <value>[[Date ~~~]]</value>
   </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>[Unitsë orderedë ~~~]</value>
+  <data name="Preview.Count" xml:space="preserve">
+    <value>[[Quantity ~~~]]</value>
   </data>
   <data name="Preview.Amount" xml:space="preserve">
-    <value>[Orderë totalë ~~~]</value>
+    <value>[[Amount ~~~]]</value>
   </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>[Activeë cultureë ~~~]</value>
-  </data>
-  <data name="Contacts.Name" xml:space="preserve">
-    <value>[Nameë ~~~]</value>
-  </data>
-  <data name="Contacts.Role" xml:space="preserve">
-    <value>[Roleë ~~~]</value>
-  </data>
-  <data name="Contacts.Phone" xml:space="preserve">
-    <value>[Phoneë ~~~]</value>
-  </data>
-  <data name="Dashboard.Tickets" xml:space="preserve">
-    <value>[Opën tickëts ~~~]</value>
-  </data>
-  <data name="Ticket.New" xml:space="preserve">
-    <value>[Nëw ~~~]</value>
-  </data>
-  <data name="Ticket.InProgress" xml:space="preserve">
-    <value>[In progrëss ~~~]</value>
+  <data name="Ticket.Open" xml:space="preserve">
+    <value>[[Open ~~~]]</value>
   </data>
   <data name="Ticket.Closed" xml:space="preserve">
-    <value>[Closëd ~~~]</value>
+    <value>[[Closed ~~~]]</value>
   </data>
-  <data name="Dashboard.RunQa" xml:space="preserve">
-    <value>[Run thë QA matrix ~~~]</value>
+  <data name="CustomerEditor.Open" xml:space="preserve">
+    <value>[[Open ~~~]]</value>
+  </data>
+  <data name="CustomerEditor.Name" xml:space="preserve">
+    <value>[[Name ~~~]]</value>
+  </data>
+  <data name="CustomerEditor.Email" xml:space="preserve">
+    <value>[[Email ~~~]]</value>
+  </data>
+  <data name="CustomerEditor.Save" xml:space="preserve">
+    <value>[[Save ~~~]]</value>
+  </data>
+  <data name="CustomerEditor.Cancel" xml:space="preserve">
+    <value>[[Cancel ~~~]]</value>
+  </data>
+  <data name="CustomerEditor.Saved" xml:space="preserve">
+    <value>[[Customer saved. ~~~~~~]]</value>
+  </data>
+  <data name="Customer.LastOrder" xml:space="preserve">
+    <value>[[Last order: {0} on {1} ~~~~~~~~~]]</value>
+  </data>
+  <data name="Validation.Required" xml:space="preserve">
+    <value>[[This field is required. ~~~~~~~~~]]</value>
+  </data>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>[[Enter a valid email address. ~~~~~~~~~~~]]</value>
+  </data>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (en-US)</value>
+  </data>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (de-DE)</value>
+  </data>
+  <data name="Language.it-IT" xml:space="preserve">
+    <value>Italiano (it-IT)</value>
+  </data>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (fr-CA)</value>
+  </data>
+  <data name="Language.ar-SA" xml:space="preserve">
+    <value>العربية (ar-SA)</value>
+  </data>
+  <data name="Language.qps-ploc" xml:space="preserve">
+    <value>Pseudo (qps-ploc)</value>
+  </data>
+  <data name="Status.Direction" xml:space="preserve">
+    <value>[[Culture: {0} · direction: {1} ~~~~~~~~~~~~]]</value>
+  </data>
+  <data name="Direction.Ltr" xml:space="preserve">
+    <value>[[left to right ~~~~~]]</value>
+  </data>
+  <data name="Direction.Rtl" xml:space="preserve">
+    <value>[[right to left ~~~~~]]</value>
+  </data>
+  <data name="Nav.Dashboard" xml:space="preserve">
+    <value>[[Dashboard ~~~~]]</value>
+  </data>
+  <data name="Nav.Settings" xml:space="preserve">
+    <value>[[Settings ~~~]]</value>
+  </data>
+  <data name="Dashboard.OpenTickets" xml:space="preserve">
+    <value>[[Open tickets this week ~~~~~~~~~]]</value>
+  </data>
+  <data name="Kpi.DueDate" xml:space="preserve">
+    <value>[[Due date ~~~]]</value>
+  </data>
+  <data name="Kpi.OpenAmount" xml:space="preserve">
+    <value>[[Open amount ~~~~]]</value>
+  </data>
+  <data name="Kpi.Resolved" xml:space="preserve">
+    <value>[[Resolved ~~~]]</value>
   </data>
   <data name="Ticket.Reference" xml:space="preserve">
-    <value>[Rëfërëncë ~~~]</value>
+    <value>[[Ticket ~~~]]</value>
+  </data>
+  <data name="Ticket.Customer" xml:space="preserve">
+    <value>[[Customer ~~~]]</value>
+  </data>
+  <data name="Ticket.Due" xml:space="preserve">
+    <value>[[Due ~~~]]</value>
+  </data>
+  <data name="Ticket.Amount" xml:space="preserve">
+    <value>[[Amount ~~~]]</value>
   </data>
   <data name="Ticket.Status" xml:space="preserve">
-    <value>[Statüs ~~~]</value>
+    <value>[[Status ~~~]]</value>
+  </data>
+  <data name="TicketStatus.New" xml:space="preserve">
+    <value>[[New ~~~]]</value>
+  </data>
+  <data name="TicketStatus.InProgress" xml:space="preserve">
+    <value>[[In progress ~~~~]]</value>
+  </data>
+  <data name="TicketStatus.Waiting" xml:space="preserve">
+    <value>[[Waiting ~~~]]</value>
+  </data>
+  <data name="TicketStatus.Open" xml:space="preserve">
+    <value>[[Open ~~~]]</value>
+  </data>
+  <data name="TicketStatus.Closed" xml:space="preserve">
+    <value>[[Closed ~~~]]</value>
+  </data>
+  <data name="Customer.Save" xml:space="preserve">
+    <value>[[Save customer record ~~~~~~~~]]</value>
+  </data>
+  <data name="Dialog.SaveChanges" xml:space="preserve">
+    <value>[[Save changes? ~~~~~]]</value>
+  </data>
+  <data name="Dialog.UnsavedChanges" xml:space="preserve">
+    <value>[[The customer record has unsaved changes. ~~~~~~~~~~~~~~~~]]</value>
   </data>
 </root>

@@ -58,47 +58,89 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Dashboard.Welcome" xml:space="preserve">
-    <value>Benvenuto in GlobalDesk</value>
+  <data name="App.ProductName" xml:space="preserve">
+    <value>GlobalDesk</value>
   </data>
-  <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>Gestione clienti, nella tua lingua</value>
+  <data name="Product.Framework" xml:space="preserve">
+    <value>Wisej.NET</value>
   </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>Ricrea l'editor</value>
+  <data name="Format.CustomerCode" xml:space="preserve">
+    <value>AA0000</value>
   </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>Mostra una finestra di Wisej.NET</value>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (en-US)</value>
   </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>Ultimo ordine</value>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (de-DE)</value>
+  </data>
+  <data name="Language.it-IT" xml:space="preserve">
+    <value>Italiano (it-IT)</value>
+  </data>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (fr-CA)</value>
+  </data>
+  <data name="Language.ar-SA" xml:space="preserve">
+    <value>العربية (ar-SA)</value>
+  </data>
+  <data name="Language.qps-ploc" xml:space="preserve">
+    <value>Pseudo (qps-ploc)</value>
+  </data>
+  <data name="App.Title" xml:space="preserve">
+    <value>GlobalDesk — Servizio assistenza</value>
+  </data>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>Servizio assistenza</value>
+  </data>
+  <data name="Dashboard.WelcomeBack" xml:space="preserve">
+    <value>Bentornata, {0}.</value>
   </data>
   <data name="Dashboard.Language" xml:space="preserve">
     <value>Lingua</value>
   </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>Ripiega su</value>
+  <data name="User.DisplayName" xml:space="preserve">
+    <value>Ana</value>
   </data>
-  <data name="Dashboard.Contacts" xml:space="preserve">
-    <value>Contatti</value>
+  <data name="Rail.Culture" xml:space="preserve">
+    <value>Cultura</value>
   </data>
-  <data name="Navigation.Customers" xml:space="preserve">
+  <data name="Culture.Neutral" xml:space="preserve">
+    <value>risorsa neutra</value>
+  </data>
+  <data name="Culture.Untranslated" xml:space="preserve">
+    <value>{0} non tradotte</value>
+  </data>
+  <data name="Nav.Customers" xml:space="preserve">
     <value>Clienti</value>
   </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>Indietro</value>
+  <data name="Nav.Tickets" xml:space="preserve">
+    <value>Ticket</value>
   </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>Cliente</value>
+  <data name="Preview.Title" xml:space="preserve">
+    <value>Anteprima cultura</value>
+  </data>
+  <data name="Preview.Date" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="Preview.Count" xml:space="preserve">
+    <value>Quantità</value>
+  </data>
+  <data name="Preview.Amount" xml:space="preserve">
+    <value>Importo</value>
+  </data>
+  <data name="Ticket.Open" xml:space="preserve">
+    <value>Aperto</value>
+  </data>
+  <data name="Ticket.Closed" xml:space="preserve">
+    <value>Chiuso</value>
+  </data>
+  <data name="CustomerEditor.Open" xml:space="preserve">
+    <value>Apri</value>
   </data>
   <data name="CustomerEditor.Name" xml:space="preserve">
     <value>Nome</value>
   </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>Codice cliente</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>Paese</value>
+  <data name="CustomerEditor.Email" xml:space="preserve">
+    <value>Email</value>
   </data>
   <data name="CustomerEditor.Save" xml:space="preserve">
     <value>Salva</value>
@@ -109,64 +151,79 @@
   <data name="CustomerEditor.Saved" xml:space="preserve">
     <value>Cliente salvato.</value>
   </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>Impossibile salvare il cliente.</value>
-  </data>
   <data name="Customer.LastOrder" xml:space="preserve">
-    <value>Ultimo ordine: {0} per {1}</value>
+    <value>Ultimo ordine: {0} il {1}</value>
   </data>
   <data name="Validation.Required" xml:space="preserve">
     <value>Questo campo è obbligatorio.</value>
   </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>Un codice cliente è composto da due lettere e quattro cifre.</value>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>Immettere un indirizzo email valido.</value>
   </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>Gli stessi tre valori, formattati per questa sessione</value>
+  <data name="Status.Direction" xml:space="preserve">
+    <value>Cultura: {0} · direzione: {1}</value>
   </data>
-  <data name="Preview.Date" xml:space="preserve">
+  <data name="Direction.Ltr" xml:space="preserve">
+    <value>da sinistra a destra</value>
+  </data>
+  <data name="Direction.Rtl" xml:space="preserve">
+    <value>da destra a sinistra</value>
+  </data>
+  <data name="Nav.Dashboard" xml:space="preserve">
+    <value>Cruscotto</value>
+  </data>
+  <data name="Nav.Settings" xml:space="preserve">
+    <value>Impostazioni</value>
+  </data>
+  <data name="Dashboard.OpenTickets" xml:space="preserve">
+    <value>Ticket aperti questa settimana</value>
+  </data>
+  <data name="Kpi.DueDate" xml:space="preserve">
     <value>Data di scadenza</value>
   </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>Unità ordinate</value>
+  <data name="Kpi.OpenAmount" xml:space="preserve">
+    <value>Importo aperto</value>
   </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>Totale ordine</value>
-  </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>Cultura attiva</value>
-  </data>
-  <data name="Contacts.Name" xml:space="preserve">
-    <value>Nome</value>
-  </data>
-  <data name="Contacts.Role" xml:space="preserve">
-    <value>Ruolo</value>
-  </data>
-  <data name="Contacts.Phone" xml:space="preserve">
-    <value>Telefono</value>
-  </data>
-  <data name="Dashboard.Tickets" xml:space="preserve">
-    <value>Ticket aperti</value>
-  </data>
-  <data name="Ticket.New" xml:space="preserve">
-    <value>Nuovo</value>
-  </data>
-  <data name="Ticket.InProgress" xml:space="preserve">
-    <value>In lavorazione</value>
-  </data>
-  <data name="Ticket.Waiting" xml:space="preserve">
-    <value>In attesa del cliente</value>
-  </data>
-  <data name="Ticket.Closed" xml:space="preserve">
-    <value>Chiuso</value>
-  </data>
-  <data name="Dashboard.RunQa" xml:space="preserve">
-    <value>Esegui la matrice QA</value>
+  <data name="Kpi.Resolved" xml:space="preserve">
+    <value>Risolti</value>
   </data>
   <data name="Ticket.Reference" xml:space="preserve">
-    <value>Riferimento</value>
+    <value>Ticket</value>
+  </data>
+  <data name="Ticket.Customer" xml:space="preserve">
+    <value>Cliente</value>
+  </data>
+  <data name="Ticket.Due" xml:space="preserve">
+    <value>Scadenza</value>
+  </data>
+  <data name="Ticket.Amount" xml:space="preserve">
+    <value>Importo</value>
   </data>
   <data name="Ticket.Status" xml:space="preserve">
     <value>Stato</value>
+  </data>
+  <data name="TicketStatus.New" xml:space="preserve">
+    <value>Nuovo</value>
+  </data>
+  <data name="TicketStatus.InProgress" xml:space="preserve">
+    <value>In corso</value>
+  </data>
+  <data name="TicketStatus.Waiting" xml:space="preserve">
+    <value>In attesa</value>
+  </data>
+  <data name="TicketStatus.Open" xml:space="preserve">
+    <value>Aperto</value>
+  </data>
+  <data name="TicketStatus.Closed" xml:space="preserve">
+    <value>Chiuso</value>
+  </data>
+  <data name="Customer.Save" xml:space="preserve">
+    <value>Salva scheda cliente</value>
+  </data>
+  <data name="Dialog.SaveChanges" xml:space="preserve">
+    <value>Salvare le modifiche?</value>
+  </data>
+  <data name="Dialog.UnsavedChanges" xml:space="preserve">
+    <value>La scheda cliente contiene modifiche non salvate.</value>
   </data>
 </root>

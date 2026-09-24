@@ -3,5 +3,10 @@
   "startup": "GlobalDesk.Program.Main, GlobalDesk",
   "theme": "Bootstrap-4",
   "debug": true,
-  "sessionTimeout": 1800
+  "sessionTimeout": 1800,
+
+  // Module 2 pins the session to the neutral language so the demo starts from a known state and
+  // the culture chip is the only thing that moves it. Module 4 replaces this with "auto", which
+  // starts each session from the browser's Accept-Language instead.
+  "culture": "en"
 }

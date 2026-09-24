@@ -1,3 +1,6 @@
+using System.Drawing;
+using Wisej.Web;
+
 namespace GlobalDesk
 {
     partial class DashboardPage
@@ -8,11 +11,10 @@ namespace GlobalDesk
         {
             if (disposing)
             {
-                // Module 4: the page subscribed to a static event, so it has to let go of it.
-                // A page that does not is kept alive by the event for the rest of the session.
-                Wisej.Web.Application.CultureChanged -= this.Application_CultureChanged;
+                Application.CultureChanged -= this.Application_CultureChanged;
 
-                components?.Dispose();
+                if (components != null)
+                    components.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -20,341 +22,313 @@ namespace GlobalDesk
         #region Wisej.NET Designer generated code
 
         //
-        // Nothing in this file carries a user-visible English sentence. Every caption is assigned
-        // in ApplyTextResources, from a resource key. A literal here is a string no translator
-        // will ever see.
+        // The capstone screen: the navigation rail with the language picker at its foot, the three
+        // value tiles, the ticket grid and the customer record's actions.
+        //
+        // Not one user-visible English sentence in this file. Every caption is assigned from
+        // LocalizationService, which is the only thing in the solution that touches a
+        // ResourceManager.
         //
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.pnlHeader = new Wisej.Web.Panel();
-            this.lblWelcome = new Wisej.Web.Label();
-            this.lblSubtitle = new Wisej.Web.Label();
-            this.lblStatus = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.FlowLayoutPanel();
-            this.btnCustomers = new Wisej.Web.Button();
-            this.cboCulture = new Wisej.Web.ComboBox();
-            this.btnRecreate = new Wisej.Web.Button();
-            this.btnSystemText = new Wisej.Web.Button();
-            this.btnLastOrder = new Wisej.Web.Button();
+            this.pnlAppBar = new Wisej.Web.Panel();
+            this.lblAppTitle = new Wisej.Web.Label();
+            this.pnlWindowGlyphs = new Wisej.Web.Panel();
+            this.lblGlyphMinimize = new Wisej.Web.Label();
+            this.lblGlyphMaximize = new Wisej.Web.Label();
+            this.lblGlyphClose = new Wisej.Web.Label();
+            this.pnlRail = new Wisej.Web.Panel();
+            this.pnlPicker = new Wisej.Web.Panel();
+            this.cboLanguage = new Wisej.Web.ComboBox();
+            this.lblNavSettings = new Wisej.Web.Label();
+            this.lblNavTickets = new Wisej.Web.Label();
+            this.lblNavCustomers = new Wisej.Web.Label();
+            this.lblNavDashboard = new Wisej.Web.Label();
+            this.pnlMain = new Wisej.Web.Panel();
             this.pnlEditorHost = new Wisej.Web.Panel();
-            this.lblContactsHeader = new Wisej.Web.Label();
-            this.gridContacts = new Wisej.Web.DataGridView();
-            this.lblTicketsHeader = new Wisej.Web.Label();
+            this.pnlGridHost = new Wisej.Web.Panel();
             this.gridTickets = new Wisej.Web.DataGridView();
-            this.colTicketRef = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colTicketStatus = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colTicketRaised = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colTicketValue = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.btnQa = new Wisej.Web.Button();
-            this.colContactName = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colContactRole = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colContactPhone = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.pnlBody = new Wisej.Web.Panel();
-            this.lblPreviewHeading = new Wisej.Web.Label();
-            this.layoutPreview = new Wisej.Web.TableLayoutPanel();
-            this.lblDateCaption = new Wisej.Web.Label();
-            this.lblDateValue = new Wisej.Web.Label();
-            this.lblQuantityCaption = new Wisej.Web.Label();
-            this.lblQuantityValue = new Wisej.Web.Label();
+            this.colReference = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colCustomer = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colDue = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colAmount = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colStatus = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.pnlTiles = new Wisej.Web.Panel();
+            this.pnlTileResolved = new Wisej.Web.Panel();
+            this.lblResolvedCaption = new Wisej.Web.Label();
+            this.lblResolvedValue = new Wisej.Web.Label();
+            this.pnlTileAmount = new Wisej.Web.Panel();
             this.lblAmountCaption = new Wisej.Web.Label();
             this.lblAmountValue = new Wisej.Web.Label();
-            this.lblCultureCaption = new Wisej.Web.Label();
-            this.lblCultureValue = new Wisej.Web.Label();
+            this.pnlTileDue = new Wisej.Web.Panel();
+            this.lblDueCaption = new Wisej.Web.Label();
+            this.lblDueValue = new Wisej.Web.Label();
+            this.lblHeading = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblWelcome
+            // ── the application bar ────────────────────────────────────────────────────────
             //
-            this.lblWelcome.AutoSize = false;
-            this.lblWelcome.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold);
-            this.lblWelcome.Location = new System.Drawing.Point(20, 12);
-            this.lblWelcome.Name = "lblWelcome";
-            this.lblWelcome.Size = new System.Drawing.Size(620, 28);
+            this.lblAppTitle.Name = "lblAppTitle";
+            this.lblAppTitle.AutoSize = false;
+            this.lblAppTitle.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblAppTitle.Padding = new Wisej.Web.Padding(18, 0, 0, 0);
+            this.lblAppTitle.ForeColor = Color.White;
+            this.lblAppTitle.Font = Desk.Px(15, FontStyle.Bold);
+            this.lblAppTitle.TextAlign = ContentAlignment.MiddleLeft;
+
+            SetGlyph(this.lblGlyphMinimize, "lblGlyphMinimize", "—");
+            SetGlyph(this.lblGlyphMaximize, "lblGlyphMaximize", "□");
+            SetGlyph(this.lblGlyphClose, "lblGlyphClose", "✕");
+
+            this.pnlWindowGlyphs.Name = "pnlWindowGlyphs";
+            this.pnlWindowGlyphs.Dock = Wisej.Web.DockStyle.Right;
+            this.pnlWindowGlyphs.Size = new Size(108, 42);
+            this.pnlWindowGlyphs.BackColor = Desk.Accent;
+            this.pnlWindowGlyphs.Controls.Add(this.lblGlyphMinimize);
+            this.pnlWindowGlyphs.Controls.Add(this.lblGlyphMaximize);
+            this.pnlWindowGlyphs.Controls.Add(this.lblGlyphClose);
+
+            this.pnlAppBar.Name = "pnlAppBar";
+            this.pnlAppBar.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlAppBar.Size = new Size(1400, 42);
+            this.pnlAppBar.BackColor = Desk.Accent;
+            this.pnlAppBar.Controls.Add(this.lblAppTitle);
+            this.pnlAppBar.Controls.Add(this.pnlWindowGlyphs);
             //
-            // lblSubtitle
+            // ── the navigation rail, with the language picker at its foot ─────────────────
             //
-            this.lblSubtitle.AutoSize = false;
-            this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 42);
-            this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(820, 22);
+            SetNavEntry(this.lblNavSettings, "lblNavSettings", false);
+            SetNavEntry(this.lblNavTickets, "lblNavTickets", false);
+            SetNavEntry(this.lblNavCustomers, "lblNavCustomers", false);
+            SetNavEntry(this.lblNavDashboard, "lblNavDashboard", true);
+
+            this.cboLanguage.Name = "cboLanguage";
+            this.cboLanguage.Dock = Wisej.Web.DockStyle.Fill;
+            this.cboLanguage.Size = new Size(186, 34);
+            this.cboLanguage.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
+            this.cboLanguage.Font = Desk.Px(13);
+            this.cboLanguage.ForeColor = Desk.Body;
+            this.cboLanguage.CssStyle = "border:1px solid #cdd9e6;border-radius:8px";
+            this.cboLanguage.TabIndex = 0;
+            this.cboLanguage.SelectedIndexChanged += this.cboLanguage_SelectedIndexChanged;
+
+            this.pnlPicker.Name = "pnlPicker";
+            this.pnlPicker.Dock = Wisej.Web.DockStyle.Bottom;
+            this.pnlPicker.Size = new Size(186, 34);
+            this.pnlPicker.BackColor = Color.Transparent;
+            this.pnlPicker.Controls.Add(this.cboLanguage);
+
+            this.pnlRail.Name = "pnlRail";
+            this.pnlRail.Dock = Wisej.Web.DockStyle.Left;
+            this.pnlRail.Size = new Size(210, 760);
+            this.pnlRail.MinimumSize = new Size(210, 0);
+            this.pnlRail.BackColor = Desk.Rail;
+            this.pnlRail.Padding = new Wisej.Web.Padding(12, 14, 12, 14);
+            this.pnlRail.CssStyle = "border-inline-end:1px solid #e4eaf1";
+            this.pnlRail.Controls.Add(this.pnlPicker);
+            this.pnlRail.Controls.Add(this.lblNavSettings);
+            this.pnlRail.Controls.Add(this.lblNavTickets);
+            this.pnlRail.Controls.Add(this.lblNavCustomers);
+            this.pnlRail.Controls.Add(this.lblNavDashboard);
             //
-            // pnlHeader
+            // ── the heading and the three value tiles ─────────────────────────────────────
             //
-            this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(900, 72);
-            this.pnlHeader.Controls.Add(this.lblSubtitle);
-            this.pnlHeader.Controls.Add(this.lblWelcome);
+            this.lblHeading.Name = "lblHeading";
+            this.lblHeading.AutoSize = false;
+            this.lblHeading.Dock = Wisej.Web.DockStyle.Top;
+            this.lblHeading.Size = new Size(1148, 30);
+            this.lblHeading.Font = Desk.Px(19, FontStyle.Bold);
+            this.lblHeading.ForeColor = Desk.Ink;
+            this.lblHeading.TextAlign = ContentAlignment.MiddleLeft;
+
+            SetTile(this.pnlTileDue, "pnlTileDue", this.lblDueCaption, "lblDueCaption",
+                    this.lblDueValue, "lblDueValue", Desk.Accent, "#1565d8");
+            SetTile(this.pnlTileAmount, "pnlTileAmount", this.lblAmountCaption, "lblAmountCaption",
+                    this.lblAmountValue, "lblAmountValue", Desk.Amber, "#e8a13c");
+            SetTile(this.pnlTileResolved, "pnlTileResolved", this.lblResolvedCaption, "lblResolvedCaption",
+                    this.lblResolvedValue, "lblResolvedValue", Desk.Teal, "#1f9d6b");
+
+            this.pnlTiles.Name = "pnlTiles";
+            this.pnlTiles.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlTiles.Size = new Size(1148, 96);
+            this.pnlTiles.BackColor = Color.FromArgb(0xF7, 0xF9, 0xFB);
+            this.pnlTiles.Padding = new Wisej.Web.Padding(0, 14, 0, 0);
+            this.pnlTiles.Controls.Add(this.pnlTileResolved);
+            this.pnlTiles.Controls.Add(this.pnlTileAmount);
+            this.pnlTiles.Controls.Add(this.pnlTileDue);
             //
-            // lblStatus
+            // ── the ticket grid ───────────────────────────────────────────────────────────
             //
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Padding = new Wisej.Web.Padding(20, 8, 20, 8);
-            this.lblStatus.Size = new System.Drawing.Size(900, 34);
-            //
-            // btnCustomers
-            //
-            // AutoSize, because a caption is a different length in every language and a fixed
-            // width is a clipped word waiting to happen.
-            this.btnCustomers.AutoSize = true;
-            this.btnCustomers.MinimumSize = new System.Drawing.Size(140, 38);
-            this.btnCustomers.Name = "btnCustomers";
-            this.btnCustomers.TabIndex = 0;
-            this.btnCustomers.Click += this.btnCustomers_Click;
-            //
-            // cboCulture
-            //
-            // Module 2 switches the culture crudely, just to prove what designer resources do and
-            // do not do. Module 4 replaces it with the real thing.
-            this.cboCulture.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.cboCulture.Name = "cboCulture";
-            this.cboCulture.Size = new System.Drawing.Size(180, 38);
-            this.cboCulture.TabIndex = 1;
-            this.cboCulture.SelectedIndexChanged += this.cboCulture_SelectedIndexChanged;
-            //
-            // btnRecreate
-            //
-            this.btnRecreate.AutoSize = true;
-            this.btnRecreate.MinimumSize = new System.Drawing.Size(200, 38);
-            this.btnRecreate.Name = "btnRecreate";
-            this.btnRecreate.TabIndex = 2;
-            this.btnRecreate.Click += this.btnRecreate_Click;
-            //
-            // btnSystemText
-            //
-            this.btnSystemText.AutoSize = true;
-            this.btnSystemText.MinimumSize = new System.Drawing.Size(220, 38);
-            this.btnSystemText.Name = "btnSystemText";
-            this.btnSystemText.TabIndex = 3;
-            this.btnSystemText.Click += this.btnSystemText_Click;
-            //
-            // btnLastOrder
-            //
-            this.btnLastOrder.AutoSize = true;
-            this.btnLastOrder.MinimumSize = new System.Drawing.Size(180, 38);
-            this.btnLastOrder.Name = "btnLastOrder";
-            this.btnLastOrder.TabIndex = 4;
-            this.btnLastOrder.Click += this.btnLastOrder_Click;
-            //
-            // pnlEditorHost
-            //
-            // The editor is never added to the page directly. It lives in a host panel, because
-            // recreating it means disposing the old instance and adding a new one - and that is
-            // much easier when there is exactly one place it can be.
-            this.pnlEditorHost.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlEditorHost.Name = "pnlEditorHost";
-            this.pnlEditorHost.Size = new System.Drawing.Size(860, 300);
-            //
-            // pnlActions
-            //
-            this.pnlActions.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlActions.FlowDirection = Wisej.Web.FlowDirection.LeftToRight;
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Padding = new Wisej.Web.Padding(14, 8, 14, 8);
-            this.pnlActions.Size = new System.Drawing.Size(900, 104);
-            this.pnlActions.WrapContents = true;
-            this.pnlActions.Controls.Add(this.btnCustomers);
-            this.pnlActions.Controls.Add(this.cboCulture);
-            this.pnlActions.Controls.Add(this.btnRecreate);
-            this.pnlActions.Controls.Add(this.btnLastOrder);
-            this.pnlActions.Controls.Add(this.btnSystemText);
-            this.pnlActions.Controls.Add(this.btnQa);
-            //
-            // lblPreviewHeading
-            //
-            this.lblPreviewHeading.AutoSize = false;
-            this.lblPreviewHeading.Dock = Wisej.Web.DockStyle.Top;
-            this.lblPreviewHeading.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblPreviewHeading.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblPreviewHeading.Name = "lblPreviewHeading";
-            this.lblPreviewHeading.Size = new System.Drawing.Size(860, 30);
-            //
-            // the preview rows
-            //
-            SetCaption(this.lblDateCaption, "lblDateCaption");
-            SetValue(this.lblDateValue, "lblDateValue");
-            SetCaption(this.lblQuantityCaption, "lblQuantityCaption");
-            SetValue(this.lblQuantityValue, "lblQuantityValue");
-            SetCaption(this.lblAmountCaption, "lblAmountCaption");
-            SetValue(this.lblAmountValue, "lblAmountValue");
-            SetCaption(this.lblCultureCaption, "lblCultureCaption");
-            SetValue(this.lblCultureValue, "lblCultureValue");
-            //
-            // layoutPreview
-            //
-            // A two-column table rather than fixed positions: the caption column takes what the
-            // longest translation needs and the value column keeps the rest.
-            this.layoutPreview.ColumnCount = 2;
-            this.layoutPreview.RowCount = 4;
-            this.layoutPreview.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 42F));
-            this.layoutPreview.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 58F));
-            for (var row = 0; row < 4; row++)
-                this.layoutPreview.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 34F));
-            this.layoutPreview.Dock = Wisej.Web.DockStyle.Top;
-            this.layoutPreview.Name = "layoutPreview";
-            this.layoutPreview.Size = new System.Drawing.Size(560, 140);
-            this.layoutPreview.Controls.Add(this.lblDateCaption, 0, 0);
-            this.layoutPreview.Controls.Add(this.lblDateValue, 1, 0);
-            this.layoutPreview.Controls.Add(this.lblQuantityCaption, 0, 1);
-            this.layoutPreview.Controls.Add(this.lblQuantityValue, 1, 1);
-            this.layoutPreview.Controls.Add(this.lblAmountCaption, 0, 2);
-            this.layoutPreview.Controls.Add(this.lblAmountValue, 1, 2);
-            this.layoutPreview.Controls.Add(this.lblCultureCaption, 0, 3);
-            this.layoutPreview.Controls.Add(this.lblCultureValue, 1, 3);
-            //
-            // lblContactsHeader
-            //
-            this.lblContactsHeader.AutoSize = false;
-            this.lblContactsHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblContactsHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblContactsHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblContactsHeader.Name = "lblContactsHeader";
-            this.lblContactsHeader.Padding = new Wisej.Web.Padding(0, 12, 0, 0);
-            this.lblContactsHeader.Size = new System.Drawing.Size(860, 38);
-            //
-            // gridContacts
-            //
-            // Left on RightToLeft.Inherit like every other child. What it actually does under an
-            // RTL culture is recorded in docs/RtlTests.md rather than assumed here.
-            //
-            this.colContactName.DataPropertyName = "Name";
-            this.colContactName.Name = "colContactName";
-            this.colContactName.Width = 200;
-            this.colContactRole.DataPropertyName = "Role";
-            this.colContactRole.Name = "colContactRole";
-            this.colContactRole.Width = 220;
-            this.colContactPhone.DataPropertyName = "Phone";
-            this.colContactPhone.Name = "colContactPhone";
-            this.colContactPhone.Width = 180;
-            this.gridContacts.Dock = Wisej.Web.DockStyle.Fill;
-            this.gridContacts.Name = "gridContacts";
-            this.gridContacts.Columns.Add(this.colContactName);
-            this.gridContacts.Columns.Add(this.colContactRole);
-            this.gridContacts.Columns.Add(this.colContactPhone);
-            //
-            // lblTicketsHeader
-            //
-            this.lblTicketsHeader.AutoSize = false;
-            this.lblTicketsHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblTicketsHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblTicketsHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblTicketsHeader.Name = "lblTicketsHeader";
-            this.lblTicketsHeader.Padding = new Wisej.Web.Padding(0, 12, 0, 0);
-            this.lblTicketsHeader.Size = new System.Drawing.Size(860, 38);
-            //
-            // gridTickets
-            //
-            // Every column is filled by the UI from a TicketStatus, a DateTime and a decimal.
-            // The grid is not data-bound to the model on purpose: binding would show the enum
-            // name and the invariant ToString of the date, which is the defect this module is
-            // about.
-            //
-            this.colTicketRef.Name = "colTicketRef";
-            this.colTicketRef.Width = 130;
-            this.colTicketStatus.Name = "colTicketStatus";
-            this.colTicketStatus.Width = 200;
-            this.colTicketRaised.Name = "colTicketRaised";
-            this.colTicketRaised.Width = 220;
-            this.colTicketValue.Name = "colTicketValue";
-            this.colTicketValue.Width = 160;
-            this.gridTickets.Dock = Wisej.Web.DockStyle.Top;
+            this.colReference.Name = "colReference";
+            this.colReference.Width = 110;
+            this.colReference.DefaultCellStyle.Font = Desk.Mono(12.5F, FontStyle.Bold);
+            this.colReference.DefaultCellStyle.ForeColor = Desk.Accent;
+            // An identifier: it must read the same in every language, including a mirrored one.
+            this.colReference.DefaultCellStyle.Alignment = Wisej.Web.DataGridViewContentAlignment.MiddleLeft;
+
+            this.colCustomer.Name = "colCustomer";
+            this.colCustomer.AutoSizeMode = Wisej.Web.DataGridViewAutoSizeColumnMode.Fill;
+
+            this.colDue.Name = "colDue";
+            this.colDue.Width = 150;
+            this.colDue.DefaultCellStyle.Font = Desk.Mono(12.5F);
+
+            this.colAmount.Name = "colAmount";
+            this.colAmount.Width = 140;
+            this.colAmount.DefaultCellStyle.Font = Desk.Mono(12.5F);
+
+            this.colStatus.Name = "colStatus";
+            this.colStatus.Width = 160;
+
             this.gridTickets.Name = "gridTickets";
-            this.gridTickets.Size = new System.Drawing.Size(860, 150);
-            this.gridTickets.Columns.Add(this.colTicketRef);
-            this.gridTickets.Columns.Add(this.colTicketStatus);
-            this.gridTickets.Columns.Add(this.colTicketRaised);
-            this.gridTickets.Columns.Add(this.colTicketValue);
+            this.gridTickets.Dock = Wisej.Web.DockStyle.Fill;
+            this.gridTickets.AllowUserToAddRows = false;
+            this.gridTickets.AllowUserToDeleteRows = false;
+            this.gridTickets.AllowUserToResizeRows = false;
+            this.gridTickets.ReadOnly = true;
+            this.gridTickets.RowHeadersVisible = false;
+            this.gridTickets.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
+            this.gridTickets.ColumnHeadersHeight = 30;
+            this.gridTickets.RowTemplate.Height = 38;
+            this.gridTickets.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.gridTickets.Font = Desk.Px(12.5F);
+            this.gridTickets.ColumnHeadersDefaultCellStyle.BackColor = Desk.CardHead;
+            this.gridTickets.ColumnHeadersDefaultCellStyle.ForeColor = Desk.Muted;
+            this.gridTickets.ColumnHeadersDefaultCellStyle.Font = Desk.Px(11.5F, FontStyle.Bold);
+            this.gridTickets.ColumnHeadersDefaultCellStyle.Alignment = Wisej.Web.DataGridViewContentAlignment.MiddleLeft;
+            this.gridTickets.Columns.Add(this.colReference);
+            this.gridTickets.Columns.Add(this.colCustomer);
+            this.gridTickets.Columns.Add(this.colDue);
+            this.gridTickets.Columns.Add(this.colAmount);
+            this.gridTickets.Columns.Add(this.colStatus);
+
+            this.pnlGridHost.Name = "pnlGridHost";
+            this.pnlGridHost.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlGridHost.BackColor = Color.FromArgb(0xF7, 0xF9, 0xFB);
+            this.pnlGridHost.Padding = new Wisej.Web.Padding(0, 14, 0, 14);
+            this.pnlGridHost.Controls.Add(this.gridTickets);
             //
-            // btnQa
+            // ── the customer record's actions ─────────────────────────────────────────────
             //
-            this.btnQa.AutoSize = true;
-            this.btnQa.MinimumSize = new System.Drawing.Size(200, 38);
-            this.btnQa.Name = "btnQa";
-            this.btnQa.TabIndex = 5;
-            this.btnQa.Click += this.btnQa_Click;
-            //
-            // pnlBody
-            //
-            this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Padding = new Wisej.Web.Padding(20);
-            this.pnlBody.Controls.Add(this.gridContacts);
-            this.pnlBody.Controls.Add(this.gridTickets);
-            this.pnlBody.Controls.Add(this.lblTicketsHeader);
-            this.pnlBody.Controls.Add(this.lblContactsHeader);
-            this.pnlBody.Controls.Add(this.layoutPreview);
-            this.pnlBody.Controls.Add(this.pnlEditorHost);
-            this.pnlBody.Controls.Add(this.lblPreviewHeading);
+            this.pnlEditorHost.Name = "pnlEditorHost";
+            this.pnlEditorHost.Dock = Wisej.Web.DockStyle.Bottom;
+            this.pnlEditorHost.Size = new Size(1148, 34);
+            this.pnlEditorHost.BackColor = Color.FromArgb(0xF7, 0xF9, 0xFB);
+
+            this.pnlMain.Name = "pnlMain";
+            this.pnlMain.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlMain.BackColor = Color.FromArgb(0xF7, 0xF9, 0xFB);
+            this.pnlMain.Padding = new Wisej.Web.Padding(20, 16, 20, 16);
+            this.pnlMain.Controls.Add(this.pnlGridHost);
+            this.pnlMain.Controls.Add(this.pnlEditorHost);
+            this.pnlMain.Controls.Add(this.pnlTiles);
+            this.pnlMain.Controls.Add(this.lblHeading);
             //
             // DashboardPage
             //
             this.Name = "DashboardPage";
-            // Module 5: the page mirrors itself and everything inside it. Every child is left on
-            // RightToLeft.Inherit, so one property here turns the whole screen around.
-            this.RightToLeftLayout = true;
-            this.Size = new System.Drawing.Size(900, 860);
-            this.Controls.Add(this.pnlBody);
-            this.Controls.Add(this.pnlActions);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.pnlHeader);
+            this.BackColor = Color.FromArgb(0xF7, 0xF9, 0xFB);
+            this.Controls.Add(this.pnlMain);
+            this.Controls.Add(this.pnlRail);
+            this.Controls.Add(this.pnlAppBar);
             this.ResumeLayout(false);
         }
 
-        private static void SetCaption(Wisej.Web.Label label, string name)
+        private static void SetGlyph(Wisej.Web.Label label, string name, string glyph)
         {
-            label.AutoSize = false;
-            label.Dock = Wisej.Web.DockStyle.Fill;
             label.Name = name;
-            label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            label.AutoSize = false;
+            label.Dock = Wisej.Web.DockStyle.Right;
+            label.Size = new Size(36, 42);
+            label.Text = glyph;   // a shape, not a word
+            label.ForeColor = Color.White;
+            label.Font = Desk.Px(13);
+            label.TextAlign = ContentAlignment.MiddleCenter;
         }
 
-        private static void SetValue(Wisej.Web.Label label, string name)
+        private static void SetNavEntry(Wisej.Web.Label label, string name, bool selected)
         {
-            label.AutoSize = false;
-            label.Dock = Wisej.Web.DockStyle.Fill;
-            label.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
             label.Name = name;
-            label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            label.AutoSize = false;
+            label.Dock = Wisej.Web.DockStyle.Top;
+            label.Size = new Size(186, 36);
+            label.Padding = new Wisej.Web.Padding(13, 0, 13, 0);
+            label.Font = Desk.Px(13.5F, selected ? FontStyle.Bold : FontStyle.Regular);
+            label.ForeColor = selected ? Desk.Accent : Desk.Muted;
+            label.BackColor = selected ? Desk.RailActive : Color.Transparent;
+            label.CssStyle = "border-radius:8px";
+            label.TextAlign = ContentAlignment.MiddleLeft;
+        }
+
+        /// <summary>One value tile: a caption and the value the session's culture wrote.</summary>
+        private static void SetTile(Wisej.Web.Panel tile, string tileName,
+                                    Wisej.Web.Label caption, string captionName,
+                                    Wisej.Web.Label value, string valueName,
+                                    Color accent, string accentCss)
+        {
+            caption.Name = captionName;
+            caption.AutoSize = false;
+            caption.Dock = Wisej.Web.DockStyle.Top;
+            caption.Size = new Size(340, 20);
+            caption.Font = Desk.Px(11.5F, FontStyle.Bold);
+            caption.ForeColor = Desk.Muted;
+            caption.CssStyle = "text-transform:uppercase;letter-spacing:.03em";
+            caption.TextAlign = ContentAlignment.MiddleLeft;
+
+            value.Name = valueName;
+            value.AutoSize = false;
+            value.Dock = Wisej.Web.DockStyle.Top;
+            value.Size = new Size(340, 34);
+            value.Font = Desk.Mono(24, FontStyle.Bold);
+            value.ForeColor = accent;
+            value.TextAlign = ContentAlignment.MiddleLeft;
+
+            tile.Name = tileName;
+            tile.Dock = Wisej.Web.DockStyle.Left;
+            tile.Size = new Size(378, 82);
+            tile.BackColor = Color.White;
+            tile.Margin = new Wisej.Web.Padding(0, 0, 14, 0);
+            tile.Padding = new Wisej.Web.Padding(15, 13, 15, 13);
+            tile.CssStyle = "border:1px solid #e4eaf1;border-top:3px solid " + accentCss + ";border-radius:11px";
+            tile.Controls.Add(value);
+            tile.Controls.Add(caption);
         }
 
         #endregion
 
-        private Wisej.Web.Panel pnlHeader;
-        private Wisej.Web.Label lblWelcome;
-        private Wisej.Web.Label lblSubtitle;
-        private Wisej.Web.Label lblStatus;
-        private Wisej.Web.FlowLayoutPanel pnlActions;
-        private Wisej.Web.Button btnCustomers;
-        private Wisej.Web.ComboBox cboCulture;
-        private Wisej.Web.Button btnRecreate;
-        private Wisej.Web.Button btnSystemText;
-        private Wisej.Web.Button btnLastOrder;
-        private Wisej.Web.Panel pnlEditorHost;
-        private Wisej.Web.Label lblContactsHeader;
-        private Wisej.Web.DataGridView gridContacts;
-        private Wisej.Web.Label lblTicketsHeader;
-        private Wisej.Web.DataGridView gridTickets;
-        private Wisej.Web.DataGridViewTextBoxColumn colTicketRef;
-        private Wisej.Web.DataGridViewTextBoxColumn colTicketStatus;
-        private Wisej.Web.DataGridViewTextBoxColumn colTicketRaised;
-        private Wisej.Web.DataGridViewTextBoxColumn colTicketValue;
-        private Wisej.Web.Button btnQa;
-        private Wisej.Web.DataGridViewTextBoxColumn colContactName;
-        private Wisej.Web.DataGridViewTextBoxColumn colContactRole;
-        private Wisej.Web.DataGridViewTextBoxColumn colContactPhone;
-        private Wisej.Web.Panel pnlBody;
-        private Wisej.Web.Label lblPreviewHeading;
-        private Wisej.Web.TableLayoutPanel layoutPreview;
-        private Wisej.Web.Label lblDateCaption;
-        private Wisej.Web.Label lblDateValue;
-        private Wisej.Web.Label lblQuantityCaption;
-        private Wisej.Web.Label lblQuantityValue;
+        private Wisej.Web.Panel pnlAppBar;
+        private Wisej.Web.Label lblAppTitle;
+        private Wisej.Web.Panel pnlWindowGlyphs;
+        private Wisej.Web.Label lblGlyphMinimize;
+        private Wisej.Web.Label lblGlyphMaximize;
+        private Wisej.Web.Label lblGlyphClose;
+        private Wisej.Web.Panel pnlRail;
+        private Wisej.Web.Label lblNavDashboard;
+        private Wisej.Web.Label lblNavCustomers;
+        private Wisej.Web.Label lblNavTickets;
+        private Wisej.Web.Label lblNavSettings;
+        private Wisej.Web.Panel pnlPicker;
+        private Wisej.Web.ComboBox cboLanguage;
+        private Wisej.Web.Panel pnlMain;
+        private Wisej.Web.Label lblHeading;
+        private Wisej.Web.Panel pnlTiles;
+        private Wisej.Web.Panel pnlTileDue;
+        private Wisej.Web.Label lblDueCaption;
+        private Wisej.Web.Label lblDueValue;
+        private Wisej.Web.Panel pnlTileAmount;
         private Wisej.Web.Label lblAmountCaption;
         private Wisej.Web.Label lblAmountValue;
-        private Wisej.Web.Label lblCultureCaption;
-        private Wisej.Web.Label lblCultureValue;
+        private Wisej.Web.Panel pnlTileResolved;
+        private Wisej.Web.Label lblResolvedCaption;
+        private Wisej.Web.Label lblResolvedValue;
+        private Wisej.Web.Panel pnlGridHost;
+        private Wisej.Web.DataGridView gridTickets;
+        private Wisej.Web.DataGridViewTextBoxColumn colReference;
+        private Wisej.Web.DataGridViewTextBoxColumn colCustomer;
+        private Wisej.Web.DataGridViewTextBoxColumn colDue;
+        private Wisej.Web.DataGridViewTextBoxColumn colAmount;
+        private Wisej.Web.DataGridViewTextBoxColumn colStatus;
+        private Wisej.Web.Panel pnlEditorHost;
     }
 }

@@ -58,7 +58,155 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="App.Title.IsInvariant" xml:space="preserve">
+  <data name="App.ProductName" xml:space="preserve">
+    <value>GlobalDesk</value>
+    <comment>The product name. INVARIANT: the same word in every language; it must never come back translated.</comment>
+  </data>
+  <data name="Product.Framework" xml:space="preserve">
+    <value>Wisej.NET</value>
+    <comment>A third-party product name. INVARIANT - a trademark is not translated.</comment>
+  </data>
+  <data name="Format.CustomerCode" xml:space="preserve">
+    <value>AA0000</value>
+    <comment>The literal shape of a customer code, shown in help text. INVARIANT - it is the rule itself, not a description of it.</comment>
+  </data>
+  <data name="App.Title" xml:space="preserve">
+    <value>GlobalDesk — Service desk</value>
+    <comment>Application bar title. Keep the product name; translate what follows the dash.</comment>
+  </data>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>Service desk</value>
+    <comment>Heading of the main area. A noun phrase - the desk that serves customers.</comment>
+  </data>
+  <data name="Dashboard.WelcomeBack" xml:space="preserve">
+    <value>Welcome back, {0}.</value>
+    <comment>Greeting under the heading. {0} is the signed-in user's display name; some languages inflect the greeting for the person's gender - Ana is a woman.</comment>
+  </data>
+  <data name="Dashboard.Language" xml:space="preserve">
+    <value>Language</value>
+    <comment>Caption beside the language picker. A noun.</comment>
+  </data>
+  <data name="User.DisplayName" xml:space="preserve">
+    <value>Ana</value>
+    <comment>The signed-in user's given name as this session's language writes it. A transliteration, not a translation.</comment>
+  </data>
+  <data name="Rail.Culture" xml:space="preserve">
+    <value>Culture</value>
+    <comment>Heading over the culture information in the side rail. The .NET sense of the word - language plus regional formatting - not culture as in the arts.</comment>
+  </data>
+  <data name="Culture.Neutral" xml:space="preserve">
+    <value>neutral resource</value>
+    <comment>Shown beside the culture name when the session is reading the neutral resource file rather than a translated one. Lower case; it follows a middot.</comment>
+  </data>
+  <data name="Culture.Untranslated" xml:space="preserve">
+    <value>{0} same as neutral</value>
+    <comment>Developer report in the side rail. {0} is a count of resource keys whose value under this culture is still the neutral one - either untranslated, or legitimately the same word. Keep it short.</comment>
+  </data>
+  <data name="Nav.Customers" xml:space="preserve">
+    <value>Customers</value>
+    <comment>Navigation entry. A noun, plural.</comment>
+  </data>
+  <data name="Nav.Tickets" xml:space="preserve">
+    <value>Tickets</value>
+    <comment>Navigation entry. Support tickets, not travel tickets.</comment>
+  </data>
+  <data name="Preview.Title" xml:space="preserve">
+    <value>Culture preview</value>
+    <comment>Heading over the three values the session's culture formatted.</comment>
+  </data>
+  <data name="Preview.Date" xml:space="preserve">
+    <value>Date</value>
+    <comment>Caption of the formatted date tile.</comment>
+  </data>
+  <data name="Preview.Count" xml:space="preserve">
+    <value>Quantity</value>
+    <comment>Caption of the formatted number tile. A count of units, not a size.</comment>
+  </data>
+  <data name="Preview.Amount" xml:space="preserve">
+    <value>Amount</value>
+    <comment>Caption of the formatted currency tile. A sum of money.</comment>
+  </data>
+  <data name="Ticket.Open" xml:space="preserve">
+    <value>Open</value>
+    <comment>A ticket STATE, not the verb: a ticket that is currently open. Adjective.</comment>
+  </data>
+  <data name="Ticket.Closed" xml:space="preserve">
+    <value>Closed</value>
+    <comment>A ticket state: work finished. Adjective.</comment>
+  </data>
+  <data name="CustomerEditor.Open" xml:space="preserve">
+    <value>Open</value>
+    <comment>Button caption: the imperative VERB - open the selected customer. Not the state Ticket.Open. Many languages use two different words; this is the one the reviewer has to be told about.</comment>
+  </data>
+  <data name="CustomerEditor.Name" xml:space="preserve">
+    <value>Name</value>
+    <comment>Label of the customer name field.</comment>
+  </data>
+  <data name="CustomerEditor.Email" xml:space="preserve">
+    <value>Email</value>
+    <comment>Label of the email address field.</comment>
+  </data>
+  <data name="CustomerEditor.Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Primary button caption. The imperative verb, not the noun.</comment>
+  </data>
+  <data name="CustomerEditor.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>Button caption. Discards the edit; the imperative verb.</comment>
+  </data>
+  <data name="CustomerEditor.Saved" xml:space="preserve">
+    <value>Customer saved.</value>
+    <comment>Confirmation after a successful save. One whole sentence.</comment>
+  </data>
+  <data name="Customer.LastOrder" xml:space="preserve">
+    <value>Last order: {0} on {1}</value>
+    <comment>One whole line. {0} is the ORDER NUMBER and {1} the order DATE, already formatted for the reader. Both placeholders must appear and must not be swapped - a machine draft got this wrong once.</comment>
+  </data>
+  <data name="Validation.Required" xml:space="preserve">
+    <value>This field is required.</value>
+    <comment>Validation message, one whole sentence.</comment>
+  </data>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>Enter a valid email address.</value>
+    <comment>Validation message when the address does not parse. One whole sentence, imperative.</comment>
+  </data>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (en-US)</value>
+    <comment>Entry in the language picker. INVARIANT: a language list shows every language in its own language.</comment>
+  </data>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (de-DE)</value>
+    <comment>Entry in the language picker. INVARIANT - see Language.en-US.</comment>
+  </data>
+  <data name="Language.it-IT" xml:space="preserve">
+    <value>Italiano (it-IT)</value>
+    <comment>Entry in the language picker. INVARIANT - see Language.en-US.</comment>
+  </data>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (fr-CA)</value>
+    <comment>Entry in the language picker. INVARIANT - see Language.en-US.</comment>
+  </data>
+  <data name="Language.ar-SA" xml:space="preserve">
+    <value>العربية (ar-SA)</value>
+    <comment>Entry in the language picker. INVARIANT - see Language.en-US.</comment>
+  </data>
+  <data name="Language.qps-ploc" xml:space="preserve">
+    <value>Pseudo (qps-ploc)</value>
+    <comment>Entry in the language picker. A test locale, not a language. INVARIANT.</comment>
+  </data>
+  <data name="Status.Direction" xml:space="preserve">
+    <value>Culture: {0} · direction: {1}</value>
+    <comment>Status strip. {0} is a culture name and is never translated; {1} is Direction.Ltr or Direction.Rtl.</comment>
+  </data>
+  <data name="Direction.Ltr" xml:space="preserve">
+    <value>left to right</value>
+    <comment>Reading direction, lower case, used inside Status.Direction.</comment>
+  </data>
+  <data name="Direction.Rtl" xml:space="preserve">
+    <value>right to left</value>
+    <comment>Reading direction, lower case, used inside Status.Direction.</comment>
+  </data>
+  <metadata name="App.ProductName.IsInvariant" xml:space="preserve">
     <value>True</value>
   </metadata>
   <metadata name="Product.Framework.IsInvariant" xml:space="preserve">
@@ -67,111 +215,22 @@
   <metadata name="Format.CustomerCode.IsInvariant" xml:space="preserve">
     <value>True</value>
   </metadata>
-  <data name="App.Title" xml:space="preserve">
-    <value>GlobalDesk</value>
-    <comment>Product name. Invariant - never translated, never declined, never transliterated.</comment>
-  </data>
-  <data name="Dashboard.Welcome" xml:space="preserve">
-    <value>Welcome to GlobalDesk</value>
-  </data>
-  <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>Customer operations, in your language</value>
-  </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>Recreate the editor</value>
-  </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>Show a Wisej.NET dialog</value>
-  </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>Last order</value>
-    <comment>Button. Shows the customer's most recent order in the editor. Noun phrase, not a command.</comment>
-  </data>
-  <data name="Dashboard.Language" xml:space="preserve">
-    <value>Language</value>
-  </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>Falls back to</value>
-    <comment>Followed by a culture name such as "de". Reads as "Falls back to de". Verb phrase.</comment>
-  </data>
-  <data name="Dashboard.Contacts" xml:space="preserve">
-    <value>Contacts</value>
-  </data>
-  <data name="Navigation.Customers" xml:space="preserve">
-    <value>Customers</value>
-    <comment>Navigation item. Plural noun - the list of customers, not a command.</comment>
-  </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>Back</value>
-  </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>Customer</value>
-  </data>
-  <data name="CustomerEditor.Name" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>Customer code</value>
-    <comment>Label for an identifier of the form AA0000. The code itself is never translated - see Wisej.NET, AA0000 below.</comment>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>Country</value>
-  </data>
-  <data name="CustomerEditor.Save" xml:space="preserve">
-    <value>Save</value>
-    <comment>Button. Imperative verb - the action, not the noun.</comment>
-  </data>
-  <data name="CustomerEditor.Cancel" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="CustomerEditor.Saved" xml:space="preserve">
-    <value>Customer saved.</value>
-  </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>The customer could not be saved.</value>
-  </data>
-  <data name="Customer.LastOrder" xml:space="preserve">
-    <value>Last order: {0} for {1}</value>
-    <comment>{0} is a date, {1} is a currency amount, both already formatted for the active culture. Keep both placeholders; word order may change.</comment>
-  </data>
-  <data name="Validation.Required" xml:space="preserve">
-    <value>This field is required.</value>
-  </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>A customer code is two letters and four digits.</value>
-    <comment>Describes the format AA0000. Do not translate the format itself if you quote it.</comment>
-  </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>The same three values, formatted for this session</value>
-  </data>
-  <data name="Preview.Date" xml:space="preserve">
-    <value>Due date</value>
-  </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>Units ordered</value>
-  </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>Order total</value>
-  </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>Active culture</value>
-  </data>
-  <data name="Contacts.Name" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="Contacts.Role" xml:space="preserve">
-    <value>Role</value>
-    <comment>Column heading. A job function such as Purchasing or Finance - not a theatrical part and not a security role.</comment>
-  </data>
-  <data name="Contacts.Phone" xml:space="preserve">
-    <value>Phone</value>
-  </data>
-  <data name="Product.Framework" xml:space="preserve">
-    <value>Wisej.NET</value>
-    <comment>Third-party product name. Invariant.</comment>
-  </data>
-  <data name="Format.CustomerCode" xml:space="preserve">
-    <value>AA0000</value>
-    <comment>The customer code format, shown literally in help text. Invariant.</comment>
-  </data>
+  <metadata name="Language.en-US.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.de-DE.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.it-IT.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.fr-CA.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.ar-SA.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.qps-ploc.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
 </root>

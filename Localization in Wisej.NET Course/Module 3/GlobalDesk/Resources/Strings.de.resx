@@ -58,77 +58,70 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="App.Title" xml:space="preserve">
+  <data name="App.ProductName" xml:space="preserve">
     <value>GlobalDesk</value>
+  </data>
+  <data name="App.Title" xml:space="preserve">
+    <value>GlobalDesk — Übersicht</value>
+  </data>
+  <data name="CustomerEditor.Title" xml:space="preserve">
+    <value>GlobalDesk — Kundeneditor</value>
   </data>
   <data name="Dashboard.Welcome" xml:space="preserve">
     <value>Willkommen bei GlobalDesk</value>
   </data>
   <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>Kundenverwaltung, in Ihrer Sprache</value>
+    <value>Ihr Servicedesk auf einen Blick</value>
   </data>
   <data name="Dashboard.RecreateEditor" xml:space="preserve">
     <value>Editor neu erstellen</value>
   </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>Einen Wisej.NET-Dialog anzeigen</value>
-  </data>
   <data name="Navigation.Customers" xml:space="preserve">
     <value>Kunden</value>
   </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>Zurück</value>
+  <data name="Navigation.Tickets" xml:space="preserve">
+    <value>Tickets</value>
   </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>Kunde</value>
+  <data name="Preview.Title" xml:space="preserve">
+    <value>Kulturvorschau</value>
+  </data>
+  <data name="Preview.Date" xml:space="preserve">
+    <value>Datum</value>
+  </data>
+  <data name="Preview.Count" xml:space="preserve">
+    <value>Menge</value>
+  </data>
+  <data name="Preview.Amount" xml:space="preserve">
+    <value>Betrag</value>
   </data>
   <data name="CustomerEditor.Name" xml:space="preserve">
     <value>Name</value>
   </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>Kundennummer</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>Land</value>
-  </data>
   <data name="CustomerEditor.Save" xml:space="preserve">
     <value>Speichern</value>
-  </data>
-  <data name="CustomerEditor.Cancel" xml:space="preserve">
-    <value>Abbrechen</value>
   </data>
   <data name="CustomerEditor.Saved" xml:space="preserve">
     <value>Kunde gespeichert.</value>
   </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>Der Kunde konnte nicht gespeichert werden.</value>
-  </data>
   <data name="Customer.LastOrder" xml:space="preserve">
-    <value>Letzte Bestellung: {0} über {1}</value>
-    <comment>{0} ist ein Datum, {1} ein Betrag.</comment>
+    <value>{0} hat zuletzt am {1} bestellt.</value>
   </data>
   <data name="Validation.Required" xml:space="preserve">
     <value>Dieses Feld ist erforderlich.</value>
   </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>Eine Kundennummer besteht aus zwei Buchstaben und vier Ziffern.</value>
+  <data name="Status.Ready" xml:space="preserve">
+    <value>Übersicht bereit — {0} Schlüssel aufgelöst, {1} Werte formatiert.</value>
   </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>Dieselben drei Werte, für diese Sitzung formatiert</value>
+  <data name="Status.EditorBuilt" xml:space="preserve">
+    <value>Editor erstellt. Seine Beschriftungen wurden einmal angewendet, bei der Konstruktion.</value>
   </data>
-  <data name="Preview.Date" xml:space="preserve">
-    <value>Fälligkeitsdatum</value>
+  <data name="Status.CultureChanged" xml:space="preserve">
+    <value>Die Sitzungskultur ist jetzt {0}. Der Editor auf dem Bildschirm wurde für {1} erstellt und hat sich nicht geändert.</value>
   </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>Bestellte Einheiten</value>
+  <data name="Status.EditorRebuilt" xml:space="preserve">
+    <value>Editor für {0} neu erstellt. Beschriftungen und Breiten kamen gemeinsam an.</value>
   </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>Bestellwert</value>
-  </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>Aktive Kultur</value>
-  </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>Letzte Bestellung</value>
+  <data name="Status.RebuildFailed" xml:space="preserve">
+    <value>Der Editor konnte nicht neu erstellt werden. Nichts von Ihren Eingaben wurde gespeichert.</value>
   </data>
 </root>

@@ -1,11 +1,14 @@
 # GlobalDesk · Localization in Wisej.NET · Module 4
 
-Local lab build for **Module 4 · Switching the Language at Runtime**. `culture: auto` in
-`Default.json`, a language picker whose handler does nothing but assign
-`Application.CurrentCulture`, and an `Application.CultureChanged` handler that refreshes the
-resource-backed captions, reformats the culture-sensitive values and rebuilds the
-designer-localized editor - so every route into a culture change gets the same refresh.
-This folder is the complete application at this point in the course, with its own solution and port.
+Local lab build for **Module 4 · Browser Culture, Session Culture and Runtime Language Switching**.
+The GlobalDesk dashboard exactly as the walkthrough shows it: the blue application bar, the
+**Welcome to GlobalDesk** heading, the **Customers** button, the **Language** picker on the right,
+the **Culture preview** panel with Date / Quantity / Amount, the designer-localized **Customer
+editor** panel beside it, and the status strip reporting the session culture.
+
+One selection repaints three things, in one handler: the resource-backed captions, the formatted
+values, and the designer-localized editor — which is rebuilt, because that is the only way a
+control that read its resources at construction changes language.
 
 ## Run it
 
@@ -14,41 +17,42 @@ cd "Localization in Wisej.NET Course/Module 4/GlobalDesk"
 dotnet run -f net10.0 --urls http://localhost:6104
 ```
 
-Open <http://localhost:6104>.
+Open <http://localhost:6104>. `culture` is `auto` in `Default.json`, so the session starts from the
+browser's `Accept-Language`; <http://localhost:6104/?lang=de-DE> in a **new tab** starts a second
+session in German while the first stays where it is.
 
 ## What to try
 
 | Action | Expected result |
 |---|---|
-| Pick **de-DE** | Everything changes at once - captions, values, and the editor, which the `CultureChanged` handler rebuilt for you. No second button press. |
-| Pick **de-AT** | German text, **Austrian** numbers: `12 500` not `12.500`, and `€ 1.850,75` not `1.850,75 €`. There is no `Strings.de-AT.resx`; the text fell back to `de`. |
-| Read the culture row | `de-AT - Deutsch (Österreich) (Greift zurück auf de)`. The fallback is on screen instead of being a mystery. |
-| Open <http://localhost:6104/?lang=de-AT> | The session starts in Austrian German and the picker is already on `de-AT` - its handler never ran. |
-| Open the app in a second browser and switch the language in one | Nothing moves in the other. That is the test for a static culture field. |
+| Pick **Deutsch (Deutschland)** | Bar, heading, button, picker caption, preview captions and all three values change together; the editor panel is rebuilt in German and shows a green **neu erstellt** badge; the strip reads `Sitzungskultur: de-DE`. |
+| Watch the editor's buttons | `Speichern` and `Abbrechen` are wider than `Save` and `Cancel`. The widths came from `CustomerEditor.de.resx` with the new instance. |
+| Pick **Français (Canada)** | English text — there is no French resource file — with Canadian French formatting: `mercredi 23 septembre 2026`, `1 234 567,89`, `1 850,75 $`. Fallback is per key, and formatting does not come from a resource at all. |
+| Open `?lang=de-DE` in a second tab | Two sessions, two cultures, one server process, both open at once. |
+| Search for a `static` culture field | There isn't one. The session already stores it. |
 
 ## Lab tasks → where in the code
 
 | Deliverable | Implementation |
 |---|---|
-| `Default.json` with `culture: auto`, plus when a fixed culture is right | [Default.json](GlobalDesk/Default.json) and [docs/CultureSwitch.md](GlobalDesk/docs/CultureSwitch.md) |
-| Picker handler setting `Application.CurrentCulture` from `CultureInfo.GetCultureInfo` | `cboCulture_SelectedIndexChanged` in [DashboardPage.cs](GlobalDesk/DashboardPage.cs) |
+| `culture` on `auto` in `Default.json` | [Default.json](GlobalDesk/Default.json), with a note on when to pin it instead |
+| Language `ComboBox` whose captions come from resource keys | `FillLanguagePicker` in [DashboardPage.cs](GlobalDesk/DashboardPage.cs); keys `Language.en-US`, `Language.de-DE`, `Language.fr-CA` |
+| `SelectedIndexChanged` that only assigns `Application.CurrentCulture` | `cboLanguage_SelectedIndexChanged` |
 | `CultureChanged` handler calling `ApplyTextResources` and `UpdateCulturePreview` | `Application_CultureChanged` |
-| The designer-localized editor recreated after the switch | `CreateEditor`, called from the same handler |
-| Verification through `?lang=`, and why culture must not be static | [docs/CultureSwitch.md](GlobalDesk/docs/CultureSwitch.md) |
+| The designer-localized editor recreated in the same handler | `CreateEditor` |
+| Verified through the `?lang=` parameter | see above |
+| Lab note on what a static culture field would do | [docs/CultureSwitch.md](GlobalDesk/docs/CultureSwitch.md) |
 
-## Notes for anyone extending the switch
+## Notes
 
-- **The picker assigns the culture and stops.** Everything else is behind `CultureChanged`, so the
-  URL parameter, a saved preference and a support tool all get the same refresh. Refreshing inline
-  works from exactly one button.
-- **Unsubscribe in `Dispose`.** `Application.CultureChanged` outlives the page; a page that forgets
-  is kept alive by it for the rest of the session. This sample does it in the designer's `Dispose`,
-  beside the components.
-- `SyncCultureCombo` needs a re-entry flag, because assigning `SelectedItem` raises
-  `SelectedIndexChanged` again. It also adds an unlisted culture rather than leaving the combo
-  blank - a French browser is not an error.
-- **Never copy the culture into a `static` field.** It is per session, and a static one means one
-  user's click changes another user's screen. It never reproduces with one developer and one
-  browser.
-- Keep a language-region culture with no resource file of its own in the picker. `de-AT` makes
-  fallback visible, and visible fallback is the only kind you can reason about.
+- The combo handler assigns the culture and **stops**. Everything else hangs off
+  `Application.CultureChanged`, so the `?lang=` parameter, a saved preference and a support tool
+  all get the same refresh for free.
+- The subscription is removed in `Dispose`. `Application.CultureChanged` outlives the page.
+- The language list shows each language in **its own** language. A German speaker looking for
+  German finds *Deutsch*, not *German*, so those three values are marked invariant.
+- The badge on the editor panel states a comparison the page can actually make:
+  `editor.BuiltForCulture` against `Application.CurrentCulture.Name`. It never says *recreated*
+  unless a rebuild happened.
+- The picker lives in its own right-docked column rather than on an anchor. An anchor measures its
+  margin from the design-time size, and the browser is never that size.

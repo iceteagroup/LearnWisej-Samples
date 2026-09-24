@@ -3,5 +3,11 @@
   "startup": "GlobalDesk.Program.Main, GlobalDesk",
   "theme": "Bootstrap-4",
   "debug": true,
-  "sessionTimeout": 1800
+  "sessionTimeout": 1800,
+
+  // "auto" starts each session from the browser's Accept-Language, and ?lang=de-DE in the address
+  // bar overrides it for that one session - which is how the walkthrough switches this screen to
+  // German, and how a support engineer reproduces a customer's screen without changing their own
+  // browser settings. Module 4 builds a picker on top of the same property.
+  "culture": "auto"
 }

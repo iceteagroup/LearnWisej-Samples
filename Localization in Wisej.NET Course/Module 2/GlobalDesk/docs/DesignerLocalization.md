@@ -1,84 +1,62 @@
-# Module 2 lab note - what the German variant overrides, and what it leaves alone
+# Module 2 lab note - what German overrides, and what it deliberately inherits
 
-`CustomerEditor` is `Localizable`. Every localizable property has moved out of
-`CustomerEditor.Designer.cs` and into `CustomerEditor.resx`, and the German variant lives in
-`CustomerEditor.de.resx`. The generated code says nothing about captions or sizes - it says
-`resources.ApplyResources(this.btnSave, "btnSave")`.
+`CustomerEditor` is `Localizable`. Every localizable property moved out of
+`CustomerEditor.Designer.cs` and into `CustomerEditor.resx`, and the generated code became
+`resources.ApplyResources(control, "name")`.
 
-## Overridden in German - nine entries
+## The neutral file: 33 entries
 
-| Key | Neutral | German | Why it had to change |
+The whole screen - text, position and size for eleven controls plus `$this.Size` and `$this.Text`.
+It is the file every other language falls back to, so it has to be complete.
+
+## The German file: nine entries
+
+| Entry | Neutral | German | Why |
 |---|---|---|---|
-| `lblTitle.Text` | Customer | Kunde | wording |
-| `lblName.Text` | Name | Name | same word, kept for completeness so the file reads as a full translation |
-| `lblCode.Text` | Customer code | Kundennummer | wording |
-| `lblCountry.Text` | Country | Land | wording |
-| `btnSave.Text` | Save | Speichern | wording |
-| `btnSave.Size` | 120, 38 | **150, 38** | "Speichern" does not fit 120 px |
-| `btnCancel.Text` | Cancel | Abbrechen | wording |
-| `btnCancel.Size` | 120, 38 | **150, 38** | "Abbrechen" does not fit either |
-| `btnCancel.Location` | 306, 194 | **336, 194** | it follows Save, which is now 30 px wider |
+| `$this.Text` | GlobalDesk — Customer editor | GlobalDesk — Kundeneditor | The window title of this screen. |
+| `lblDetails.Text` | Customer details | Kundendaten | |
+| `lblCode.Text` | Customer code | Kundennummer | |
+| `lblCity.Text` | City | Ort | |
+| `lblNotes.Text` | Notes | Bemerkungen | |
+| `btnCancel.Text` | Cancel | Abbrechen | |
+| `btnCancel.Size` | 88 × 38 | 118 × 38 | *Abbrechen* is four characters longer than *Cancel*. |
+| `btnSave.Text` | Save changes | Änderungen speichern | |
+| `btnSave.Size` | 128 × 38 | 186 × 38 | The neutral width cuts the German caption in half. |
 
-One `Size` and one `Location` at minimum, as the lab asks - in practice two of each, because the
-two buttons sit next to each other and widening the first moves the second.
+Plus the two `Location` entries the widths drag along with them - see below.
 
-## Deliberately *not* overridden - nineteen entries inherited
+## What German does *not* override
 
-Everything else stays in the neutral file and is inherited: the control's own size, every label
-`Location` and `Size`, every text box and the combo box, and `lblMessage`.
+`lblName.Text` is the obvious one: German also says **Name**. Copying it into the German file
+would look tidier and would be a slow-motion defect. Reword the neutral value later and the
+German file keeps the old wording, silently, for as long as nobody compares them.
 
-That restraint is the point. A German `.resx` that repeats all twenty-eight entries looks
-thorough and is a maintenance trap: change the neutral layout afterwards and German silently keeps
-the old geometry, because an override always wins. **Override only what must differ.** Every entry
-you copy without changing is a future divergence you have signed up for.
+The same goes for every `Location` and `Size` that did not have to change: nineteen entries are
+inherited. Each one copied would be one more place to edit when the neutral layout moves.
 
-The test to apply before adding an override: *if the neutral layout changes next month, do I want
-German to follow?* If yes, do not override it.
+**The rule: a language file contains differences, never a copy of the baseline.**
 
-## Why the buttons needed a size override at all
+## Why a Size override brings a Location with it
 
-They did not have to. `btnSave` could have been `AutoSize` with a `MinimumSize`, like
-`btnCustomers` on the dashboard, and then no German size entry would exist.
+The two buttons sit at the bottom right. Widening `btnSave` from 128 to 186 pushes its left edge
+58 px to the left, and `btnCancel` has to move with it, so German also carries
+`btnSave.Location` and `btnCancel.Location`.
 
-Both are legitimate and the choice is worth making on purpose:
+The walkthrough's override list names `lblCode.Location` at this point. The mechanism is the same
+one - a language that needs different geometry stores it against that language alone - but in this
+layout the control that actually has to move is the button pair, so that is where the overrides
+are. Anchoring the buttons to the bottom right, or an `AutoSize` button with a `MinimumSize`,
+avoids per-language geometry entirely; the lab keeps the explicit override because seeing it in
+the `.resx` is the point.
 
-- **`AutoSize`** - no per-language geometry, nothing to maintain, and it cannot clip. The cost is
-  that button widths vary between languages, so a row of buttons is ragged.
-- **A size override** - the designer shows exactly what ships and a reviewer can see the German
-  layout in the designer. The cost is one entry per language per control, forever.
+## The rule that catches everyone
 
-This lab uses `AutoSize` on the dashboard and explicit overrides in the editor so both appear in
-one application. For a screen with many languages, `AutoSize` plus a layout panel wins; the
-dashboard's preview table is a `TableLayoutPanel` for the same reason.
+`ApplyResources` is called from `InitializeComponent`. `InitializeComponent` is called from the
+constructor. **Designer resources are therefore applied once, when the control is created.**
 
-## The behaviour that catches everyone
-
-`ApplyResources` is called from `InitializeComponent`, which runs when the control is
-**constructed**. Designer resources are therefore applied **once**, at construction, and a culture
-change afterwards does nothing to them.
-
-The lab shows all three behaviours side by side. Switch the culture to `de-DE` and:
-
-- The **formatted values** change immediately - they are formatted on every refresh.
-- The **page captions** do not change - there is no `Strings.de.resx` yet. Module 3 adds it, and
-  then they will, because `ApplyTextResources` is re-run.
-- The **editor** does not change either, for a completely different reason: it was constructed
-  under `en-US` and nothing re-reads its resource.
-
-Press **Recreate the editor** and it changes:
-
-```
-Editor rebuilt. The old instance was constructed under en-US; the new one under de-DE.
-```
-
-`Kunde`, `Kundennummer`, `Land`, `Speichern`, `Abbrechen`, and the two buttons visibly wider.
-
-Two behaviours that look identical from the outside - "the caption did not change" - with two
-different causes and two different fixes. Telling them apart is what this module is for.
-
-## How the recreate is done
-
-The editor is never added to the page directly. It lives in `pnlEditorHost`, and recreating means:
+Click the culture chip with the editor open and watch: the chip turns amber, the status line says
+the session is now `de-DE`, and the editor keeps every English caption it was born with. Nothing
+is broken. Nothing will fix itself either.
 
 ```csharp
 this.pnlEditorHost.Controls.Clear();
@@ -87,11 +65,24 @@ this.editor = new CustomerEditor();
 this.pnlEditorHost.Controls.Add(this.editor);
 ```
 
-Dispose matters - the old instance is a server-side object with a client counterpart, and dropping
-the reference without disposing leaks both. A host panel makes this a three-line method instead of
-an exercise in finding every place the control might have been added.
+`Dispose` is not optional: the old instance has a client-side counterpart, and skipping it leaks
+one control tree per rebuild.
 
-In a real editor this is also where you would carry the user's unsaved input across, because
-rebuilding the control throws away everything typed into it. That is the real cost of designer
-localization with a runtime language switch, and it is why Module 7's `LocalizationService` keeps
-run-time text in the shared resource where a switch is free.
+The rebuild's real cost is in the first line. Whatever the user had typed into Notes is gone.
+A production screen saves and restores the values around the rebuild, or does not offer the
+language switch while an editor is open. Module 4 does the rebuild inside the `CultureChanged`
+handler so the half-translated state never appears at all.
+
+## Two translation jobs, not one
+
+The editor's captions come from `CustomerEditor.de.resx`. The messages it produces at run time -
+the save confirmation, the validation message - come from `Texts.Get` and the shared
+`Strings.resx`. They are separate files and separate work.
+
+That matters in the direction people forget: a complete `Strings.de.resx` does **not** translate
+this control, and a complete `CustomerEditor.de.resx` does not translate the messages. Each falls
+back silently to the neutral value, and a half-translated screen looks entirely intentional.
+
+You can see it in this module: with the session on `de-DE` the rebuilt editor is German while the
+**Recreate editor** button above it is still English, because the shared German file does not
+exist until Module 3.

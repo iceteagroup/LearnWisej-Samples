@@ -4,72 +4,45 @@ using Wisej.Web;
 namespace GlobalDesk
 {
     /// <summary>
-    /// A designer-localized user control.
+    /// The customer record's two actions, as a designer-localized control.
     ///
-    /// Nothing in this file or in <c>CustomerEditor.Designer.cs</c> contains a caption. Every
-    /// localizable property lives in <c>CustomerEditor.resx</c>, with the German overrides in
-    /// <c>CustomerEditor.de.resx</c>, and <c>ApplyResources</c> in <c>InitializeComponent</c>
-    /// puts them on the controls when the control is constructed.
-    ///
-    /// The word "constructed" is the whole lesson of Module 2. Designer resources are applied
-    /// once, at construction. Change <c>Application.CurrentCulture</c> afterwards and this control
-    /// keeps every caption it was born with - which is why the dashboard has a button that throws
-    /// it away and builds a new one.
-    ///
-    /// Messages the control produces at run time are a different matter: they come from
-    /// <see cref="Texts"/>, the shared resource, because they are not designed properties of any
-    /// control.
+    /// Its captions come from <c>CustomerEditor.resx</c> and its language companions, applied by
+    /// <c>ApplyResources</c> when the control is constructed. Everything else on the capstone
+    /// screen goes through <see cref="LocalizationService"/>, and the contrast between the two is
+    /// one of the rows on the QA checklist.
     /// </summary>
     public partial class CustomerEditor : UserControl
     {
         public CustomerEditor()
         {
             InitializeComponent();
-
-            // Country names are data with a display form, not designed captions, so they are
-            // filled in code rather than stored in the designer resource.
-            this.cboCountry.Items.AddRange(new object[] { "Germany", "France", "Italy", "United Kingdom" });
-            this.cboCountry.SelectedIndex = 0;
         }
 
-        /// <summary>
-        /// The one sentence on this control that is built from parts. It is a single resource
-        /// string with two placeholders, filled with string.Format and the session's culture -
-        /// never assembled by concatenating fragments, because word order is not the same in every
-        /// language and a translator needs the whole sentence in front of them.
-        /// </summary>
-        public void ShowLastOrder(DateTime date, decimal amount)
-        {
-            var culture = Application.CurrentCulture;
-
-            this.lblMessage.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblMessage.Text = string.Format(
-                culture,
-                Texts.Get("Customer.LastOrder"),
-                date.ToString("d", culture),
-                amount.ToString("C", culture));
-        }
-
-        /// <summary>The culture this instance was constructed under - the point of the Module 2 demo.</summary>
+        /// <summary>The culture this instance was constructed under - see Module 2.</summary>
         public string BuiltForCulture { get; } = Application.CurrentCulture.Name;
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            // The service decides what happened; this method decides how to say it. The UI is the
-            // only layer that knows a language exists.
-            var result = CustomerSaveService.Save(this.txtName.Text, this.txtCode.Text);
+            // A Wisej.NET dialog: the title and the message are ours, the Yes and No buttons are
+            // the framework's own text - see docs/TextKinds.md.
+            var answer = MessageBox.Show(
+                LocalizationService.Text("Dialog.UnsavedChanges"),
+                LocalizationService.Text("Dialog.SaveChanges"),
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
-            this.lblMessage.Text = Texts.Get(CustomerSaveService.ResourceKeyFor(result));
-            this.lblMessage.ForeColor = result == SaveResult.Saved
-                ? System.Drawing.Color.FromArgb(31, 157, 107)
-                : System.Drawing.Color.FromArgb(217, 58, 58);
+            if (answer != DialogResult.Yes)
+                return;
+
+            var result = CustomerSaveService.Save("Northwind Traders", null);
+            MessageBox.Show(
+                LocalizationService.Text(CustomerSaveService.ResourceKeyFor(result)),
+                LocalizationService.Text("App.ProductName"),
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.txtName.Text = string.Empty;
-            this.txtCode.Text = string.Empty;
-            this.lblMessage.Text = string.Empty;
+            // Nothing to discard on this screen; the capstone's editing lives in Module 6.
         }
     }
 }

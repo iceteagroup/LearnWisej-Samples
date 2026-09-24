@@ -10,20 +10,21 @@ namespace GlobalDesk
     ///
     /// - <see cref="ApplyTextResources"/> puts <b>words</b> on screen. Every one of them comes
     ///   from a resource key, so a translator can change all of them without touching code.
-    /// - <see cref="UpdateCulturePreview"/> puts <b>values</b> on screen. A date, a count and an
-    ///   amount are not words; they are formatted at the moment they are displayed, with the
+    /// - <see cref="UpdateCulturePreview"/> puts <b>values</b> on screen. A date, a quantity and
+    ///   an amount are not words; they are formatted at the moment they are displayed, with the
     ///   session's culture as the format provider.
     ///
-    /// Nothing stored here is ever a formatted string. The model holds a <see cref="DateTime"/>,
-    /// an <see cref="int"/> and a <see cref="decimal"/>, which is what a database column and an
-    /// API response should hold too.
+    /// Nothing stored here is ever a formatted string. The model holds a <see cref="DateTime"/>
+    /// and two <see cref="decimal"/> values, which is what a database column and an API response
+    /// should hold too.
     /// </summary>
     public partial class DashboardPage : Page
     {
-        // The data. Real values, stored in real types - not "15/03/2026" and not "1.850,75 EUR".
-        private readonly DateTime dueDate = new DateTime(2026, 3, 15);
-        private readonly int unitsOrdered = 12500;
-        private readonly decimal orderTotal = 1850.75m;
+        // The data. Real values, stored in real types - not "14/10/2025" and not "1.850,75 EUR".
+        // These are the three the walkthrough uses, so the screen and the video read the same.
+        private readonly DateTime previewDate = new DateTime(2025, 10, 14);
+        private readonly decimal previewCount = 1234567.89m;
+        private readonly decimal previewAmount = 1850.75m;
 
         public DashboardPage()
         {
@@ -31,6 +32,7 @@ namespace GlobalDesk
 
             ApplyTextResources();
             UpdateCulturePreview();
+            ReportStatus();
         }
 
         /// <summary>
@@ -40,17 +42,14 @@ namespace GlobalDesk
         /// </summary>
         private void ApplyTextResources()
         {
-            this.Text = Texts.Get("App.Title");
-
+            this.lblAppTitle.Text = Texts.Get("App.Title");
             this.lblWelcome.Text = Texts.Get("Dashboard.Welcome");
-            this.lblSubtitle.Text = Texts.Get("Dashboard.Subtitle");
             this.btnCustomers.Text = Texts.Get("Navigation.Customers");
 
-            this.lblPreviewHeading.Text = Texts.Get("Preview.Heading");
+            this.lblPreviewTitle.Text = Texts.Get("Preview.Title");
             this.lblDateCaption.Text = Texts.Get("Preview.Date");
-            this.lblQuantityCaption.Text = Texts.Get("Preview.Quantity");
+            this.lblCountCaption.Text = Texts.Get("Preview.Count");
             this.lblAmountCaption.Text = Texts.Get("Preview.Amount");
-            this.lblCultureCaption.Text = Texts.Get("Preview.Culture");
         }
 
         /// <summary>
@@ -59,7 +58,7 @@ namespace GlobalDesk
         /// users in the same server process can read two different date patterns at the same time.
         ///
         /// Note what is not happening here: no string concatenation, no currency symbol typed by
-        /// hand, no <c>"dd/MM/yyyy"</c>. The standard format specifiers - "D", "N0", "C" - let the
+        /// hand, no <c>"dd/MM/yyyy"</c>. The standard format specifiers - "D", "N2", "C" - let the
         /// culture decide the pattern, the separators and the symbol, which is the only way this
         /// works in a country nobody has thought about yet.
         /// </summary>
@@ -67,21 +66,29 @@ namespace GlobalDesk
         {
             var culture = Application.CurrentCulture;
 
-            this.lblDateValue.Text = this.dueDate.ToString("D", culture);
-            this.lblQuantityValue.Text = this.unitsOrdered.ToString("N0", culture);
-            this.lblAmountValue.Text = this.orderTotal.ToString("C", culture);
+            this.lblDateValue.Text = this.previewDate.ToString("D", culture);
+            this.lblCountValue.Text = this.previewCount.ToString("N2", culture);
+            this.lblAmountValue.Text = this.previewAmount.ToString("C", culture);
 
-            this.lblCultureValue.Text = $"{culture.Name} - {culture.DisplayName}";
-
-            this.lblStatus.Text =
-                $"Stored: {this.dueDate:yyyy-MM-dd}, {this.unitsOrdered}, {this.orderTotal} - " +
-                $"the same three values, before any culture touched them.";
+            // Not a caption and not a value: the name of the culture doing the formatting.
+            // It is deliberately not translated - "de-DE" is the same string in every language.
+            this.lblCulture.Text = "Application.CurrentCulture = " + culture.Name;
         }
 
-        private void btnCustomers_Click(object sender, EventArgs e)
+        /// <summary>
+        /// What the load actually did, counted rather than claimed: how many distinct resource
+        /// keys came back with a value, and how many values the culture formatted.
+        /// </summary>
+        private void ReportStatus()
         {
-            // The customer editor arrives in Module 2.
-            this.lblStatus.Text = Texts.Get("Navigation.Customers") + ": " + Texts.Get("CustomerEditor.Title");
+            var culture = Application.CurrentCulture;
+            var template = Texts.Get("Status.Ready");
+
+            // string.Format gets the culture too. Without it, it would use whatever culture the
+            // thread happens to be on, which in a server application is whatever it last did.
+            this.lblStatus.Text = string.Format(culture, template, Texts.ResolvedCount, 3);
+            this.lblStatus.BackColor = Desk.GoodBack;
+            this.lblStatus.ForeColor = Desk.GoodInk;
         }
     }
 }

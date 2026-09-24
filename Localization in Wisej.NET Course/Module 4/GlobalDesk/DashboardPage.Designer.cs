@@ -1,3 +1,6 @@
+using System.Drawing;
+using Wisej.Web;
+
 namespace GlobalDesk
 {
     partial class DashboardPage
@@ -8,11 +11,12 @@ namespace GlobalDesk
         {
             if (disposing)
             {
-                // Module 4: the page subscribed to a static event, so it has to let go of it.
-                // A page that does not is kept alive by the event for the rest of the session.
-                Wisej.Web.Application.CultureChanged -= this.Application_CultureChanged;
+                // Application.CultureChanged outlives the page. Leave this out and every page
+                // that was ever open keeps handling culture changes for the rest of the session.
+                Application.CultureChanged -= this.Application_CultureChanged;
 
-                components?.Dispose();
+                if (components != null)
+                    components.Dispose();
             }
             base.Dispose(disposing);
         }
@@ -21,237 +25,264 @@ namespace GlobalDesk
 
         //
         // Nothing in this file carries a user-visible English sentence. Every caption is assigned
-        // in ApplyTextResources, from a resource key. A literal here is a string no translator
-        // will ever see.
+        // in ApplyTextResources, from a resource key, because from this module on that method runs
+        // again on every culture change.
         //
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.pnlHeader = new Wisej.Web.Panel();
-            this.lblWelcome = new Wisej.Web.Label();
-            this.lblSubtitle = new Wisej.Web.Label();
+            this.pnlAppBar = new Wisej.Web.Panel();
+            this.lblAppTitle = new Wisej.Web.Label();
+            this.pnlWindowGlyphs = new Wisej.Web.Panel();
+            this.lblGlyphMinimize = new Wisej.Web.Label();
+            this.lblGlyphMaximize = new Wisej.Web.Label();
+            this.lblGlyphClose = new Wisej.Web.Label();
+            this.pnlStatus = new Wisej.Web.Panel();
             this.lblStatus = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.FlowLayoutPanel();
-            this.btnCustomers = new Wisej.Web.Button();
-            this.cboCulture = new Wisej.Web.ComboBox();
-            this.btnRecreate = new Wisej.Web.Button();
-            this.btnSystemText = new Wisej.Web.Button();
-            this.btnLastOrder = new Wisej.Web.Button();
-            this.pnlEditorHost = new Wisej.Web.Panel();
+            this.lblStatusNote = new Wisej.Web.Label();
             this.pnlBody = new Wisej.Web.Panel();
-            this.lblPreviewHeading = new Wisej.Web.Label();
-            this.layoutPreview = new Wisej.Web.TableLayoutPanel();
+            this.lblWelcome = new Wisej.Web.Label();
+            this.btnCustomers = new Wisej.Web.Button();
+            this.lblLanguage = new Wisej.Web.Label();
+            this.cboLanguage = new Wisej.Web.ComboBox();
+            this.pnlLanguage = new Wisej.Web.Panel();
+            this.pnlPreview = new Wisej.Web.Panel();
+            this.lblPreviewTitle = new Wisej.Web.Label();
             this.lblDateCaption = new Wisej.Web.Label();
             this.lblDateValue = new Wisej.Web.Label();
-            this.lblQuantityCaption = new Wisej.Web.Label();
-            this.lblQuantityValue = new Wisej.Web.Label();
+            this.lblCountCaption = new Wisej.Web.Label();
+            this.lblCountValue = new Wisej.Web.Label();
             this.lblAmountCaption = new Wisej.Web.Label();
             this.lblAmountValue = new Wisej.Web.Label();
-            this.lblCultureCaption = new Wisej.Web.Label();
-            this.lblCultureValue = new Wisej.Web.Label();
+            this.pnlEditorHost = new Wisej.Web.Panel();
             this.SuspendLayout();
             //
-            // lblWelcome
+            // ── the application bar ────────────────────────────────────────────────────────
             //
-            this.lblWelcome.AutoSize = false;
-            this.lblWelcome.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold);
-            this.lblWelcome.Location = new System.Drawing.Point(20, 12);
+            this.lblAppTitle.Name = "lblAppTitle";
+            this.lblAppTitle.AutoSize = false;
+            this.lblAppTitle.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblAppTitle.Padding = new Wisej.Web.Padding(18, 0, 0, 0);
+            this.lblAppTitle.ForeColor = Color.White;
+            this.lblAppTitle.Font = Desk.Px(15, FontStyle.Bold);
+            this.lblAppTitle.TextAlign = ContentAlignment.MiddleLeft;
+
+            SetGlyph(this.lblGlyphMinimize, "lblGlyphMinimize", "—");
+            SetGlyph(this.lblGlyphMaximize, "lblGlyphMaximize", "□");
+            SetGlyph(this.lblGlyphClose, "lblGlyphClose", "✕");
+
+            this.pnlWindowGlyphs.Name = "pnlWindowGlyphs";
+            this.pnlWindowGlyphs.Dock = Wisej.Web.DockStyle.Right;
+            this.pnlWindowGlyphs.Size = new Size(108, 40);
+            this.pnlWindowGlyphs.BackColor = Desk.Accent;
+            this.pnlWindowGlyphs.Controls.Add(this.lblGlyphMinimize);
+            this.pnlWindowGlyphs.Controls.Add(this.lblGlyphMaximize);
+            this.pnlWindowGlyphs.Controls.Add(this.lblGlyphClose);
+
+            this.pnlAppBar.Name = "pnlAppBar";
+            this.pnlAppBar.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlAppBar.Size = new Size(1400, 40);
+            this.pnlAppBar.BackColor = Desk.Accent;
+            this.pnlAppBar.Controls.Add(this.lblAppTitle);
+            this.pnlAppBar.Controls.Add(this.pnlWindowGlyphs);
+            //
+            // ── the heading and the navigation button ──────────────────────────────────────
+            //
             this.lblWelcome.Name = "lblWelcome";
-            this.lblWelcome.Size = new System.Drawing.Size(620, 28);
-            //
-            // lblSubtitle
-            //
-            this.lblSubtitle.AutoSize = false;
-            this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 42);
-            this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(820, 22);
-            //
-            // pnlHeader
-            //
-            this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(900, 72);
-            this.pnlHeader.Controls.Add(this.lblSubtitle);
-            this.pnlHeader.Controls.Add(this.lblWelcome);
-            //
-            // lblStatus
-            //
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Padding = new Wisej.Web.Padding(20, 8, 20, 8);
-            this.lblStatus.Size = new System.Drawing.Size(900, 34);
-            //
-            // btnCustomers
-            //
-            // AutoSize, because a caption is a different length in every language and a fixed
-            // width is a clipped word waiting to happen.
-            this.btnCustomers.AutoSize = true;
-            this.btnCustomers.MinimumSize = new System.Drawing.Size(140, 38);
+            this.lblWelcome.AutoSize = false;
+            this.lblWelcome.Location = new Point(26, 56);
+            this.lblWelcome.Size = new Size(620, 36);
+            this.lblWelcome.Font = Desk.Px(25, FontStyle.Bold);
+            this.lblWelcome.ForeColor = Color.FromArgb(0x12, 0x20, 0x2E);
+            this.lblWelcome.TextAlign = ContentAlignment.MiddleLeft;
+
             this.btnCustomers.Name = "btnCustomers";
-            this.btnCustomers.TabIndex = 0;
-            this.btnCustomers.Click += this.btnCustomers_Click;
+            this.btnCustomers.AutoSize = true;
+            this.btnCustomers.Location = new Point(26, 108);
+            this.btnCustomers.MinimumSize = new Size(120, 36);
+            this.btnCustomers.Padding = new Wisej.Web.Padding(20, 0, 20, 0);
+            this.btnCustomers.BackColor = Desk.Accent;
+            this.btnCustomers.ForeColor = Color.White;
+            this.btnCustomers.Font = Desk.Px(14.5F, FontStyle.Bold);
+            this.btnCustomers.CssStyle = "border-radius:7px;border:none";
+            this.btnCustomers.TabIndex = 1;
             //
-            // cboCulture
+            // ── the language picker ────────────────────────────────────────────────────────
             //
-            // Module 2 switches the culture crudely, just to prove what designer resources do and
-            // do not do. Module 4 replaces it with the real thing.
-            this.cboCulture.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.cboCulture.Name = "cboCulture";
-            this.cboCulture.Size = new System.Drawing.Size(180, 38);
-            this.cboCulture.TabIndex = 1;
-            this.cboCulture.SelectedIndexChanged += this.cboCulture_SelectedIndexChanged;
+            // The picker sits in its own column docked to the right edge, so it stays where the
+            // walkthrough shows it at any window width - no anchor arithmetic against a
+            // design-time size that the browser is never going to match.
+            this.lblLanguage.Name = "lblLanguage";
+            this.lblLanguage.AutoSize = false;
+            this.lblLanguage.Location = new Point(0, 52);
+            this.lblLanguage.Size = new Size(288, 20);
+            this.lblLanguage.Font = Desk.Px(13, FontStyle.Bold);
+            this.lblLanguage.ForeColor = Desk.Muted;
+            this.lblLanguage.TextAlign = ContentAlignment.MiddleLeft;
+
+            this.cboLanguage.Name = "cboLanguage";
+            this.cboLanguage.Location = new Point(0, 78);
+            this.cboLanguage.Size = new Size(288, 36);
+            this.cboLanguage.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
+            this.cboLanguage.Font = Desk.Px(14.5F);
+            this.cboLanguage.ForeColor = Desk.Body;
+            this.cboLanguage.CssStyle = "border:1.5px solid #c9d5e2;border-radius:6px";
+            this.cboLanguage.TabIndex = 0;
+            this.cboLanguage.SelectedIndexChanged += this.cboLanguage_SelectedIndexChanged;
+
+            this.pnlLanguage.Name = "pnlLanguage";
+            this.pnlLanguage.Dock = Wisej.Web.DockStyle.Right;
+            this.pnlLanguage.Size = new Size(314, 818);
+            this.pnlLanguage.BackColor = Color.White;
+            this.pnlLanguage.Controls.Add(this.lblLanguage);
+            this.pnlLanguage.Controls.Add(this.cboLanguage);
             //
-            // btnRecreate
+            // ── the culture preview panel ──────────────────────────────────────────────────
             //
-            this.btnRecreate.AutoSize = true;
-            this.btnRecreate.MinimumSize = new System.Drawing.Size(200, 38);
-            this.btnRecreate.Name = "btnRecreate";
-            this.btnRecreate.TabIndex = 2;
-            this.btnRecreate.Click += this.btnRecreate_Click;
+            this.lblPreviewTitle.Name = "lblPreviewTitle";
+            this.lblPreviewTitle.AutoSize = false;
+            this.lblPreviewTitle.Dock = Wisej.Web.DockStyle.Top;
+            this.lblPreviewTitle.Size = new Size(438, 32);
+            this.lblPreviewTitle.Padding = new Wisej.Web.Padding(18, 0, 18, 0);
+            this.lblPreviewTitle.Font = Desk.Px(12, FontStyle.Bold);
+            this.lblPreviewTitle.ForeColor = Desk.Muted;
+            this.lblPreviewTitle.CssStyle = "border-bottom:1px solid #e6ecf3;text-transform:uppercase;letter-spacing:.04em";
+            this.lblPreviewTitle.TextAlign = ContentAlignment.MiddleLeft;
+
+            SetPreviewRow(this.lblDateCaption, "lblDateCaption", this.lblDateValue, "lblDateValue", 44);
+            SetPreviewRow(this.lblCountCaption, "lblCountCaption", this.lblCountValue, "lblCountValue", 82);
+            SetPreviewRow(this.lblAmountCaption, "lblAmountCaption", this.lblAmountValue, "lblAmountValue", 120);
+
+            this.pnlPreview.Name = "pnlPreview";
+            this.pnlPreview.Location = new Point(26, 174);
+            this.pnlPreview.Size = new Size(440, 176);
+            this.pnlPreview.BackColor = Color.FromArgb(0xF8, 0xFA, 0xFC);
+            this.pnlPreview.CssStyle = "border:1px solid #dbe3ec;border-radius:8px";
+            this.pnlPreview.Controls.Add(this.lblDateCaption);
+            this.pnlPreview.Controls.Add(this.lblDateValue);
+            this.pnlPreview.Controls.Add(this.lblCountCaption);
+            this.pnlPreview.Controls.Add(this.lblCountValue);
+            this.pnlPreview.Controls.Add(this.lblAmountCaption);
+            this.pnlPreview.Controls.Add(this.lblAmountValue);
+            this.pnlPreview.Controls.Add(this.lblPreviewTitle);
             //
-            // btnSystemText
+            // ── where the designer-localized editor lives ──────────────────────────────────
             //
-            this.btnSystemText.AutoSize = true;
-            this.btnSystemText.MinimumSize = new System.Drawing.Size(220, 38);
-            this.btnSystemText.Name = "btnSystemText";
-            this.btnSystemText.TabIndex = 3;
-            this.btnSystemText.Click += this.btnSystemText_Click;
-            //
-            // btnLastOrder
-            //
-            this.btnLastOrder.AutoSize = true;
-            this.btnLastOrder.MinimumSize = new System.Drawing.Size(180, 38);
-            this.btnLastOrder.Name = "btnLastOrder";
-            this.btnLastOrder.TabIndex = 4;
-            this.btnLastOrder.Click += this.btnLastOrder_Click;
-            //
-            // pnlEditorHost
-            //
-            // The editor is never added to the page directly. It lives in a host panel, because
-            // recreating it means disposing the old instance and adding a new one - and that is
-            // much easier when there is exactly one place it can be.
-            this.pnlEditorHost.Dock = Wisej.Web.DockStyle.Top;
+            // A host panel makes the rebuild three lines instead of a hunt.
             this.pnlEditorHost.Name = "pnlEditorHost";
-            this.pnlEditorHost.Size = new System.Drawing.Size(860, 300);
-            //
-            // pnlActions
-            //
-            this.pnlActions.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlActions.FlowDirection = Wisej.Web.FlowDirection.LeftToRight;
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Padding = new Wisej.Web.Padding(14, 8, 14, 8);
-            this.pnlActions.Size = new System.Drawing.Size(900, 104);
-            this.pnlActions.WrapContents = true;
-            this.pnlActions.Controls.Add(this.btnCustomers);
-            this.pnlActions.Controls.Add(this.cboCulture);
-            this.pnlActions.Controls.Add(this.btnRecreate);
-            this.pnlActions.Controls.Add(this.btnLastOrder);
-            this.pnlActions.Controls.Add(this.btnSystemText);
-            //
-            // lblPreviewHeading
-            //
-            this.lblPreviewHeading.AutoSize = false;
-            this.lblPreviewHeading.Dock = Wisej.Web.DockStyle.Top;
-            this.lblPreviewHeading.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblPreviewHeading.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblPreviewHeading.Name = "lblPreviewHeading";
-            this.lblPreviewHeading.Size = new System.Drawing.Size(860, 30);
-            //
-            // the preview rows
-            //
-            SetCaption(this.lblDateCaption, "lblDateCaption");
-            SetValue(this.lblDateValue, "lblDateValue");
-            SetCaption(this.lblQuantityCaption, "lblQuantityCaption");
-            SetValue(this.lblQuantityValue, "lblQuantityValue");
-            SetCaption(this.lblAmountCaption, "lblAmountCaption");
-            SetValue(this.lblAmountValue, "lblAmountValue");
-            SetCaption(this.lblCultureCaption, "lblCultureCaption");
-            SetValue(this.lblCultureValue, "lblCultureValue");
-            //
-            // layoutPreview
-            //
-            // A two-column table rather than fixed positions: the caption column takes what the
-            // longest translation needs and the value column keeps the rest.
-            this.layoutPreview.ColumnCount = 2;
-            this.layoutPreview.RowCount = 4;
-            this.layoutPreview.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 42F));
-            this.layoutPreview.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 58F));
-            for (var row = 0; row < 4; row++)
-                this.layoutPreview.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 34F));
-            this.layoutPreview.Dock = Wisej.Web.DockStyle.Top;
-            this.layoutPreview.Name = "layoutPreview";
-            this.layoutPreview.Size = new System.Drawing.Size(560, 140);
-            this.layoutPreview.Controls.Add(this.lblDateCaption, 0, 0);
-            this.layoutPreview.Controls.Add(this.lblDateValue, 1, 0);
-            this.layoutPreview.Controls.Add(this.lblQuantityCaption, 0, 1);
-            this.layoutPreview.Controls.Add(this.lblQuantityValue, 1, 1);
-            this.layoutPreview.Controls.Add(this.lblAmountCaption, 0, 2);
-            this.layoutPreview.Controls.Add(this.lblAmountValue, 1, 2);
-            this.layoutPreview.Controls.Add(this.lblCultureCaption, 0, 3);
-            this.layoutPreview.Controls.Add(this.lblCultureValue, 1, 3);
+            this.pnlEditorHost.Location = new Point(500, 174);
+            this.pnlEditorHost.Size = new Size(474, 176);
+            this.pnlEditorHost.BackColor = Color.White;
             //
             // pnlBody
             //
-            this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
             this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Padding = new Wisej.Web.Padding(20);
-            this.pnlBody.Controls.Add(this.layoutPreview);
+            this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlBody.BackColor = Color.White;
+            this.pnlBody.Controls.Add(this.lblWelcome);
+            this.pnlBody.Controls.Add(this.btnCustomers);
+            this.pnlBody.Controls.Add(this.pnlLanguage);
+            this.pnlBody.Controls.Add(this.pnlPreview);
             this.pnlBody.Controls.Add(this.pnlEditorHost);
-            this.pnlBody.Controls.Add(this.lblPreviewHeading);
+            //
+            // ── the status strip ───────────────────────────────────────────────────────────
+            //
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.AutoSize = false;
+            this.lblStatus.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblStatus.Font = Desk.Px(13.5F);
+            this.lblStatus.ForeColor = Desk.Muted;
+            this.lblStatus.TextAlign = ContentAlignment.MiddleLeft;
+
+            this.lblStatusNote.Name = "lblStatusNote";
+            this.lblStatusNote.AutoSize = true;
+            this.lblStatusNote.Visible = false;
+            this.lblStatusNote.Dock = Wisej.Web.DockStyle.Right;
+            this.lblStatusNote.Font = Desk.Px(13.5F);
+            this.lblStatusNote.ForeColor = Color.FromArgb(0x1D, 0x7A, 0x48);
+            this.lblStatusNote.TextAlign = ContentAlignment.MiddleRight;
+
+            this.pnlStatus.Name = "pnlStatus";
+            this.pnlStatus.Dock = Wisej.Web.DockStyle.Bottom;
+            this.pnlStatus.Size = new Size(1400, 42);
+            this.pnlStatus.BackColor = Desk.CardHead;
+            this.pnlStatus.Padding = new Wisej.Web.Padding(18, 0, 18, 0);
+            this.pnlStatus.CssStyle = "border-top:1px solid #e0e7ef";
+            this.pnlStatus.Controls.Add(this.lblStatus);
+            this.pnlStatus.Controls.Add(this.lblStatusNote);
             //
             // DashboardPage
             //
             this.Name = "DashboardPage";
-            this.Size = new System.Drawing.Size(900, 860);
+            this.BackColor = Color.White;
             this.Controls.Add(this.pnlBody);
-            this.Controls.Add(this.pnlActions);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.pnlHeader);
+            this.Controls.Add(this.pnlStatus);
+            this.Controls.Add(this.pnlAppBar);
             this.ResumeLayout(false);
         }
 
-        private static void SetCaption(Wisej.Web.Label label, string name)
+        /// <summary>One of the three window glyphs at the right of the application bar.</summary>
+        private static void SetGlyph(Wisej.Web.Label label, string name, string glyph)
         {
-            label.AutoSize = false;
-            label.Dock = Wisej.Web.DockStyle.Fill;
             label.Name = name;
-            label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            label.AutoSize = false;
+            label.Dock = Wisej.Web.DockStyle.Right;
+            label.Size = new Size(36, 40);
+            // A glyph is a shape, not a word. It never goes through a resource.
+            label.Text = glyph;
+            label.ForeColor = Color.White;
+            label.Font = Desk.Px(13);
+            label.TextAlign = ContentAlignment.MiddleCenter;
         }
 
-        private static void SetValue(Wisej.Web.Label label, string name)
+        /// <summary>One caption + value row of the culture preview panel.</summary>
+        private static void SetPreviewRow(Wisej.Web.Label caption, string captionName,
+                                          Wisej.Web.Label value, string valueName, int y)
         {
-            label.AutoSize = false;
-            label.Dock = Wisej.Web.DockStyle.Fill;
-            label.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            label.Name = name;
-            label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            caption.Name = captionName;
+            caption.AutoSize = false;
+            caption.Location = new Point(18, y);
+            caption.Size = new Size(108, 34);
+            caption.Font = Desk.Px(13.5F, FontStyle.Bold);
+            caption.ForeColor = Desk.Muted;
+            caption.TextAlign = ContentAlignment.MiddleLeft;
+
+            // Monospaced on purpose: the panel exists to compare separators and digit grouping
+            // between cultures, and a proportional font hides the difference.
+            value.Name = valueName;
+            value.AutoSize = false;
+            value.Location = new Point(126, y);
+            value.Size = new Size(296, 34);
+            value.Font = Desk.Mono(15);
+            value.ForeColor = Desk.Body;
+            value.TextAlign = ContentAlignment.MiddleLeft;
         }
 
         #endregion
 
-        private Wisej.Web.Panel pnlHeader;
-        private Wisej.Web.Label lblWelcome;
-        private Wisej.Web.Label lblSubtitle;
-        private Wisej.Web.Label lblStatus;
-        private Wisej.Web.FlowLayoutPanel pnlActions;
-        private Wisej.Web.Button btnCustomers;
-        private Wisej.Web.ComboBox cboCulture;
-        private Wisej.Web.Button btnRecreate;
-        private Wisej.Web.Button btnSystemText;
-        private Wisej.Web.Button btnLastOrder;
-        private Wisej.Web.Panel pnlEditorHost;
+        private Wisej.Web.Panel pnlAppBar;
+        private Wisej.Web.Label lblAppTitle;
+        private Wisej.Web.Panel pnlWindowGlyphs;
+        private Wisej.Web.Label lblGlyphMinimize;
+        private Wisej.Web.Label lblGlyphMaximize;
+        private Wisej.Web.Label lblGlyphClose;
         private Wisej.Web.Panel pnlBody;
-        private Wisej.Web.Label lblPreviewHeading;
-        private Wisej.Web.TableLayoutPanel layoutPreview;
+        private Wisej.Web.Label lblWelcome;
+        private Wisej.Web.Button btnCustomers;
+        private Wisej.Web.Label lblLanguage;
+        private Wisej.Web.Panel pnlLanguage;
+        private Wisej.Web.ComboBox cboLanguage;
+        private Wisej.Web.Panel pnlPreview;
+        private Wisej.Web.Label lblPreviewTitle;
         private Wisej.Web.Label lblDateCaption;
         private Wisej.Web.Label lblDateValue;
-        private Wisej.Web.Label lblQuantityCaption;
-        private Wisej.Web.Label lblQuantityValue;
+        private Wisej.Web.Label lblCountCaption;
+        private Wisej.Web.Label lblCountValue;
         private Wisej.Web.Label lblAmountCaption;
         private Wisej.Web.Label lblAmountValue;
-        private Wisej.Web.Label lblCultureCaption;
-        private Wisej.Web.Label lblCultureValue;
+        private Wisej.Web.Panel pnlEditorHost;
+        private Wisej.Web.Panel pnlStatus;
+        private Wisej.Web.Label lblStatus;
+        private Wisej.Web.Label lblStatusNote;
     }
 }

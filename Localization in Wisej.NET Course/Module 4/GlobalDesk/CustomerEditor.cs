@@ -1,24 +1,16 @@
 using System;
+using System.Drawing;
 using Wisej.Web;
 
 namespace GlobalDesk
 {
     /// <summary>
-    /// A designer-localized user control.
+    /// The designer-localized customer editor, now a panel on the dashboard.
     ///
-    /// Nothing in this file or in <c>CustomerEditor.Designer.cs</c> contains a caption. Every
-    /// localizable property lives in <c>CustomerEditor.resx</c>, with the German overrides in
-    /// <c>CustomerEditor.de.resx</c>, and <c>ApplyResources</c> in <c>InitializeComponent</c>
-    /// puts them on the controls when the control is constructed.
-    ///
-    /// The word "constructed" is the whole lesson of Module 2. Designer resources are applied
-    /// once, at construction. Change <c>Application.CurrentCulture</c> afterwards and this control
-    /// keeps every caption it was born with - which is why the dashboard has a button that throws
-    /// it away and builds a new one.
-    ///
-    /// Messages the control produces at run time are a different matter: they come from
-    /// <see cref="Texts"/>, the shared resource, because they are not designed properties of any
-    /// control.
+    /// Its captions are applied by <c>ApplyResources</c> inside <c>InitializeComponent</c>, which
+    /// means <b>at construction</b>. The dashboard's <c>CultureChanged</c> handler therefore does
+    /// not try to refresh it; it throws it away and builds a new one, in the same step as the
+    /// captions and the formatted values, so the screen is never half translated.
     /// </summary>
     public partial class CustomerEditor : UserControl
     {
@@ -26,50 +18,41 @@ namespace GlobalDesk
         {
             InitializeComponent();
 
-            // Country names are data with a display form, not designed captions, so they are
-            // filled in code rather than stored in the designer resource.
-            this.cboCountry.Items.AddRange(new object[] { "Germany", "France", "Italy", "United Kingdom" });
-            this.cboCountry.SelectedIndex = 0;
+            // Customer data, not captions: the same two values in every language.
+            this.txtCompany.Text = "Northwind Traders";
+            this.txtCode.Text = "NWT-0041";
         }
+
+        /// <summary>The culture this instance was constructed under. The dashboard compares it
+        /// with the session's culture, which is how the badge can tell the truth.</summary>
+        public string BuiltForCulture { get; } = Application.CurrentCulture.Name;
+
+        /// <summary>Raised with a finished, already-localized sentence for the status strip.</summary>
+        public event Action<string> Message;
 
         /// <summary>
-        /// The one sentence on this control that is built from parts. It is a single resource
-        /// string with two placeholders, filled with string.Format and the session's culture -
-        /// never assembled by concatenating fragments, because word order is not the same in every
-        /// language and a translator needs the whole sentence in front of them.
+        /// The badge in the panel header. Green when this instance was built for the session's
+        /// current culture after a switch, red when it was not - which is the state Module 4
+        /// exists to make impossible.
         /// </summary>
-        public void ShowLastOrder(DateTime date, decimal amount)
+        public void ShowBadge(string text, bool good)
         {
-            var culture = Application.CurrentCulture;
-
-            this.lblMessage.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
-            this.lblMessage.Text = string.Format(
-                culture,
-                Texts.Get("Customer.LastOrder"),
-                date.ToString("d", culture),
-                amount.ToString("C", culture));
+            this.lblBadge.Visible = !string.IsNullOrEmpty(text);
+            this.lblBadge.Text = text ?? string.Empty;
+            this.lblBadge.BackColor = good ? Desk.Teal : Color.FromArgb(0xD6, 0x45, 0x45);
+            this.lblBadge.CssStyle = "border-radius:999px";
         }
-
-        /// <summary>The culture this instance was constructed under - the point of the Module 2 demo.</summary>
-        public string BuiltForCulture { get; } = Application.CurrentCulture.Name;
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            // The service decides what happened; this method decides how to say it. The UI is the
-            // only layer that knows a language exists.
-            var result = CustomerSaveService.Save(this.txtName.Text, this.txtCode.Text);
-
-            this.lblMessage.Text = Texts.Get(CustomerSaveService.ResourceKeyFor(result));
-            this.lblMessage.ForeColor = result == SaveResult.Saved
-                ? System.Drawing.Color.FromArgb(31, 157, 107)
-                : System.Drawing.Color.FromArgb(217, 58, 58);
+            var result = CustomerSaveService.Save(this.txtCompany.Text, null);
+            this.Message?.Invoke(Texts.Get(CustomerSaveService.ResourceKeyFor(result)));
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            this.txtName.Text = string.Empty;
-            this.txtCode.Text = string.Empty;
-            this.lblMessage.Text = string.Empty;
+            this.txtCompany.Text = "Northwind Traders";
+            this.txtCode.Text = "NWT-0041";
         }
     }
 }

@@ -58,94 +58,91 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="App.ProductName" xml:space="preserve">
+    <value>GlobalDesk</value>
+  </data>
   <data name="App.Title" xml:space="preserve">
-    <value>[GlobalDeskë ~~~]</value>
+    <value>[[GlobalDesk — Dashboard ~~~~~~~~~]]</value>
   </data>
-  <data name="Dashboard.Welcome" xml:space="preserve">
-    <value>[Welcomeë to GlobalDeskë ~~~]</value>
+  <data name="Dashboard.WelcomeBack" xml:space="preserve">
+    <value>[[Welcome back, {0} ~~~~~~~]]</value>
   </data>
-  <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>[Customerë operationsë, in yourë languageë ~~~]</value>
+  <data name="User.DisplayName" xml:space="preserve">
+    <value>[[Dana ~~~]]</value>
   </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>[Recreateë the editorë ~~~]</value>
+  <data name="Nav.Dashboard" xml:space="preserve">
+    <value>[[Dashboard ~~~~]]</value>
   </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>[Showë a Wisejë.NET dialogë ~~~]</value>
+  <data name="Nav.Customers" xml:space="preserve">
+    <value>[[Customers ~~~~]]</value>
   </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>[Lastë orderë ~~~]</value>
+  <data name="Nav.Contacts" xml:space="preserve">
+    <value>[[Contacts ~~~]]</value>
   </data>
-  <data name="Dashboard.Language" xml:space="preserve">
-    <value>[Languageë ~~~]</value>
-  </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>[Fallsë backë to ~~~]</value>
-  </data>
-  <data name="Dashboard.Contacts" xml:space="preserve">
-    <value>[Contactsë ~~~]</value>
-  </data>
-  <data name="Navigation.Customers" xml:space="preserve">
-    <value>[Customersë ~~~]</value>
-  </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>[Backë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>[Customerë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Name" xml:space="preserve">
-    <value>[Nameë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>[Customerë codeë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>[Countryë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Save" xml:space="preserve">
-    <value>[Saveë ~~~]</value>
-  </data>
-  <data name="CustomerEditor.Cancel" xml:space="preserve">
-    <value>[Cancelë ~~~]</value>
+  <data name="Nav.Settings" xml:space="preserve">
+    <value>[[Settings ~~~]]</value>
   </data>
   <data name="CustomerEditor.Saved" xml:space="preserve">
-    <value>[Customerë savedë. ~~~]</value>
-  </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>[The customerë couldë not be savedë. ~~~]</value>
+    <value>[[Customer saved. ~~~~~~]]</value>
   </data>
   <data name="Customer.LastOrder" xml:space="preserve">
-    <value>[Lastë orderë: {0} for {1} ~~~]</value>
+    <value>[[{0} last ordered on {1}. ~~~~~~~~~~]]</value>
   </data>
   <data name="Validation.Required" xml:space="preserve">
-    <value>[Thisë fieldë is requiredë. ~~~]</value>
+    <value>[[This field is required. ~~~~~~~~~]]</value>
   </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>[A customerë codeë is two lettersë and fourë digitsë. ~~~]</value>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>[[Enter a valid email address. ~~~~~~~~~~~]]</value>
   </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>[The sameë threeë valuesë, formattedë for thisë sessionë ~~~]</value>
+  <data name="Contacts.Contact" xml:space="preserve">
+    <value>[[Contact ~~~]]</value>
   </data>
-  <data name="Preview.Date" xml:space="preserve">
-    <value>[Due dateë ~~~]</value>
+  <data name="Contacts.Company" xml:space="preserve">
+    <value>[[Company ~~~]]</value>
   </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>[Unitsë orderedë ~~~]</value>
+  <data name="Contacts.City" xml:space="preserve">
+    <value>[[City ~~~]]</value>
   </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>[Orderë totalë ~~~]</value>
+  <data name="Contact.Dana" xml:space="preserve">
+    <value>[[Dana Rossi ~~~~]]</value>
   </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>[Activeë cultureë ~~~]</value>
+  <data name="Contact.Omar" xml:space="preserve">
+    <value>[[Omar Haddad ~~~~]]</value>
   </data>
-  <data name="Contacts.Name" xml:space="preserve">
-    <value>[Nameë ~~~]</value>
+  <data name="Contact.Priya" xml:space="preserve">
+    <value>[[Priya Nair ~~~~]]</value>
   </data>
-  <data name="Contacts.Role" xml:space="preserve">
-    <value>[Roleë ~~~]</value>
+  <data name="City.Milan" xml:space="preserve">
+    <value>[[Milan ~~~]]</value>
   </data>
-  <data name="Contacts.Phone" xml:space="preserve">
-    <value>[Phoneë ~~~]</value>
+  <data name="City.Doha" xml:space="preserve">
+    <value>[[Doha ~~~]]</value>
+  </data>
+  <data name="City.Pune" xml:space="preserve">
+    <value>[[Pune ~~~]]</value>
+  </data>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (United States)</value>
+  </data>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (Deutschland)</value>
+  </data>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (Canada)</value>
+  </data>
+  <data name="Language.ar-SA" xml:space="preserve">
+    <value>العربية (السعودية)</value>
+  </data>
+  <data name="Language.qps-ploc" xml:space="preserve">
+    <value>Pseudo (qps-ploc)</value>
+  </data>
+  <data name="Status.Direction" xml:space="preserve">
+    <value>[[Culture: {0} · direction: {1} ~~~~~~~~~~~~]]</value>
+  </data>
+  <data name="Direction.Ltr" xml:space="preserve">
+    <value>[[left to right ~~~~~]]</value>
+  </data>
+  <data name="Direction.Rtl" xml:space="preserve">
+    <value>[[right to left ~~~~~]]</value>
   </data>
 </root>

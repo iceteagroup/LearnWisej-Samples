@@ -58,50 +58,89 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="App.ProductName" xml:space="preserve">
+    <value>GlobalDesk</value>
+  </data>
+  <data name="Product.Framework" xml:space="preserve">
+    <value>Wisej.NET</value>
+  </data>
+  <data name="Format.CustomerCode" xml:space="preserve">
+    <value>AA0000</value>
+  </data>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (en-US)</value>
+  </data>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (de-DE)</value>
+  </data>
+  <data name="Language.it-IT" xml:space="preserve">
+    <value>Italiano (it-IT)</value>
+  </data>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (fr-CA)</value>
+  </data>
+  <data name="Language.ar-SA" xml:space="preserve">
+    <value>العربية (ar-SA)</value>
+  </data>
+  <data name="Language.qps-ploc" xml:space="preserve">
+    <value>Pseudo (qps-ploc)</value>
+  </data>
   <data name="App.Title" xml:space="preserve">
-    <value>جلوبال ديسك</value>
+    <value>GlobalDesk — مكتب الخدمة</value>
   </data>
-  <data name="Dashboard.Welcome" xml:space="preserve">
-    <value>مرحبا بك في جلوبال ديسك</value>
+  <data name="Dashboard.Title" xml:space="preserve">
+    <value>مكتب الخدمة</value>
   </data>
-  <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>إدارة العملاء، بلغتك</value>
-  </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>إعادة إنشاء المحرر</value>
-  </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>عرض مربع حوار Wisej.NET</value>
-  </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>آخر طلب</value>
+  <data name="Dashboard.WelcomeBack" xml:space="preserve">
+    <value>مرحبًا بعودتك، {0}.</value>
   </data>
   <data name="Dashboard.Language" xml:space="preserve">
     <value>اللغة</value>
   </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>يرجع إلى</value>
+  <data name="User.DisplayName" xml:space="preserve">
+    <value>آنا</value>
   </data>
-  <data name="Dashboard.Contacts" xml:space="preserve">
-    <value>جهات الاتصال</value>
+  <data name="Rail.Culture" xml:space="preserve">
+    <value>الثقافة</value>
   </data>
-  <data name="Navigation.Customers" xml:space="preserve">
+  <data name="Culture.Neutral" xml:space="preserve">
+    <value>مورد محايد</value>
+  </data>
+  <data name="Culture.Untranslated" xml:space="preserve">
+    <value>{0} مطابقة للمحايد</value>
+  </data>
+  <data name="Nav.Customers" xml:space="preserve">
     <value>العملاء</value>
   </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>رجوع</value>
+  <data name="Nav.Tickets" xml:space="preserve">
+    <value>التذاكر</value>
   </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>عميل</value>
+  <data name="Preview.Title" xml:space="preserve">
+    <value>معاينة الثقافة</value>
+  </data>
+  <data name="Preview.Date" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="Preview.Count" xml:space="preserve">
+    <value>الكمية</value>
+  </data>
+  <data name="Preview.Amount" xml:space="preserve">
+    <value>المبلغ</value>
+  </data>
+  <data name="Ticket.Open" xml:space="preserve">
+    <value>مفتوح</value>
+  </data>
+  <data name="Ticket.Closed" xml:space="preserve">
+    <value>مغلق</value>
+  </data>
+  <data name="CustomerEditor.Open" xml:space="preserve">
+    <value>فتح</value>
   </data>
   <data name="CustomerEditor.Name" xml:space="preserve">
     <value>الاسم</value>
   </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>رمز العميل</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>الدولة</value>
+  <data name="CustomerEditor.Email" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
   </data>
   <data name="CustomerEditor.Save" xml:space="preserve">
     <value>حفظ</value>
@@ -112,40 +151,22 @@
   <data name="CustomerEditor.Saved" xml:space="preserve">
     <value>تم حفظ العميل.</value>
   </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>تعذر حفظ العميل.</value>
-  </data>
   <data name="Customer.LastOrder" xml:space="preserve">
-    <value>آخر طلب: {0} بقيمة {1}</value>
+    <value>آخر طلب: {0} في {1}</value>
   </data>
   <data name="Validation.Required" xml:space="preserve">
     <value>هذا الحقل مطلوب.</value>
   </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>رمز العميل حرفان وأربعة أرقام.</value>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>أدخل عنوان بريد إلكتروني صالحًا.</value>
   </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>القيم الثلاث نفسها، منسقة لهذه الجلسة</value>
+  <data name="Status.Direction" xml:space="preserve">
+    <value>الثقافة: {0} · الاتجاه: {1}</value>
   </data>
-  <data name="Preview.Date" xml:space="preserve">
-    <value>تاريخ الاستحقاق</value>
+  <data name="Direction.Ltr" xml:space="preserve">
+    <value>من اليسار إلى اليمين</value>
   </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>الوحدات المطلوبة</value>
-  </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>إجمالي الطلب</value>
-  </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>الثقافة النشطة</value>
-  </data>
-  <data name="Contacts.Name" xml:space="preserve">
-    <value>الاسم</value>
-  </data>
-  <data name="Contacts.Role" xml:space="preserve">
-    <value>الدور</value>
-  </data>
-  <data name="Contacts.Phone" xml:space="preserve">
-    <value>الهاتف</value>
+  <data name="Direction.Rtl" xml:space="preserve">
+    <value>من اليمين إلى اليسار</value>
   </data>
 </root>

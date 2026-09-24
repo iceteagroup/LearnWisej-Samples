@@ -13,12 +13,13 @@ namespace GlobalDesk
     ///
     /// The word "constructed" is the whole lesson of Module 2. Designer resources are applied
     /// once, at construction. Change <c>Application.CurrentCulture</c> afterwards and this control
-    /// keeps every caption it was born with - which is why the dashboard has a button that throws
+    /// keeps every caption it was born with - which is why the host page has a button that throws
     /// it away and builds a new one.
     ///
     /// Messages the control produces at run time are a different matter: they come from
     /// <see cref="Texts"/>, the shared resource, because they are not designed properties of any
-    /// control.
+    /// control - and because a shared resource is re-read on every lookup, so it follows a culture
+    /// change without a rebuild.
     /// </summary>
     public partial class CustomerEditor : UserControl
     {
@@ -26,14 +27,24 @@ namespace GlobalDesk
         {
             InitializeComponent();
 
-            // Country names are data with a display form, not designed captions, so they are
-            // filled in code rather than stored in the designer resource.
-            this.cboCountry.Items.AddRange(new object[] { "Germany", "France", "Italy", "United Kingdom" });
-            this.cboCountry.SelectedIndex = 0;
+            // Customer data, not captions: the same three values in every language.
+            this.txtCode.Text = "GD-10482";
+            this.txtName.Text = "Nordwind Logistik GmbH";
+            this.txtCity.Text = "Hamburg";
         }
 
-        /// <summary>The culture this instance was constructed under - the point of the Module 2 demo.</summary>
+        /// <summary>
+        /// The culture this instance was constructed under - the point of the Module 2 demo.
+        /// The host page reports it, so "the screen is still English" is a fact rather than a
+        /// complaint.
+        /// </summary>
         public string BuiltForCulture { get; } = Application.CurrentCulture.Name;
+
+        /// <summary>
+        /// Raised with a finished, already-localized sentence whenever the editor has something
+        /// to say. The control does not own a status strip; the page it is hosted in does.
+        /// </summary>
+        public event Action<string> Message;
 
         private void btnSave_Click(object sender, EventArgs e)
         {
@@ -41,18 +52,18 @@ namespace GlobalDesk
             // than from this control's designer resource.
             if (string.IsNullOrWhiteSpace(this.txtName.Text))
             {
-                this.lblMessage.Text = Texts.Get("Validation.Required");
+                this.Message?.Invoke(Texts.Get("Validation.Required"));
                 return;
             }
 
-            this.lblMessage.Text = Texts.Get("CustomerEditor.Saved");
+            this.Message?.Invoke(Texts.Get("CustomerEditor.Saved"));
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
             this.txtName.Text = string.Empty;
-            this.txtCode.Text = string.Empty;
-            this.lblMessage.Text = string.Empty;
+            this.txtCity.Text = string.Empty;
+            this.txtNotes.Text = string.Empty;
         }
     }
 }

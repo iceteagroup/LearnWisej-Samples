@@ -58,95 +58,138 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="App.Title" xml:space="preserve">
+  <data name="App.ProductName" xml:space="preserve">
     <value>GlobalDesk</value>
+    <comment>The product name. Marked invariant: the same word in every language, and it must never come back translated.</comment>
   </data>
-  <data name="Dashboard.Welcome" xml:space="preserve">
-    <value>Welcome to GlobalDesk</value>
+  <data name="App.Title" xml:space="preserve">
+    <value>GlobalDesk — Dashboard</value>
+    <comment>Application bar title. Keep the product name; translate what follows the dash.</comment>
   </data>
-  <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>Customer operations, in your language</value>
+  <data name="Dashboard.WelcomeBack" xml:space="preserve">
+    <value>Welcome back, {0}</value>
+    <comment>Greeting on the dashboard. {0} is the signed-in user's display name. Arabic puts the name after a comma too; keep the placeholder wherever the greeting needs it.</comment>
   </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>Recreate the editor</value>
+  <data name="User.DisplayName" xml:space="preserve">
+    <value>Dana</value>
+    <comment>The signed-in user's given name as this session's language writes it. A transliteration, not a translation.</comment>
   </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>Show a Wisej.NET dialog</value>
+  <data name="Nav.Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+    <comment>Navigation entry. A noun - the overview screen.</comment>
   </data>
-  <data name="Navigation.Customers" xml:space="preserve">
+  <data name="Nav.Customers" xml:space="preserve">
     <value>Customers</value>
+    <comment>Navigation entry. A noun, plural.</comment>
   </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>Back</value>
+  <data name="Nav.Contacts" xml:space="preserve">
+    <value>Contacts</value>
+    <comment>Navigation entry. People at customer companies, not the verb.</comment>
   </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>Customer</value>
-  </data>
-  <data name="CustomerEditor.Name" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>Customer code</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>Country</value>
-  </data>
-  <data name="CustomerEditor.Save" xml:space="preserve">
-    <value>Save</value>
-  </data>
-  <data name="CustomerEditor.Cancel" xml:space="preserve">
-    <value>Cancel</value>
+  <data name="Nav.Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Navigation entry. Application settings.</comment>
   </data>
   <data name="CustomerEditor.Saved" xml:space="preserve">
     <value>Customer saved.</value>
-  </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>The customer could not be saved.</value>
+    <comment>Confirmation after a successful save. One whole sentence.</comment>
   </data>
   <data name="Customer.LastOrder" xml:space="preserve">
-    <value>Last order: {0} for {1}</value>
-    <comment>{0} is a date, {1} is a currency amount. Both are formatted by the caller for the active culture - do not reorder them in a way that separates them from their captions.</comment>
+    <value>{0} last ordered on {1}.</value>
+    <comment>One whole sentence. {0} is the customer name, {1} the date of the last order, already formatted for the reader. Both placeholders must appear.</comment>
   </data>
   <data name="Validation.Required" xml:space="preserve">
     <value>This field is required.</value>
+    <comment>Validation message, one whole sentence.</comment>
   </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>A customer code is two letters and four digits.</value>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>Enter a valid email address.</value>
+    <comment>Validation message when the address does not parse. One whole sentence, imperative.</comment>
   </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>The same three values, formatted for this session</value>
+  <data name="Contacts.Contact" xml:space="preserve">
+    <value>Contact</value>
+    <comment>Grid column header. The person, singular.</comment>
   </data>
-  <data name="Preview.Date" xml:space="preserve">
-    <value>Due date</value>
+  <data name="Contacts.Company" xml:space="preserve">
+    <value>Company</value>
+    <comment>Grid column header. The organisation the contact works for.</comment>
   </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>Units ordered</value>
+  <data name="Contacts.City" xml:space="preserve">
+    <value>City</value>
+    <comment>Grid column header. The town, not the municipality.</comment>
   </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>Order total</value>
+  <data name="Contact.Dana" xml:space="preserve">
+    <value>Dana Rossi</value>
+    <comment>A person's display name in this language's script. Data identifies the row; this is only how the name is written for this reader.</comment>
   </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>Active culture</value>
+  <data name="Contact.Omar" xml:space="preserve">
+    <value>Omar Haddad</value>
+    <comment>A person's display name in this language's script - see Contact.Dana.</comment>
   </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>Last order</value>
+  <data name="Contact.Priya" xml:space="preserve">
+    <value>Priya Nair</value>
+    <comment>A person's display name in this language's script - see Contact.Dana.</comment>
   </data>
-  <data name="Dashboard.Language" xml:space="preserve">
-    <value>Language</value>
+  <data name="City.Milan" xml:space="preserve">
+    <value>Milan</value>
+    <comment>City name. Many languages have their own form (Mailand, Milano); use it.</comment>
   </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>Falls back to</value>
+  <data name="City.Doha" xml:space="preserve">
+    <value>Doha</value>
+    <comment>City name - see City.Milan.</comment>
   </data>
-  <data name="Dashboard.Contacts" xml:space="preserve">
-    <value>Contacts</value>
+  <data name="City.Pune" xml:space="preserve">
+    <value>Pune</value>
+    <comment>City name - see City.Milan.</comment>
   </data>
-  <data name="Contacts.Name" xml:space="preserve">
-    <value>Name</value>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (United States)</value>
+    <comment>Entry in the language picker. Invariant: a language list shows every language in its own language.</comment>
   </data>
-  <data name="Contacts.Role" xml:space="preserve">
-    <value>Role</value>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (Deutschland)</value>
+    <comment>Entry in the language picker. Invariant - see Language.en-US.</comment>
   </data>
-  <data name="Contacts.Phone" xml:space="preserve">
-    <value>Phone</value>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (Canada)</value>
+    <comment>Entry in the language picker. Invariant - see Language.en-US.</comment>
   </data>
+  <data name="Language.ar-SA" xml:space="preserve">
+    <value>العربية (السعودية)</value>
+    <comment>Entry in the language picker. Invariant - see Language.en-US.</comment>
+  </data>
+  <data name="Language.qps-ploc" xml:space="preserve">
+    <value>Pseudo (qps-ploc)</value>
+    <comment>Entry in the language picker. A test locale, not a language. Invariant.</comment>
+  </data>
+  <data name="Status.Direction" xml:space="preserve">
+    <value>Culture: {0} · direction: {1}</value>
+    <comment>Status strip. {0} is a culture name and is never translated; {1} is Direction.Ltr or Direction.Rtl.</comment>
+  </data>
+  <data name="Direction.Ltr" xml:space="preserve">
+    <value>left to right</value>
+    <comment>Reading direction, lower case, used inside Status.Direction.</comment>
+  </data>
+  <data name="Direction.Rtl" xml:space="preserve">
+    <value>right to left</value>
+    <comment>Reading direction, lower case, used inside Status.Direction.</comment>
+  </data>
+  <metadata name="App.ProductName.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.en-US.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.de-DE.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.fr-CA.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.ar-SA.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.qps-ploc.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
 </root>

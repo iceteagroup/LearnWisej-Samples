@@ -58,31 +58,16 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="lblTitle.Text" xml:space="preserve">
-    <value>Kunde</value>
-  </data>
   <data name="lblName.Text" xml:space="preserve">
     <value>Name</value>
   </data>
-  <data name="lblCode.Text" xml:space="preserve">
-    <value>Kundennummer</value>
-  </data>
-  <data name="lblCountry.Text" xml:space="preserve">
-    <value>Land</value>
+  <data name="lblEmail.Text" xml:space="preserve">
+    <value>E-Mail</value>
   </data>
   <data name="btnSave.Text" xml:space="preserve">
     <value>Speichern</value>
   </data>
-  <data name="btnSave.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 38</value>
-  </data>
   <data name="btnCancel.Text" xml:space="preserve">
     <value>Abbrechen</value>
-  </data>
-  <data name="btnCancel.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 38</value>
-  </data>
-  <data name="btnCancel.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>336, 194</value>
   </data>
 </root>

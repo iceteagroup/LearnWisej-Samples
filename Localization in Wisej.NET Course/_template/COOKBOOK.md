@@ -145,6 +145,33 @@ as `GlobalDesk.Resources.de` but Wisej still uses its own. Wisej's are under bas
 `Wisej.Resources` and an application resource gets its root namespace prefixed, so the names do not
 meet. Left in the sample with the evidence in `Module 3/.../docs/TextKinds.md`.
 
+## Building the screen the walkthrough shows
+
+The videos measure in CSS pixels; Wisej sizes fonts in points. `Desk.Px(15)` in `DeskTheme.cs` is
+`new Font("default", 15 * 0.75f)`, and a value copied straight out of a mock then lands where the
+mock put it. `Desk.Mono` is the same for the code font the previews use to compare separators.
+
+- **Docking order is reverse of `Controls.Add`.** The control added *last* docks *first*, so it
+  claims the outer edge. A `Fill` control is added first and gets what is left. Three `Top`
+  panels added in the order bottom, middle, top read down the screen correctly.
+- **Do not set `Size` on the `Page`.** A `MainPage` with an explicit size stops filling the
+  browser and the window gains a scrollbar. Let it fill.
+- **`Anchor` measures its margin from the design-time size**, which the browser is never going to
+  match, so an anchored control placed at `x = 1086` ends up off-screen. Put it in a panel docked
+  to the edge instead.
+- `CssStyle` is the way to a `border-radius`, a one-sided border or `text-transform`; there is no
+  property for any of them. `border-inline-end` rather than `border-right` keeps a rail's divider
+  on the correct side under RTL.
+- An `AutoSize` `Label` docked `Left` **wraps** instead of growing. Give it an explicit width, or
+  the longest translation turns a one-line heading into two.
+- `Application.RightToLeft` is a **`bool`** in Wisej, not a `RightToLeft` enum value.
+- `CultureInfo.GetCultureInfo("qps-ploc").Name` comes back as **`qps-Ploc`**. Compare culture
+  names with `StringComparison.OrdinalIgnoreCase` or a picker built from the lower-case string
+  reports the session's culture as unknown.
+- `Wisej.Resources.ResourceManager.GetString(key, culture)` exists, and
+  `GetString(key, CultureInfo.InvariantCulture)` reads the neutral value - which is all an
+  "untranslated" report needs.
+
 ## Other gotchas
 
 - A `--` inside an XML comment breaks the `.csproj` with `MSB4025`.

@@ -1,3 +1,6 @@
+using System.Drawing;
+using Wisej.Web;
+
 namespace GlobalDesk
 {
     partial class CustomerEditor
@@ -16,16 +19,14 @@ namespace GlobalDesk
         #region Wisej.NET Designer generated code
 
         //
-        // This is what the designer writes once Localizable is set to true.
+        // Still Localizable, as Module 2 left it: every designed caption, size and position lives
+        // in CustomerEditor.resx and its German companion, and ApplyResources puts them on the
+        // controls when the control is constructed.
         //
-        // Every localizable property - Text, Size, Location, RightToLeft and the rest - moves out
-        // of this file and into CustomerEditor.resx, and ApplyResources puts it back at run time
-        // from whichever .resx matches the current culture. Nothing below says "Save" or "150, 38";
-        // it says "look up btnSave".
-        //
-        // The consequence that catches everyone: ApplyResources runs here, in InitializeComponent,
-        // which means it runs when the control is CONSTRUCTED. A culture change afterwards does
-        // not re-run it. That is why the page has a Recreate button.
+        // What Module 3 adds is the other half of the screen - the last-order sentence, the save
+        // confirmation and the validation message. Those are NOT designed properties of any
+        // control: they are produced at run time, and they come from the shared Strings.resx
+        // through Texts.Get. Their labels are created here with no text at all.
         //
         private void InitializeComponent()
         {
@@ -33,101 +34,137 @@ namespace GlobalDesk
             System.ComponentModel.ComponentResourceManager resources =
                 new System.ComponentModel.ComponentResourceManager(typeof(CustomerEditor));
 
-            this.lblTitle = new Wisej.Web.Label();
             this.lblName = new Wisej.Web.Label();
             this.txtName = new Wisej.Web.TextBox();
-            this.lblCode = new Wisej.Web.Label();
-            this.txtCode = new Wisej.Web.TextBox();
-            this.lblCountry = new Wisej.Web.Label();
-            this.cboCountry = new Wisej.Web.ComboBox();
+            this.lblEmail = new Wisej.Web.Label();
+            this.txtEmail = new Wisej.Web.TextBox();
+            this.lblNotes = new Wisej.Web.Label();
+            this.txtNotes = new Wisej.Web.TextBox();
+            this.lblValidation = new Wisej.Web.Label();
+            this.lblLastOrder = new Wisej.Web.Label();
+            this.lblMessage = new Wisej.Web.Label();
             this.btnSave = new Wisej.Web.Button();
             this.btnCancel = new Wisej.Web.Button();
-            this.lblMessage = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblTitle
-            //
-            resources.ApplyResources(this.lblTitle, "lblTitle");
-            this.lblTitle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Name = "lblTitle";
-            //
-            // lblName
+            // the three rows - designed captions, from the designer resource
             //
             resources.ApplyResources(this.lblName, "lblName");
-            this.lblName.Name = "lblName";
-            //
-            // txtName
-            //
+            SetFieldLabel(this.lblName, "lblName");
             resources.ApplyResources(this.txtName, "txtName");
-            this.txtName.Name = "txtName";
+            SetField(this.txtName, "txtName");
+
+            resources.ApplyResources(this.lblEmail, "lblEmail");
+            SetFieldLabel(this.lblEmail, "lblEmail");
+            resources.ApplyResources(this.txtEmail, "txtEmail");
+            SetField(this.txtEmail, "txtEmail");
+
+            resources.ApplyResources(this.lblNotes, "lblNotes");
+            SetFieldLabel(this.lblNotes, "lblNotes");
+            resources.ApplyResources(this.txtNotes, "txtNotes");
+            SetField(this.txtNotes, "txtNotes");
             //
-            // lblCode
+            // lblValidation - a run-time message, so it has no designed text
             //
-            resources.ApplyResources(this.lblCode, "lblCode");
-            this.lblCode.Name = "lblCode";
+            this.lblValidation.Name = "lblValidation";
+            this.lblValidation.AutoSize = false;
+            this.lblValidation.Location = new Point(442, 0);
+            this.lblValidation.Size = new Size(400, 50);
+            this.lblValidation.Font = Desk.Px(13.5F, FontStyle.Bold);
+            this.lblValidation.ForeColor = Desk.BadInk;
+            this.lblValidation.TextAlign = ContentAlignment.MiddleLeft;
             //
-            // txtCode
+            // lblLastOrder - one composed sentence, built at run time
             //
-            resources.ApplyResources(this.txtCode, "txtCode");
-            this.txtCode.Name = "txtCode";
+            this.lblLastOrder.Name = "lblLastOrder";
+            this.lblLastOrder.AutoSize = false;
+            this.lblLastOrder.Location = new Point(0, 160);
+            this.lblLastOrder.Size = new Size(842, 24);
+            this.lblLastOrder.Font = Desk.Px(13.5F, FontStyle.Italic);
+            this.lblLastOrder.ForeColor = Desk.FieldInk;
+            this.lblLastOrder.TextAlign = ContentAlignment.MiddleLeft;
             //
-            // lblCountry
+            // lblMessage - the save result, shown as a pill
             //
-            resources.ApplyResources(this.lblCountry, "lblCountry");
-            this.lblCountry.Name = "lblCountry";
-            //
-            // cboCountry
-            //
-            resources.ApplyResources(this.cboCountry, "cboCountry");
-            this.cboCountry.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.cboCountry.Name = "cboCountry";
+            this.lblMessage.Name = "lblMessage";
+            this.lblMessage.AutoSize = true;
+            this.lblMessage.Visible = false;
+            this.lblMessage.Location = new Point(0, 196);
+            this.lblMessage.Font = Desk.Px(13.5F, FontStyle.Bold);
+            this.lblMessage.Padding = new Wisej.Web.Padding(14, 7, 14, 7);
+            this.lblMessage.TextAlign = ContentAlignment.MiddleCenter;
             //
             // btnSave
             //
             resources.ApplyResources(this.btnSave, "btnSave");
             this.btnSave.Name = "btnSave";
+            this.btnSave.BackColor = Desk.Accent;
+            this.btnSave.ForeColor = Color.White;
+            this.btnSave.Font = Desk.Px(13.5F, FontStyle.Bold);
+            this.btnSave.CssStyle = "border:1px solid #1565d8;border-radius:7px";
             this.btnSave.Click += this.btnSave_Click;
             //
             // btnCancel
             //
             resources.ApplyResources(this.btnCancel, "btnCancel");
             this.btnCancel.Name = "btnCancel";
+            this.btnCancel.BackColor = Color.White;
+            this.btnCancel.ForeColor = Desk.FieldInk;
+            this.btnCancel.Font = Desk.Px(13.5F, FontStyle.Bold);
+            this.btnCancel.CssStyle = "border:1px solid #cdd9e6;border-radius:7px";
             this.btnCancel.Click += this.btnCancel_Click;
-            //
-            // lblMessage
-            //
-            resources.ApplyResources(this.lblMessage, "lblMessage");
-            this.lblMessage.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
-            this.lblMessage.Name = "lblMessage";
             //
             // CustomerEditor
             //
             resources.ApplyResources(this, "$this");
             this.Name = "CustomerEditor";
-            this.Controls.Add(this.lblMessage);
-            this.Controls.Add(this.btnCancel);
-            this.Controls.Add(this.btnSave);
-            this.Controls.Add(this.cboCountry);
-            this.Controls.Add(this.lblCountry);
-            this.Controls.Add(this.txtCode);
-            this.Controls.Add(this.lblCode);
-            this.Controls.Add(this.txtName);
+            this.BackColor = Color.White;
             this.Controls.Add(this.lblName);
-            this.Controls.Add(this.lblTitle);
+            this.Controls.Add(this.txtName);
+            this.Controls.Add(this.lblValidation);
+            this.Controls.Add(this.lblEmail);
+            this.Controls.Add(this.txtEmail);
+            this.Controls.Add(this.lblNotes);
+            this.Controls.Add(this.txtNotes);
+            this.Controls.Add(this.lblLastOrder);
+            this.Controls.Add(this.lblMessage);
+            this.Controls.Add(this.btnSave);
+            this.Controls.Add(this.btnCancel);
             this.ResumeLayout(false);
+        }
+
+        /// <summary>The caption column of one row. Its text, position and size come from the
+        /// resource; its colour and font do not, because neither has a German variant.</summary>
+        private static void SetFieldLabel(Wisej.Web.Label label, string name)
+        {
+            label.Name = name;
+            label.AutoSize = false;
+            label.Font = Desk.Px(14.5F);
+            label.ForeColor = Desk.FieldInk;
+            label.TextAlign = ContentAlignment.MiddleLeft;
+        }
+
+        /// <summary>The editor column of one row.</summary>
+        private static void SetField(Wisej.Web.TextBox box, string name)
+        {
+            box.Name = name;
+            box.Font = Desk.Mono(14.5F);
+            box.ForeColor = Desk.Body;
+            box.CssStyle = "border:1.5px solid #c9d4e0;border-radius:6px";
         }
 
         #endregion
 
-        private Wisej.Web.Label lblTitle;
         private Wisej.Web.Label lblName;
         private Wisej.Web.TextBox txtName;
-        private Wisej.Web.Label lblCode;
-        private Wisej.Web.TextBox txtCode;
-        private Wisej.Web.Label lblCountry;
-        private Wisej.Web.ComboBox cboCountry;
+        private Wisej.Web.Label lblEmail;
+        private Wisej.Web.TextBox txtEmail;
+        private Wisej.Web.Label lblNotes;
+        private Wisej.Web.TextBox txtNotes;
+        private Wisej.Web.Label lblValidation;
+        private Wisej.Web.Label lblLastOrder;
+        private Wisej.Web.Label lblMessage;
         private Wisej.Web.Button btnSave;
         private Wisej.Web.Button btnCancel;
-        private Wisej.Web.Label lblMessage;
     }
 }

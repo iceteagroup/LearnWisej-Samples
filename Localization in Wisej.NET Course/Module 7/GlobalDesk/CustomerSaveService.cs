@@ -14,7 +14,7 @@ namespace GlobalDesk
     {
         Saved,
         NameRequired,
-        CodeFormatInvalid,
+        EmailInvalid,
     }
 
     /// <summary>
@@ -27,15 +27,18 @@ namespace GlobalDesk
     /// </summary>
     public static class CustomerSaveService
     {
-        private static readonly Regex CodePattern = new Regex("^[A-Za-z]{2}[0-9]{4}$", RegexOptions.Compiled);
+        // The rule itself, not a message about the rule. It is not translated, because it is not
+        // words: it is the definition of a valid address.
+        private static readonly Regex EmailPattern =
+            new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
-        public static SaveResult Save(string name, string code)
+        public static SaveResult Save(string name, string email)
         {
             if (string.IsNullOrWhiteSpace(name))
                 return SaveResult.NameRequired;
 
-            if (!string.IsNullOrWhiteSpace(code) && !CodePattern.IsMatch(code))
-                return SaveResult.CodeFormatInvalid;
+            if (!string.IsNullOrWhiteSpace(email) && !EmailPattern.IsMatch(email))
+                return SaveResult.EmailInvalid;
 
             // A real implementation would persist here.
             return SaveResult.Saved;
@@ -45,6 +48,10 @@ namespace GlobalDesk
         /// The one place a <see cref="SaveResult"/> becomes a resource key. Kept beside the enum so
         /// adding a result and forgetting its caption is a switch the compiler complains about,
         /// rather than a blank message a user reports.
+        ///
+        /// A <c>switch</c> rather than <c>"Validation." + result</c> on purpose: string
+        /// concatenation compiles whatever you rename the enum to and fails at run time with a
+        /// missing key, while this fails at the point of the change.
         /// </summary>
         public static string ResourceKeyFor(SaveResult result)
         {
@@ -52,7 +59,7 @@ namespace GlobalDesk
             {
                 case SaveResult.Saved: return "CustomerEditor.Saved";
                 case SaveResult.NameRequired: return "Validation.Required";
-                case SaveResult.CodeFormatInvalid: return "Validation.CodeFormat";
+                case SaveResult.EmailInvalid: return "Validation.Email";
                 default: throw new ArgumentOutOfRangeException(nameof(result), result, "no resource key for this result");
             }
         }

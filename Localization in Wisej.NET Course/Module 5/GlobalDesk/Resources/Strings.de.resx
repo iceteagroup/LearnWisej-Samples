@@ -58,95 +58,88 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="App.Title" xml:space="preserve">
+  <data name="App.ProductName" xml:space="preserve">
     <value>GlobalDesk</value>
   </data>
-  <data name="Dashboard.Welcome" xml:space="preserve">
-    <value>Willkommen bei GlobalDesk</value>
+  <data name="App.Title" xml:space="preserve">
+    <value>GlobalDesk — Übersicht</value>
   </data>
-  <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>Kundenverwaltung, in Ihrer Sprache</value>
+  <data name="Dashboard.WelcomeBack" xml:space="preserve">
+    <value>Willkommen zurück, {0}</value>
   </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>Editor neu erstellen</value>
+  <data name="User.DisplayName" xml:space="preserve">
+    <value>Dana</value>
   </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>Einen Wisej.NET-Dialog anzeigen</value>
+  <data name="Nav.Dashboard" xml:space="preserve">
+    <value>Übersicht</value>
   </data>
-  <data name="Navigation.Customers" xml:space="preserve">
-    <value>Kunden</value>
+  <data name="Nav.Customers" xml:space="preserve">
+    <value>Kundenverwaltung</value>
   </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>Zurück</value>
+  <data name="Nav.Contacts" xml:space="preserve">
+    <value>Kontaktverzeichnis</value>
   </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>Kunde</value>
-  </data>
-  <data name="CustomerEditor.Name" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>Kundennummer</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>Land</value>
-  </data>
-  <data name="CustomerEditor.Save" xml:space="preserve">
-    <value>Speichern</value>
-  </data>
-  <data name="CustomerEditor.Cancel" xml:space="preserve">
-    <value>Abbrechen</value>
+  <data name="Nav.Settings" xml:space="preserve">
+    <value>Einstellungen</value>
   </data>
   <data name="CustomerEditor.Saved" xml:space="preserve">
     <value>Kunde gespeichert.</value>
   </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>Der Kunde konnte nicht gespeichert werden.</value>
-  </data>
   <data name="Customer.LastOrder" xml:space="preserve">
-    <value>Letzte Bestellung: {0} über {1}</value>
-    <comment>{0} ist ein Datum, {1} ein Betrag.</comment>
+    <value>{0} hat zuletzt am {1} bestellt.</value>
   </data>
   <data name="Validation.Required" xml:space="preserve">
     <value>Dieses Feld ist erforderlich.</value>
   </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>Eine Kundennummer besteht aus zwei Buchstaben und vier Ziffern.</value>
+  <data name="Contacts.Contact" xml:space="preserve">
+    <value>Kontakt</value>
   </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>Dieselben drei Werte, für diese Sitzung formatiert</value>
+  <data name="Contacts.Company" xml:space="preserve">
+    <value>Unternehmen</value>
   </data>
-  <data name="Preview.Date" xml:space="preserve">
-    <value>Fälligkeitsdatum</value>
+  <data name="Contacts.City" xml:space="preserve">
+    <value>Stadt</value>
   </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>Bestellte Einheiten</value>
+  <data name="Contact.Dana" xml:space="preserve">
+    <value>Dana Rossi</value>
   </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>Bestellwert</value>
+  <data name="Contact.Omar" xml:space="preserve">
+    <value>Omar Haddad</value>
   </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>Aktive Kultur</value>
+  <data name="Contact.Priya" xml:space="preserve">
+    <value>Priya Nair</value>
   </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>Letzte Bestellung</value>
+  <data name="City.Milan" xml:space="preserve">
+    <value>Mailand</value>
   </data>
-  <data name="Dashboard.Language" xml:space="preserve">
-    <value>Sprache</value>
+  <data name="City.Doha" xml:space="preserve">
+    <value>Doha</value>
   </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>Greift zurück auf</value>
+  <data name="City.Pune" xml:space="preserve">
+    <value>Pune</value>
   </data>
-  <data name="Dashboard.Contacts" xml:space="preserve">
-    <value>Kontakte</value>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (United States)</value>
   </data>
-  <data name="Contacts.Name" xml:space="preserve">
-    <value>Name</value>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (Deutschland)</value>
   </data>
-  <data name="Contacts.Role" xml:space="preserve">
-    <value>Rolle</value>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (Canada)</value>
   </data>
-  <data name="Contacts.Phone" xml:space="preserve">
-    <value>Telefon</value>
+  <data name="Language.ar-SA" xml:space="preserve">
+    <value>العربية (السعودية)</value>
+  </data>
+  <data name="Language.qps-ploc" xml:space="preserve">
+    <value>Pseudo (qps-ploc)</value>
+  </data>
+  <data name="Status.Direction" xml:space="preserve">
+    <value>Kultur: {0} · Richtung: {1}</value>
+  </data>
+  <data name="Direction.Ltr" xml:space="preserve">
+    <value>von links nach rechts</value>
+  </data>
+  <data name="Direction.Rtl" xml:space="preserve">
+    <value>von rechts nach links</value>
   </data>
 </root>

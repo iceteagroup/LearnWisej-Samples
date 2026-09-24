@@ -1,11 +1,15 @@
 # GlobalDesk · Localization in Wisej.NET · Module 3
 
-Local lab build for **Module 3 · Shared Resources and Translated Text**. `Strings.de.resx` beside
-the neutral file with the same keys translated, a `Customer.LastOrder` sentence built from one
-resource string with two placeholders, a save service that returns a result code rather than an
-English sentence, and a Wisej.NET dialog that puts product text and framework text side by side.
-The Module 1-2 dashboard and editor are unchanged.
-This folder is the complete application at this point in the course, with its own solution and port.
+Local lab build for **Module 3 · Application Resources, ResourceManager and Wisej System Text**.
+The GlobalDesk customer editor exactly as the walkthrough shows it: the blue application bar, the
+**Name** / **Email** / **Notes** rows, the italic last-order sentence, the green confirmation pill
+and the **Save** / **Cancel** pair — plus the Wisej.NET `MessageBox` whose buttons are the
+framework's own text.
+
+The designed captions still come from `CustomerEditor.resx` (Module 2). What Module 3 adds is
+everything the designer can never reach: `Resources/Strings.de.resx` beside the neutral file, a
+`Customer.LastOrder` sentence with two placeholders built through `string.Format`, and a save
+service that returns a `SaveResult` value the UI turns into words.
 
 ## Run it
 
@@ -14,51 +18,46 @@ cd "Localization in Wisej.NET Course/Module 3/GlobalDesk"
 dotnet run -f net10.0 --urls http://localhost:6103
 ```
 
-Open <http://localhost:6103>.
+Open <http://localhost:6103>, and <http://localhost:6103/?lang=de-DE> in a **new tab** for the
+German session. `culture` is `auto` in `Default.json`, so each session starts from the browser's
+`Accept-Language` and `?lang=` overrides it for that session only — reloading the same tab
+reconnects to the session you already have.
 
 ## What to try
 
 | Action | Expected result |
 |---|---|
-| Switch to **de-DE** | Every caption on the page turns German now - `Strings.de.resx` exists. The editor still does not; press Recreate. |
-| Press **Letzte Bestellung** | One sentence from one resource string: `Letzte Bestellung: 15.03.2026 über 1.850,75 €`. Switch back to English and it reads `Last order: 3/15/2026 for $1,850.75`. |
-| Press **Save** with an empty name | `Dieses Feld ist erforderlich.` - and the service returned `SaveResult.NameRequired`, not a German sentence. |
-| Type `XX99` as the code and Save | The code-format message, from the same route. |
-| Press **Einen Wisej.NET-Dialog anzeigen** | Title and message German from our resource; buttons `Ja` / `Nein` German from Wisej.NET's own, with no work from us. |
-| Read the status line after that dialog | It says the project's `Resources.de.resx` override did **not** replace those buttons. That is the honest result - see the note. |
+| Read the italic line | `Anna Weber last ordered on 9/14/2026.` — one resource string with `{0}` and `{1}`, not three fragments. |
+| Open `?lang=de-DE` in a new tab | `Anna Weber hat zuletzt am 14.09.2026 bestellt.` The date moved into the middle of the sentence and the verb went to the end. |
+| Press **Save** | The green pill, then a Wisej.NET `MessageBox`. |
+| Press **Save** under German | `Kunde gespeichert.` from `Strings.de.resx`, and `OK` / `Abbrechen` on the dialog — Wisej.NET's own German, with no resource file of ours involved. |
+| Clear **Name** and press **Save** | The field turns red and `This field is required.` appears beside it, from `Validation.Required`. |
+| Type a broken address and press **Save** under German | `Enter a valid email address.` — in English. `Validation.Email` is missing from the German file on purpose: .NET falls back to the neutral value and nothing throws. |
+| Two tabs, two languages, at once | One server process, two sessions, two cultures. |
 
 ## Lab tasks → where in the code
 
 | Deliverable | Implementation |
 |---|---|
-| `Strings.de.resx` with the same keys translated | [Resources/Strings.de.resx](GlobalDesk/Resources/Strings.de.resx) |
-| `Customer.LastOrder` built with `string.Format` and the active culture | `ShowLastOrder` in [CustomerEditor.cs](GlobalDesk/CustomerEditor.cs) |
-| A save service returning a result code, not a sentence | [CustomerSaveService.cs](GlobalDesk/CustomerSaveService.cs) |
-| An application resource overriding a Wisej system label, shown in a MessageBox | [Resources.de.resx](GlobalDesk/Resources.de.resx) and `btnSystemText_Click` — **attempted, does not take effect**, see the note |
-| Lab note separating product, system and diagnostic text | [docs/TextKinds.md](GlobalDesk/docs/TextKinds.md) |
+| `Strings.de.resx` with the same keys | [Resources/Strings.de.resx](GlobalDesk/Resources/Strings.de.resx) — 22 of the neutral file's 23 |
+| `Customer.LastOrder` with two placeholders and a translator comment | [Resources/Strings.resx](GlobalDesk/Resources/Strings.resx) |
+| Built with `string.Format` and the session culture | `ShowLastOrder` in [CustomerEditor.cs](GlobalDesk/CustomerEditor.cs) |
+| Save service that returns a result code, not a sentence | [CustomerSaveService.cs](GlobalDesk/CustomerSaveService.cs) |
+| Every message routed through `Texts.Get` | `btnSave_Click` in [CustomerEditor.cs](GlobalDesk/CustomerEditor.cs) |
+| `Resources.de.resx` overriding a Wisej system label | [Resources.de.resx](GlobalDesk/Resources.de.resx) — **and it does not take effect**, see the lab note |
+| Lab note on product text, system text and diagnostic text | [docs/TextKinds.md](GlobalDesk/docs/TextKinds.md) |
 
-## Known gap
+## Notes
 
-The Wisej system-label override does not work in this sample. Two namings were tried and both were
-verified against the built assembly: `Resources-de.resx` lands in the main assembly because the
-hyphen is not a culture, and `Resources.de.resx` lands correctly in the `de` satellite but Wisej
-still uses its own captions. The file, the attempt and the things left to check are documented in
-[docs/TextKinds.md](GlobalDesk/docs/TextKinds.md), and the application reports what is really on
-the buttons rather than claiming a success it did not have.
-
-Everything else in the module works and is verified.
-
-## Notes for anyone extending the resources
-
-- **Wisej.NET already ships translations for its own strings** - de, es, fr, it, ja, ko, pl, pt,
-  pt-BR, ru, tr, cs, zh-Hans, zh-Hant. Check before translating a framework label.
-- A `.resx` whose culture is separated by a **hyphen** is not a culture-specific resource. MSBuild
-  only builds a satellite for `Name.<culture>.resx` with a dot.
-- One resource string per sentence, with placeholders. Never concatenate fragments - word order is
-  not universal, and a translator needs the whole sentence.
-- Pass the culture to `string.Format` as well as to each `ToString`. Without it `string.Format`
-  uses the thread's culture.
-- Put a `<comment>` on any key whose meaning is not obvious out of context, especially ones with
-  placeholders. It is the only context a translator gets.
-- Domain code returns codes; the UI turns codes into words. `CustomerSaveService` never mentions a
-  language and can be tested without one.
+- `Texts.Get` is unchanged from Module 1: one `Wisej.Resources.ResourceManager` over the base name
+  `GlobalDesk.Resources.Strings`, and a bracketed `[key]` when a lookup comes back empty.
+- A missing **translation** and a missing **key** are different failures. The first falls back to
+  the neutral value silently — `Validation.Email` in this build proves it. The second shows the
+  bracketed marker. Only the second is visible without looking for it.
+- The culture goes to `string.Format` as well as to each `ToString`. Without it, `string.Format`
+  uses the thread's culture, which in a server application is whatever that thread last did.
+- The `Resources.de.resx` override of Wisej's own `yes` / `no` labels **does not work here**, and
+  the lab note says exactly what was tried and what was verified. Wisej already ships German for
+  those buttons, which is why they are German anyway.
+- Module 2's culture chip is gone from this screen: the walkthrough switches this module through
+  the address bar instead. Module 4 puts a real language picker on the dashboard.

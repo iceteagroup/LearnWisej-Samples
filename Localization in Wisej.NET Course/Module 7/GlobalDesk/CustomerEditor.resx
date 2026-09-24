@@ -58,88 +58,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="$this.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>560, 300</value>
-  </data>
-  <data name="lblTitle.Text" xml:space="preserve">
-    <value>Customer</value>
-  </data>
-  <data name="lblTitle.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 14</value>
-  </data>
-  <data name="lblTitle.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>420, 26</value>
-  </data>
-  <data name="lblName.Text" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="lblName.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 58</value>
-  </data>
-  <data name="lblName.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 24</value>
-  </data>
-  <data name="txtName.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 54</value>
-  </data>
-  <data name="txtName.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>360, 32</value>
-  </data>
-  <data name="lblCode.Text" xml:space="preserve">
-    <value>Customer code</value>
-  </data>
-  <data name="lblCode.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 100</value>
-  </data>
-  <data name="lblCode.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 24</value>
-  </data>
-  <data name="txtCode.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 96</value>
-  </data>
-  <data name="txtCode.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>180, 32</value>
-  </data>
-  <data name="lblCountry.Text" xml:space="preserve">
-    <value>Country</value>
-  </data>
-  <data name="lblCountry.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 142</value>
-  </data>
-  <data name="lblCountry.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 24</value>
-  </data>
-  <data name="cboCountry.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 138</value>
-  </data>
-  <data name="cboCountry.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>240, 32</value>
-  </data>
   <data name="btnSave.Text" xml:space="preserve">
-    <value>Save</value>
-  </data>
-  <data name="btnSave.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 194</value>
-  </data>
-  <data name="btnSave.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>120, 38</value>
+    <value>Save customer record</value>
+    <comment>Primary button caption. Imperative verb plus its object; German is about twice the width, which an AutoSize button absorbs.</comment>
   </data>
   <data name="btnCancel.Text" xml:space="preserve">
     <value>Cancel</value>
-  </data>
-  <data name="btnCancel.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>306, 194</value>
-  </data>
-  <data name="btnCancel.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>120, 38</value>
-  </data>
-  <data name="lblMessage.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 246</value>
-  </data>
-  <data name="lblMessage.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>520, 26</value>
-  </data>
-  <data name="lblMessage.Text" xml:space="preserve">
-    <value></value>
+    <comment>Button caption. Discards the edit; the imperative verb.</comment>
   </data>
 </root>

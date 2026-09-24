@@ -59,82 +59,111 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="App.Title" xml:space="preserve">
-    <value>GlobalDesk</value>
+    <value>GlobalDesk — Service desk</value>
+    <comment>Application bar title for the dashboard. Keep the product name GlobalDesk; translate what follows the dash.</comment>
   </data>
   <data name="Dashboard.Welcome" xml:space="preserve">
     <value>Welcome to GlobalDesk</value>
+    <comment>Heading on the dashboard page.</comment>
   </data>
   <data name="Dashboard.Subtitle" xml:space="preserve">
-    <value>Customer operations, in your language</value>
-  </data>
-  <data name="Dashboard.RecreateEditor" xml:space="preserve">
-    <value>Recreate the editor</value>
-  </data>
-  <data name="Dashboard.ShowSystemText" xml:space="preserve">
-    <value>Show a Wisej.NET dialog</value>
+    <value>Your service desk at a glance</value>
+    <comment>Line under the heading. Not shown on the Module 1 screen; kept so the neutral file is complete.</comment>
   </data>
   <data name="Navigation.Customers" xml:space="preserve">
     <value>Customers</value>
+    <comment>Navigation button caption. A noun (the list of customers), not the verb.</comment>
   </data>
-  <data name="Navigation.Back" xml:space="preserve">
-    <value>Back</value>
+  <data name="Navigation.Tickets" xml:space="preserve">
+    <value>Tickets</value>
+    <comment>Navigation button caption. A noun.</comment>
   </data>
-  <data name="CustomerEditor.Title" xml:space="preserve">
-    <value>Customer</value>
+  <data name="Preview.Title" xml:space="preserve">
+    <value>Culture preview</value>
+    <comment>Header of the panel that shows how the session's culture writes a date, a number and an amount.</comment>
+  </data>
+  <data name="Preview.Date" xml:space="preserve">
+    <value>Date</value>
+    <comment>Caption beside the formatted date.</comment>
+  </data>
+  <data name="Preview.Count" xml:space="preserve">
+    <value>Quantity</value>
+    <comment>Caption beside the formatted number. A count of units, not a size.</comment>
+  </data>
+  <data name="Preview.Amount" xml:space="preserve">
+    <value>Amount</value>
+    <comment>Caption beside the formatted currency. A sum of money.</comment>
   </data>
   <data name="CustomerEditor.Name" xml:space="preserve">
     <value>Name</value>
-  </data>
-  <data name="CustomerEditor.Code" xml:space="preserve">
-    <value>Customer code</value>
-  </data>
-  <data name="CustomerEditor.Country" xml:space="preserve">
-    <value>Country</value>
+    <comment>Field label - reused by two screens.</comment>
   </data>
   <data name="CustomerEditor.Save" xml:space="preserve">
     <value>Save</value>
-  </data>
-  <data name="CustomerEditor.Cancel" xml:space="preserve">
-    <value>Cancel</value>
+    <comment>Button caption. The imperative verb, not the noun.</comment>
   </data>
   <data name="CustomerEditor.Saved" xml:space="preserve">
     <value>Customer saved.</value>
-  </data>
-  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
-    <value>The customer could not be saved.</value>
-  </data>
-  <data name="Customer.LastOrder" xml:space="preserve">
-    <value>Last order: {0} for {1}</value>
-    <comment>{0} is a date, {1} is a currency amount. Both are formatted by the caller for the active culture - do not reorder them in a way that separates them from their captions.</comment>
+    <comment>Confirmation after a successful save. One whole sentence.</comment>
   </data>
   <data name="Validation.Required" xml:space="preserve">
     <value>This field is required.</value>
+    <comment>Validation message, one whole sentence.</comment>
   </data>
-  <data name="Validation.CodeFormat" xml:space="preserve">
-    <value>A customer code is two letters and four digits.</value>
+  <data name="App.ProductName" xml:space="preserve">
+    <value>GlobalDesk</value>
+    <comment>The product name. Marked invariant: it is the same word in every language and must never come back translated.</comment>
   </data>
-  <data name="Preview.Heading" xml:space="preserve">
-    <value>The same three values, formatted for this session</value>
+  <data name="Customer.LastOrder" xml:space="preserve">
+    <value>{0} last ordered on {1}.</value>
+    <comment>One whole sentence. {0} is the customer name, {1} the date of the last order, already formatted for the reader. Both placeholders must appear; German moves {1} into the middle and the verb to the end.</comment>
   </data>
-  <data name="Preview.Date" xml:space="preserve">
-    <value>Due date</value>
-  </data>
-  <data name="Preview.Quantity" xml:space="preserve">
-    <value>Units ordered</value>
-  </data>
-  <data name="Preview.Amount" xml:space="preserve">
-    <value>Order total</value>
-  </data>
-  <data name="Preview.Culture" xml:space="preserve">
-    <value>Active culture</value>
-  </data>
-  <data name="Dashboard.LastOrder" xml:space="preserve">
-    <value>Last order</value>
+  <data name="Validation.Email" xml:space="preserve">
+    <value>Enter a valid email address.</value>
+    <comment>Validation message when the address does not parse. One whole sentence, imperative.</comment>
   </data>
   <data name="Dashboard.Language" xml:space="preserve">
     <value>Language</value>
+    <comment>Caption above the language picker. A noun.</comment>
   </data>
-  <data name="Dashboard.Fallback" xml:space="preserve">
-    <value>Falls back to</value>
+  <data name="Language.en-US" xml:space="preserve">
+    <value>English (United States)</value>
+    <comment>Entry in the language picker. Marked invariant: a language list shows every language in its own language, so this value is the same in every resource file.</comment>
   </data>
+  <data name="Language.de-DE" xml:space="preserve">
+    <value>Deutsch (Deutschland)</value>
+    <comment>Entry in the language picker. Invariant - see Language.en-US.</comment>
+  </data>
+  <data name="Language.fr-CA" xml:space="preserve">
+    <value>Français (Canada)</value>
+    <comment>Entry in the language picker. Invariant - see Language.en-US.</comment>
+  </data>
+  <data name="Status.SessionCulture" xml:space="preserve">
+    <value>Session culture: {0}</value>
+    <comment>Status strip. {0} is a culture name such as de-DE and is never translated.</comment>
+  </data>
+  <data name="Status.EditorRecreated" xml:space="preserve">
+    <value>Customer editor recreated</value>
+    <comment>Status note after a language switch rebuilt the designer-localized editor.</comment>
+  </data>
+  <data name="Editor.Recreated" xml:space="preserve">
+    <value>recreated</value>
+    <comment>Badge on the editor panel, lower case: this instance was built for the culture the session is on now.</comment>
+  </data>
+  <data name="Editor.Stale" xml:space="preserve">
+    <value>still {0}</value>
+    <comment>Badge on the editor panel. {0} is the culture name the instance was built for, which is no longer the session culture. Keep it short - the badge is a pill.</comment>
+  </data>
+  <metadata name="App.ProductName.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.en-US.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.de-DE.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
+  <metadata name="Language.fr-CA.IsInvariant" xml:space="preserve">
+    <value>True</value>
+  </metadata>
 </root>

@@ -5,10 +5,9 @@
   "debug": true,
   "sessionTimeout": 1800,
 
-  // Module 4. "auto" starts each session from the browser's Accept-Language, so a German
-  // browser lands on German without anyone choosing anything - and the ?lang= parameter in the
-  // URL overrides it for one session, which is how a support engineer reproduces a customer's
-  // screen.
+  // "auto" starts each session from the browser's Accept-Language, so a German browser lands on
+  // German without anyone choosing anything - and ?lang= in the URL overrides it for one session,
+  // which is how a support engineer reproduces a customer's screen.
   //
   // A FIXED culture is the right choice when the application is for one market and the values
   // must be unambiguous for everyone who reads them: an internal back office where every user is

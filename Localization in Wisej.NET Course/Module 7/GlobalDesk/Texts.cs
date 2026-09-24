@@ -1,23 +1,18 @@
 namespace GlobalDesk
 {
     /// <summary>
-    /// The one place the application asks for a piece of text.
+    /// The one place the application used to ask for a piece of text.
     ///
-    /// Every user-visible string in GlobalDesk comes through here, which buys three things: one
-    /// decision about what a missing key looks like, one place to change if the resource layout
-    /// ever moves, and a single name to search for when somebody asks "where does this wording
-    /// come from?".
+    /// From Module 7 it is a thin forwarder: <see cref="LocalizationService"/> holds the
+    /// implementation, the missing-key policy and the date, number and currency formatting, and a
+    /// solution-wide search for <c>ResourceManager</c> returns that one file.
     ///
-    /// From Module 7 it is a forwarder: <see cref="LocalizationService"/> holds the
-    /// implementation, the missing-key policy and the date, number and currency formatting.
+    /// It is kept so the earlier modules' call sites still read the same. Delete it once every
+    /// caller has moved across - a shim that survives is a second API, and a second API is a
+    /// second place for the missing-key policy to be decided.
     /// </summary>
     public static class Texts
     {
-        /// <summary>
-        /// Kept as a thin forwarder so the six modules' call sites still read the same, while
-        /// there is now exactly one implementation behind them. Delete it once every caller has
-        /// moved to <see cref="LocalizationService"/> - a shim that survives is a second API.
-        /// </summary>
         public static string Get(string key) => LocalizationService.Text(key);
     }
 }

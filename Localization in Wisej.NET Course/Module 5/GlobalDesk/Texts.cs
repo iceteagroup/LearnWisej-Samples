@@ -1,4 +1,4 @@
-using System.Reflection;
+using System.Collections.Generic;
 using Wisej.Resources;
 
 namespace GlobalDesk
@@ -26,6 +26,9 @@ namespace GlobalDesk
         private static readonly ResourceManager Resources =
             new ResourceManager("GlobalDesk.Resources.Strings", typeof(Texts).Assembly);
 
+        private static readonly HashSet<string> Resolved = new HashSet<string>();
+        private static readonly HashSet<string> Missing = new HashSet<string>();
+
         /// <summary>
         /// Returns the text for <paramref name="key"/>, or the key in brackets if there is none.
         ///
@@ -33,6 +36,24 @@ namespace GlobalDesk
         /// missing key behind a blank caption that nobody reports; <c>[Dashboard.Welcome]</c> on
         /// screen is a defect anyone can see and describe.
         /// </summary>
-        public static string Get(string key) => Resources.GetString(key) ?? $"[{key}]";
+        public static string Get(string key)
+        {
+            var value = Resources.GetString(key);
+            if (value == null)
+            {
+                Missing.Add(key);
+                return "[" + key + "]";
+            }
+
+            Resolved.Add(key);
+            return value;
+        }
+
+        /// <summary>How many distinct keys this session asked for and got. The dashboard's
+        /// status line reports it, so a gap is arithmetic rather than a feeling.</summary>
+        public static int ResolvedCount => Resolved.Count;
+
+        /// <summary>How many distinct keys came back bracketed.</summary>
+        public static int MissingCount => Missing.Count;
     }
 }

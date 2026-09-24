@@ -58,88 +58,79 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="$this.Text" xml:space="preserve">
+    <value>GlobalDesk — Customer editor</value>
+    <comment>Window title of this screen. Keep the product name GlobalDesk.</comment>
+  </data>
   <data name="$this.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>560, 300</value>
-  </data>
-  <data name="lblTitle.Text" xml:space="preserve">
-    <value>Customer</value>
-  </data>
-  <data name="lblTitle.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 14</value>
-  </data>
-  <data name="lblTitle.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>420, 26</value>
+    <value>842, 280</value>
   </data>
   <data name="lblName.Text" xml:space="preserve">
     <value>Name</value>
+    <comment>Label of the customer name field. German uses the same word - do not add an override just to copy it.</comment>
   </data>
   <data name="lblName.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 58</value>
+    <value>0, 0</value>
   </data>
   <data name="lblName.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 24</value>
+    <value>130, 50</value>
   </data>
   <data name="txtName.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 54</value>
+    <value>130, 9</value>
   </data>
   <data name="txtName.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>360, 32</value>
+    <value>300, 32</value>
   </data>
-  <data name="lblCode.Text" xml:space="preserve">
-    <value>Customer code</value>
+  <data name="lblEmail.Text" xml:space="preserve">
+    <value>Email</value>
+    <comment>Label of the email address field.</comment>
   </data>
-  <data name="lblCode.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 100</value>
+  <data name="lblEmail.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
+    <value>0, 50</value>
   </data>
-  <data name="lblCode.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 24</value>
+  <data name="lblEmail.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
+    <value>130, 50</value>
   </data>
-  <data name="txtCode.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 96</value>
+  <data name="txtEmail.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
+    <value>130, 59</value>
   </data>
-  <data name="txtCode.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>180, 32</value>
+  <data name="txtEmail.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
+    <value>300, 32</value>
   </data>
-  <data name="lblCountry.Text" xml:space="preserve">
-    <value>Country</value>
+  <data name="lblNotes.Text" xml:space="preserve">
+    <value>Notes</value>
+    <comment>Label of the free-text remarks box. A noun, plural.</comment>
   </data>
-  <data name="lblCountry.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 142</value>
+  <data name="lblNotes.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
+    <value>0, 100</value>
   </data>
-  <data name="lblCountry.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>150, 24</value>
+  <data name="lblNotes.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
+    <value>130, 50</value>
   </data>
-  <data name="cboCountry.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 138</value>
+  <data name="txtNotes.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
+    <value>130, 109</value>
   </data>
-  <data name="cboCountry.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>240, 32</value>
+  <data name="txtNotes.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
+    <value>300, 32</value>
   </data>
   <data name="btnSave.Text" xml:space="preserve">
     <value>Save</value>
+    <comment>Primary button caption. The imperative verb, not the noun.</comment>
   </data>
   <data name="btnSave.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>176, 194</value>
+    <value>0, 238</value>
   </data>
   <data name="btnSave.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>120, 38</value>
+    <value>88, 34</value>
   </data>
   <data name="btnCancel.Text" xml:space="preserve">
     <value>Cancel</value>
+    <comment>Button caption. Discards the edit; the imperative verb.</comment>
   </data>
   <data name="btnCancel.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>306, 194</value>
+    <value>98, 238</value>
   </data>
   <data name="btnCancel.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>120, 38</value>
-  </data>
-  <data name="lblMessage.Location" type="System.Drawing.Point, System.Drawing" xml:space="preserve">
-    <value>16, 246</value>
-  </data>
-  <data name="lblMessage.Size" type="System.Drawing.Size, System.Drawing" xml:space="preserve">
-    <value>520, 26</value>
-  </data>
-  <data name="lblMessage.Text" xml:space="preserve">
-    <value></value>
+    <value>88, 34</value>
   </data>
 </root>
