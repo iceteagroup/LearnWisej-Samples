@@ -1,92 +1,84 @@
 # Module 3 lab note - what a theme switch actually moves
 
-Run the Icon gallery, switch between `Bootstrap-4` and `BootstrapDark-4`, and watch the five
-pictures. The result is not the one most people predict, and the reason is worth the page.
+Read off the running IconGallery page under `Bootstrap-4` and `BootstrapDark-4`, by decoding the
+inlined SVG out of the page under both themes. Not from the documentation.
 
-## The prediction, and what really happened
+## The five image-source strings, as `IconGallery.Designer.cs` and the page both print them
 
-The obvious rule is "the theme owns theme images; files are files". Under that rule the two
-`icon-*` pictures move and the three file-based ones stay.
-
-What actually happened:
-
-| Control | Image source | Moved? |
+| Control | Source string | Kind |
 |---|---|---|
-| `picTheme` | `icon-search` | yes |
-| `picThemeSecond` | `icon-settings` | yes |
-| `picRecoloured` | `Images/pin.svg?color=highlight` | yes |
-| `picAbsolute` | `http://localhost:6203/Images/status-ok.svg` | **yes** |
-| `picProject` | `Images/logo.svg` | no |
+| `picThemeImage` | `icon-print` | theme key |
+| `picProjectSvg` | `Images/company-logo.svg` | relative URL |
+| `picAbsoluteUrl` | `http://localhost:6203/cdn/users/42.png` | absolute URL |
+| `picPackOne` | `resource.wx/Wisej.Ext.MaterialDesign/android-logo.svg` | resource source |
+| `picPackTwo` | `resource.wx/Wisej.Ext.MaterialDesign/save-button.svg?color=highlight` | resource source + colour |
 
-Four of the five moved, including one that is nothing but an absolute URL to a static file on
-disk. The prediction is wrong.
+## What moved
 
-## Why, established from the rendered DOM
+| Slot | Light theme | Dark theme | Verdict |
+|---|---|---|---|
+| `picThemeImage` | `fill="#5F5F5F"` | `fill="#A0B5BD"` | followed the theme |
+| `picProjectSvg` | unchanged | unchanged | unchanged |
+| `picAbsoluteUrl` | a PNG | a PNG | unchanged |
+| `picPackOne` | `fill="#5F5F5F"` | `fill="#A0B5BD"` | **followed the theme** |
+| `picPackTwo` | `fill="#298AE5"` | the dark theme's highlight | followed the theme |
 
-Wisej.NET does not hand the browser the URL for an SVG image source. It reads the file and
-**inlines it** as a `data:image/svg+xml;base64` background, and on the way through it decides
-whether the artwork is a recolourable *icon* or a picture.
+Three of the five moved, and the third one is the surprise.
 
-`status-ok.svg` is written as a green disc with a white tick. Decoded out of the page under the
-dark theme it arrives as:
+## The rule, which is not the intuitive one
+
+The intuitive rule is "the theme owns theme images, and everything else is a fixed file". It is
+wrong.
+
+Wisej.NET does not hand the browser a URL for an SVG image source. It reads the file and **inlines
+it** as a `data:image/svg+xml;base64` background, and on the way through it writes `fill` and
+`color` on the root element. What happens next is decided by the artwork:
+
+- `android-logo.svg`, straight out of an official pack, has **no `fill` on any of its paths**.
+  The injected root fill is therefore what paints it, and it changes with the theme even though
+  nothing about `resource.wx/Wisej.Ext.MaterialDesign/android-logo.svg` mentions a theme.
+- `company-logo.svg` sits in this project's own `Images` folder - the most "fixed file" source
+  there is - and does not move, because every path sets `fill="none"` and strokes with a literal
+  colour. Strokes are never rewritten.
+
+So: **where the file came from is irrelevant.** What decides is whether the artwork leaves its own
+colours to be filled in. An absolute URL to somebody else's static file is recoloured exactly the
+same way a theme image is.
+
+That is also the practical rule for drawing icons. A line icon only follows the theme if it
+strokes with `currentColor`:
 
 ```xml
-<svg viewBox="0 0 24 24" fill="#A0B5BD" style="color: rgb(160,181,189); fill: rgb(160,181,189);">
-  <circle cx="12" cy="12" r="10" fill="#A0B5BD"/>
-  <path fill="none" stroke="#ffffff" .../>
+<svg viewBox="0 0 24 24" fill="#1565d8">
+  <path fill="none" stroke="currentColor" ... />
 </svg>
 ```
 
-The green is gone. Its single meaningful fill was replaced with `#A0B5BD`, the dark theme's icon
-colour, and white was left alone.
+A literal `stroke="#6b7c90"` renders correctly, accepts a `?color=` suffix without complaint, and
+never changes colour. `company-logo.svg` is written that way on purpose - a brand mark is artwork,
+not an icon.
 
-`logo.svg`, inlined from the same page at the same moment, is untouched:
+## The colour suffix, and the names that do not work
 
-```
-fill="#1565d8" fill="#0d47a1" fill="#ffffff" fill="#ffffff" fill="#ffd166" fill="#1fae5a"
-```
+`?color=` is applied to the source string, so it works on a theme image name, a relative URL and a
+`resource.wx` source alike.
 
-No root `fill`, no injected `style`, six colours still there.
+The value has to be a colour name the theme really defines. `highlight` resolved to
+`rgb(41, 138, 229)` under Bootstrap-4 and to the dark theme's highlight under BootstrapDark-4.
+`activeText` did not resolve at all: the inlined SVG came back with `fill="activeText"` and
+`style="color: activetext;"`, which is a CSS system-colour keyword rather than anything Wisej.NET
+chose, so the icon was coloured by the browser and stopped following the theme. `error` behaves
+the same way - `invalid` is the Bootstrap-4 name for that colour.
 
-**The rule that falls out:** an SVG with essentially one colour (white and `none` do not count) is
-treated as an icon and takes the theme's icon colour. Artwork with several colours is passed
-through as-is. Where the file lives - theme name, relative URL, absolute URL - has nothing to do
-with it.
+There is no error, no warning and no exception. A mistyped colour name is a silent no-op, which is
+the whole argument for previewing a recolour before a screen depends on it.
 
-## What that means when you are choosing assets
+## Where this sample differs from the lesson video
 
-- A monochrome SVG is the right choice for interface icons **because** it will be recoloured. It
-  will look correct in a theme nobody has written yet.
-- If you need an asset to keep its own colours - a logo, a flag, a product shot - give it more
-  than one colour, or use a raster. A one-colour logo will be quietly repainted by the first dark
-  theme somebody switches on, and it will look like a bug in the theme rather than in the asset.
-- `?color=` makes the decision explicit rather than leaving it to the default. `?color=highlight`
-  names a colour from the theme's palette, so it moves with the theme; `?color=#7d5ae0` pins a
-  literal, which is almost always the wrong answer. Press **Cycle the colour suffix** to walk
-  through `highlight`, `hotTrack`, `invalid` and one literal and watch the difference.
-- The suffix needs artwork it can recolour. `pin.svg` is one path, one fill, no stroke and no
-  gradient, and it is commented as being that way on purpose. Pointing the suffix at `logo.svg`
-  does nothing, which is the same finding from the other direction.
-
-## What the designer Image Selector writes
-
-Every image source on this page is a plain string in `IconGalleryPage.Designer.cs`, which is what
-the picker produces - it never generates an `Image` object for these:
-
-```csharp
-this.picTheme.ImageSource = "icon-search";
-this.picProject.ImageSource = "Images/logo.svg";
-this.picRecoloured.ImageSource = "Images/pin.svg?color=highlight";
-this.picThemeSecond.ImageSource = "icon-settings";
-```
-
-That is the practical argument for using the picker rather than assigning images in code: the
-result is readable, greppable and reviewable in a diff, and a mistyped theme name shows up as a
-blank control rather than as a runtime exception.
-
-`picAbsolute` is the exception on this page. Its URL is built in the constructor from
-`Application.Url` so the sample runs on whatever port you start it on; a real project would let
-the picker write the literal address.
-
-Two icon-pack assets belong in this gallery as well. The packs are installed in Module 4, and the
-`IconCompare` page there covers them.
+- The video's gallery labels the pack resource **unchanged** after the theme switch. On the
+  running page it is not - see above. The sample reports what actually happened.
+- The video writes `save.svg?color=activeText`. `activeText` is not a Wisej.NET theme colour, so
+  the sample uses `highlight`, which is.
+- The video's absolute URL is `cdn.example.com/users/42.jpg`, a placeholder host. The sample uses
+  a real absolute address this application answers, so the slot resolves on a machine with no
+  outbound access.

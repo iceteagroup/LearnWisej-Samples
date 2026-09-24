@@ -1,144 +1,147 @@
 using System;
-using System.Text;
 using Wisej.Web;
 
 namespace IconDesk
 {
     /// <summary>
-    /// Five image sources of five different kinds, all of them strings the designer Image Selector
-    /// can write, and a theme switch that separates the ones the theme owns from the ones it does
-    /// not.
-    ///
-    /// The point of the page is the report at the bottom: every picture here is identified by a
-    /// readable string that survives a code review, and nothing on this page decodes an image on
-    /// the server.
+    /// Five image sources of five different kinds - all of them strings the designer Image
+    /// Selector can write - and a theme switch that separates the ones the theme owns from the
+    /// ones it does not.
     /// </summary>
+    /// <remarks>
+    /// Nothing on this page decodes an image on the server. Every slot prints the source string
+    /// it was given, so the page and <c>IconGallery.Designer.cs</c> say the same thing.
+    /// </remarks>
     public partial class IconGalleryPage : Page
     {
-        /// <summary>
-        /// Themes that ship with Wisej.NET 4. A light and a dark one from the same family make the
-        /// difference easiest to see.
-        /// </summary>
-        private static readonly string[] Themes = { "Bootstrap-4", "BootstrapDark-4", "Material-3", "Graphite-3" };
+        /// <summary>The theme owns this artwork outright, so it changes when the theme does.</summary>
+        private const string ThemeImage = "icon-print";
 
         /// <summary>
-        /// Two theme colour names and one literal. A theme colour follows the theme; a literal
-        /// does not, which is the whole argument for naming colours rather than typing them.
+        /// A file deployed beside the application. Its paths carry a literal stroke colour and
+        /// turn their own fill off, so Wisej.NET renders it exactly as drawn.
         /// </summary>
-        private static readonly string[] Colours = { "highlight", "hotTrack", "invalid", "#7d5ae0" };
+        private const string ProjectSvg = "Images/company-logo.svg";
 
-        private readonly CommandPage commands;
+        /// <summary>
+        /// An official pack's icon, addressed the way the designer's icon-pack explorer writes it:
+        /// resource.wx, the assembly, the file. The form stores this string, not a copy of the
+        /// artwork.
+        /// </summary>
+        private const string PackIcon = "resource.wx/Wisej.Ext.MaterialDesign/android-logo.svg";
 
-        private int colourIndex;
+        /// <summary>
+        /// The same kind of source with a colour suffix. <c>highlight</c> is a theme colour
+        /// <b>name</b>, so it resolves again under the next theme; a literal would not.
+        /// </summary>
+        private const string RecolouredIcon = "resource.wx/Wisej.Ext.MaterialDesign/save-button.svg?color=highlight";
 
-        public IconGalleryPage(CommandPage commands)
+        /// <summary>
+        /// Which slots move when the theme changes, in slot order - read off the running page
+        /// under both themes, not guessed from the mechanism.
+        /// </summary>
+        /// <remarks>
+        /// The intuitive rule - "the theme owns theme images, everything else is a fixed file" -
+        /// is wrong, and this array is the evidence. What decides is whether Wisej.NET reads the
+        /// artwork as a recolourable icon. The pack SVG carries no fill of its own, so the fill
+        /// Wisej.NET injects on the root is what paints it, and it changes with the theme even
+        /// though nothing about its source string mentions a theme. The project mark sits in the
+        /// same folder as everything else and does not move, because its paths fix their own
+        /// colours. Where the file came from is irrelevant.
+        /// </remarks>
+        private static readonly bool[] FollowsTheTheme = { true, false, false, true, true };
+
+        private GalleryPalette palette = GalleryPalette.Light;
+        private bool switched;
+
+        public IconGalleryPage()
         {
             InitializeComponent();
 
-            this.commands = commands;
-
-            foreach (var theme in Themes)
-                this.cboTheme.Items.Add(theme);
-
-            this.cboTheme.SelectedItem = Application.Theme?.Name;
-            if (this.cboTheme.SelectedIndex < 0)
-                this.cboTheme.SelectedIndex = 0;
-
-            // An absolute URL, built at run time so the lab works on whichever port it was started
-            // on. In a real project the designer writes the literal address into the file above.
-            this.picAbsolute.ImageSource = Application.Url.TrimEnd('/') + "/Images/status-ok.svg";
-
-            Report();
+            AssignImageSources();
+            ApplyPalette();
         }
 
-        private void btnBack_Click(object sender, EventArgs e)
+        // ── the five mechanisms ─────────────────────────────────────────────────
+
+        private void AssignImageSources()
         {
-            Application.MainPage = this.commands;
+            this.slotThemeImage.Picture.ImageSource = ThemeImage;
+            this.slotThemeImage.SourceText = ThemeImage;
+
+            this.slotProjectSvg.Picture.ImageSource = ProjectSvg;
+            this.slotProjectSvg.SourceText = ProjectSvg;
+
+            // A complete external address. It is built at run time so the lab works on whichever
+            // port it was started on; in a real project the designer writes the literal address.
+            var absolute = Application.Url.TrimEnd('/') + "/cdn/users/42.png";
+            this.slotAbsoluteUrl.Picture.ImageSource = absolute;
+            this.slotAbsoluteUrl.SourceText = absolute.Replace("http://", string.Empty).Replace("https://", string.Empty);
+
+            this.slotPackOne.Picture.ImageSource = PackIcon;
+            this.slotPackOne.SourceText = "resource.wx/…/android-logo.svg";
+            this.slotPackOne.Picture.ToolTipText = PackIcon;
+
+            this.slotPackTwo.Picture.ImageSource = RecolouredIcon;
+            this.slotPackTwo.SourceText = "…/save-button.svg?color=highlight";
+            this.slotPackTwo.Picture.ToolTipText = RecolouredIcon;
         }
 
         // ── the theme switch ────────────────────────────────────────────────────
 
-        private void cboTheme_SelectedIndexChanged(object sender, EventArgs e)
+        private void btnLightTheme_Click(object sender, EventArgs e)
         {
-            var theme = (string)this.cboTheme.SelectedItem;
-            if (string.IsNullOrEmpty(theme) || theme == Application.Theme?.Name)
+            SwitchTo(GalleryPalette.Light);
+        }
+
+        private void btnDarkTheme_Click(object sender, EventArgs e)
+        {
+            SwitchTo(GalleryPalette.Dark);
+        }
+
+        private void SwitchTo(GalleryPalette next)
+        {
+            if (next == this.palette)
                 return;
 
             // Application.Theme is a ClientTheme object, not a string. LoadTheme takes the name.
-            Application.LoadTheme(theme);
+            Application.LoadTheme(next.ThemeName);
 
-            this.lblStatus.Text =
-                $"Theme is now {theme}. Four of the five moved. The multi-coloured project logo did not, " +
-                "and that - not where the file came from - is the rule: Wisej.NET recolours an SVG it reads as an icon.";
+            this.palette = next;
+            this.switched = true;
 
-            Report();
+            ApplyPalette();
         }
-
-        // ── the colour suffix ───────────────────────────────────────────────────
 
         /// <summary>
-        /// The suffix recolours a monochrome SVG. It works on artwork with a single fill and no
-        /// gradient; it cannot do anything useful to the multi-coloured project logo, which is why
-        /// only <c>pin.svg</c> is wired to this button.
+        /// Repaints the page, and - once the theme has been switched at least once - puts the
+        /// verdict on every card.
         /// </summary>
-        private void btnRecolour_Click(object sender, EventArgs e)
+        private void ApplyPalette()
         {
-            this.colourIndex = (this.colourIndex + 1) % Colours.Length;
-            var colour = Colours[this.colourIndex];
+            var p = this.palette;
 
-            this.picRecoloured.ImageSource = "Images/pin.svg?color=" + colour;
-            this.lblRecoloured.Text = "Recoloured SVG\r\n\"...pin.svg?color=" + colour + "\"";
+            this.BackColor = p.Surface;
+            this.pnlBody.BackColor = p.Surface;
+            this.pnlTheme.BackColor = p.Surface;
+            this.layoutSlots.BackColor = p.Surface;
+            this.appTitleBar.BackColor = p.Bar;
+            this.lblThemeCaption.ForeColor = p.Sub;
 
-            this.lblStatus.Text = colour.StartsWith("#")
-                ? $"Colour is the literal {colour}. It will look exactly the same under every theme, which is usually wrong."
-                : $"Colour is the theme name \"{colour}\". Switch the theme and this icon moves with it.";
+            StyleChip(this.btnLightTheme, p == GalleryPalette.Light, p);
+            StyleChip(this.btnDarkTheme, p == GalleryPalette.Dark, p);
 
-            Report();
+            var slots = new[] { this.slotThemeImage, this.slotProjectSvg, this.slotAbsoluteUrl, this.slotPackOne, this.slotPackTwo };
+
+            for (var i = 0; i < slots.Length; i++)
+                slots[i].ApplyPalette(p, FollowsTheTheme[i], this.switched);
         }
 
-        // ── the report ──────────────────────────────────────────────────────────
-
-        private void btnReport_Click(object sender, EventArgs e)
+        private static void StyleChip(Button chip, bool active, GalleryPalette p)
         {
-            Report();
-            this.lblStatus.Text = "Every image source on the page, exactly as the designer would have written it.";
-        }
-
-        private void Report()
-        {
-            // The third column is the one the lab is actually about, and it is not the obvious
-            // answer. What decides whether an asset follows the theme is not where it came from -
-            // it is whether Wisej.NET decided the artwork is a recolourable icon. See
-            // docs/ThemeSwitch.md for how that was established.
-            var rows = new (PictureBox Box, string Kind, string Verdict)[]
-            {
-                (this.picTheme, "named theme image",
-                    "<b>follows the theme</b> - the theme owns the artwork outright"),
-                (this.picProject, "relative URL to a file deployed beside the application",
-                    "<b>fixed</b> - six fills, so it is treated as artwork and passed through untouched"),
-                (this.picAbsolute, "absolute URL",
-                    "<b>follows the theme</b> - one fill plus white, so it is treated as an icon and recoloured"),
-                (this.picRecoloured, "relative URL plus the ?color= suffix",
-                    this.colourIndex == Colours.Length - 1
-                        ? "<b>fixed</b> - the suffix names a literal, which no theme can move"
-                        : "<b>follows the theme</b> - the suffix names a theme colour"),
-                (this.picThemeSecond, "named theme image",
-                    "<b>follows the theme</b> - the theme owns the artwork outright"),
-            };
-
-            var report = new StringBuilder();
-            report.Append("<b>The five image sources, and which of them the theme moves</b><br><br>");
-
-            foreach (var row in rows)
-            {
-                report.Append("<b>").Append(row.Box.Name).Append("</b> &mdash; ")
-                      .Append(row.Kind).Append(": <code>").Append(row.Box.ImageSource).Append("</code><br>&nbsp;&nbsp;&nbsp;&nbsp;")
-                      .Append(row.Verdict)
-                      .Append("<br>");
-            }
-
-            report.Append("<br>Current theme: <b>").Append(Application.Theme?.Name).Append("</b>.");
-            this.lblReport.Text = report.ToString();
+            chip.BackColor = active ? p.Active : p.Surface;
+            chip.ForeColor = active ? p.OnActive : p.Sub;
+            chip.CssStyle = "border:1px solid " + GalleryPalette.Css(active ? p.Active : p.Line) + ";border-radius:999px;";
         }
     }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A line icon, drawn so Wisej.NET can recolour it: one meaningful fill on the root makes it an
+     icon rather than artwork, every path turns its own fill off, and the strokes take the colour
+     Wisej injects by asking for currentColor. A literal stroke colour here would never change. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#1565d8">
+  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 4h10l4 4v12H5z"/>
+  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 4v6h7"/>
+  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M8 20v-6h8v6"/>
+</svg>

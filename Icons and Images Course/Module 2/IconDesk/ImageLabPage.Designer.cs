@@ -18,348 +18,392 @@ namespace IconDesk
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.pnlHeader = new Wisej.Web.Panel();
-            this.lblTitle = new Wisej.Web.Label();
-            this.lblSubtitle = new Wisej.Web.Label();
-            this.lblStatus = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.Panel();
-            this.btnBack = new Wisej.Web.Button();
-            this.btnFetchSlow = new Wisej.Web.Button();
-            this.btnFetchRemote = new Wisej.Web.Button();
-            this.btnReport = new Wisej.Web.Button();
+            this.appTitleBar = new IconDesk.AppTitleBar();
             this.pnlBody = new Wisej.Web.Panel();
-            this.lblSizeModesHeader = new Wisej.Web.Label();
-            this.layoutSizeModes = new Wisej.Web.TableLayoutPanel();
-            this.pnlNormal = new Wisej.Web.Panel();
-            this.lblNormal = new Wisej.Web.Label();
+            this.lblModesHeader = new Wisej.Web.Label();
+            this.pnlModes = new Wisej.Web.Panel();
             this.picNormal = new Wisej.Web.PictureBox();
-            this.pnlZoom = new Wisej.Web.Panel();
-            this.lblZoom = new Wisej.Web.Label();
+            this.lblNormalName = new Wisej.Web.Label();
+            this.lblNormalNote = new Wisej.Web.Label();
             this.picZoom = new Wisej.Web.PictureBox();
-            this.pnlCover = new Wisej.Web.Panel();
-            this.lblCover = new Wisej.Web.Label();
+            this.lblZoomName = new Wisej.Web.Label();
+            this.lblZoomNote = new Wisej.Web.Label();
             this.picCover = new Wisej.Web.PictureBox();
-            this.pnlStretch = new Wisej.Web.Panel();
-            this.lblStretch = new Wisej.Web.Label();
+            this.lblCoverName = new Wisej.Web.Label();
+            this.lblCoverNote = new Wisej.Web.Label();
             this.picStretch = new Wisej.Web.PictureBox();
+            this.lblStretchName = new Wisej.Web.Label();
+            this.lblStretchNote = new Wisej.Web.Label();
             this.pnlLower = new Wisej.Web.Panel();
             this.pnlRemote = new Wisej.Web.Panel();
             this.lblRemoteHeader = new Wisej.Web.Label();
+            this.pnlRemoteBox = new Wisej.Web.Panel();
+            this.lblRemoteWaiting = new Wisej.Web.Label();
             this.picRemote = new Wisej.Web.PictureBox();
             this.pnlVector = new Wisej.Web.Panel();
             this.lblVectorHeader = new Wisej.Web.Label();
-            this.pnlVectorSizes = new Wisej.Web.FlowLayoutPanel();
+            this.pnlVectorBox = new Wisej.Web.Panel();
+            this.lblSvgRow = new Wisej.Web.Label();
             this.picSvg16 = new Wisej.Web.PictureBox();
             this.picSvg24 = new Wisej.Web.PictureBox();
             this.picSvg32 = new Wisej.Web.PictureBox();
             this.picSvg48 = new Wisej.Web.PictureBox();
+            this.lblLegacyRow = new Wisej.Web.Label();
+            this.picLegacy16 = new Wisej.Web.PictureBox();
+            this.picLegacy24 = new Wisej.Web.PictureBox();
+            this.picLegacy32 = new Wisej.Web.PictureBox();
+            this.picLegacy48 = new Wisej.Web.PictureBox();
+            this.pnlReport = new Wisej.Web.Panel();
             this.lblReport = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblTitle
+            // appTitleBar
             //
-            this.lblTitle.AutoSize = false;
-            this.lblTitle.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Location = new System.Drawing.Point(20, 12);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(360, 28);
-            this.lblTitle.Text = "Image lab";
+            this.appTitleBar.Size = new System.Drawing.Size(1000, 42);
+            this.appTitleBar.Title = "IconDesk — ImageLab";
             //
-            // lblSubtitle
+            // lblModesHeader
             //
-            this.lblSubtitle.AutoSize = false;
-            this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 42);
-            this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(900, 22);
-            this.lblSubtitle.Text = "One raster in four size modes, one JPEG fetched asynchronously, and one SVG at four sizes.";
+            this.lblModesHeader.AutoSize = false;
+            this.lblModesHeader.CssStyle = "letter-spacing:.05em;";
+            this.lblModesHeader.Dock = Wisej.Web.DockStyle.Top;
+            this.lblModesHeader.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.lblModesHeader.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblModesHeader.Name = "lblModesHeader";
+            this.lblModesHeader.Size = new System.Drawing.Size(960, 20);
+            this.lblModesHeader.Text = "ONE RASTER ASSET · FOUR SIZE MODES";
             //
-            // pnlHeader
+            // the four size-mode frames - identical 220 x 150 boxes, one SizeMode each
             //
-            this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1000, 72);
-            this.pnlHeader.Controls.Add(this.lblSubtitle);
-            this.pnlHeader.Controls.Add(this.lblTitle);
-            //
-            // lblStatus
-            //
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Padding = new Wisej.Web.Padding(20, 8, 20, 8);
-            this.lblStatus.Size = new System.Drawing.Size(1000, 34);
-            this.lblStatus.Text = "Ready.";
-            //
-            // btnBack
-            //
-            this.btnBack.Location = new System.Drawing.Point(20, 9);
-            this.btnBack.Name = "btnBack";
-            this.btnBack.Size = new System.Drawing.Size(170, 38);
-            this.btnBack.TabIndex = 0;
-            this.btnBack.Text = "Back to commands";
-            this.btnBack.Click += this.btnBack_Click;
-            //
-            // btnFetchSlow
-            //
-            this.btnFetchSlow.Location = new System.Drawing.Point(202, 9);
-            this.btnFetchSlow.Name = "btnFetchSlow";
-            this.btnFetchSlow.Size = new System.Drawing.Size(230, 38);
-            this.btnFetchSlow.TabIndex = 1;
-            this.btnFetchSlow.Text = "Fetch the slow JPEG (2.5 s)";
-            this.btnFetchSlow.Click += this.btnFetchSlow_Click;
-            //
-            // btnFetchRemote
-            //
-            this.btnFetchRemote.Location = new System.Drawing.Point(444, 9);
-            this.btnFetchRemote.Name = "btnFetchRemote";
-            this.btnFetchRemote.Size = new System.Drawing.Size(230, 38);
-            this.btnFetchRemote.TabIndex = 2;
-            this.btnFetchRemote.Text = "Fetch a remote JPEG";
-            this.btnFetchRemote.Click += this.btnFetchRemote_Click;
-            //
-            // btnReport
-            //
-            this.btnReport.Location = new System.Drawing.Point(686, 9);
-            this.btnReport.Name = "btnReport";
-            this.btnReport.Size = new System.Drawing.Size(230, 38);
-            this.btnReport.TabIndex = 3;
-            this.btnReport.Text = "Report every PictureBox";
-            this.btnReport.Click += this.btnReport_Click;
-            //
-            // pnlActions
-            //
-            this.pnlActions.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Size = new System.Drawing.Size(1000, 56);
-            this.pnlActions.Controls.Add(this.btnReport);
-            this.pnlActions.Controls.Add(this.btnFetchRemote);
-            this.pnlActions.Controls.Add(this.btnFetchSlow);
-            this.pnlActions.Controls.Add(this.btnBack);
-            //
-            // lblSizeModesHeader
-            //
-            this.lblSizeModesHeader.AutoSize = false;
-            this.lblSizeModesHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblSizeModesHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblSizeModesHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSizeModesHeader.Name = "lblSizeModesHeader";
-            this.lblSizeModesHeader.Size = new System.Drawing.Size(960, 26);
-            this.lblSizeModesHeader.Text = "One 480 x 300 raster, four SizeMode values, identical 220 x 150 boxes";
-            //
-            // the four size-mode cells
-            //
-            this.lblNormal.AutoSize = false;
-            this.lblNormal.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblNormal.Name = "lblNormal";
-            this.lblNormal.Size = new System.Drawing.Size(220, 22);
-            this.lblNormal.Text = "Normal - no scaling, clipped";
-            this.picNormal.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.picNormal.Dock = Wisej.Web.DockStyle.Fill;
+            this.picNormal.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.picNormal.CssStyle = "border:1.5px solid #8a93a0;border-radius:6px;";
+            this.picNormal.Location = new System.Drawing.Point(0, 10);
             this.picNormal.Name = "picNormal";
+            this.picNormal.Size = new System.Drawing.Size(220, 150);
             this.picNormal.SizeMode = Wisej.Web.PictureBoxSizeMode.Normal;
-            this.pnlNormal.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlNormal.Name = "pnlNormal";
-            this.pnlNormal.Padding = new Wisej.Web.Padding(0, 0, 12, 0);
-            this.pnlNormal.Controls.Add(this.picNormal);
-            this.pnlNormal.Controls.Add(this.lblNormal);
+            this.lblNormalName.AutoSize = false;
+            this.lblNormalName.Font = new System.Drawing.Font("Consolas", 10.1F, System.Drawing.FontStyle.Bold);
+            this.lblNormalName.ForeColor = System.Drawing.Color.FromArgb(138, 147, 160);
+            this.lblNormalName.Location = new System.Drawing.Point(0, 167);
+            this.lblNormalName.Name = "lblNormalName";
+            this.lblNormalName.Size = new System.Drawing.Size(220, 20);
+            this.lblNormalName.Text = "Normal";
+            this.lblNormalNote.AutoSize = false;
+            this.lblNormalNote.Font = new System.Drawing.Font("default", 9.4F);
+            this.lblNormalNote.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblNormalNote.Location = new System.Drawing.Point(0, 187);
+            this.lblNormalNote.Name = "lblNormalNote";
+            this.lblNormalNote.Size = new System.Drawing.Size(220, 18);
+            this.lblNormalNote.Text = "original size · clipped";
 
-            this.lblZoom.AutoSize = false;
-            this.lblZoom.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblZoom.Name = "lblZoom";
-            this.lblZoom.Size = new System.Drawing.Size(220, 22);
-            this.lblZoom.Text = "Zoom - fits, whole picture";
-            this.picZoom.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.picZoom.Dock = Wisej.Web.DockStyle.Fill;
+            this.picZoom.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.picZoom.CssStyle = "border:1.5px solid #1fae5a;border-radius:6px;";
+            this.picZoom.Location = new System.Drawing.Point(236, 10);
             this.picZoom.Name = "picZoom";
+            this.picZoom.Size = new System.Drawing.Size(220, 150);
             this.picZoom.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
-            this.pnlZoom.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlZoom.Name = "pnlZoom";
-            this.pnlZoom.Padding = new Wisej.Web.Padding(0, 0, 12, 0);
-            this.pnlZoom.Controls.Add(this.picZoom);
-            this.pnlZoom.Controls.Add(this.lblZoom);
+            this.lblZoomName.AutoSize = false;
+            this.lblZoomName.Font = new System.Drawing.Font("Consolas", 10.1F, System.Drawing.FontStyle.Bold);
+            this.lblZoomName.ForeColor = System.Drawing.Color.FromArgb(31, 174, 90);
+            this.lblZoomName.Location = new System.Drawing.Point(236, 167);
+            this.lblZoomName.Name = "lblZoomName";
+            this.lblZoomName.Size = new System.Drawing.Size(220, 20);
+            this.lblZoomName.Text = "Zoom";
+            this.lblZoomNote.AutoSize = false;
+            this.lblZoomNote.Font = new System.Drawing.Font("default", 9.4F);
+            this.lblZoomNote.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblZoomNote.Location = new System.Drawing.Point(236, 187);
+            this.lblZoomNote.Name = "lblZoomNote";
+            this.lblZoomNote.Size = new System.Drawing.Size(220, 18);
+            this.lblZoomNote.Text = "whole picture · ratio kept";
 
-            this.lblCover.AutoSize = false;
-            this.lblCover.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblCover.Name = "lblCover";
-            this.lblCover.Size = new System.Drawing.Size(220, 22);
-            this.lblCover.Text = "Cover - fills, edges cropped";
-            this.picCover.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.picCover.Dock = Wisej.Web.DockStyle.Fill;
+            this.picCover.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.picCover.CssStyle = "border:1.5px solid #1a86ff;border-radius:6px;";
+            this.picCover.Location = new System.Drawing.Point(472, 10);
             this.picCover.Name = "picCover";
+            this.picCover.Size = new System.Drawing.Size(220, 150);
             this.picCover.SizeMode = Wisej.Web.PictureBoxSizeMode.Cover;
-            this.pnlCover.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlCover.Name = "pnlCover";
-            this.pnlCover.Padding = new Wisej.Web.Padding(0, 0, 12, 0);
-            this.pnlCover.Controls.Add(this.picCover);
-            this.pnlCover.Controls.Add(this.lblCover);
+            this.lblCoverName.AutoSize = false;
+            this.lblCoverName.Font = new System.Drawing.Font("Consolas", 10.1F, System.Drawing.FontStyle.Bold);
+            this.lblCoverName.ForeColor = System.Drawing.Color.FromArgb(26, 134, 255);
+            this.lblCoverName.Location = new System.Drawing.Point(472, 167);
+            this.lblCoverName.Name = "lblCoverName";
+            this.lblCoverName.Size = new System.Drawing.Size(220, 20);
+            this.lblCoverName.Text = "Cover";
+            this.lblCoverNote.AutoSize = false;
+            this.lblCoverNote.Font = new System.Drawing.Font("default", 9.4F);
+            this.lblCoverNote.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblCoverNote.Location = new System.Drawing.Point(472, 187);
+            this.lblCoverNote.Name = "lblCoverNote";
+            this.lblCoverNote.Size = new System.Drawing.Size(220, 18);
+            this.lblCoverNote.Text = "fills the box · edges cropped";
 
-            this.lblStretch.AutoSize = false;
-            this.lblStretch.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStretch.Name = "lblStretch";
-            this.lblStretch.Size = new System.Drawing.Size(220, 22);
-            this.lblStretch.Text = "StretchImage - fills, distorted";
-            this.picStretch.BorderStyle = Wisej.Web.BorderStyle.Solid;
-            this.picStretch.Dock = Wisej.Web.DockStyle.Fill;
+            this.picStretch.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.picStretch.CssStyle = "border:1.5px solid #e05a3b;border-radius:6px;";
+            this.picStretch.Location = new System.Drawing.Point(708, 10);
             this.picStretch.Name = "picStretch";
+            this.picStretch.Size = new System.Drawing.Size(220, 150);
             this.picStretch.SizeMode = Wisej.Web.PictureBoxSizeMode.StretchImage;
-            this.pnlStretch.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlStretch.Name = "pnlStretch";
-            this.pnlStretch.Controls.Add(this.picStretch);
-            this.pnlStretch.Controls.Add(this.lblStretch);
+            this.lblStretchName.AutoSize = false;
+            this.lblStretchName.Font = new System.Drawing.Font("Consolas", 10.1F, System.Drawing.FontStyle.Bold);
+            this.lblStretchName.ForeColor = System.Drawing.Color.FromArgb(224, 90, 59);
+            this.lblStretchName.Location = new System.Drawing.Point(708, 167);
+            this.lblStretchName.Name = "lblStretchName";
+            this.lblStretchName.Size = new System.Drawing.Size(220, 20);
+            this.lblStretchName.Text = "StretchImage";
+            this.lblStretchNote.AutoSize = false;
+            this.lblStretchNote.Font = new System.Drawing.Font("default", 9.4F);
+            this.lblStretchNote.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblStretchNote.Location = new System.Drawing.Point(708, 187);
+            this.lblStretchNote.Name = "lblStretchNote";
+            this.lblStretchNote.Size = new System.Drawing.Size(220, 18);
+            this.lblStretchNote.Text = "fills the box · ratio lost";
             //
-            // layoutSizeModes
+            // pnlModes
             //
-            this.layoutSizeModes.ColumnCount = 4;
-            this.layoutSizeModes.RowCount = 1;
-            this.layoutSizeModes.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 25F));
-            this.layoutSizeModes.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 25F));
-            this.layoutSizeModes.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 25F));
-            this.layoutSizeModes.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 25F));
-            this.layoutSizeModes.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Percent, 100F));
-            this.layoutSizeModes.Dock = Wisej.Web.DockStyle.Top;
-            this.layoutSizeModes.Name = "layoutSizeModes";
-            this.layoutSizeModes.Size = new System.Drawing.Size(960, 180);
-            this.layoutSizeModes.Controls.Add(this.pnlNormal, 0, 0);
-            this.layoutSizeModes.Controls.Add(this.pnlZoom, 1, 0);
-            this.layoutSizeModes.Controls.Add(this.pnlCover, 2, 0);
-            this.layoutSizeModes.Controls.Add(this.pnlStretch, 3, 0);
+            this.pnlModes.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlModes.Name = "pnlModes";
+            this.pnlModes.Size = new System.Drawing.Size(960, 205);
+            this.pnlModes.Controls.Add(this.picNormal);
+            this.pnlModes.Controls.Add(this.lblNormalName);
+            this.pnlModes.Controls.Add(this.lblNormalNote);
+            this.pnlModes.Controls.Add(this.picZoom);
+            this.pnlModes.Controls.Add(this.lblZoomName);
+            this.pnlModes.Controls.Add(this.lblZoomNote);
+            this.pnlModes.Controls.Add(this.picCover);
+            this.pnlModes.Controls.Add(this.lblCoverName);
+            this.pnlModes.Controls.Add(this.lblCoverNote);
+            this.pnlModes.Controls.Add(this.picStretch);
+            this.pnlModes.Controls.Add(this.lblStretchName);
+            this.pnlModes.Controls.Add(this.lblStretchNote);
             //
             // the remote picture
             //
             this.lblRemoteHeader.AutoSize = false;
+            this.lblRemoteHeader.CssStyle = "letter-spacing:.05em;";
             this.lblRemoteHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblRemoteHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblRemoteHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
+            this.lblRemoteHeader.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.lblRemoteHeader.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
             this.lblRemoteHeader.Name = "lblRemoteHeader";
-            this.lblRemoteHeader.Size = new System.Drawing.Size(360, 26);
-            this.lblRemoteHeader.Text = "A JPEG fetched through LoadAsync";
-            this.picRemote.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.lblRemoteHeader.Size = new System.Drawing.Size(300, 20);
+            this.lblRemoteHeader.Text = "LOADASYNC · REMOTE JPEG";
+            //
+            // lblRemoteWaiting
+            //
+            // Shown until LoadCompleted arrives, so the box says what it is waiting for instead of
+            // looking broken.
+            this.lblRemoteWaiting.AutoSize = false;
+            this.lblRemoteWaiting.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblRemoteWaiting.Font = new System.Drawing.Font("Consolas", 10.1F);
+            this.lblRemoteWaiting.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblRemoteWaiting.Name = "lblRemoteWaiting";
+            this.lblRemoteWaiting.Size = new System.Drawing.Size(300, 128);
+            this.lblRemoteWaiting.Text = "waiting for the host…";
+            this.lblRemoteWaiting.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            //
+            // picRemote
+            //
             this.picRemote.Dock = Wisej.Web.DockStyle.Fill;
             this.picRemote.Name = "picRemote";
-            this.picRemote.ShowLoader = true;
-            this.picRemote.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
+            this.picRemote.SizeMode = Wisej.Web.PictureBoxSizeMode.Cover;
+            this.picRemote.Visible = false;
             this.picRemote.LoadCompleted += this.picRemote_LoadCompleted;
+            //
+            // pnlRemoteBox
+            //
+            this.pnlRemoteBox.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.pnlRemoteBox.CssStyle = "border:1.5px solid #c9d4e0;border-radius:6px;overflow:hidden;";
+            this.pnlRemoteBox.Location = new System.Drawing.Point(0, 28);
+            this.pnlRemoteBox.Name = "pnlRemoteBox";
+            this.pnlRemoteBox.Size = new System.Drawing.Size(300, 128);
+            this.pnlRemoteBox.Controls.Add(this.lblRemoteWaiting);
+            this.pnlRemoteBox.Controls.Add(this.picRemote);
+            //
+            // pnlRemote
+            //
             this.pnlRemote.Dock = Wisej.Web.DockStyle.Left;
             this.pnlRemote.Name = "pnlRemote";
-            this.pnlRemote.Padding = new Wisej.Web.Padding(0, 12, 24, 0);
-            this.pnlRemote.Size = new System.Drawing.Size(360, 200);
-            this.pnlRemote.Controls.Add(this.picRemote);
+            this.pnlRemote.Size = new System.Drawing.Size(320, 172);
+            this.pnlRemote.Controls.Add(this.pnlRemoteBox);
             this.pnlRemote.Controls.Add(this.lblRemoteHeader);
             //
-            // the vector at four sizes
+            // the SVG row and the bitmap row
             //
             this.lblVectorHeader.AutoSize = false;
+            this.lblVectorHeader.CssStyle = "letter-spacing:.05em;";
             this.lblVectorHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblVectorHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblVectorHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
+            this.lblVectorHeader.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.lblVectorHeader.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
             this.lblVectorHeader.Name = "lblVectorHeader";
-            this.lblVectorHeader.Size = new System.Drawing.Size(500, 26);
-            this.lblVectorHeader.Text = "One SVG on ImageSource at 16, 24, 32 and 48 pixels";
+            this.lblVectorHeader.Size = new System.Drawing.Size(600, 20);
+            this.lblVectorHeader.Text = "IMAGESOURCE SVG VS BITMAP · 16 · 24 · 32 · 48";
+
+            this.lblSvgRow.AutoSize = false;
+            this.lblSvgRow.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.lblSvgRow.ForeColor = System.Drawing.Color.FromArgb(31, 174, 90);
+            this.lblSvgRow.Location = new System.Drawing.Point(0, 30);
+            this.lblSvgRow.Name = "lblSvgRow";
+            this.lblSvgRow.Size = new System.Drawing.Size(96, 20);
+            this.lblSvgRow.Text = "SVG";
+            this.picSvg16.Location = new System.Drawing.Point(96, 38);
             this.picSvg16.Name = "picSvg16";
             this.picSvg16.Size = new System.Drawing.Size(16, 16);
+            this.picSvg16.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
             this.picSvg16.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
+            this.picSvg24.Location = new System.Drawing.Point(134, 30);
             this.picSvg24.Name = "picSvg24";
             this.picSvg24.Size = new System.Drawing.Size(24, 24);
+            this.picSvg24.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
             this.picSvg24.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
+            this.picSvg32.Location = new System.Drawing.Point(180, 22);
             this.picSvg32.Name = "picSvg32";
             this.picSvg32.Size = new System.Drawing.Size(32, 32);
+            this.picSvg32.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
             this.picSvg32.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
+            this.picSvg48.Location = new System.Drawing.Point(234, 6);
             this.picSvg48.Name = "picSvg48";
             this.picSvg48.Size = new System.Drawing.Size(48, 48);
+            this.picSvg48.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
             this.picSvg48.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
-            this.pnlVectorSizes.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlVectorSizes.FlowDirection = Wisej.Web.FlowDirection.LeftToRight;
-            this.pnlVectorSizes.Name = "pnlVectorSizes";
-            this.pnlVectorSizes.Size = new System.Drawing.Size(500, 64);
-            this.pnlVectorSizes.Controls.Add(this.picSvg16);
-            this.pnlVectorSizes.Controls.Add(this.picSvg24);
-            this.pnlVectorSizes.Controls.Add(this.picSvg32);
-            this.pnlVectorSizes.Controls.Add(this.picSvg48);
+
+            this.lblLegacyRow.AutoSize = false;
+            this.lblLegacyRow.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.lblLegacyRow.ForeColor = System.Drawing.Color.FromArgb(224, 90, 59);
+            this.lblLegacyRow.Location = new System.Drawing.Point(0, 84);
+            this.lblLegacyRow.Name = "lblLegacyRow";
+            this.lblLegacyRow.Size = new System.Drawing.Size(96, 20);
+            this.lblLegacyRow.Text = "bitmap";
+            this.picLegacy16.Location = new System.Drawing.Point(96, 92);
+            this.picLegacy16.Name = "picLegacy16";
+            this.picLegacy16.Size = new System.Drawing.Size(16, 16);
+            this.picLegacy16.SizeMode = Wisej.Web.PictureBoxSizeMode.StretchImage;
+            this.picLegacy24.Location = new System.Drawing.Point(134, 84);
+            this.picLegacy24.Name = "picLegacy24";
+            this.picLegacy24.Size = new System.Drawing.Size(24, 24);
+            this.picLegacy24.SizeMode = Wisej.Web.PictureBoxSizeMode.StretchImage;
+            this.picLegacy32.Location = new System.Drawing.Point(180, 76);
+            this.picLegacy32.Name = "picLegacy32";
+            this.picLegacy32.Size = new System.Drawing.Size(32, 32);
+            this.picLegacy32.SizeMode = Wisej.Web.PictureBoxSizeMode.StretchImage;
+            this.picLegacy48.Location = new System.Drawing.Point(234, 60);
+            this.picLegacy48.Name = "picLegacy48";
+            this.picLegacy48.Size = new System.Drawing.Size(48, 48);
+            this.picLegacy48.SizeMode = Wisej.Web.PictureBoxSizeMode.StretchImage;
             //
-            // lblReport
+            // pnlVectorBox
             //
-            this.lblReport.AllowHtml = true;
-            this.lblReport.AutoSize = false;
-            this.lblReport.Dock = Wisej.Web.DockStyle.Fill;
-            this.lblReport.Name = "lblReport";
-            this.lblReport.Padding = new Wisej.Web.Padding(0, 10, 0, 0);
-            this.lblReport.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+            this.pnlVectorBox.BackColor = System.Drawing.Color.White;
+            this.pnlVectorBox.CssStyle = "border:1.5px solid #c9d4e0;border-radius:6px;";
+            this.pnlVectorBox.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlVectorBox.Name = "pnlVectorBox";
+            this.pnlVectorBox.Padding = new Wisej.Web.Padding(14, 10, 14, 10);
+            this.pnlVectorBox.Controls.Add(this.lblSvgRow);
+            this.pnlVectorBox.Controls.Add(this.picSvg16);
+            this.pnlVectorBox.Controls.Add(this.picSvg24);
+            this.pnlVectorBox.Controls.Add(this.picSvg32);
+            this.pnlVectorBox.Controls.Add(this.picSvg48);
+            this.pnlVectorBox.Controls.Add(this.lblLegacyRow);
+            this.pnlVectorBox.Controls.Add(this.picLegacy16);
+            this.pnlVectorBox.Controls.Add(this.picLegacy24);
+            this.pnlVectorBox.Controls.Add(this.picLegacy32);
+            this.pnlVectorBox.Controls.Add(this.picLegacy48);
             //
             // pnlVector
             //
             this.pnlVector.Dock = Wisej.Web.DockStyle.Fill;
             this.pnlVector.Name = "pnlVector";
-            this.pnlVector.Padding = new Wisej.Web.Padding(0, 12, 0, 0);
-            this.pnlVector.Controls.Add(this.lblReport);
-            this.pnlVector.Controls.Add(this.pnlVectorSizes);
+            this.pnlVector.Padding = new Wisej.Web.Padding(0, 28, 0, 16);
+            this.pnlVector.Controls.Add(this.pnlVectorBox);
             this.pnlVector.Controls.Add(this.lblVectorHeader);
             //
             // pnlLower
             //
-            this.pnlLower.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlLower.Dock = Wisej.Web.DockStyle.Top;
             this.pnlLower.Name = "pnlLower";
+            this.pnlLower.Padding = new Wisej.Web.Padding(0, 16, 0, 0);
+            this.pnlLower.Size = new System.Drawing.Size(960, 188);
             this.pnlLower.Controls.Add(this.pnlVector);
             this.pnlLower.Controls.Add(this.pnlRemote);
             //
+            // lblReport
+            //
+            // One line per PictureBox, naming the property that actually supplied its picture.
+            this.lblReport.AllowHtml = true;
+            this.lblReport.AutoSize = false;
+            this.lblReport.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblReport.Name = "lblReport";
+            this.lblReport.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+            //
+            // pnlReport
+            //
+            this.pnlReport.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.pnlReport.CssStyle = "border:1px solid #dde4ec;border-left:4px solid #1565d8;border-radius:6px;";
+            this.pnlReport.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlReport.Name = "pnlReport";
+            this.pnlReport.Padding = new Wisej.Web.Padding(16, 10, 16, 10);
+            this.pnlReport.Size = new System.Drawing.Size(960, 164);
+            this.pnlReport.Controls.Add(this.lblReport);
+            //
             // pnlBody
             //
+            this.pnlBody.BackColor = System.Drawing.Color.White;
             this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
             this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Padding = new Wisej.Web.Padding(20);
+            this.pnlBody.Padding = new Wisej.Web.Padding(24, 18, 24, 20);
+            this.pnlBody.Controls.Add(this.pnlReport);
             this.pnlBody.Controls.Add(this.pnlLower);
-            this.pnlBody.Controls.Add(this.layoutSizeModes);
-            this.pnlBody.Controls.Add(this.lblSizeModesHeader);
+            this.pnlBody.Controls.Add(this.pnlModes);
+            this.pnlBody.Controls.Add(this.lblModesHeader);
             //
             // ImageLabPage
             //
+            this.BackColor = System.Drawing.Color.White;
             this.Name = "ImageLabPage";
-            this.Size = new System.Drawing.Size(1000, 640);
-            this.Text = "IconDesk - Image lab";
+            this.Size = new System.Drawing.Size(1010, 640);
+            this.Text = "IconDesk — ImageLab";
             this.Controls.Add(this.pnlBody);
-            this.Controls.Add(this.pnlActions);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.pnlHeader);
+            this.Controls.Add(this.appTitleBar);
             this.ResumeLayout(false);
         }
 
         #endregion
 
-        private Wisej.Web.Panel pnlHeader;
-        private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblSubtitle;
-        private Wisej.Web.Label lblStatus;
-        private Wisej.Web.Panel pnlActions;
-        private Wisej.Web.Button btnBack;
-        private Wisej.Web.Button btnFetchSlow;
-        private Wisej.Web.Button btnFetchRemote;
-        private Wisej.Web.Button btnReport;
+        private IconDesk.AppTitleBar appTitleBar;
         private Wisej.Web.Panel pnlBody;
-        private Wisej.Web.Label lblSizeModesHeader;
-        private Wisej.Web.TableLayoutPanel layoutSizeModes;
-        private Wisej.Web.Panel pnlNormal;
-        private Wisej.Web.Label lblNormal;
+        private Wisej.Web.Label lblModesHeader;
+        private Wisej.Web.Panel pnlModes;
         private Wisej.Web.PictureBox picNormal;
-        private Wisej.Web.Panel pnlZoom;
-        private Wisej.Web.Label lblZoom;
+        private Wisej.Web.Label lblNormalName;
+        private Wisej.Web.Label lblNormalNote;
         private Wisej.Web.PictureBox picZoom;
-        private Wisej.Web.Panel pnlCover;
-        private Wisej.Web.Label lblCover;
+        private Wisej.Web.Label lblZoomName;
+        private Wisej.Web.Label lblZoomNote;
         private Wisej.Web.PictureBox picCover;
-        private Wisej.Web.Panel pnlStretch;
-        private Wisej.Web.Label lblStretch;
+        private Wisej.Web.Label lblCoverName;
+        private Wisej.Web.Label lblCoverNote;
         private Wisej.Web.PictureBox picStretch;
+        private Wisej.Web.Label lblStretchName;
+        private Wisej.Web.Label lblStretchNote;
         private Wisej.Web.Panel pnlLower;
         private Wisej.Web.Panel pnlRemote;
         private Wisej.Web.Label lblRemoteHeader;
+        private Wisej.Web.Panel pnlRemoteBox;
+        private Wisej.Web.Label lblRemoteWaiting;
         private Wisej.Web.PictureBox picRemote;
         private Wisej.Web.Panel pnlVector;
         private Wisej.Web.Label lblVectorHeader;
-        private Wisej.Web.FlowLayoutPanel pnlVectorSizes;
+        private Wisej.Web.Panel pnlVectorBox;
+        private Wisej.Web.Label lblSvgRow;
         private Wisej.Web.PictureBox picSvg16;
         private Wisej.Web.PictureBox picSvg24;
         private Wisej.Web.PictureBox picSvg32;
         private Wisej.Web.PictureBox picSvg48;
+        private Wisej.Web.Label lblLegacyRow;
+        private Wisej.Web.PictureBox picLegacy16;
+        private Wisej.Web.PictureBox picLegacy24;
+        private Wisej.Web.PictureBox picLegacy32;
+        private Wisej.Web.PictureBox picLegacy48;
+        private Wisej.Web.Panel pnlReport;
         private Wisej.Web.Label lblReport;
     }
 }

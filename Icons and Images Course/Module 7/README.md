@@ -1,11 +1,12 @@
 # IconDesk · Icons & Images in Wisej.NET · Module 7
 
-Local lab build for **Module 7 · Icon Fonts and the Capstone**. A `Summary` page that puts every
-mechanism the course covered on one screen - a theme image, an official pack icon, a custom pack
-icon, an embedded asset and a recoloured SVG - plus the one thing Module 7 adds: icon fonts, in an
-`AllowHtml` toolbar and in a `DataGridView` column whose glyphs respond individually to a click.
-The Module 1-6 pages are unchanged.
-This folder is the complete application at the end of the course.
+Local lab build for **Module 7 · Icon Fonts, HTML Content and Production Icon Strategy**. The
+capstone: the IconDesk shell, an **Icon Summary** page carrying one tile per mechanism the course
+covered, and a **Customer Actions** page whose grid draws its actions as icon-font glyphs inside
+an `AllowHtml` column - the sixth mechanism, and the only one that is not an image at all.
+
+Modules 1 to 6 are carried forward unchanged; the application opens on the shell. This folder is
+the complete application at the end of the course, with its own solution and port.
 
 ## Run it
 
@@ -14,42 +15,60 @@ cd "Icons and Images Course/Module 7/IconDesk"
 dotnet run -f net10.0 --urls http://localhost:6207
 ```
 
-Open <http://localhost:6207> and press **Summary**.
+Open <http://localhost:6207>.
+
+## The screen
+
+`IconDesk · Icon Summary`: the application map down the left - the seven sections the course
+built, in the order it built them - and the summary tiles on the right. **Customer Actions** and
+**Icon Summary** are the two sections this module owns and the two the nav switches between; the
+other five name where the rest of IconDesk lives.
 
 ## What to try
 
 | Action | Expected result |
 |---|---|
-| Click the pencil, the arrow or the cross in a grid row | The status line names the action **and** the row: `delete on floppy-o.svg (cell x=67, y=15)`. The `role` attribute on the glyph is what makes that possible. |
-| Click the actions cell but between glyphs | `Role was empty` - the page can tell the difference between "clicked an action" and "clicked the cell". |
-| Switch to **BootstrapDark-4** | Every image-based icon turns light. Every icon-font glyph stays dark grey. That is the finding, and it is left in on purpose. |
-| Press **Run the theme QA pass** | The page reports its own image sources and points at the finding. |
-| Look at the toolbar card | One `Label`. No `Image`, no `ImageSource`, no `ImageList` - the glyphs are text. |
+| Read the five tiles | A theme image, an official pack icon, a custom pack icon, an embedded resource and a recoloured SVG. Each tile prints the source string it was given and carries a tooltip. |
+| Press the **Theme: …** chip | The other theme loads and every tile gains a verdict. Four followed the theme and one did not - and the one that did not is the *embedded* logo, which is the opposite of the intuitive answer. |
+| Open **Customer Actions** | A grid whose Actions column is `AllowHtml`, with two icon-font glyphs per cell. The glyphs are text: no `Image`, no `ImageSource`, nothing for an image property to report. |
+| Click a glyph | The strip below names the `role` the element carried, the order, and what the application would do. Click the cell but not a glyph and it says the role was empty. |
+| Switch to the dark theme and look at the glyphs | They read correctly, because `icon-font.css` no longer sets a colour on `.idi` - see `docs/ThemeQA.md`. |
 
 ## Lab tasks → where in the code
 
 | Deliverable | Implementation |
 |---|---|
-| Icon-font stylesheet referenced from `Default.html` | [Default.html](IconDesk/Default.html) and [Images/icon-font.css](IconDesk/Images/icon-font.css) |
-| An `AllowHtml` toolbar rendering font glyphs | `BuildIconFontToolbar` in [SummaryPage.cs](IconDesk/SummaryPage.cs) |
-| A grid column with icon-font actions that respond to the clicked element | `BuildGrid` / `gridAssets_CellClick`, and `colActions.AllowHtml` in the designer |
-| A summary page showing all five image mechanisms | `ShowEveryMechanism` |
-| Production icon policy | [docs/IconPolicy.md](IconDesk/docs/IconPolicy.md) |
-| QA pass in a light and a dark theme | [docs/ThemeQA.md](IconDesk/docs/ThemeQA.md) |
+| Icon-font stylesheet loaded before any `AllowHtml` content | the `<link>` in [Default.html](IconDesk/Default.html), [Images/icon-font.css](IconDesk/Images/icon-font.css) |
+| An icon-font action column in a grid | `Actions` / `colActions.AllowHtml` in [SummaryPage.cs](IconDesk/SummaryPage.cs) and its designer |
+| `role=` telling one handler which action was clicked | `gridCustomers_CellClick` |
+| The five-mechanism summary page | `Tiles` / `BuildTiles` |
+| The theme QA pass | `btnThemeChip_Click` / `PaintVerdicts`, [docs/ThemeQA.md](IconDesk/docs/ThemeQA.md) |
+| The written icon policy | [docs/IconPolicy.md](IconDesk/docs/IconPolicy.md) |
 
 ## Notes for anyone extending the capstone
 
-- **`DataGridViewCellEventArgs.Role`** is how a click lands on an action rather than on a row. Put
-  a `role="edit"` attribute on the element inside the `AllowHtml` cell and Wisej.NET reports it
-  back. `e.X` and `e.Y` give the position inside the cell if a layout needs them. Verified live.
-- `AllowHtml` goes on the **column**, not the grid.
-- **Icon fonts are the one mechanism a theme switch cannot reach.** Glyphs are text; the theme
-  never sees them. Do not set `color` on the glyph classes - let them inherit from the surrounding
-  text, which the theme does control. The sample deliberately keeps the broken version so the QA
-  pass has something to find.
-- The stylesheet is referenced from `Default.html` rather than from C#, because it has to be in the
-  document before any `AllowHtml` content that uses its classes is rendered.
-- `icon-font.css` uses Unicode glyphs from the system font rather than shipping a bespoke webfont,
-  so the lab runs with no internet access and nothing binary is smuggled in. Swapping in a real
-  family is one `@font-face` rule and a change of `content` values; the file says so at the top and
-  nothing else on the page changes.
+- **Icon-font glyphs are text.** They are styled by a stylesheet the document loads and rendered
+  inside `AllowHtml` content. Nothing about them passes through the theme, so a colour set in CSS
+  is a colour no theme can revisit. Do not set `color` on a glyph class; let it inherit.
+- Reference the stylesheet from `Default.html`, **not** from C#: it has to be in the document
+  before any `AllowHtml` content that uses its classes is rendered.
+- `AllowHtml` goes on the **column**, not on the grid. `DataGridViewCellEventArgs` carries
+  `RowIndex`, `ColumnIndex`, `X`, `Y`, `Location` and - the useful one - **`Role`**. Put
+  `role="edit"` on an element inside an `AllowHtml` cell and `CellClick` reports it, which is how
+  a click lands on an action rather than on a row.
+- The shell is a two-column `TableLayoutPanel`. `Dock = Left` beside `Dock = Fill` on a Page did
+  not shrink the content panel here; a table says how the row is shared without either control
+  guessing a width.
+- A `Button` with `BorderStyle = None` renders as plain text but does **not** raise `Click` in
+  Wisej.NET 4.1.4. Every clickable control on this page is a Button with a border style the
+  framework recognises, styled with `CssStyle`.
+
+## Where this sample differs from the lesson video
+
+- The video's QA row marks the official pack icon and the custom pack icon **unchanged** after the
+  theme switch. On the running page they change, because both are monochrome SVGs with no fill of
+  their own - see `docs/ThemeQA.md`. The sample reports what actually happened.
+- The video writes `status-warning.svg?color=error`. `error` is not a Wisej.NET theme colour name
+  and resolves to nothing; the sample uses `invalid`.
+- The five earlier nav entries are shown, as the video shows them, but are not links: a page with
+  no way back is worse than a page with none.

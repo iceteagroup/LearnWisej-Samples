@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-  <path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 5h16l-6 7v6l-4 2v-8L4 5z"/>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IconDesk.Icons pack. Recolourable by contract: one meaningful fill on the root so
+     Wisej.NET reads this as an icon, fill="none" on every shape so the injected fill cannot
+     paint it in, and stroke="currentColor" so the strokes take the injected colour. A literal
+     stroke colour renders correctly and then never changes again. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#1f2d3a">
+  <path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M3 5h18l-7 8v6l-4 2v-8z"/>
 </svg>

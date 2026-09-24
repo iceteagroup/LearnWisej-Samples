@@ -18,221 +18,159 @@ namespace IconDesk
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.pnlHeader = new Wisej.Web.Panel();
-            this.lblTitle = new Wisej.Web.Label();
-            this.lblSubtitle = new Wisej.Web.Label();
-            this.lblStatus = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.FlowLayoutPanel();
-            this.btnBack = new Wisej.Web.Button();
-            this.btnOverride = new Wisej.Web.Button();
-            this.btnRemoveOverride = new Wisej.Web.Button();
-            this.btnMisspell = new Wisej.Web.Button();
-            this.btnReport = new Wisej.Web.Button();
+            this.appTitleBar = new IconDesk.AppTitleBar();
             this.pnlBody = new Wisej.Web.Panel();
-            this.lblResourcesHeader = new Wisej.Web.Label();
-            this.layoutResources = new Wisej.Web.TableLayoutPanel();
-            this.picLogo = new Wisej.Web.PictureBox();
-            this.lblLogo = new Wisej.Web.Label();
-            this.picOk = new Wisej.Web.PictureBox();
-            this.lblOk = new Wisej.Web.Label();
-            this.picWarning = new Wisej.Web.PictureBox();
-            this.lblWarning = new Wisej.Web.Label();
-            this.picPhoto = new Wisej.Web.PictureBox();
-            this.lblPhoto = new Wisej.Web.Label();
-            this.picBadge = new Wisej.Web.PictureBox();
-            this.lblBadge = new Wisej.Web.Label();
-            this.lblReport = new Wisej.Web.Label();
+            this.pnlActions = new Wisej.Web.Panel();
+            this.btnShowResources = new Wisej.Web.Button();
+            this.lblBuildAction = new Wisej.Web.Label();
+            this.layoutTiles = new Wisej.Web.TableLayoutPanel();
+            this.tileLogo = new IconDesk.AssetTile();
+            this.tileOk = new IconDesk.AssetTile();
+            this.tileWarning = new IconDesk.AssetTile();
+            this.tilePhoto = new IconDesk.AssetTile();
+            this.tileBadge = new IconDesk.AssetTile();
+            this.lblResourceReport = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblTitle
+            // appTitleBar
             //
-            this.lblTitle.AutoSize = false;
-            this.lblTitle.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Location = new System.Drawing.Point(20, 12);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(460, 28);
-            this.lblTitle.Text = "Embedded resources";
+            this.appTitleBar.Size = new System.Drawing.Size(1000, 36);
+            this.appTitleBar.Title = "IconDesk — ResourceLab";
             //
-            // lblSubtitle
+            // btnShowResources
             //
-            this.lblSubtitle.AutoSize = false;
-            this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 42);
-            this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(900, 22);
-            this.lblSubtitle.Text = "Five assets compiled into the assembly and served through resource.wx.";
+            // The one control on this screen. Its caption names the next step, so the lab can be
+            // walked through without a second button being added to the page.
+            this.btnShowResources.BackColor = System.Drawing.Color.FromArgb(21, 101, 216);
+            this.btnShowResources.CssStyle = "border:none;border-radius:7px;";
+            this.btnShowResources.Font = new System.Drawing.Font("default", 10.1F, System.Drawing.FontStyle.Bold);
+            this.btnShowResources.ForeColor = System.Drawing.Color.White;
+            this.btnShowResources.Location = new System.Drawing.Point(0, 0);
+            this.btnShowResources.Name = "btnShowResources";
+            this.btnShowResources.Size = new System.Drawing.Size(170, 32);
+            this.btnShowResources.TabIndex = 0;
+            this.btnShowResources.Text = "Show resources";
+            this.btnShowResources.Click += this.btnShowResources_Click;
             //
-            // pnlHeader
+            // lblBuildAction
             //
-            this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1000, 72);
-            this.pnlHeader.Controls.Add(this.lblSubtitle);
-            this.pnlHeader.Controls.Add(this.lblTitle);
-            //
-            // lblStatus
-            //
-            this.lblStatus.AllowHtml = true;
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Padding = new Wisej.Web.Padding(20, 8, 20, 8);
-            this.lblStatus.Size = new System.Drawing.Size(1000, 34);
-            this.lblStatus.Text = "Ready.";
-            //
-            // the buttons
-            //
-            this.btnBack.Name = "btnBack";
-            this.btnBack.Size = new System.Drawing.Size(170, 38);
-            this.btnBack.TabIndex = 0;
-            this.btnBack.Text = "Back to commands";
-            this.btnBack.Click += this.btnBack_Click;
-
-            this.btnOverride.Name = "btnOverride";
-            this.btnOverride.Size = new System.Drawing.Size(250, 38);
-            this.btnOverride.TabIndex = 1;
-            this.btnOverride.Text = "Drop an override beside the app";
-            this.btnOverride.Click += this.btnOverride_Click;
-
-            this.btnRemoveOverride.Name = "btnRemoveOverride";
-            this.btnRemoveOverride.Size = new System.Drawing.Size(190, 38);
-            this.btnRemoveOverride.TabIndex = 2;
-            this.btnRemoveOverride.Text = "Remove the override";
-            this.btnRemoveOverride.Click += this.btnRemoveOverride_Click;
-
-            this.btnMisspell.Name = "btnMisspell";
-            this.btnMisspell.Size = new System.Drawing.Size(210, 38);
-            this.btnMisspell.TabIndex = 3;
-            this.btnMisspell.Text = "Misspell a resource URL";
-            this.btnMisspell.Click += this.btnMisspell_Click;
-
-            this.btnReport.Name = "btnReport";
-            this.btnReport.Size = new System.Drawing.Size(210, 38);
-            this.btnReport.TabIndex = 4;
-            this.btnReport.Text = "Report the resource URLs";
-            this.btnReport.Click += this.btnReport_Click;
+            this.lblBuildAction.AllowHtml = true;
+            this.lblBuildAction.AutoSize = false;
+            this.lblBuildAction.Font = new System.Drawing.Font("default", 9.4F);
+            this.lblBuildAction.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblBuildAction.Location = new System.Drawing.Point(180, 0);
+            this.lblBuildAction.Name = "lblBuildAction";
+            this.lblBuildAction.Size = new System.Drawing.Size(560, 32);
+            this.lblBuildAction.Text = "Build Action = <b>Embedded Resource</b> on all five files";
+            this.lblBuildAction.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // pnlActions
             //
-            this.pnlActions.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlActions.FlowDirection = Wisej.Web.FlowDirection.LeftToRight;
+            this.pnlActions.Dock = Wisej.Web.DockStyle.Top;
             this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Padding = new Wisej.Web.Padding(14, 8, 14, 8);
-            this.pnlActions.Size = new System.Drawing.Size(1000, 104);
-            this.pnlActions.WrapContents = true;
-            this.pnlActions.Controls.Add(this.btnBack);
-            this.pnlActions.Controls.Add(this.btnOverride);
-            this.pnlActions.Controls.Add(this.btnRemoveOverride);
-            this.pnlActions.Controls.Add(this.btnMisspell);
-            this.pnlActions.Controls.Add(this.btnReport);
+            this.pnlActions.Size = new System.Drawing.Size(960, 46);
+            this.pnlActions.Controls.Add(this.btnShowResources);
+            this.pnlActions.Controls.Add(this.lblBuildAction);
             //
-            // lblResourcesHeader
+            // the five asset tiles
             //
-            this.lblResourcesHeader.AutoSize = false;
-            this.lblResourcesHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblResourcesHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblResourcesHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblResourcesHeader.Name = "lblResourcesHeader";
-            this.lblResourcesHeader.Size = new System.Drawing.Size(960, 26);
-            this.lblResourcesHeader.Text = "Five embedded assets - picLogo qualified with the assembly name, the other four not";
+            this.tileLogo.Dock = Wisej.Web.DockStyle.Fill;
+            this.tileLogo.FileName = "logo.svg";
+            this.tileLogo.Margin = new Wisej.Web.Padding(0, 0, 10, 0);
+            this.tileLogo.Name = "tileLogo";
+            this.tileLogo.Picture.Name = "picLogo";
+            this.tileLogo.SourceShape = "resource.wx/IconDesk/…";
+
+            this.tileOk.Dock = Wisej.Web.DockStyle.Fill;
+            this.tileOk.FileName = "status-ok.svg";
+            this.tileOk.Margin = new Wisej.Web.Padding(0, 0, 10, 0);
+            this.tileOk.Name = "tileOk";
+            this.tileOk.Picture.Name = "picOk";
+
+            this.tileWarning.Dock = Wisej.Web.DockStyle.Fill;
+            this.tileWarning.FileName = "status-warning.svg";
+            this.tileWarning.Margin = new Wisej.Web.Padding(0, 0, 10, 0);
+            this.tileWarning.Name = "tileWarning";
+            this.tileWarning.Picture.Name = "picWarning";
+
+            this.tilePhoto.Dock = Wisej.Web.DockStyle.Fill;
+            this.tilePhoto.FileName = "photo.png";
+            this.tilePhoto.Margin = new Wisej.Web.Padding(0, 0, 10, 0);
+            this.tilePhoto.Name = "tilePhoto";
+            this.tilePhoto.Picture.Name = "picPhoto";
+
+            this.tileBadge.Dock = Wisej.Web.DockStyle.Fill;
+            this.tileBadge.FileName = "badge.gif";
+            this.tileBadge.Name = "tileBadge";
+            this.tileBadge.Picture.Name = "picBadge";
             //
-            // the five assets
+            // layoutTiles
             //
-            SetAsset(this.picLogo, "picLogo", this.lblLogo, "lblLogo", "logo.svg\r\nqualified");
-            SetAsset(this.picOk, "picOk", this.lblOk, "lblOk", "status-ok.svg\r\nunqualified");
-            SetAsset(this.picWarning, "picWarning", this.lblWarning, "lblWarning", "status-warning.svg\r\nunqualified");
-            SetAsset(this.picPhoto, "picPhoto", this.lblPhoto, "lblPhoto", "photo.png\r\nunqualified");
-            SetAsset(this.picBadge, "picBadge", this.lblBadge, "lblBadge", "badge.gif\r\nunqualified");
-            //
-            // layoutResources
-            //
-            this.layoutResources.ColumnCount = 5;
-            this.layoutResources.RowCount = 2;
+            this.layoutTiles.ColumnCount = 5;
+            this.layoutTiles.RowCount = 1;
             for (var column = 0; column < 5; column++)
-                this.layoutResources.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 20F));
-            this.layoutResources.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 90F));
-            this.layoutResources.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 46F));
-            this.layoutResources.Dock = Wisej.Web.DockStyle.Top;
-            this.layoutResources.Name = "layoutResources";
-            this.layoutResources.Size = new System.Drawing.Size(960, 140);
-            this.layoutResources.Controls.Add(this.picLogo, 0, 0);
-            this.layoutResources.Controls.Add(this.picOk, 1, 0);
-            this.layoutResources.Controls.Add(this.picWarning, 2, 0);
-            this.layoutResources.Controls.Add(this.picPhoto, 3, 0);
-            this.layoutResources.Controls.Add(this.picBadge, 4, 0);
-            this.layoutResources.Controls.Add(this.lblLogo, 0, 1);
-            this.layoutResources.Controls.Add(this.lblOk, 1, 1);
-            this.layoutResources.Controls.Add(this.lblWarning, 2, 1);
-            this.layoutResources.Controls.Add(this.lblPhoto, 3, 1);
-            this.layoutResources.Controls.Add(this.lblBadge, 4, 1);
+                this.layoutTiles.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 20F));
+            this.layoutTiles.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 140F));
+            this.layoutTiles.Dock = Wisej.Web.DockStyle.Top;
+            this.layoutTiles.Name = "layoutTiles";
+            this.layoutTiles.Size = new System.Drawing.Size(960, 140);
+            this.layoutTiles.Controls.Add(this.tileLogo, 0, 0);
+            this.layoutTiles.Controls.Add(this.tileOk, 1, 0);
+            this.layoutTiles.Controls.Add(this.tileWarning, 2, 0);
+            this.layoutTiles.Controls.Add(this.tilePhoto, 3, 0);
+            this.layoutTiles.Controls.Add(this.tileBadge, 4, 0);
             //
-            // lblReport
+            // lblResourceReport
             //
-            this.lblReport.AllowHtml = true;
-            this.lblReport.AutoSize = false;
-            this.lblReport.Dock = Wisej.Web.DockStyle.Fill;
-            this.lblReport.Name = "lblReport";
-            this.lblReport.Padding = new Wisej.Web.Padding(0, 14, 0, 0);
-            this.lblReport.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+            // The status strip. A missing asset says so here rather than leaving a silent empty
+            // rectangle for a customer to find first.
+            this.lblResourceReport.AllowHtml = true;
+            this.lblResourceReport.AutoSize = false;
+            this.lblResourceReport.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.lblResourceReport.CssStyle = "border-top:1px solid #e4eaf1;";
+            this.lblResourceReport.Dock = Wisej.Web.DockStyle.Bottom;
+            this.lblResourceReport.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.lblResourceReport.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblResourceReport.Name = "lblResourceReport";
+            this.lblResourceReport.Padding = new Wisej.Web.Padding(16, 0, 16, 0);
+            this.lblResourceReport.Size = new System.Drawing.Size(1000, 30);
+            this.lblResourceReport.Text = "Ready";
+            this.lblResourceReport.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // pnlBody
             //
+            this.pnlBody.BackColor = System.Drawing.Color.White;
             this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
             this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Padding = new Wisej.Web.Padding(20);
-            this.pnlBody.Controls.Add(this.lblReport);
-            this.pnlBody.Controls.Add(this.layoutResources);
-            this.pnlBody.Controls.Add(this.lblResourcesHeader);
+            this.pnlBody.Padding = new Wisej.Web.Padding(18, 16, 18, 10);
+            this.pnlBody.Controls.Add(this.layoutTiles);
+            this.pnlBody.Controls.Add(this.pnlActions);
             //
             // ResourceLabPage
             //
+            this.BackColor = System.Drawing.Color.White;
             this.Name = "ResourceLabPage";
             this.Size = new System.Drawing.Size(1000, 640);
-            this.Text = "IconDesk - Embedded resources";
+            this.Text = "IconDesk — ResourceLab";
             this.Controls.Add(this.pnlBody);
-            this.Controls.Add(this.pnlActions);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.pnlHeader);
+            this.Controls.Add(this.lblResourceReport);
+            this.Controls.Add(this.appTitleBar);
             this.ResumeLayout(false);
-        }
-
-        private static void SetAsset(Wisej.Web.PictureBox box, string boxName, Wisej.Web.Label label, string labelName, string caption)
-        {
-            box.Name = boxName;
-            box.Size = new System.Drawing.Size(72, 72);
-            box.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
-
-            label.AutoSize = false;
-            label.Name = labelName;
-            label.Text = caption;
-            label.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         }
 
         #endregion
 
-        private Wisej.Web.Panel pnlHeader;
-        private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblSubtitle;
-        private Wisej.Web.Label lblStatus;
-        private Wisej.Web.FlowLayoutPanel pnlActions;
-        private Wisej.Web.Button btnBack;
-        private Wisej.Web.Button btnOverride;
-        private Wisej.Web.Button btnRemoveOverride;
-        private Wisej.Web.Button btnMisspell;
-        private Wisej.Web.Button btnReport;
+        private IconDesk.AppTitleBar appTitleBar;
         private Wisej.Web.Panel pnlBody;
-        private Wisej.Web.Label lblResourcesHeader;
-        private Wisej.Web.TableLayoutPanel layoutResources;
-        private Wisej.Web.PictureBox picLogo;
-        private Wisej.Web.Label lblLogo;
-        private Wisej.Web.PictureBox picOk;
-        private Wisej.Web.Label lblOk;
-        private Wisej.Web.PictureBox picWarning;
-        private Wisej.Web.Label lblWarning;
-        private Wisej.Web.PictureBox picPhoto;
-        private Wisej.Web.Label lblPhoto;
-        private Wisej.Web.PictureBox picBadge;
-        private Wisej.Web.Label lblBadge;
-        private Wisej.Web.Label lblReport;
+        private Wisej.Web.Panel pnlActions;
+        private Wisej.Web.Button btnShowResources;
+        private Wisej.Web.Label lblBuildAction;
+        private Wisej.Web.TableLayoutPanel layoutTiles;
+        private IconDesk.AssetTile tileLogo;
+        private IconDesk.AssetTile tileOk;
+        private IconDesk.AssetTile tileWarning;
+        private IconDesk.AssetTile tilePhoto;
+        private IconDesk.AssetTile tileBadge;
+        private Wisej.Web.Label lblResourceReport;
     }
 }

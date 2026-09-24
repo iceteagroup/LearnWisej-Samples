@@ -18,267 +18,266 @@ namespace IconDesk
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.pnlHeader = new Wisej.Web.Panel();
-            this.lblTitle = new Wisej.Web.Label();
-            this.lblSubtitle = new Wisej.Web.Label();
-            this.lblStatus = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.FlowLayoutPanel();
-            this.btnBack = new Wisej.Web.Button();
-            this.cboTheme = new Wisej.Web.ComboBox();
-            this.btnQa = new Wisej.Web.Button();
-            this.pnlBody = new Wisej.Web.Panel();
-            this.lblCardHeader = new Wisej.Web.Label();
-            this.lblToolbar = new Wisej.Web.Label();
-            this.lblMechanismsHeader = new Wisej.Web.Label();
-            this.layoutMechanisms = new Wisej.Web.TableLayoutPanel();
-            this.picTheme = new Wisej.Web.PictureBox();
-            this.lblTheme = new Wisej.Web.Label();
-            this.picOfficial = new Wisej.Web.PictureBox();
-            this.lblOfficial = new Wisej.Web.Label();
-            this.picCustom = new Wisej.Web.PictureBox();
-            this.lblCustom = new Wisej.Web.Label();
-            this.picEmbedded = new Wisej.Web.PictureBox();
-            this.lblEmbedded = new Wisej.Web.Label();
-            this.picRecoloured = new Wisej.Web.PictureBox();
-            this.lblRecoloured = new Wisej.Web.Label();
-            this.lblGridHeader = new Wisej.Web.Label();
-            this.gridAssets = new Wisej.Web.DataGridView();
-            this.colAsset = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colKind = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.appTitleBar = new IconDesk.AppTitleBar();
+            this.pnlNav = new Wisej.Web.Panel();
+            this.layoutShell = new Wisej.Web.TableLayoutPanel();
+            this.pnlContent = new Wisej.Web.Panel();
+            this.pnlSummary = new Wisej.Web.Panel();
+            this.pnlSummaryHead = new Wisej.Web.Panel();
+            this.lblSummaryHeading = new Wisej.Web.Label();
+            this.btnThemeChip = new Wisej.Web.Button();
+            this.layoutTiles = new Wisej.Web.TableLayoutPanel();
+            this.layoutVerdicts = new Wisej.Web.TableLayoutPanel();
+            this.lblSummaryFooter = new Wisej.Web.Label();
+            this.pnlActions = new Wisej.Web.Panel();
+            this.pnlActionsHead = new Wisej.Web.Panel();
+            this.lblActionsHeading = new Wisej.Web.Label();
+            this.lblQaChip = new Wisej.Web.Label();
+            this.gridCustomers = new Wisej.Web.DataGridView();
+            this.colOrder = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colCustomer = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colStatus = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colActions = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.layoutLegend = new Wisej.Web.TableLayoutPanel();
+            this.lblClickReport = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblTitle
+            // appTitleBar
             //
-            this.lblTitle.AutoSize = false;
-            this.lblTitle.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Location = new System.Drawing.Point(20, 12);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(560, 28);
-            this.lblTitle.Text = "Every mechanism, on one page";
+            this.appTitleBar.Title = "IconDesk";
             //
-            // lblSubtitle
+            // pnlNav - the application map, exactly the seven sections the course built
             //
-            this.lblSubtitle.AutoSize = false;
-            this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 42);
-            this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(900, 22);
-            this.lblSubtitle.Text = "Theme image, official pack, custom pack, embedded asset, recoloured SVG - and icon fonts.";
+            this.pnlNav.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.pnlNav.CssStyle = "border-right:1px solid #e4eaf1;";
+            this.pnlNav.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlNav.Name = "pnlNav";
+            this.pnlNav.Padding = new Wisej.Web.Padding(10, 13, 10, 13);
+            this.pnlNav.Size = new System.Drawing.Size(168, 600);
             //
-            // pnlHeader
+            // ── the Icon Summary view ──────────────────────────────────────────
             //
-            this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1000, 72);
-            this.pnlHeader.Controls.Add(this.lblSubtitle);
-            this.pnlHeader.Controls.Add(this.lblTitle);
-            //
-            // lblStatus
-            //
-            this.lblStatus.AllowHtml = true;
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Padding = new Wisej.Web.Padding(20, 8, 20, 8);
-            this.lblStatus.Size = new System.Drawing.Size(1000, 34);
-            this.lblStatus.Text = "Ready.";
-            //
-            // the buttons
-            //
-            this.btnBack.Name = "btnBack";
-            this.btnBack.Size = new System.Drawing.Size(170, 38);
-            this.btnBack.TabIndex = 0;
-            this.btnBack.Text = "Back to commands";
-            this.btnBack.Click += this.btnBack_Click;
+            this.lblSummaryHeading.AutoSize = false;
+            this.lblSummaryHeading.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblSummaryHeading.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
+            this.lblSummaryHeading.ForeColor = System.Drawing.Color.FromArgb(13, 27, 42);
+            this.lblSummaryHeading.Name = "lblSummaryHeading";
+            this.lblSummaryHeading.Text = "Every image on this page, and where it comes from";
+            this.lblSummaryHeading.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 
-            this.cboTheme.DropDownStyle = Wisej.Web.ComboBoxStyle.DropDownList;
-            this.cboTheme.Name = "cboTheme";
-            this.cboTheme.Size = new System.Drawing.Size(200, 38);
-            this.cboTheme.TabIndex = 1;
-            this.cboTheme.SelectedIndexChanged += this.cboTheme_SelectedIndexChanged;
+            this.btnThemeChip.BackColor = System.Drawing.Color.FromArgb(234, 243, 255);
+            this.btnThemeChip.CssStyle = "border:1px solid #c5ddff;border-radius:999px;";
+            this.btnThemeChip.Dock = Wisej.Web.DockStyle.Right;
+            this.btnThemeChip.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.btnThemeChip.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
+            this.btnThemeChip.Margin = new Wisej.Web.Padding(0, 3, 0, 3);
+            this.btnThemeChip.Name = "btnThemeChip";
+            this.btnThemeChip.TabIndex = 0;
+            this.btnThemeChip.Click += this.btnThemeChip_Click;
+            this.btnThemeChip.Size = new System.Drawing.Size(200, 32);
+            this.btnThemeChip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 
-            this.btnQa.Name = "btnQa";
-            this.btnQa.Size = new System.Drawing.Size(240, 38);
-            this.btnQa.TabIndex = 2;
-            this.btnQa.Text = "Run the theme QA pass";
-            this.btnQa.Click += this.btnQa_Click;
-            //
-            // pnlActions
-            //
-            this.pnlActions.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlActions.FlowDirection = Wisej.Web.FlowDirection.LeftToRight;
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Padding = new Wisej.Web.Padding(14, 8, 14, 8);
-            this.pnlActions.Size = new System.Drawing.Size(1000, 60);
-            this.pnlActions.WrapContents = true;
-            this.pnlActions.Controls.Add(this.btnBack);
-            this.pnlActions.Controls.Add(this.cboTheme);
-            this.pnlActions.Controls.Add(this.btnQa);
-            //
-            // lblCardHeader
-            //
-            this.lblCardHeader.AutoSize = false;
-            this.lblCardHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblCardHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblCardHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblCardHeader.Name = "lblCardHeader";
-            this.lblCardHeader.Size = new System.Drawing.Size(960, 26);
-            this.lblCardHeader.Text = "An icon-font toolbar - one AllowHtml label, no images at all";
-            //
-            // lblToolbar - the icon-font card. Its content is set in code.
-            //
-            this.lblToolbar.AllowHtml = true;
-            this.lblToolbar.AutoSize = false;
-            this.lblToolbar.Dock = Wisej.Web.DockStyle.Top;
-            this.lblToolbar.Name = "lblToolbar";
-            this.lblToolbar.Size = new System.Drawing.Size(960, 46);
-            this.lblToolbar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            //
-            // lblMechanismsHeader
-            //
-            this.lblMechanismsHeader.AutoSize = false;
-            this.lblMechanismsHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblMechanismsHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblMechanismsHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblMechanismsHeader.Name = "lblMechanismsHeader";
-            this.lblMechanismsHeader.Padding = new Wisej.Web.Padding(0, 12, 0, 0);
-            this.lblMechanismsHeader.Size = new System.Drawing.Size(960, 38);
-            this.lblMechanismsHeader.Text = "The five image-source mechanisms the course covered";
-            //
-            // the five mechanisms
-            //
-            SetCell(this.picTheme, "picTheme", this.lblTheme, "lblTheme", "Theme image");
-            SetCell(this.picOfficial, "picOfficial", this.lblOfficial, "lblOfficial", "Official pack");
-            SetCell(this.picCustom, "picCustom", this.lblCustom, "lblCustom", "Custom pack");
-            SetCell(this.picEmbedded, "picEmbedded", this.lblEmbedded, "lblEmbedded", "Embedded asset");
-            SetCell(this.picRecoloured, "picRecoloured", this.lblRecoloured, "lblRecoloured", "Recoloured SVG");
-            //
-            // layoutMechanisms
-            //
-            this.layoutMechanisms.ColumnCount = 5;
-            this.layoutMechanisms.RowCount = 2;
+            this.pnlSummaryHead.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlSummaryHead.Name = "pnlSummaryHead";
+            this.pnlSummaryHead.Size = new System.Drawing.Size(800, 40);
+            this.pnlSummaryHead.Controls.Add(this.lblSummaryHeading);
+            this.pnlSummaryHead.Controls.Add(this.btnThemeChip);
+
+            this.layoutTiles.ColumnCount = 5;
+            this.layoutTiles.RowCount = 1;
             for (var column = 0; column < 5; column++)
-                this.layoutMechanisms.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 20F));
-            this.layoutMechanisms.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 54F));
-            this.layoutMechanisms.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 26F));
-            this.layoutMechanisms.Dock = Wisej.Web.DockStyle.Top;
-            this.layoutMechanisms.Name = "layoutMechanisms";
-            this.layoutMechanisms.Size = new System.Drawing.Size(960, 84);
-            this.layoutMechanisms.Controls.Add(this.picTheme, 0, 0);
-            this.layoutMechanisms.Controls.Add(this.picOfficial, 1, 0);
-            this.layoutMechanisms.Controls.Add(this.picCustom, 2, 0);
-            this.layoutMechanisms.Controls.Add(this.picEmbedded, 3, 0);
-            this.layoutMechanisms.Controls.Add(this.picRecoloured, 4, 0);
-            this.layoutMechanisms.Controls.Add(this.lblTheme, 0, 1);
-            this.layoutMechanisms.Controls.Add(this.lblOfficial, 1, 1);
-            this.layoutMechanisms.Controls.Add(this.lblCustom, 2, 1);
-            this.layoutMechanisms.Controls.Add(this.lblEmbedded, 3, 1);
-            this.layoutMechanisms.Controls.Add(this.lblRecoloured, 4, 1);
-            //
-            // lblGridHeader
-            //
-            this.lblGridHeader.AutoSize = false;
-            this.lblGridHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblGridHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblGridHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblGridHeader.Name = "lblGridHeader";
-            this.lblGridHeader.Padding = new Wisej.Web.Padding(0, 12, 0, 0);
-            this.lblGridHeader.Size = new System.Drawing.Size(960, 38);
-            this.lblGridHeader.Text = "Icon-font actions in a grid column - click a glyph, not the row";
-            //
-            // the grid
-            //
-            this.colAsset.DataPropertyName = "Asset";
-            this.colAsset.HeaderText = "Asset";
-            this.colAsset.Name = "colAsset";
-            this.colAsset.Width = 220;
+                this.layoutTiles.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 20F));
+            this.layoutTiles.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 132F));
+            this.layoutTiles.Dock = Wisej.Web.DockStyle.Top;
+            this.layoutTiles.Name = "layoutTiles";
+            this.layoutTiles.Padding = new Wisej.Web.Padding(0, 6, 0, 0);
+            this.layoutTiles.Size = new System.Drawing.Size(800, 138);
 
-            this.colKind.DataPropertyName = "Kind";
-            this.colKind.HeaderText = "Mechanism";
-            this.colKind.Name = "colKind";
-            this.colKind.Width = 300;
+            this.layoutVerdicts.ColumnCount = 5;
+            this.layoutVerdicts.RowCount = 1;
+            for (var column = 0; column < 5; column++)
+                this.layoutVerdicts.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 20F));
+            this.layoutVerdicts.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 32F));
+            this.layoutVerdicts.Dock = Wisej.Web.DockStyle.Top;
+            this.layoutVerdicts.Name = "layoutVerdicts";
+            this.layoutVerdicts.Padding = new Wisej.Web.Padding(0, 13, 0, 0);
+            this.layoutVerdicts.Size = new System.Drawing.Size(800, 45);
 
-            // AllowHtml on the column is what lets the cell value be markup rather than text.
+            this.lblSummaryFooter.AllowHtml = true;
+            this.lblSummaryFooter.AutoSize = false;
+            this.lblSummaryFooter.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.lblSummaryFooter.CssStyle = "border:1px solid #e4eaf1;border-radius:9px;";
+            this.lblSummaryFooter.Dock = Wisej.Web.DockStyle.Bottom;
+            this.lblSummaryFooter.Font = new System.Drawing.Font("default", 9.8F);
+            this.lblSummaryFooter.ForeColor = System.Drawing.Color.FromArgb(70, 88, 106);
+            this.lblSummaryFooter.Name = "lblSummaryFooter";
+            this.lblSummaryFooter.Padding = new Wisej.Web.Padding(15, 0, 15, 0);
+            this.lblSummaryFooter.Size = new System.Drawing.Size(800, 42);
+            this.lblSummaryFooter.Text =
+                "<span style='color:#1f9d6b'>&#9679;</span> &nbsp;Every tile carries a visible name and a tooltip — nothing on this page is an unlabelled icon.";
+            this.lblSummaryFooter.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+            this.pnlSummary.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlSummary.Name = "pnlSummary";
+            this.pnlSummary.Padding = new Wisej.Web.Padding(20, 18, 20, 18);
+            this.pnlSummary.Controls.Add(this.lblSummaryFooter);
+            this.pnlSummary.Controls.Add(this.layoutVerdicts);
+            this.pnlSummary.Controls.Add(this.layoutTiles);
+            this.pnlSummary.Controls.Add(this.pnlSummaryHead);
+            //
+            // ── the Customer Actions view ──────────────────────────────────────
+            //
+            this.lblActionsHeading.AutoSize = false;
+            this.lblActionsHeading.Dock = Wisej.Web.DockStyle.Fill;
+            this.lblActionsHeading.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Bold);
+            this.lblActionsHeading.ForeColor = System.Drawing.Color.FromArgb(13, 27, 42);
+            this.lblActionsHeading.Name = "lblActionsHeading";
+            this.lblActionsHeading.Text = "gridCustomers.AllowHtml = true";
+            this.lblActionsHeading.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+            this.lblQaChip.AutoSize = false;
+            this.lblQaChip.BackColor = System.Drawing.Color.FromArgb(234, 243, 255);
+            this.lblQaChip.CssStyle = "border:1px solid #c5ddff;border-radius:999px;";
+            this.lblQaChip.Dock = Wisej.Web.DockStyle.Right;
+            this.lblQaChip.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            this.lblQaChip.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
+            this.lblQaChip.Name = "lblQaChip";
+            this.lblQaChip.Size = new System.Drawing.Size(200, 26);
+            this.lblQaChip.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+
+            this.pnlActionsHead.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlActionsHead.Name = "pnlActionsHead";
+            this.pnlActionsHead.Size = new System.Drawing.Size(800, 40);
+            this.pnlActionsHead.Controls.Add(this.lblActionsHeading);
+            this.pnlActionsHead.Controls.Add(this.lblQaChip);
+            //
+            // gridCustomers - four orders, and one cell with two things a click can land on
+            //
+            this.colOrder.DataPropertyName = "Order";
+            this.colOrder.HeaderText = "Order";
+            this.colOrder.Name = "colOrder";
+            this.colOrder.Width = 110;
+
+            this.colCustomer.DataPropertyName = "Customer";
+            this.colCustomer.HeaderText = "Customer";
+            this.colCustomer.Name = "colCustomer";
+            this.colCustomer.AutoSizeMode = Wisej.Web.DataGridViewAutoSizeColumnMode.Fill;
+
+            this.colStatus.AllowHtml = true;
+            this.colStatus.DataPropertyName = "Status";
+            this.colStatus.HeaderText = "Status";
+            this.colStatus.Name = "colStatus";
+            this.colStatus.Width = 140;
+
+            // AllowHtml goes on the COLUMN, not on the grid: that is what lets a cell hold the
+            // two glyph spans the click handler asks about.
             this.colActions.AllowHtml = true;
             this.colActions.DataPropertyName = "Actions";
             this.colActions.HeaderText = "Actions";
             this.colActions.Name = "colActions";
-            this.colActions.Width = 160;
+            this.colActions.Width = 260;
 
-            this.gridAssets.Dock = Wisej.Web.DockStyle.Fill;
-            this.gridAssets.Name = "gridAssets";
-            this.gridAssets.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
-            this.gridAssets.Columns.Add(this.colAsset);
-            this.gridAssets.Columns.Add(this.colKind);
-            this.gridAssets.Columns.Add(this.colActions);
-            this.gridAssets.CellClick += this.gridAssets_CellClick;
+            this.gridCustomers.AllowUserToAddRows = false;
+            this.gridCustomers.AllowUserToDeleteRows = false;
+            this.gridCustomers.AutoGenerateColumns = false;
+            this.gridCustomers.BorderStyle = Wisej.Web.BorderStyle.Solid;
+            this.gridCustomers.ColumnHeadersHeight = 34;
+            this.gridCustomers.CssStyle = "border-radius:10px;";
+            this.gridCustomers.Dock = Wisej.Web.DockStyle.Top;
+            this.gridCustomers.Name = "gridCustomers";
+            this.gridCustomers.ReadOnly = true;
+            this.gridCustomers.RowHeadersVisible = false;
+            this.gridCustomers.RowTemplate.Height = 54;
+            this.gridCustomers.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
+            this.gridCustomers.Size = new System.Drawing.Size(800, 262);
+            this.gridCustomers.Columns.Add(this.colOrder);
+            this.gridCustomers.Columns.Add(this.colCustomer);
+            this.gridCustomers.Columns.Add(this.colStatus);
+            this.gridCustomers.Columns.Add(this.colActions);
+            this.gridCustomers.CellClick += this.gridCustomers_CellClick;
+
+            this.layoutLegend.ColumnCount = 3;
+            this.layoutLegend.RowCount = 1;
+            for (var column = 0; column < 3; column++)
+                this.layoutLegend.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 33.34F));
+            this.layoutLegend.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 62F));
+            this.layoutLegend.Dock = Wisej.Web.DockStyle.Top;
+            this.layoutLegend.Name = "layoutLegend";
+            this.layoutLegend.Padding = new Wisej.Web.Padding(0, 13, 0, 0);
+            this.layoutLegend.Size = new System.Drawing.Size(800, 75);
+
+            this.lblClickReport.AllowHtml = true;
+            this.lblClickReport.AutoSize = false;
+            this.lblClickReport.Dock = Wisej.Web.DockStyle.Bottom;
+            this.lblClickReport.Font = new System.Drawing.Font("default", 10.1F, System.Drawing.FontStyle.Bold);
+            this.lblClickReport.Name = "lblClickReport";
+            this.lblClickReport.Padding = new Wisej.Web.Padding(16, 0, 16, 0);
+            this.lblClickReport.Size = new System.Drawing.Size(800, 44);
+            this.lblClickReport.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+            this.pnlActions.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlActions.Name = "pnlActions";
+            this.pnlActions.Padding = new Wisej.Web.Padding(20, 18, 20, 18);
+            this.pnlActions.Visible = false;
+            this.pnlActions.Controls.Add(this.lblClickReport);
+            this.pnlActions.Controls.Add(this.layoutLegend);
+            this.pnlActions.Controls.Add(this.gridCustomers);
+            this.pnlActions.Controls.Add(this.pnlActionsHead);
             //
-            // pnlBody
+            // pnlContent
             //
-            this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Padding = new Wisej.Web.Padding(20);
-            this.pnlBody.Controls.Add(this.gridAssets);
-            this.pnlBody.Controls.Add(this.lblGridHeader);
-            this.pnlBody.Controls.Add(this.layoutMechanisms);
-            this.pnlBody.Controls.Add(this.lblMechanismsHeader);
-            this.pnlBody.Controls.Add(this.lblToolbar);
-            this.pnlBody.Controls.Add(this.lblCardHeader);
+            this.pnlContent.BackColor = System.Drawing.Color.White;
+            this.pnlContent.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlContent.Name = "pnlContent";
+            this.pnlContent.Controls.Add(this.pnlSummary);
+            this.pnlContent.Controls.Add(this.pnlActions);
             //
             // SummaryPage
             //
+            this.BackColor = System.Drawing.Color.White;
             this.Name = "SummaryPage";
-            this.Size = new System.Drawing.Size(1000, 680);
-            this.Text = "IconDesk - Summary";
-            this.Controls.Add(this.pnlBody);
-            this.Controls.Add(this.pnlActions);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.pnlHeader);
+            this.Size = new System.Drawing.Size(1000, 640);
+            this.Text = "IconDesk — Icon Summary";
+            // A two-column shell. Dock alone is not enough here: the nav and the content have to
+            // share the row, and a table says so without either of them guessing a width.
+            this.layoutShell.ColumnCount = 2;
+            this.layoutShell.RowCount = 1;
+            this.layoutShell.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Absolute, 168F));
+            this.layoutShell.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 100F));
+            this.layoutShell.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Percent, 100F));
+            this.layoutShell.Dock = Wisej.Web.DockStyle.Fill;
+            this.layoutShell.Name = "layoutShell";
+            this.layoutShell.Controls.Add(this.pnlNav, 0, 0);
+            this.layoutShell.Controls.Add(this.pnlContent, 1, 0);
+
+            this.Controls.Add(this.layoutShell);
+            this.Controls.Add(this.appTitleBar);
             this.ResumeLayout(false);
-        }
-
-        private static void SetCell(Wisej.Web.PictureBox box, string boxName, Wisej.Web.Label label, string labelName, string caption)
-        {
-            box.Name = boxName;
-            box.Size = new System.Drawing.Size(48, 48);
-            box.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
-
-            label.AutoSize = false;
-            label.Name = labelName;
-            label.Text = caption;
-            label.TextAlign = System.Drawing.ContentAlignment.TopLeft;
         }
 
         #endregion
 
-        private Wisej.Web.Panel pnlHeader;
-        private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblSubtitle;
-        private Wisej.Web.Label lblStatus;
-        private Wisej.Web.FlowLayoutPanel pnlActions;
-        private Wisej.Web.Button btnBack;
-        private Wisej.Web.ComboBox cboTheme;
-        private Wisej.Web.Button btnQa;
-        private Wisej.Web.Panel pnlBody;
-        private Wisej.Web.Label lblCardHeader;
-        private Wisej.Web.Label lblToolbar;
-        private Wisej.Web.Label lblMechanismsHeader;
-        private Wisej.Web.TableLayoutPanel layoutMechanisms;
-        private Wisej.Web.PictureBox picTheme;
-        private Wisej.Web.Label lblTheme;
-        private Wisej.Web.PictureBox picOfficial;
-        private Wisej.Web.Label lblOfficial;
-        private Wisej.Web.PictureBox picCustom;
-        private Wisej.Web.Label lblCustom;
-        private Wisej.Web.PictureBox picEmbedded;
-        private Wisej.Web.Label lblEmbedded;
-        private Wisej.Web.PictureBox picRecoloured;
-        private Wisej.Web.Label lblRecoloured;
-        private Wisej.Web.Label lblGridHeader;
-        private Wisej.Web.DataGridView gridAssets;
-        private Wisej.Web.DataGridViewTextBoxColumn colAsset;
-        private Wisej.Web.DataGridViewTextBoxColumn colKind;
+        private IconDesk.AppTitleBar appTitleBar;
+        private Wisej.Web.Panel pnlNav;
+        private Wisej.Web.TableLayoutPanel layoutShell;
+        private Wisej.Web.Panel pnlContent;
+        private Wisej.Web.Panel pnlSummary;
+        private Wisej.Web.Panel pnlSummaryHead;
+        private Wisej.Web.Label lblSummaryHeading;
+        private Wisej.Web.Button btnThemeChip;
+        private Wisej.Web.TableLayoutPanel layoutTiles;
+        private Wisej.Web.TableLayoutPanel layoutVerdicts;
+        private Wisej.Web.Label lblSummaryFooter;
+        private Wisej.Web.Panel pnlActions;
+        private Wisej.Web.Panel pnlActionsHead;
+        private Wisej.Web.Label lblActionsHeading;
+        private Wisej.Web.Label lblQaChip;
+        private Wisej.Web.DataGridView gridCustomers;
+        private Wisej.Web.DataGridViewTextBoxColumn colOrder;
+        private Wisej.Web.DataGridViewTextBoxColumn colCustomer;
+        private Wisej.Web.DataGridViewTextBoxColumn colStatus;
         private Wisej.Web.DataGridViewTextBoxColumn colActions;
+        private Wisej.Web.TableLayoutPanel layoutLegend;
+        private Wisej.Web.Label lblClickReport;
     }
 }

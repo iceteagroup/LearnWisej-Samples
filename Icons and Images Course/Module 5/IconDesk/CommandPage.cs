@@ -12,34 +12,57 @@ namespace IconDesk
     /// 1. <c>btnOpen</c> gets an <see cref="System.Drawing.Image"/> the server decoded, which
     ///    Wisej.NET sends to the browser as PNG data,
     /// 2. <c>btnSave</c> gets a named theme image as an <c>ImageSource</c> string the client resolves,
-    /// 3. <c>btnPrint</c> and <c>btnDelete</c> share one <see cref="ImageList"/> through <c>ImageKey</c>,
-    /// 4. <c>btnConflict</c> is left empty until the lab sets two image properties on it at once.
-    /// The diagnostics label reads every one of them back through <see cref="IImage"/>.
+    /// 3. <c>btnPrint</c> and <c>btnDelete</c> share one <see cref="ImageList"/> through <c>ImageKey</c>.
+    /// Clicking a button adds its line to <c>lblDiagnostics</c>, which reads the control back
+    /// through <see cref="IImage"/> and names the property that is actually populated. Clicking
+    /// Delete again replaces the picture stored under its key, and once more sets a second image
+    /// property on it so the key stops deciding.
     /// </summary>
     public partial class CommandPage : Page
     {
         /// <summary>The theme defines this one, so the client takes it from a cache it already holds.</summary>
-        private const string SaveThemeImage = "icon-check";
+        private const string SaveThemeImage = "icon-save";
 
-        private bool deleteSwapped;
+        /// <summary>
+        /// The image source the lab assigns on top of btnDelete's ImageKey. The lesson writes
+        /// "icon-delete"; Bootstrap-4 has no image of that name, so this sample names a theme
+        /// image that really exists - what matters is that a second image property takes the slot.
+        /// </summary>
+        private const string DeleteThemeImage = "icon-close";
+
+        private static readonly Color Muted = Color.FromArgb(138, 152, 168);
+        private static readonly Color Good = Color.FromArgb(23, 128, 79);
+        private static readonly Color Bad = Color.FromArgb(180, 47, 47);
+        private static readonly Color IdleBack = Color.FromArgb(244, 247, 250);
+        private static readonly Color GoodBack = Color.FromArgb(230, 246, 238);
+        private static readonly Color BadBack = Color.FromArgb(253, 236, 236);
+
+        /// <summary>The buttons whose line is currently printed, in the order they were clicked.</summary>
+        private readonly List<Control> reported = new List<Control>();
+
+        /// <summary>Controls that had an ImageKey until a second image property took the slot.</summary>
+        private readonly HashSet<Control> displacedKeys = new HashSet<Control>();
+
+        /// <summary>0 = Delete not reported yet, 1 = reported, 2 = key repointed, 3 = slot taken.</summary>
+        private int deleteStage;
 
         public CommandPage()
         {
             InitializeComponent();
 
             LoadCommandIcons();
-            ReportMechanisms();
+            WriteDiagnostics();
         }
 
         // ── the four mechanisms ─────────────────────────────────────────────────
 
         private void LoadCommandIcons()
         {
-            // 1. An image object. Image.FromFile decodes the file into server memory here and now,
-            //    and the bytes the browser receives are produced by Wisej.NET, not by the file.
+            // 1. An image object. The file is decoded into server memory here and now, and the
+            //    bytes the browser receives are produced by Wisej.NET, not by the file.
             this.btnOpen.Image = LoadServerImage("open.png");
 
-            // 2. A string. Nothing is decoded on the server: the client resolves "icon-check"
+            // 2. A string. Nothing is decoded on the server: the client resolves "icon-save"
             //    against the theme it has already downloaded.
             this.btnSave.ImageSource = SaveThemeImage;
 
@@ -53,10 +76,6 @@ namespace IconDesk
 
             this.btnDelete.ImageList = this.imagesCommands;
             this.btnDelete.ImageKey = "delete";
-
-            // A Label is an image-capable control too, and it is on the same key as the button.
-            this.lblDeleteEcho.ImageList = this.imagesCommands;
-            this.lblDeleteEcho.ImageKey = "delete";
         }
 
         /// <summary>
@@ -74,136 +93,199 @@ namespace IconDesk
             return Image.FromStream(new MemoryStream(bytes));
         }
 
-        // ── reading the mechanism back through IImage ───────────────────────────
+        // ── one click, one diagnostics line ─────────────────────────────────────
 
-        private void btnInspect_Click(object sender, EventArgs e)
+        private void btnOpen_Click(object sender, EventArgs e)
         {
-            ReportMechanisms();
-            this.lblStatus.Text = "Inspected every control through IImage - the report reads the properties, not the picture.";
+            Report(this.btnOpen);
         }
 
-        private void ReportMechanisms()
+        private void btnSave_Click(object sender, EventArgs e)
         {
-            var report = new StringBuilder();
-            report.Append("<b>What is actually carrying each icon</b><br><br>");
+            Report(this.btnSave);
+        }
 
-            foreach (var control in new Control[] { this.btnOpen, this.btnSave, this.btnPrint, this.btnDelete, this.lblDeleteEcho, this.btnConflict })
-                report.Append("<b>").Append(control.Name).Append("</b> &mdash; ").Append(Describe(control)).Append("<br>");
+        private void btnPrint_Click(object sender, EventArgs e)
+        {
+            Report(this.btnPrint);
+        }
 
-            this.lblDiagnostics.Text = report.ToString();
+        /// <summary>
+        /// Delete carries the rest of the lab. The first click reports it like the others; the
+        /// second replaces the picture stored under its key; the third sets a second image
+        /// property on the same control and lets the diagnostics line report which one won.
+        /// </summary>
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            switch (this.deleteStage)
+            {
+                case 0:
+                    Report(this.btnDelete);
+                    this.deleteStage = 1;
+                    break;
+
+                case 1:
+                    ReplaceDeleteEntry();
+                    this.deleteStage = 2;
+                    break;
+
+                default:
+                    TakeTheSlotFromTheKey();
+                    this.deleteStage = 3;
+                    break;
+            }
+        }
+
+        private void Report(Control control)
+        {
+            if (!this.reported.Contains(control))
+                this.reported.Add(control);
+
+            WriteDiagnostics();
+
+            if (this.reported.Count == 4)
+                SetStatus("Diagnostics complete — every icon accounted for.", Good, GoodBack);
+            else
+                SetStatus(control.Name + " read through IImage.", Muted, IdleBack);
+        }
+
+        /// <summary>
+        /// Replaces the picture stored under one key. No image property on any control is
+        /// assigned: the button points at the key, not at the picture, so it follows.
+        /// </summary>
+        private void ReplaceDeleteEntry()
+        {
+            // The collection indexer hands back the entry, not a copy, so assigning its Image is
+            // how a key is repointed at a different picture.
+            var entry = this.imagesCommands.Images["delete"];
+            var previous = entry.Image;
+            entry.Image = LoadServerImage("delete-alt.png");
+            previous?.Dispose();
+
+            RepaintControlsOn(this.imagesCommands, "delete");
+
+            WriteDiagnostics();
+            SetStatus("One entry replaced — every control on that key followed.", Good, GoodBack);
+        }
+
+        /// <summary>
+        /// The second half of the lab note. An image source assigned somewhere else - a theme
+        /// helper, a style pass, a later refactor - takes the one visual slot the control has.
+        /// </summary>
+        /// <remarks>
+        /// Read back afterwards, <c>ImageKey</c> is not merely ignored: Wisej.NET 4.1.4 clears it.
+        /// The properties are mutually exclusive, so the later assignment does not win a fight,
+        /// it ends one - and the key that used to decide is gone from the control.
+        /// </remarks>
+        private void TakeTheSlotFromTheKey()
+        {
+            var keyBefore = this.btnDelete.ImageKey;
+
+            this.btnDelete.ImageSource = DeleteThemeImage;
+
+            if (!string.IsNullOrEmpty(keyBefore) && string.IsNullOrEmpty(this.btnDelete.ImageKey))
+                this.displacedKeys.Add(this.btnDelete);
+
+            WriteDiagnostics();
+            SetStatus("btnDelete now answers ImageSource. Assigning it cleared the key.", Bad, BadBack);
+        }
+
+        /// <summary>
+        /// Finds every image-capable control on the page that draws <paramref name="key"/> from
+        /// <paramref name="list"/> and repaints it.
+        /// </summary>
+        /// <remarks>
+        /// Wisej.NET serves a control's picture from a URL stamped with that control's own
+        /// version, and the version only moves when one of the control's image properties is
+        /// written. A picture swapped inside the list therefore reaches the server but not a
+        /// browser still holding the old URL, so each control is told to resolve its key again -
+        /// the same key, written back unchanged. That is a repaint, not a different picture, and
+        /// the search above is the demonstration: this code does not know which controls use the
+        /// key, it asks.
+        /// </remarks>
+        private void RepaintControlsOn(ImageList list, string key)
+        {
+            foreach (var control in AllControls(this))
+            {
+                if (control is IImage image && image.ImageList == list && image.ImageKey == key)
+                {
+                    image.ImageKey = null;
+                    image.ImageKey = key;
+                }
+            }
+        }
+
+        private static IEnumerable<Control> AllControls(Control root)
+        {
+            foreach (Control child in root.Controls)
+            {
+                yield return child;
+
+                foreach (var grandChild in AllControls(child))
+                    yield return grandChild;
+            }
+        }
+
+        // ── reading the mechanism back through IImage ───────────────────────────
+
+        private void WriteDiagnostics()
+        {
+            var html = new StringBuilder();
+
+            foreach (var control in this.reported)
+                html.Append(DescribeIcon(control));
+
+            this.lblDiagnostics.Text = html.ToString();
         }
 
         /// <summary>
         /// The cast is the point: a Button, a Label and anything else image-capable expose the same
         /// six properties through <see cref="IImage"/>, so one method can report on all of them.
-        /// More than one answer means more than one property is populated, which is the usual cause
-        /// of "the wrong icon".
         /// </summary>
-        private static string Describe(Control control)
+        /// <remarks>
+        /// The order of the tests matters. ImageSource is asked about first because assigning it
+        /// takes the slot from everything else, and ImageList/ImageKey before Image because a
+        /// control fed from a list also returns that entry's picture from Image - testing Image
+        /// first would report every keyed control as if it owned an image object.
+        /// </remarks>
+        private string DescribeIcon(Control control)
         {
             if (!(control is IImage image))
-                return "not an image-capable control - it does not implement IImage";
-
-            // Ask about the list first. A control that takes its picture from an ImageList also
-            // returns that picture from Image, so testing Image first would report every keyed
-            // control as if it owned an image object.
-            if (image.ImageList != null && !string.IsNullOrEmpty(image.ImageKey))
-                return $"<b>ImageList + ImageKey</b> - entry \"{image.ImageKey}\" of a shared collection " +
-                       "(reading Image back returns that entry's picture, which is why this test comes first)";
-
-            if (image.ImageList != null && image.ImageIndex >= 0)
-                return $"<b>ImageList + ImageIndex</b> - entry {image.ImageIndex} of a shared collection, " +
-                       "which the next inserted image will silently change";
-
-            var found = new List<string>();
-
-            if (image.Image != null)
-                found.Add($"<b>Image</b> - a {image.Image.Width}x{image.Image.Height} System.Drawing.Image in server memory, sent to the browser as PNG");
+                return Line(control.Name, "no image model", "the control does not implement IImage", "#8a98a8");
 
             if (!string.IsNullOrEmpty(image.ImageSource))
-                found.Add($"<b>ImageSource</b> - the string \"{image.ImageSource}\", resolved by the client");
+            {
+                // A control this page watched lose its key gets the interesting line, because
+                // "theme image name ..." would not explain why the keyed picture went away.
+                return this.displacedKeys.Contains(control)
+                    ? Line(control.Name, "ImageSource", "the key no longer decides", "#b42f2f")
+                    : Line(control.Name, "ImageSource", "theme image name \"" + image.ImageSource + "\"", "#1565d8");
+            }
 
-            if (found.Count == 0)
-                return "no image property is set";
+            if (image.ImageList != null && !string.IsNullOrEmpty(image.ImageKey))
+                return Line(control.Name, "ImageList + Key", "key \"" + image.ImageKey + "\"", "#17804f");
 
-            // In practice this never reports two: Wisej.NET clears Image when ImageSource is
-            // assigned. The branch stays because it is the honest test - if a future version kept
-            // both, this is the line that would tell you.
-            return found.Count == 1
-                ? found[0]
-                : string.Join(", and ", found) + " &mdash; <b>two properties feed one slot</b>";
+            if (image.Image != null)
+                return Line(control.Name, "Image", "System.Drawing.Image → sent as PNG", "#b06a00");
+
+            return Line(control.Name, "no icon", "no image property is populated", "#8a98a8");
         }
 
-        // ── navigation ──────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// The command page instance is handed to the lab page and handed back, so one session
-        /// keeps one set of controls and one ImageList rather than rebuilding them on every hop.
-        /// </summary>
-        private void btnImageLab_Click(object sender, EventArgs e)
+        /// <summary>One diagnostics row: the control name, the mechanism, and what it points at.</summary>
+        private static string Line(string name, string mechanism, string detail, string color)
         {
-            Application.MainPage = new ImageLabPage(this);
+            return "<div style='display:flex;align-items:center;gap:12px;height:28px;" +
+                   "font-family:Consolas,\"Courier New\",monospace;font-size:13.5px;'>" +
+                   "<span style='flex:none;width:92px;color:#5a6b7d;font-weight:700;'>" + name + "</span>" +
+                   "<span style='flex:none;width:132px;color:" + color + ";font-weight:800;'>" + mechanism + "</span>" +
+                   "<span style='color:#34465a;'>" + detail + "</span></div>";
         }
 
-        private void btnGallery_Click(object sender, EventArgs e)
+        private void SetStatus(string text, Color foreColor, Color backColor)
         {
-            Application.MainPage = new IconGalleryPage(this);
-        }
-
-        private void btnPacks_Click(object sender, EventArgs e)
-        {
-            Application.MainPage = new IconComparePage(this);
-        }
-
-        private void btnResources_Click(object sender, EventArgs e)
-        {
-            Application.MainPage = new ResourceLabPage(this);
-        }
-
-        // ── what the lab note is about ──────────────────────────────────────────
-
-        /// <summary>
-        /// Replaces the picture stored under one key. No control is touched: both the button and the
-        /// label point at the key, not at the image, so both follow.
-        /// </summary>
-        private void btnSwapDelete_Click(object sender, EventArgs e)
-        {
-            this.deleteSwapped = !this.deleteSwapped;
-
-            var replacement = LoadServerImage(this.deleteSwapped ? "delete-alt.png" : "delete.png");
-
-            // The collection indexer hands back the entry, not a copy, so assigning its Image is
-            // how a key is repointed at a different picture.
-            var entry = this.imagesCommands.Images["delete"];
-            var previous = entry.Image;
-            entry.Image = replacement;
-            previous?.Dispose();
-
-            this.lblStatus.Text = this.deleteSwapped
-                ? "Key \"delete\" now holds delete-alt.png. btnDelete and lblDeleteEcho both changed, and neither was assigned to."
-                : "Key \"delete\" is back to delete.png. Again, both controls followed the key.";
-        }
-
-        /// <summary>
-        /// Sets an image object and then an image source on the same button. They feed one visual
-        /// slot, and Wisej.NET does not keep both: assigning <c>ImageSource</c> <b>clears</b>
-        /// <c>Image</c>. Verified here - read the button back afterwards and only ImageSource is
-        /// populated, which is why "the icon disappeared" is nearly always a second assignment
-        /// somewhere else in the code rather than a broken file.
-        /// </summary>
-        private void btnSetBoth_Click(object sender, EventArgs e)
-        {
-            this.btnConflict.Image = LoadServerImage("print.png");
-            var imageWasSet = this.btnConflict.Image != null;
-
-            this.btnConflict.ImageSource = "icon-search";
-            var imageSurvived = this.btnConflict.Image != null;
-
-            ReportMechanisms();
-
-            this.lblStatus.Text =
-                $"btnConflict: Image assigned ({imageWasSet}), then ImageSource assigned - Image still set afterwards: {imageSurvived}. " +
-                "One slot, so the later assignment does not win a fight, it ends one.";
+            this.lblStatus.Text = text;
+            this.lblStatus.ForeColor = foreColor;
+            this.lblStatus.BackColor = backColor;
         }
     }
 }

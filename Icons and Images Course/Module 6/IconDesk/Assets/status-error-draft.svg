@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Error icon as it arrived from the designer, kept so the recolour check has something
+     to fail on. The stroke colour is hard-coded, so Wisej.NET's injected colour never
+     reaches it and the ?color= suffix is a silent no-op. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#8a8f98">
+  <circle fill="none" stroke="#8a8f98" stroke-width="1.8" stroke-linecap="round" cx="12" cy="12" r="9"/>
+  <path fill="none" stroke="#8a8f98" stroke-width="1.8" stroke-linecap="round" d="M8.7 8.7l6.6 6.6M15.3 8.7l-6.6 6.6"/>
+</svg>

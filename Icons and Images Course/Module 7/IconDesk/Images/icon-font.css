@@ -21,7 +21,11 @@
     width: 1.35em;
     /* Sized in em so one class works in a 13px grid cell and in a 20px card heading. */
     font-size: 1.05em;
-    color: #5a6b7d;
+    /*
+      No colour here. The Module 7 QA pass found dark-grey glyphs on a dark background beside
+      image icons that had correctly turned light: a colour set in CSS is a colour no theme can
+      revisit. Let the glyph inherit from the text around it.
+    */
 }
 
 /* Interactive glyphs get a hit area a thumb can find and a visible hover state. */

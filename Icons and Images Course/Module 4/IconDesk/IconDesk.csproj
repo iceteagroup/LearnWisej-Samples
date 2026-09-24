@@ -42,6 +42,16 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Always</CopyToPublishDirectory>
     </Content>
+    <!--
+      A separate folder for the one asset IconGallery reaches through an absolute URL. It is
+      served by this application on purpose: the lab needs a real absolute address that answers
+      on a machine with no outbound access, and "another host" is a property of the URL, not of
+      where the bytes happen to live.
+    -->
+    <Content Include="cdn\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

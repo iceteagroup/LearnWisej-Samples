@@ -1,11 +1,13 @@
 # IconDesk · Icons & Images in Wisej.NET · Module 3
 
-Local lab build for **Module 3 · The Designer Image Selector and Theme Images**. An `IconGallery`
-page carrying five image sources of five different kinds - a named theme image, a relative project
-SVG, an absolute URL, a monochrome SVG recoloured with the `?color=` suffix, and a second theme
-image - plus a theme switch that separates the assets a theme moves from the ones it does not.
-The Module 1 command panel and the Module 2 image lab are unchanged.
-This folder is the complete application at this point in the course, with its own solution and port.
+Local lab build for **Module 3 · Theme Images, URLs, SVG Color and the Designer Image Picker**.
+An `IconGallery` page with five slots - a named theme image, a relative URL, an absolute URL, an
+icon-pack `resource.wx` source and the same kind of source with a `?color=` suffix - and a theme
+switch that says which of them moved.
+
+Modules 1 and 2 are carried forward unchanged; the application opens on the page this module
+builds. This folder is the complete application at this point in the course, with its own solution
+and port.
 
 ## Run it
 
@@ -14,43 +16,49 @@ cd "Icons and Images Course/Module 3/IconDesk"
 dotnet run -f net10.0 --urls http://localhost:6203
 ```
 
-Open <http://localhost:6203> and press **Icon gallery**.
+Open <http://localhost:6203>.
+
+## The screen
+
+`IconDesk — IconGallery`: a **THEME** row with a Light and a Dark chip, then five cards. Each card
+carries the picture, the caption naming its mechanism, and the source string exactly as it appears
+in `IconGallery.Designer.cs`. After the first theme switch each card also carries its verdict.
 
 ## What to try
 
 | Action | Expected result |
 |---|---|
-| Switch the theme to **BootstrapDark-4** | Four of the five pictures change. The multi-coloured project logo does not. |
-| Predict which four before you look | Most people say the two `icon-*` images. The absolute URL moves as well, and that is the lesson. |
-| Press **Cycle the colour suffix** | The pin walks through `highlight`, `hotTrack`, `invalid` and one literal `#7d5ae0`. The three theme names follow a later theme switch; the literal does not. |
-| Press **Report the image sources** | Every source is printed as the designer wrote it, with a verdict on whether the theme moves it and why. |
-| Read `IconGalleryPage.Designer.cs` | Five plain strings. The picker never produces an `Image` object for these controls. |
+| Read the five source strings | `icon-print`, `Images/company-logo.svg`, the absolute `…/cdn/users/42.png`, `resource.wx/…/android-logo.svg` and `…/save-button.svg?color=highlight`. Nothing on the page decodes an image on the server. |
+| Press **Dark theme** | The page repaints and every card gains a verdict. Three followed the theme, two did not - and not the three you would guess. |
+| Press **Light theme** | Everything goes back. The verdicts stay, because the point of the exercise is the comparison. |
+| Hover the two pack cards | The tooltip shows the full `resource.wx` string; the card prints the elided form the video uses. |
+| Open the network panel | Two `resource.wx/Wisej.Ext.MaterialDesign/*.svg` requests, one `Images/company-logo.svg`, one `cdn/users/42.png`. The theme image costs no request of its own. |
 
 ## Lab tasks → where in the code
 
 | Deliverable | Implementation |
 |---|---|
-| Five controls with designer-assigned image sources | [IconGalleryPage.Designer.cs](IconDesk/IconGalleryPage.Designer.cs) |
-| One theme image, one project SVG, one absolute URL | `picTheme`, `picProject`, `picAbsolute` |
-| Monochrome SVG recoloured with `?color=` and a theme colour name | `picRecoloured`, `btnRecolour_Click` in [IconGalleryPage.cs](IconDesk/IconGalleryPage.cs) |
-| Designer excerpt showing the generated strings | quoted in [docs/ThemeSwitch.md](IconDesk/docs/ThemeSwitch.md) |
-| Theme-switch note | [docs/ThemeSwitch.md](IconDesk/docs/ThemeSwitch.md) |
-
-The two icon-pack assets the lab also asks for arrive in Module 4, which installs the packs.
+| Five gallery slots with captions naming the mechanism | `layoutSlots` in [IconGalleryPage.Designer.cs](IconDesk/IconGalleryPage.Designer.cs), [GallerySlot.cs](IconDesk/GallerySlot.cs) |
+| A named theme image and a project SVG by relative URL | `AssignImageSources` in [IconGalleryPage.cs](IconDesk/IconGalleryPage.cs) |
+| A complete external address, and two icon-pack assets | `AssignImageSources`; the pack comes from the `Wisej-4-MaterialDesign` reference in the `.csproj` |
+| `?color=` with a theme colour name, and artwork that ignores it | `RecolouredIcon`; `Images/company-logo.svg` is the artwork that does not move |
+| A theme switch, and the note listing what changed | `SwitchTo` / `ApplyPalette`, [docs/ThemeSwitch.md](IconDesk/docs/ThemeSwitch.md) |
 
 ## Notes for anyone extending the gallery
 
-- **Wisej.NET inlines SVG image sources** as `data:image/svg+xml;base64` and recolours the ones it
-  reads as icons. An SVG with one meaningful fill takes the theme's icon colour; artwork with
-  several colours is passed through untouched. Where the file came from is irrelevant - an
-  absolute URL to a static file is recoloured just the same.
-- That is why `?color=` only does anything useful to monochrome artwork, and why a one-colour logo
-  is a trap: the first dark theme repaints it.
-- `Application.Theme` is a `ClientTheme` object, not a string. Read `Application.Theme.Name` and
+- `Application.Theme` is a **`ClientTheme` object**, not a string. Read `Application.Theme.Name`;
   switch with `Application.LoadTheme("BootstrapDark-4")`.
-- Theme colour names for the suffix come from the theme's own `colors` section: `highlight`,
-  `hotTrack`, `invalid`, `grayText`, `windowText` and so on.
-- The named theme images available in Bootstrap-4 are a short list - `icon-search`,
-  `icon-settings`, `icon-print`, `icon-check`, `icon-close`, `icon-refresh`, `icon-calendar` and a
-  handful more. There is no theme name for every concept you will need, which is the gap the icon
-  packs in Module 4 fill.
+- The page paints its own surface, panel and text colours from `GalleryPalette` rather than
+  inheriting them. That is deliberate: if the whole page redrew itself from the theme there would
+  be nothing to compare. Only the five image sources are left to the theme.
+- **Where the file came from does not decide whether it follows the theme.** Wisej.NET inlines an
+  SVG image source as a `data:image/svg+xml` background and injects `fill` and `color` on the root
+  element. Artwork that fixes its own colours is unaffected; artwork that does not is repainted,
+  whatever URL it arrived through. See `docs/ThemeSwitch.md`.
+- `?color=` needs a colour name the theme really defines. `highlight`, `hotTrack`, `invalid`,
+  `info`, `grayText` and `windowText` resolve. `activeText` and `error` do not - Wisej.NET passes
+  the unknown name through to the SVG's `fill`, the browser ignores it, and the icon quietly keeps
+  the colour it already had.
+- The absolute-URL slot is served by this application from its own `cdn/` folder so the lab works
+  with no outbound access. "Another host" is a property of the URL, and the production caution -
+  availability, authentication, CORS and CSP belong to whoever owns that host - is unchanged.

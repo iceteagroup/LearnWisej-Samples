@@ -78,7 +78,14 @@ Before an icon change merges:
 - [ ] Uses a mechanism from the table in section 1, and the obvious one for the case.
 - [ ] From the primary family, or the exception is stated in the pull request.
 - [ ] Provenance and licence known and recorded if the artwork is new.
-- [ ] Monochrome SVG strokes or fills with `currentColor` so the theme can recolour it.
+- [ ] Monochrome SVG strokes or fills with `currentColor` so the theme can recolour it, with
+      `fill="none"` on every shape - `fill="none"` on a wrapping `<g>` is not enough, the
+      injected root fill wins and the outline comes back solid.
+- [ ] Artwork that must **not** be repainted - a brand mark - carries two or more meaningful
+      fills, which is what makes Wisej.NET pass it through untouched.
+- [ ] Any `?color=` value names a theme colour the theme really defines. `invalid`, `info`,
+      `success`, `highlight` and `hotTrack` resolve; `error` and `activeText` do not, and an
+      unknown name is a silent no-op.
 - [ ] No `width`/`height` on the root element - `viewBox` only.
 - [ ] Accessible name present for anything interactive.
 - [ ] Checked in a light **and** a dark theme.

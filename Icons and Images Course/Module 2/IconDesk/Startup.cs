@@ -20,11 +20,11 @@ app.UseWisej();
 // asynchronous load can be demonstrated on a machine with no internet access, and so the delay
 // is the same every time the lab is run. Everything else about the request is ordinary: it is a
 // URL that returns image bytes.
-app.MapGet("/slow/photo.jpg", async (Microsoft.AspNetCore.Http.HttpContext context) =>
+app.MapGet("/slow/hero.jpg", async (Microsoft.AspNetCore.Http.HttpContext context) =>
 {
     await Task.Delay(TimeSpan.FromSeconds(2.5));
 
-    var path = Path.Combine(AppContext.BaseDirectory, "Images", "photo.jpg");
+    var path = Path.Combine(AppContext.BaseDirectory, "Images", "hero.jpg");
     var bytes = await File.ReadAllBytesAsync(path);
 
     context.Response.ContentType = "image/jpeg";

@@ -15,271 +15,289 @@ namespace IconDesk
 
         #region Wisej.NET Designer generated code
 
+        /// <summary>Column geometry: two 240-pixel family columns pinned to the right edge.</summary>
+        private const int ColumnWidth = 240;
+        private const int DesignWidth = 960;
+        private const int SidePadding = 26;
+
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.pnlHeader = new Wisej.Web.Panel();
-            this.lblTitle = new Wisej.Web.Label();
-            this.lblSubtitle = new Wisej.Web.Label();
-            this.lblStatus = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.Panel();
-            this.btnBack = new Wisej.Web.Button();
-            this.btnRecolour = new Wisej.Web.Button();
-            this.btnReport = new Wisej.Web.Button();
+            this.appTitleBar = new IconDesk.AppTitleBar();
             this.pnlBody = new Wisej.Web.Panel();
-            this.lblCompareHeader = new Wisej.Web.Label();
-            this.layoutCompare = new Wisej.Web.TableLayoutPanel();
-            this.lblCorner = new Wisej.Web.Label();
+            this.pnlHeader = new Wisej.Web.Panel();
+            this.lblColConcept = new Wisej.Web.Label();
+            this.lblColFamilyOne = new Wisej.Web.Label();
+            this.lblColFamilyTwo = new Wisej.Web.Label();
+            this.rowSave = new Wisej.Web.Panel();
             this.lblConceptSave = new Wisej.Web.Label();
-            this.lblConceptDelete = new Wisej.Web.Label();
-            this.lblConceptSearch = new Wisej.Web.Label();
-            this.lblConceptUser = new Wisej.Web.Label();
-            this.lblConceptSettings = new Wisej.Web.Label();
-            this.lblFamilyFa = new Wisej.Web.Label();
             this.picFaSave = new Wisej.Web.PictureBox();
-            this.picFaDelete = new Wisej.Web.PictureBox();
-            this.picFaSearch = new Wisej.Web.PictureBox();
-            this.picFaUser = new Wisej.Web.PictureBox();
-            this.picFaSettings = new Wisej.Web.PictureBox();
-            this.lblFamilyMd = new Wisej.Web.Label();
+            this.lblFaSave = new Wisej.Web.Label();
             this.picMdSave = new Wisej.Web.PictureBox();
+            this.lblMdSave = new Wisej.Web.Label();
+            this.rowDelete = new Wisej.Web.Panel();
+            this.lblConceptDelete = new Wisej.Web.Label();
+            this.picFaDelete = new Wisej.Web.PictureBox();
+            this.lblFaDelete = new Wisej.Web.Label();
             this.picMdDelete = new Wisej.Web.PictureBox();
+            this.lblMdDelete = new Wisej.Web.Label();
+            this.rowSearch = new Wisej.Web.Panel();
+            this.lblConceptSearch = new Wisej.Web.Label();
+            this.picFaSearch = new Wisej.Web.PictureBox();
+            this.lblFaSearch = new Wisej.Web.Label();
             this.picMdSearch = new Wisej.Web.PictureBox();
+            this.lblMdSearch = new Wisej.Web.Label();
+            this.rowUser = new Wisej.Web.Panel();
+            this.lblConceptUser = new Wisej.Web.Label();
+            this.picFaUser = new Wisej.Web.PictureBox();
+            this.lblFaUser = new Wisej.Web.Label();
             this.picMdUser = new Wisej.Web.PictureBox();
+            this.lblMdUser = new Wisej.Web.Label();
+            this.rowSettings = new Wisej.Web.Panel();
+            this.lblConceptSettings = new Wisej.Web.Label();
+            this.picFaSettings = new Wisej.Web.PictureBox();
+            this.lblFaSettings = new Wisej.Web.Label();
             this.picMdSettings = new Wisej.Web.PictureBox();
-            this.lblReport = new Wisej.Web.Label();
+            this.lblMdSettings = new Wisej.Web.Label();
+            this.pnlFooter = new Wisej.Web.Panel();
+            this.btnCompare = new Wisej.Web.Button();
+            this.lblFooterNote = new Wisej.Web.Label();
+            this.lblRecommendation = new Wisej.Web.Label();
             this.SuspendLayout();
             //
-            // lblTitle
+            // appTitleBar
             //
-            this.lblTitle.AutoSize = false;
-            this.lblTitle.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Location = new System.Drawing.Point(20, 12);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(360, 28);
-            this.lblTitle.Text = "Icon packs, compared";
+            this.appTitleBar.Title = "IconDesk — IconCompare";
             //
-            // lblSubtitle
+            // pnlHeader - the column headings
             //
-            this.lblSubtitle.AutoSize = false;
-            this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 42);
-            this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(900, 22);
-            this.lblSubtitle.Text = "The same five concepts drawn by FontAwesome and by Material Design.";
-            //
-            // pnlHeader
-            //
+            this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.pnlHeader.CssStyle = "border-bottom:1px solid #e0e7ef;";
             this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1000, 72);
-            this.pnlHeader.Controls.Add(this.lblSubtitle);
-            this.pnlHeader.Controls.Add(this.lblTitle);
+            this.pnlHeader.Size = new System.Drawing.Size(DesignWidth, 54);
+            BuildHeading(this.lblColConcept, "lblColConcept", "CONCEPT", SidePadding, 400);
+            BuildHeading(this.lblColFamilyOne, "lblColFamilyOne", "WISEJ-4-FONTAWESOME", DesignWidth - SidePadding - 2 * ColumnWidth, ColumnWidth);
+            BuildHeading(this.lblColFamilyTwo, "lblColFamilyTwo", "WISEJ-4-MATERIALDESIGN", DesignWidth - SidePadding - ColumnWidth, ColumnWidth);
+            this.pnlHeader.Controls.Add(this.lblColConcept);
+            this.pnlHeader.Controls.Add(this.lblColFamilyOne);
+            this.pnlHeader.Controls.Add(this.lblColFamilyTwo);
             //
-            // lblStatus
+            // the five concept rows
             //
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Padding = new Wisej.Web.Padding(20, 8, 20, 8);
-            this.lblStatus.Size = new System.Drawing.Size(1000, 34);
-            this.lblStatus.Text = "Ready.";
+            BuildRow(this.rowSave, "rowSave", 0, this.lblConceptSave, "lblConceptSave", "Save",
+                this.picFaSave, "picFaSave", this.lblFaSave, "lblFaSave",
+                this.picMdSave, "picMdSave", this.lblMdSave, "lblMdSave");
+            BuildRow(this.rowDelete, "rowDelete", 1, this.lblConceptDelete, "lblConceptDelete", "Delete",
+                this.picFaDelete, "picFaDelete", this.lblFaDelete, "lblFaDelete",
+                this.picMdDelete, "picMdDelete", this.lblMdDelete, "lblMdDelete");
+            BuildRow(this.rowSearch, "rowSearch", 2, this.lblConceptSearch, "lblConceptSearch", "Search",
+                this.picFaSearch, "picFaSearch", this.lblFaSearch, "lblFaSearch",
+                this.picMdSearch, "picMdSearch", this.lblMdSearch, "lblMdSearch");
+            BuildRow(this.rowUser, "rowUser", 3, this.lblConceptUser, "lblConceptUser", "User",
+                this.picFaUser, "picFaUser", this.lblFaUser, "lblFaUser",
+                this.picMdUser, "picMdUser", this.lblMdUser, "lblMdUser");
+            BuildRow(this.rowSettings, "rowSettings", 4, this.lblConceptSettings, "lblConceptSettings", "Settings",
+                this.picFaSettings, "picFaSettings", this.lblFaSettings, "lblFaSettings",
+                this.picMdSettings, "picMdSettings", this.lblMdSettings, "lblMdSettings");
             //
-            // btnBack
-            //
-            this.btnBack.Location = new System.Drawing.Point(20, 9);
-            this.btnBack.Name = "btnBack";
-            this.btnBack.Size = new System.Drawing.Size(170, 38);
-            this.btnBack.TabIndex = 0;
-            this.btnBack.Text = "Back to commands";
-            this.btnBack.Click += this.btnBack_Click;
-            //
-            // btnRecolour
-            //
-            this.btnRecolour.Location = new System.Drawing.Point(202, 9);
-            this.btnRecolour.Name = "btnRecolour";
-            this.btnRecolour.Size = new System.Drawing.Size(250, 38);
-            this.btnRecolour.TabIndex = 1;
-            this.btnRecolour.Text = "Recolour the two Delete icons";
-            this.btnRecolour.Click += this.btnRecolour_Click;
-            //
-            // btnReport
-            //
-            this.btnReport.Location = new System.Drawing.Point(464, 9);
-            this.btnReport.Name = "btnReport";
-            this.btnReport.Size = new System.Drawing.Size(250, 38);
-            this.btnReport.TabIndex = 2;
-            this.btnReport.Text = "Report the pack resource URLs";
-            this.btnReport.Click += this.btnReport_Click;
-            //
-            // pnlActions
-            //
-            this.pnlActions.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Size = new System.Drawing.Size(1000, 56);
-            this.pnlActions.Controls.Add(this.btnReport);
-            this.pnlActions.Controls.Add(this.btnRecolour);
-            this.pnlActions.Controls.Add(this.btnBack);
-            //
-            // lblCompareHeader
-            //
-            this.lblCompareHeader.AutoSize = false;
-            this.lblCompareHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblCompareHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblCompareHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblCompareHeader.Name = "lblCompareHeader";
-            this.lblCompareHeader.Size = new System.Drawing.Size(960, 26);
-            this.lblCompareHeader.Text = "Five concepts, two families, one row each";
-            //
-            // the concept headings
-            //
-            this.lblCorner.AutoSize = false;
-            this.lblCorner.Name = "lblCorner";
-            this.lblCorner.Text = "";
-            SetHeading(this.lblConceptSave, "lblConceptSave", "Save");
-            SetHeading(this.lblConceptDelete, "lblConceptDelete", "Delete");
-            SetHeading(this.lblConceptSearch, "lblConceptSearch", "Search");
-            SetHeading(this.lblConceptUser, "lblConceptUser", "User");
-            SetHeading(this.lblConceptSettings, "lblConceptSettings", "Settings");
-            //
-            // the family headings
-            //
-            SetHeading(this.lblFamilyFa, "lblFamilyFa", "FontAwesome");
-            SetHeading(this.lblFamilyMd, "lblFamilyMd", "Material Design");
-            //
-            // the ten icons. The five FontAwesome sources below are exactly what the Visual Studio
-            // image explorer writes when you pick an icon out of an installed pack: a resource.wx
-            // path into the pack assembly, with no file copied into the project.
+            // The five FontAwesome sources are exactly what the Visual Studio image explorer
+            // writes when you pick an icon out of an installed pack: a resource.wx path into the
+            // pack assembly, with no file copied into the project. The Material Design column is
+            // assigned from the pack catalog in IconComparePage.cs instead, so the lab has both
+            // routes side by side.
             //
             this.picFaSave.ImageSource = "resource.wx/Wisej.Ext.FontAwesome/floppy-o.svg";
-            SetIcon(this.picFaSave, "picFaSave");
             this.picFaDelete.ImageSource = "resource.wx/Wisej.Ext.FontAwesome/trash.svg";
-            SetIcon(this.picFaDelete, "picFaDelete");
             this.picFaSearch.ImageSource = "resource.wx/Wisej.Ext.FontAwesome/search.svg";
-            SetIcon(this.picFaSearch, "picFaSearch");
             this.picFaUser.ImageSource = "resource.wx/Wisej.Ext.FontAwesome/user.svg";
-            SetIcon(this.picFaUser, "picFaUser");
             this.picFaSettings.ImageSource = "resource.wx/Wisej.Ext.FontAwesome/cog.svg";
-            SetIcon(this.picFaSettings, "picFaSettings");
             //
-            // The Material Design row is assigned from the pack catalog in IconComparePage.cs
-            // instead, so the lab has both routes side by side.
+            // pnlFooter - the count chip, which is also the control that rebuilds both columns,
+            // and the sentence about the two recoloured icons.
             //
-            SetIcon(this.picMdSave, "picMdSave");
-            SetIcon(this.picMdDelete, "picMdDelete");
-            SetIcon(this.picMdSearch, "picMdSearch");
-            SetIcon(this.picMdUser, "picMdUser");
-            SetIcon(this.picMdSettings, "picMdSettings");
+            this.btnCompare.BackColor = System.Drawing.Color.FromArgb(234, 243, 255);
+            this.btnCompare.CssStyle = "border:1px solid #c5ddff;border-radius:999px;";
+            this.btnCompare.Font = new System.Drawing.Font("default", 10.1F, System.Drawing.FontStyle.Bold);
+            this.btnCompare.ForeColor = System.Drawing.Color.FromArgb(11, 106, 230);
+            this.btnCompare.Location = new System.Drawing.Point(SidePadding, 16);
+            this.btnCompare.Name = "btnCompare";
+            this.btnCompare.Size = new System.Drawing.Size(210, 30);
+            this.btnCompare.TabIndex = 0;
+            this.btnCompare.Text = "10 icons · 2 packs · 1 page";
+            this.btnCompare.Click += this.btnCompare_Click;
+
+            this.lblFooterNote.AllowHtml = true;
+            this.lblFooterNote.AutoSize = false;
+            this.lblFooterNote.Font = new System.Drawing.Font("default", 10.1F);
+            this.lblFooterNote.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblFooterNote.Location = new System.Drawing.Point(248, 16);
+            this.lblFooterNote.Name = "lblFooterNote";
+            this.lblFooterNote.Size = new System.Drawing.Size(700, 30);
+            this.lblFooterNote.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+            this.pnlFooter.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlFooter.Name = "pnlFooter";
+            this.pnlFooter.Size = new System.Drawing.Size(DesignWidth, 62);
+            this.pnlFooter.Controls.Add(this.btnCompare);
+            this.pnlFooter.Controls.Add(this.lblFooterNote);
             //
-            // layoutCompare
+            // lblRecommendation
             //
-            this.layoutCompare.ColumnCount = 6;
-            this.layoutCompare.RowCount = 3;
-            this.layoutCompare.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Absolute, 150F));
-            for (var column = 0; column < 5; column++)
-                this.layoutCompare.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 20F));
-            this.layoutCompare.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 34F));
-            this.layoutCompare.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 64F));
-            this.layoutCompare.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Absolute, 64F));
-            this.layoutCompare.Dock = Wisej.Web.DockStyle.Top;
-            this.layoutCompare.Name = "layoutCompare";
-            this.layoutCompare.Size = new System.Drawing.Size(960, 170);
-            this.layoutCompare.Controls.Add(this.lblCorner, 0, 0);
-            this.layoutCompare.Controls.Add(this.lblConceptSave, 1, 0);
-            this.layoutCompare.Controls.Add(this.lblConceptDelete, 2, 0);
-            this.layoutCompare.Controls.Add(this.lblConceptSearch, 3, 0);
-            this.layoutCompare.Controls.Add(this.lblConceptUser, 4, 0);
-            this.layoutCompare.Controls.Add(this.lblConceptSettings, 5, 0);
-            this.layoutCompare.Controls.Add(this.lblFamilyFa, 0, 1);
-            this.layoutCompare.Controls.Add(this.picFaSave, 1, 1);
-            this.layoutCompare.Controls.Add(this.picFaDelete, 2, 1);
-            this.layoutCompare.Controls.Add(this.picFaSearch, 3, 1);
-            this.layoutCompare.Controls.Add(this.picFaUser, 4, 1);
-            this.layoutCompare.Controls.Add(this.picFaSettings, 5, 1);
-            this.layoutCompare.Controls.Add(this.lblFamilyMd, 0, 2);
-            this.layoutCompare.Controls.Add(this.picMdSave, 1, 2);
-            this.layoutCompare.Controls.Add(this.picMdDelete, 2, 2);
-            this.layoutCompare.Controls.Add(this.picMdSearch, 3, 2);
-            this.layoutCompare.Controls.Add(this.picMdUser, 4, 2);
-            this.layoutCompare.Controls.Add(this.picMdSettings, 5, 2);
-            //
-            // lblReport
-            //
-            this.lblReport.AllowHtml = true;
-            this.lblReport.AutoSize = false;
-            this.lblReport.Dock = Wisej.Web.DockStyle.Fill;
-            this.lblReport.Name = "lblReport";
-            this.lblReport.Padding = new Wisej.Web.Padding(0, 14, 0, 0);
-            this.lblReport.TextAlign = System.Drawing.ContentAlignment.TopLeft;
+            this.lblRecommendation.AllowHtml = true;
+            this.lblRecommendation.AutoSize = false;
+            this.lblRecommendation.BackColor = System.Drawing.Color.FromArgb(238, 247, 241);
+            this.lblRecommendation.CssStyle = "border:1px solid #bfe2cd;border-radius:9px;";
+            this.lblRecommendation.Dock = Wisej.Web.DockStyle.Top;
+            this.lblRecommendation.Font = new System.Drawing.Font("default", 10.5F);
+            this.lblRecommendation.ForeColor = System.Drawing.Color.FromArgb(28, 107, 66);
+            this.lblRecommendation.Name = "lblRecommendation";
+            this.lblRecommendation.Padding = new Wisej.Web.Padding(16, 14, 16, 14);
+            this.lblRecommendation.Size = new System.Drawing.Size(DesignWidth - 2 * SidePadding, 64);
+            this.lblRecommendation.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
             // pnlBody
             //
+            this.pnlBody.BackColor = System.Drawing.Color.White;
             this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
             this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Padding = new Wisej.Web.Padding(20);
-            this.pnlBody.Controls.Add(this.lblReport);
-            this.pnlBody.Controls.Add(this.layoutCompare);
-            this.pnlBody.Controls.Add(this.lblCompareHeader);
+            this.pnlBody.Padding = new Wisej.Web.Padding(0, 0, 0, 20);
+            this.pnlBody.Controls.Add(this.lblRecommendation);
+            this.pnlBody.Controls.Add(this.pnlFooter);
+            this.pnlBody.Controls.Add(this.rowSettings);
+            this.pnlBody.Controls.Add(this.rowUser);
+            this.pnlBody.Controls.Add(this.rowSearch);
+            this.pnlBody.Controls.Add(this.rowDelete);
+            this.pnlBody.Controls.Add(this.rowSave);
+            this.pnlBody.Controls.Add(this.pnlHeader);
             //
             // IconComparePage
             //
+            this.BackColor = System.Drawing.Color.White;
             this.Name = "IconComparePage";
             this.Size = new System.Drawing.Size(1000, 640);
-            this.Text = "IconDesk - Icon packs";
+            this.Text = "IconDesk — IconCompare";
             this.Controls.Add(this.pnlBody);
-            this.Controls.Add(this.pnlActions);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.pnlHeader);
+            this.Controls.Add(this.appTitleBar);
             this.ResumeLayout(false);
         }
 
-        private static void SetHeading(Wisej.Web.Label label, string name, string text)
+        /// <summary>One uppercase column heading.</summary>
+        private static void BuildHeading(Wisej.Web.Label label, string name, string text, int left, int width)
         {
+            label.Anchor = left > 400
+                ? Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right
+                : Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Left;
             label.AutoSize = false;
-            label.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
+            label.CssStyle = "letter-spacing:.04em;";
+            label.Font = new System.Drawing.Font("default", 9.4F, System.Drawing.FontStyle.Bold);
+            label.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            label.Location = new System.Drawing.Point(left, 0);
             label.Name = name;
+            label.Size = new System.Drawing.Size(width, 54);
             label.Text = text;
             label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         }
 
-        private static void SetIcon(Wisej.Web.PictureBox box, string name)
+        /// <summary>
+        /// One concept row: the caption on the left and the same concept from both families,
+        /// each with the file name the pack actually served.
+        /// </summary>
+        private static void BuildRow(
+            Wisej.Web.Panel row, string rowName, int index,
+            Wisej.Web.Label concept, string conceptName, string conceptText,
+            Wisej.Web.PictureBox one, string oneName, Wisej.Web.Label oneFile, string oneFileName,
+            Wisej.Web.PictureBox two, string twoName, Wisej.Web.Label twoFile, string twoFileName)
         {
-            box.Name = name;
-            box.Size = new System.Drawing.Size(40, 40);
-            box.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
+            row.BackColor = index % 2 == 1
+                ? System.Drawing.Color.FromArgb(251, 252, 254)
+                : System.Drawing.Color.White;
+            row.CssStyle = "border-bottom:1px solid #f0f3f7;";
+            row.Dock = Wisej.Web.DockStyle.Top;
+            row.Name = rowName;
+            row.Size = new System.Drawing.Size(DesignWidth, 68);
+
+            concept.AutoSize = false;
+            concept.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Bold);
+            concept.ForeColor = System.Drawing.Color.FromArgb(31, 45, 58);
+            concept.Location = new System.Drawing.Point(SidePadding, 0);
+            concept.Name = conceptName;
+            concept.Size = new System.Drawing.Size(400, 68);
+            concept.Text = conceptText;
+            concept.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+
+            var oneLeft = DesignWidth - SidePadding - 2 * ColumnWidth;
+            var twoLeft = DesignWidth - SidePadding - ColumnWidth;
+
+            BuildCell(one, oneName, oneFile, oneFileName, oneLeft);
+            BuildCell(two, twoName, twoFile, twoFileName, twoLeft);
+
+            row.Controls.Add(concept);
+            row.Controls.Add(one);
+            row.Controls.Add(oneFile);
+            row.Controls.Add(two);
+            row.Controls.Add(twoFile);
+        }
+
+        private static void BuildCell(Wisej.Web.PictureBox picture, string pictureName, Wisej.Web.Label file, string fileName, int left)
+        {
+            picture.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
+            picture.Location = new System.Drawing.Point(left, 19);
+            picture.Name = pictureName;
+            picture.Size = new System.Drawing.Size(30, 30);
+            picture.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
+
+            file.Anchor = Wisej.Web.AnchorStyles.Top | Wisej.Web.AnchorStyles.Right;
+            file.AutoSize = false;
+            file.Font = new System.Drawing.Font("Consolas", 9.4F);
+            file.ForeColor = System.Drawing.Color.FromArgb(125, 141, 160);
+            file.Location = new System.Drawing.Point(left + 44, 0);
+            file.Name = fileName;
+            file.Size = new System.Drawing.Size(ColumnWidth - 44, 68);
+            file.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
         }
 
         #endregion
 
-        private Wisej.Web.Panel pnlHeader;
-        private Wisej.Web.Label lblTitle;
-        private Wisej.Web.Label lblSubtitle;
-        private Wisej.Web.Label lblStatus;
-        private Wisej.Web.Panel pnlActions;
-        private Wisej.Web.Button btnBack;
-        private Wisej.Web.Button btnRecolour;
-        private Wisej.Web.Button btnReport;
+        private IconDesk.AppTitleBar appTitleBar;
         private Wisej.Web.Panel pnlBody;
-        private Wisej.Web.Label lblCompareHeader;
-        private Wisej.Web.TableLayoutPanel layoutCompare;
-        private Wisej.Web.Label lblCorner;
+        private Wisej.Web.Panel pnlHeader;
+        private Wisej.Web.Label lblColConcept;
+        private Wisej.Web.Label lblColFamilyOne;
+        private Wisej.Web.Label lblColFamilyTwo;
+        private Wisej.Web.Panel rowSave;
         private Wisej.Web.Label lblConceptSave;
-        private Wisej.Web.Label lblConceptDelete;
-        private Wisej.Web.Label lblConceptSearch;
-        private Wisej.Web.Label lblConceptUser;
-        private Wisej.Web.Label lblConceptSettings;
-        private Wisej.Web.Label lblFamilyFa;
         private Wisej.Web.PictureBox picFaSave;
-        private Wisej.Web.PictureBox picFaDelete;
-        private Wisej.Web.PictureBox picFaSearch;
-        private Wisej.Web.PictureBox picFaUser;
-        private Wisej.Web.PictureBox picFaSettings;
-        private Wisej.Web.Label lblFamilyMd;
+        private Wisej.Web.Label lblFaSave;
         private Wisej.Web.PictureBox picMdSave;
+        private Wisej.Web.Label lblMdSave;
+        private Wisej.Web.Panel rowDelete;
+        private Wisej.Web.Label lblConceptDelete;
+        private Wisej.Web.PictureBox picFaDelete;
+        private Wisej.Web.Label lblFaDelete;
         private Wisej.Web.PictureBox picMdDelete;
+        private Wisej.Web.Label lblMdDelete;
+        private Wisej.Web.Panel rowSearch;
+        private Wisej.Web.Label lblConceptSearch;
+        private Wisej.Web.PictureBox picFaSearch;
+        private Wisej.Web.Label lblFaSearch;
         private Wisej.Web.PictureBox picMdSearch;
+        private Wisej.Web.Label lblMdSearch;
+        private Wisej.Web.Panel rowUser;
+        private Wisej.Web.Label lblConceptUser;
+        private Wisej.Web.PictureBox picFaUser;
+        private Wisej.Web.Label lblFaUser;
         private Wisej.Web.PictureBox picMdUser;
+        private Wisej.Web.Label lblMdUser;
+        private Wisej.Web.Panel rowSettings;
+        private Wisej.Web.Label lblConceptSettings;
+        private Wisej.Web.PictureBox picFaSettings;
+        private Wisej.Web.Label lblFaSettings;
         private Wisej.Web.PictureBox picMdSettings;
-        private Wisej.Web.Label lblReport;
+        private Wisej.Web.Label lblMdSettings;
+        private Wisej.Web.Panel pnlFooter;
+        private Wisej.Web.Button btnCompare;
+        private Wisej.Web.Label lblFooterNote;
+        private Wisej.Web.Label lblRecommendation;
     }
 }

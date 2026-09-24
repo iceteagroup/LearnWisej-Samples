@@ -7,11 +7,12 @@ namespace IconDesk
     {
         /// <summary>
         /// Wisej.NET session entry point (configured in Default.json "startup").
-        /// IconDesk is a Web Page Application: one Page fills the browser window.
+        /// IconDesk is a Web Page Application: one Page fills the browser window. Each module
+        /// opens on the page that module builds.
         /// </summary>
         static void Main(NameValueCollection args)
         {
-            Application.MainPage = new CommandPage();
+            Application.MainPage = new IconPackPage();
         }
     }
 }

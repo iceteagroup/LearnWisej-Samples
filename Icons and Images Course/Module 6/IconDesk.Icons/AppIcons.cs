@@ -18,48 +18,57 @@ namespace IconDesk.Icons
         /// </summary>
         public const string Assembly = "IconDesk.Icons";
 
+        /// <summary>The pack's own version, shown in the gallery toolbar.</summary>
+        public const string Version = "1.0.0";
+
         private const string Prefix = "resource.wx/" + Assembly + "/";
 
-        public const string Add = Prefix + "add.svg";
-        public const string Delete = Prefix + "delete.svg";
-        public const string Edit = Prefix + "edit.svg";
-        public const string Export = Prefix + "export.svg";
-        public const string Filter = Prefix + "filter.svg";
-        public const string Info = Prefix + "info.svg";
-        public const string Refresh = Prefix + "refresh.svg";
+        // ── the vocabulary, in the order the gallery shows it ───────────────────
+
         public const string Save = Prefix + "save.svg";
+        public const string Delete = Prefix + "delete.svg";
         public const string Search = Prefix + "search.svg";
+        public const string Filter = Prefix + "filter.svg";
+        public const string Print = Prefix + "print.svg";
+        public const string Export = Prefix + "export.svg";
+        public const string Customer = Prefix + "customer.svg";
+        public const string Order = Prefix + "order.svg";
         public const string Settings = Prefix + "settings.svg";
-        public const string User = Prefix + "user.svg";
-        public const string Warning = Prefix + "warning.svg";
+        public const string Success = Prefix + "status-success.svg";
+        public const string Warning = Prefix + "status-warning.svg";
+        public const string Error = Prefix + "status-error.svg";
 
         /// <summary>
-        /// Every icon in the pack, by name. Useful for a gallery screen and for the test that
-        /// asserts the catalog and the embedded resources have not drifted apart.
+        /// Every icon in the pack, by name, in gallery order. Useful for a gallery screen and for
+        /// the test that asserts the catalog and the embedded resources have not drifted apart.
         /// </summary>
-        public static readonly System.Collections.Generic.IReadOnlyDictionary<string, string> All =
-            new System.Collections.Generic.Dictionary<string, string>
+        public static readonly System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string, string>> All =
+            new System.Collections.Generic.List<System.Collections.Generic.KeyValuePair<string, string>>
             {
-                { nameof(Add), Add },
-                { nameof(Delete), Delete },
-                { nameof(Edit), Edit },
-                { nameof(Export), Export },
-                { nameof(Filter), Filter },
-                { nameof(Info), Info },
-                { nameof(Refresh), Refresh },
-                { nameof(Save), Save },
-                { nameof(Search), Search },
-                { nameof(Settings), Settings },
-                { nameof(User), User },
-                { nameof(Warning), Warning },
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Save), Save),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Delete), Delete),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Search), Search),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Filter), Filter),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Print), Print),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Export), Export),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Customer), Customer),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Order), Order),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Settings), Settings),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Success), Success),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Warning), Warning),
+                new System.Collections.Generic.KeyValuePair<string, string>(nameof(Error), Error),
             };
 
         /// <summary>
-        /// Appends the recolour suffix. The pack's artwork is monochrome on purpose, so every icon
-        /// in it accepts one - see the note on SVG cleanup in the module docs.
+        /// Appends the recolour suffix. The pack's artwork is monochrome on purpose and every
+        /// shape in it strokes with <c>currentColor</c>, so every icon accepts one - see
+        /// ICON-PACK-RULES.md for the file that did not, and what was wrong with it.
         /// </summary>
         /// <param name="icon">One of the constants on this class.</param>
         /// <param name="colour">A theme colour name such as <c>highlight</c>, or a literal.</param>
-        public static string Coloured(string icon, string colour) => icon + "?color=" + colour;
+        public static string Coloured(string icon, string colour)
+        {
+            return icon + "?color=" + colour;
+        }
     }
 }
