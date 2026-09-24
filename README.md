@@ -5,7 +5,7 @@ e-learning platform for [Wisej.NET](https://wisej.com/). Every course folder con
 Wisej.NET 4 application per module, built from that module's lesson guide, lab guide and walkthrough
 video, so you can open the lab, run the finished solution next to it, click through it and compare.
 
-![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4) ![Wisej.NET 4.1](https://img.shields.io/badge/Wisej.NET-4.1.0-0078D4) ![Samples](https://img.shields.io/badge/runnable%20samples-95-2EA44F)
+![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4) ![Wisej.NET 4.1](https://img.shields.io/badge/Wisej.NET-4.1.0-0078D4) ![Samples](https://img.shields.io/badge/runnable%20samples-116-2EA44F)
 
 ## Courses
 
@@ -22,6 +22,8 @@ video, so you can open the lab, run the finished solution next to it, click thro
 | [Production Architecture Deep Dive](./Production%20Architecture%20Deep%20Dive) | 12 | `TicketOps` | 5101–5112 | The TicketOps Console built the production way: project structure, startup and session state, responsive composition, data workflows, safe save pipelines, modal transactions, background sync, DI, interop, localization, security, deployment |
 | [Enterprise Wisej.NET Course](./Enterprise%20Wisej.NET%20Course) | 14 | `EnterpriseOps` | 5201–5214 | The EnterpriseOps Command Center, a multi-tenant field-service system: governance, migration strategy, tenancy and concurrency, EF Core transactions, high-volume UX, background pipelines, wizards, custom components, secure interop, SSO and audit, observability, cloud release engineering, PWA/offline, AI-assisted delivery |
 | [Performance & Profiling Course](./Performance%20and%20Profiling%20Course) | 7 | `WisejPerfLab` | 5801–5807 | WisejPerfLab, a support desk over 50,000 tickets, made fast with evidence: scenarios and a budget, the Visual Studio profiling workflow, the CPU hot path, session leaks and allocations, a virtual grid and a lazy tree, one query per page and a non-blocking export, then a capacity model and a health check |
+| [Localization in Wisej.NET Course](./Localization%20in%20Wisej.NET%20Course) | 7 | `GlobalDesk` | 6101–6107 | GlobalDesk taken from English to five languages: resource keys and culture-formatted values, designer localization and its German variant, shared translations and composed sentences, a runtime language switch on `CultureChanged`, right-to-left and pseudo-localization, one honest translation round, then a `LocalizationService` and a QA matrix |
+| [Icons & Images Course](./Icons%20and%20Images%20Course) | 7 | `IconDesk` | 6201–6207 | IconDesk, every way Wisej.NET puts a picture on a control: the four image mechanisms behind an `IImage` readout, the raster and vector pipelines, the designer image selector and theme recolouring, two official icon packs compared, embedded resources and deployment overrides, your own icon pack as a class library, then icon fonts and a capstone |
 
 Each course folder has its own `README.md` with a module-by-module table, and each module folder has
 a `README.md` that tells you what to click, maps the lab steps to the code and answers the self-check
@@ -51,7 +53,7 @@ Modules with unit tests (the Data Binding course and Validation capstone) run th
 
 ## How a sample is laid out
 
-All 95 samples follow the same frame so that a learner who has finished one module knows where to
+All 116 samples follow the same frame so that a learner who has finished one module knows where to
 look in the next:
 
 - **The lab screen** on the left, built with the control names the lab guide uses.
