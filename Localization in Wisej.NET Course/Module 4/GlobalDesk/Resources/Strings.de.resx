@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="App.Title" xml:space="preserve">
+    <value>GlobalDesk</value>
+  </data>
+  <data name="Dashboard.Welcome" xml:space="preserve">
+    <value>Willkommen bei GlobalDesk</value>
+  </data>
+  <data name="Dashboard.Subtitle" xml:space="preserve">
+    <value>Kundenverwaltung, in Ihrer Sprache</value>
+  </data>
+  <data name="Dashboard.RecreateEditor" xml:space="preserve">
+    <value>Editor neu erstellen</value>
+  </data>
+  <data name="Dashboard.ShowSystemText" xml:space="preserve">
+    <value>Einen Wisej.NET-Dialog anzeigen</value>
+  </data>
+  <data name="Navigation.Customers" xml:space="preserve">
+    <value>Kunden</value>
+  </data>
+  <data name="Navigation.Back" xml:space="preserve">
+    <value>Zurück</value>
+  </data>
+  <data name="CustomerEditor.Title" xml:space="preserve">
+    <value>Kunde</value>
+  </data>
+  <data name="CustomerEditor.Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="CustomerEditor.Code" xml:space="preserve">
+    <value>Kundennummer</value>
+  </data>
+  <data name="CustomerEditor.Country" xml:space="preserve">
+    <value>Land</value>
+  </data>
+  <data name="CustomerEditor.Save" xml:space="preserve">
+    <value>Speichern</value>
+  </data>
+  <data name="CustomerEditor.Cancel" xml:space="preserve">
+    <value>Abbrechen</value>
+  </data>
+  <data name="CustomerEditor.Saved" xml:space="preserve">
+    <value>Kunde gespeichert.</value>
+  </data>
+  <data name="CustomerEditor.SaveFailed" xml:space="preserve">
+    <value>Der Kunde konnte nicht gespeichert werden.</value>
+  </data>
+  <data name="Customer.LastOrder" xml:space="preserve">
+    <value>Letzte Bestellung: {0} über {1}</value>
+    <comment>{0} ist ein Datum, {1} ein Betrag.</comment>
+  </data>
+  <data name="Validation.Required" xml:space="preserve">
+    <value>Dieses Feld ist erforderlich.</value>
+  </data>
+  <data name="Validation.CodeFormat" xml:space="preserve">
+    <value>Eine Kundennummer besteht aus zwei Buchstaben und vier Ziffern.</value>
+  </data>
+  <data name="Preview.Heading" xml:space="preserve">
+    <value>Dieselben drei Werte, für diese Sitzung formatiert</value>
+  </data>
+  <data name="Preview.Date" xml:space="preserve">
+    <value>Fälligkeitsdatum</value>
+  </data>
+  <data name="Preview.Quantity" xml:space="preserve">
+    <value>Bestellte Einheiten</value>
+  </data>
+  <data name="Preview.Amount" xml:space="preserve">
+    <value>Bestellwert</value>
+  </data>
+  <data name="Preview.Culture" xml:space="preserve">
+    <value>Aktive Kultur</value>
+  </data>
+  <data name="Dashboard.LastOrder" xml:space="preserve">
+    <value>Letzte Bestellung</value>
+  </data>
+  <data name="Dashboard.Language" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="Dashboard.Fallback" xml:space="preserve">
+    <value>Greift zurück auf</value>
+  </data>
+</root>
