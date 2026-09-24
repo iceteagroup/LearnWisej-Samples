@@ -24,468 +24,369 @@ namespace VisualOperationsStudio
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.pnlSurfaces = new Wisej.Web.Panel();
-            this.lblSurfacesHeader = new Wisej.Web.Label();
-            this.layoutSurfaces = new Wisej.Web.TableLayoutPanel();
-            this.pnlSurface1 = new Wisej.Web.Panel();
-            this.lblSurface1 = new Wisej.Web.Label();
-            this.pnlPlain = new Wisej.Web.Panel();
-            this.lblReading = new Wisej.Web.Label();
-            this.progressReading = new Wisej.Web.ProgressBar();
-            this.pnlSurface3 = new Wisej.Web.Panel();
-            this.lblSurface3 = new Wisej.Web.Label();
-            this.canvasSurface = new Wisej.Web.Canvas();
-            this.pnlSurface4 = new Wisej.Web.Panel();
-            this.lblSurface4 = new Wisej.Web.Label();
-            this.picExport = new Wisej.Web.PictureBox();
-            this.pnlHeader = new Wisej.Web.Panel();
-            this.lblMachine = new Wisej.Web.Label();
-            this.lblSubtitle = new Wisej.Web.Label();
-            this.lblStatus = new Wisej.Web.Label();
-            this.pnlActions = new Wisej.Web.Panel();
-            this.btnTakeReading = new Wisej.Web.Button();
-            this.btnReset = new Wisej.Web.Button();
-            this.btnPlayground = new Wisej.Web.Button();
+            this.pnlAppBar = new Wisej.Web.Panel();
+            this.lblAppTitle = new Wisej.Web.Label();
+            this.lblAppSuffix = new Wisej.Web.Label();
+            this.glyphs = new VisualOperationsStudio.Controls.WindowGlyphs();
             this.pnlBody = new Wisej.Web.Panel();
-            this.splitMain = new Wisej.Web.SplitContainer();
-            this.pnlText = new Wisej.Web.Panel();
-            this.lblTextHeader = new Wisej.Web.Label();
-            this.gridValues = new Wisej.Web.DataGridView();
-            this.colValueName = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colValueText = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.listReport = new Wisej.Web.ListBox();
-            this.btnDegraded = new Wisej.Web.Button();
-            this.btnMetrics = new Wisej.Web.Button();
-            this.pnlGauges = new Wisej.Web.Panel();
-            this.gaugeSpindle = new VisualOperationsStudio.Controls.TelemetryGauge();
-            this.gaugeCoolant = new VisualOperationsStudio.Controls.TelemetryGauge();
-            this.gaugeCycle = new VisualOperationsStudio.Controls.TelemetryGauge();
-            this.gridOperations = new Wisej.Web.DataGridView();
-            this.colMachine = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colSite = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colLastReading = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.cardGauge = new Wisej.Web.Panel();
+            this.lblGaugeHeader = new Wisej.Web.Label();
+            this.pnlGaugeGap = new Wisej.Web.Panel();
+            this.gaugeCpu = new VisualOperationsStudio.Controls.TelemetryGauge();
+            this.lblAccessibleReading = new Wisej.Web.Label();
+            this.pnlGaugeFiller = new Wisej.Web.Panel();
+            this.pnlGapLeft = new Wisej.Web.Panel();
+            this.cardGrid = new Wisej.Web.Panel();
+            this.lblGridHeader = new Wisej.Web.Label();
+            this.gridAssets = new Wisej.Web.DataGridView();
+            this.colAsset = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colHealth = new Wisej.Web.DataGridViewTextBoxColumn();
             this.colTrend = new Wisej.Web.DataGridViewTextBoxColumn();
-            this.colStatusHtml = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.colState = new Wisej.Web.DataGridViewTextBoxColumn();
+            this.lblAccessibleTable = new Wisej.Web.Label();
+            this.pnlGapRight = new Wisej.Web.Panel();
+            this.cardCanvas = new Wisej.Web.Panel();
+            this.lblCanvasHeader = new Wisej.Web.Label();
+            this.canvasTopology = new Wisej.Web.Canvas();
+            this.pnlCanvasFiller = new Wisej.Web.Panel();
+            this.pnlCanvasActions = new Wisej.Web.Panel();
+            this.btnExport = new Wisej.Web.Button();
+            this.btnResetView = new Wisej.Web.Button();
             this.SuspendLayout();
             //
-            // lblMachine
+            // lblAppTitle
             //
-            this.lblMachine.AutoSize = false;
-            this.lblMachine.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold);
-            this.lblMachine.Location = new System.Drawing.Point(20, 12);
-            this.lblMachine.Name = "lblMachine";
-            this.lblMachine.Size = new System.Drawing.Size(360, 28);
-            this.lblMachine.Text = "Line 3 Press";
+            this.lblAppTitle.AutoSize = false;
+            this.lblAppTitle.Font = new System.Drawing.Font("default", 15F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.lblAppTitle.ForeColor = System.Drawing.Color.White;
+            this.lblAppTitle.Location = new System.Drawing.Point(18, 0);
+            this.lblAppTitle.Name = "lblAppTitle";
+            this.lblAppTitle.Size = new System.Drawing.Size(188, 42);
+            this.lblAppTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblAppTitle.Text = "Visual Operations Studio";
             //
-            // lblSubtitle
+            // lblAppSuffix
             //
-            this.lblSubtitle.AutoSize = false;
-            this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSubtitle.Location = new System.Drawing.Point(20, 42);
-            this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(760, 22);
-            this.lblSubtitle.Text = "TelemetryGauge - three painted gauges over the same TelemetrySample model";
+            this.lblAppSuffix.AutoSize = false;
+            this.lblAppSuffix.CssStyle = "opacity:.85";
+            this.lblAppSuffix.Font = new System.Drawing.Font("default", 13.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.lblAppSuffix.ForeColor = System.Drawing.Color.White;
+            this.lblAppSuffix.Location = new System.Drawing.Point(209, 0);
+            this.lblAppSuffix.Name = "lblAppSuffix";
+            this.lblAppSuffix.Size = new System.Drawing.Size(160, 42);
+            this.lblAppSuffix.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblAppSuffix.Text = "· Capstone";
             //
-            // pnlHeader
+            // glyphs
             //
-            this.pnlHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Size = new System.Drawing.Size(1080, 72);
-            this.pnlHeader.Controls.Add(this.lblSubtitle);
-            this.pnlHeader.Controls.Add(this.lblMachine);
+            this.glyphs.BackColor = System.Drawing.Color.FromArgb(21, 101, 216);
+            this.glyphs.Dock = Wisej.Web.DockStyle.Right;
+            this.glyphs.Inset = 18;
+            this.glyphs.Name = "glyphs";
+            this.glyphs.Size = new System.Drawing.Size(89, 42);
             //
-            // lblStatus
+            // pnlAppBar
             //
-            this.lblStatus.AutoSize = false;
-            this.lblStatus.Dock = Wisej.Web.DockStyle.Bottom;
-            this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Padding = new Wisej.Web.Padding(20, 8, 20, 8);
-            this.lblStatus.Size = new System.Drawing.Size(1080, 34);
-            this.lblStatus.Text = "Opening VisualOperationsStudio...";
+            this.pnlAppBar.BackColor = System.Drawing.Color.FromArgb(21, 101, 216);
+            this.pnlAppBar.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlAppBar.Name = "pnlAppBar";
+            this.pnlAppBar.Size = new System.Drawing.Size(1400, 42);
+            this.pnlAppBar.Controls.Add(this.lblAppTitle);
+            this.pnlAppBar.Controls.Add(this.lblAppSuffix);
+            this.pnlAppBar.Controls.Add(this.glyphs);
             //
-            // btnTakeReading
+            // lblGaugeHeader
             //
-            this.btnTakeReading.Location = new System.Drawing.Point(20, 9);
-            this.btnTakeReading.Name = "btnTakeReading";
-            this.btnTakeReading.Size = new System.Drawing.Size(160, 38);
-            this.btnTakeReading.TabIndex = 0;
-            this.btnTakeReading.Text = "Take reading";
-            this.btnTakeReading.Click += this.btnTakeReading_Click;
+            this.lblGaugeHeader.AutoSize = false;
+            this.lblGaugeHeader.CssStyle = "letter-spacing:.04em";
+            this.lblGaugeHeader.Dock = Wisej.Web.DockStyle.Top;
+            this.lblGaugeHeader.Font = new System.Drawing.Font("default", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.lblGaugeHeader.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblGaugeHeader.Name = "lblGaugeHeader";
+            this.lblGaugeHeader.Size = new System.Drawing.Size(218, 18);
+            this.lblGaugeHeader.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblGaugeHeader.Text = "CONTROL PAINT · SERVER";
             //
-            // btnReset
+            // pnlGaugeGap
             //
-            this.btnReset.Location = new System.Drawing.Point(192, 9);
-            this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(110, 38);
-            this.btnReset.TabIndex = 1;
-            this.btnReset.Text = "Reset";
-            this.btnReset.Click += this.btnReset_Click;
+            this.pnlGaugeGap.Dock = Wisej.Web.DockStyle.Top;
+            this.pnlGaugeGap.Name = "pnlGaugeGap";
+            this.pnlGaugeGap.Size = new System.Drawing.Size(218, 10);
             //
-            // btnPlayground
+            // gaugeCpu
             //
-            this.btnPlayground.Location = new System.Drawing.Point(314, 9);
-            this.btnPlayground.Name = "btnPlayground";
-            this.btnPlayground.Size = new System.Drawing.Size(180, 38);
-            this.btnPlayground.TabIndex = 2;
-            this.btnPlayground.Text = "Plant topology";
-            this.btnPlayground.Click += this.btnPlayground_Click;
+            this.gaugeCpu.Dock = Wisej.Web.DockStyle.Top;
+            this.gaugeCpu.Name = "gaugeCpu";
+            this.gaugeCpu.Size = new System.Drawing.Size(218, 210);
             //
-            // btnDegraded
+            // lblAccessibleReading
             //
-            this.btnDegraded.Location = new System.Drawing.Point(506, 9);
-            this.btnDegraded.Name = "btnDegraded";
-            this.btnDegraded.Size = new System.Drawing.Size(190, 38);
-            this.btnDegraded.TabIndex = 3;
-            this.btnDegraded.Text = "Run degraded checks";
-            this.btnDegraded.Click += this.btnDegraded_Click;
+            this.lblAccessibleReading.AllowHtml = true;
+            this.lblAccessibleReading.AutoSize = false;
+            this.lblAccessibleReading.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.lblAccessibleReading.CssStyle = "border:1px solid #e4eaf1;border-radius:8px;white-space:normal;line-height:1.4";
+            this.lblAccessibleReading.Dock = Wisej.Web.DockStyle.Bottom;
+            this.lblAccessibleReading.Font = new System.Drawing.Font("default", 11.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.lblAccessibleReading.ForeColor = System.Drawing.Color.FromArgb(70, 88, 106);
+            this.lblAccessibleReading.Name = "lblAccessibleReading";
+            this.lblAccessibleReading.Padding = new Wisej.Web.Padding(10, 7, 10, 7);
+            this.lblAccessibleReading.Size = new System.Drawing.Size(218, 58);
+            this.lblAccessibleReading.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // btnMetrics
+            // pnlGaugeFiller
             //
-            this.btnMetrics.Location = new System.Drawing.Point(708, 9);
-            this.btnMetrics.Name = "btnMetrics";
-            this.btnMetrics.Size = new System.Drawing.Size(150, 38);
-            this.btnMetrics.TabIndex = 4;
-            this.btnMetrics.Text = "Render metrics";
-            this.btnMetrics.Click += this.btnMetrics_Click;
+            this.pnlGaugeFiller.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlGaugeFiller.Name = "pnlGaugeFiller";
             //
-            // listReport
+            // cardGauge
             //
-            this.listReport.Dock = Wisej.Web.DockStyle.Bottom;
-            this.listReport.Font = new System.Drawing.Font("monospace", 9F);
-            this.listReport.Name = "listReport";
-            this.listReport.Size = new System.Drawing.Size(1080, 116);
+            this.cardGauge.BackColor = System.Drawing.Color.White;
+            this.cardGauge.CssStyle = "border:1px solid #e4eaf1;border-radius:12px";
+            this.cardGauge.Dock = Wisej.Web.DockStyle.Left;
+            this.cardGauge.Name = "cardGauge";
+            this.cardGauge.Padding = new Wisej.Web.Padding(16, 14, 16, 14);
+            this.cardGauge.Size = new System.Drawing.Size(250, 600);
+            this.cardGauge.Controls.Add(this.pnlGaugeFiller);
+            this.cardGauge.Controls.Add(this.lblAccessibleReading);
+            this.cardGauge.Controls.Add(this.gaugeCpu);
+            this.cardGauge.Controls.Add(this.pnlGaugeGap);
+            this.cardGauge.Controls.Add(this.lblGaugeHeader);
             //
-            // pnlActions
+            // pnlGapLeft
             //
-            this.pnlActions.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlActions.Name = "pnlActions";
-            this.pnlActions.Size = new System.Drawing.Size(1080, 56);
-            this.pnlActions.Controls.Add(this.btnMetrics);
-            this.pnlActions.Controls.Add(this.btnDegraded);
-            this.pnlActions.Controls.Add(this.btnPlayground);
-            this.pnlActions.Controls.Add(this.btnReset);
-            this.pnlActions.Controls.Add(this.btnTakeReading);
+            this.pnlGapLeft.Dock = Wisej.Web.DockStyle.Left;
+            this.pnlGapLeft.Name = "pnlGapLeft";
+            this.pnlGapLeft.Size = new System.Drawing.Size(16, 600);
             //
-            // lblTextHeader
+            // lblGridHeader
             //
-            this.lblTextHeader.AutoSize = false;
-            this.lblTextHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblTextHeader.Font = new System.Drawing.Font("default", 10F, System.Drawing.FontStyle.Bold);
-            this.lblTextHeader.Name = "lblTextHeader";
-            this.lblTextHeader.Size = new System.Drawing.Size(300, 30);
-            this.lblTextHeader.Text = "Every value the graphics show";
+            this.lblGridHeader.AutoSize = false;
+            this.lblGridHeader.CssStyle = "letter-spacing:.04em;border-bottom:1px solid #e4eaf1";
+            this.lblGridHeader.Dock = Wisej.Web.DockStyle.Top;
+            this.lblGridHeader.Font = new System.Drawing.Font("default", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.lblGridHeader.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblGridHeader.Name = "lblGridHeader";
+            this.lblGridHeader.Padding = new Wisej.Web.Padding(14, 0, 14, 0);
+            this.lblGridHeader.Size = new System.Drawing.Size(500, 36);
+            this.lblGridHeader.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblGridHeader.Text = "CELLPAINT · USERPAINT COLUMNS";
             //
-            // colValueName
+            // colAsset
             //
-            this.colValueName.DataPropertyName = "Name";
-            this.colValueName.HeaderText = "Value";
-            this.colValueName.Name = "colValueName";
-            this.colValueName.Width = 180;
-            //
-            // colValueText
-            //
-            this.colValueText.DataPropertyName = "Text";
-            this.colValueText.HeaderText = "Reading";
-            this.colValueText.Name = "colValueText";
-            this.colValueText.Width = 110;
-            //
-            // gridValues
-            //
-            this.gridValues.AllowUserToAddRows = false;
-            this.gridValues.AutoGenerateColumns = false;
-            this.gridValues.Dock = Wisej.Web.DockStyle.Fill;
-            this.gridValues.Name = "gridValues";
-            this.gridValues.ReadOnly = true;
-            this.gridValues.Columns.Add(this.colValueName);
-            this.gridValues.Columns.Add(this.colValueText);
-            //
-            // pnlText
-            //
-            this.pnlText.Dock = Wisej.Web.DockStyle.Right;
-            this.pnlText.Name = "pnlText";
-            this.pnlText.Size = new System.Drawing.Size(320, 400);
-            this.pnlText.Controls.Add(this.gridValues);
-            this.pnlText.Controls.Add(this.lblTextHeader);
-            //
-            // gaugeSpindle
-            //
-            this.gaugeSpindle.Dock = Wisej.Web.DockStyle.Left;
-            this.gaugeSpindle.Name = "gaugeSpindle";
-            this.gaugeSpindle.Size = new System.Drawing.Size(250, 400);
-            //
-            // gaugeCoolant
-            //
-            this.gaugeCoolant.Dock = Wisej.Web.DockStyle.Left;
-            this.gaugeCoolant.Name = "gaugeCoolant";
-            this.gaugeCoolant.Size = new System.Drawing.Size(250, 400);
-            //
-            // gaugeCycle
-            //
-            this.gaugeCycle.Dock = Wisej.Web.DockStyle.Fill;
-            this.gaugeCycle.Name = "gaugeCycle";
-            //
-            // pnlGauges
-            //
-            this.pnlGauges.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlGauges.Name = "pnlGauges";
-            this.pnlGauges.Padding = new Wisej.Web.Padding(12, 6, 12, 6);
-            this.pnlGauges.Resize += this.pnlGauges_Resize;
-            this.pnlGauges.Controls.Add(this.gaugeCycle);
-            this.pnlGauges.Controls.Add(this.gaugeCoolant);
-            this.pnlGauges.Controls.Add(this.gaugeSpindle);
-            //
-            // pnlBody
-            //
-            this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlBody.Name = "pnlBody";
-            this.pnlBody.Controls.Add(this.pnlGauges);
-            this.pnlBody.Controls.Add(this.pnlText);
-            //
-            // colMachine
-            //
-            this.colMachine.DataPropertyName = "Machine";
-            this.colMachine.HeaderText = "Machine";
-            this.colMachine.Name = "colMachine";
-            this.colMachine.Width = 130;
-            //
-            // colSite
-            //
-            this.colSite.DataPropertyName = "Site";
-            this.colSite.HeaderText = "Site";
-            this.colSite.Name = "colSite";
-            this.colSite.Width = 110;
-            //
-            // colLastReading
-            //
-            this.colLastReading.DataPropertyName = "LastReadingText";
-            this.colLastReading.HeaderText = "Last reading";
-            this.colLastReading.Name = "colLastReading";
-            this.colLastReading.Width = 110;
+            this.colAsset.DataPropertyName = "Asset";
+            this.colAsset.DefaultCellStyle.Font = new System.Drawing.Font("Consolas", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.colAsset.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(21, 101, 216);
+            this.colAsset.HeaderText = "Asset";
+            this.colAsset.Name = "colAsset";
+            this.colAsset.Width = 104;
             //
             // colHealth
             //
-            this.colHealth.HeaderText = "Health (painted)";
+            this.colHealth.AutoSizeMode = Wisej.Web.DataGridViewAutoSizeColumnMode.Fill;
+            this.colHealth.HeaderText = "Health";
             this.colHealth.Name = "colHealth";
-            this.colHealth.Width = 200;
             //
             // colTrend
             //
-            this.colTrend.HeaderText = "Trend (painted)";
+            this.colTrend.HeaderText = "Trend";
             this.colTrend.Name = "colTrend";
-            this.colTrend.Width = 160;
+            this.colTrend.Width = 112;
             //
-            // colStatusHtml
+            // colState
             //
-            this.colStatusHtml.AllowHtml = true;
-            this.colStatusHtml.DataPropertyName = "SeverityHtml";
-            this.colStatusHtml.HeaderText = "Status (AllowHtml)";
-            this.colStatusHtml.Name = "colStatusHtml";
-            this.colStatusHtml.Width = 180;
+            this.colState.AllowHtml = true;
+            this.colState.DataPropertyName = "StateHtml";
+            this.colState.HeaderText = "State";
+            this.colState.Name = "colState";
+            this.colState.Width = 92;
             //
-            // gridOperations
+            // gridAssets
             //
-            this.gridOperations.AllowUserToAddRows = false;
-            this.gridOperations.AutoGenerateColumns = false;
-            this.gridOperations.Dock = Wisej.Web.DockStyle.Fill;
-            this.gridOperations.Name = "gridOperations";
-            this.gridOperations.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
-            this.gridOperations.Columns.Add(this.colMachine);
-            this.gridOperations.Columns.Add(this.colSite);
-            this.gridOperations.Columns.Add(this.colLastReading);
-            this.gridOperations.Columns.Add(this.colHealth);
-            this.gridOperations.Columns.Add(this.colTrend);
-            this.gridOperations.Columns.Add(this.colStatusHtml);
+            this.gridAssets.AllowUserToAddRows = false;
+            this.gridAssets.AllowUserToDeleteRows = false;
+            this.gridAssets.AllowUserToOrderColumns = false;
+            this.gridAssets.AutoGenerateColumns = false;
+            this.gridAssets.BorderStyle = Wisej.Web.BorderStyle.None;
+            this.gridAssets.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.gridAssets.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("default", 10.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.gridAssets.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.gridAssets.ColumnHeadersHeight = 26;
+            this.gridAssets.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+            this.gridAssets.DefaultCellStyle.Font = new System.Drawing.Font("default", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.gridAssets.Dock = Wisej.Web.DockStyle.Fill;
+            this.gridAssets.Name = "gridAssets";
+            this.gridAssets.ReadOnly = true;
+            this.gridAssets.RowHeadersVisible = false;
+            this.gridAssets.RowTemplate.Height = 42;
+            this.gridAssets.SelectionMode = Wisej.Web.DataGridViewSelectionMode.FullRowSelect;
+            this.gridAssets.Columns.Add(this.colAsset);
+            this.gridAssets.Columns.Add(this.colHealth);
+            this.gridAssets.Columns.Add(this.colTrend);
+            this.gridAssets.Columns.Add(this.colState);
             //
-            // splitMain
+            // lblAccessibleTable
             //
-            this.splitMain.Dock = Wisej.Web.DockStyle.Fill;
-            this.splitMain.Name = "splitMain";
-            this.splitMain.Orientation = Wisej.Web.Orientation.Horizontal;
-            this.splitMain.SplitterDistance = 300;
-            this.splitMain.Panel1.Controls.Add(this.pnlBody);
-            this.splitMain.Panel2.Controls.Add(this.gridOperations);
+            this.lblAccessibleTable.AllowHtml = true;
+            this.lblAccessibleTable.AutoSize = false;
+            this.lblAccessibleTable.BackColor = System.Drawing.Color.FromArgb(244, 247, 250);
+            this.lblAccessibleTable.CssStyle = "border:1px dashed #9db9db;border-radius:8px;white-space:normal;line-height:1.45";
+            this.lblAccessibleTable.Dock = Wisej.Web.DockStyle.Bottom;
+            this.lblAccessibleTable.Font = new System.Drawing.Font("default", 11.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel);
+            this.lblAccessibleTable.ForeColor = System.Drawing.Color.FromArgb(70, 88, 106);
+            this.lblAccessibleTable.Margin = new Wisej.Web.Padding(12, 10, 12, 10);
+            this.lblAccessibleTable.Name = "lblAccessibleTable";
+            this.lblAccessibleTable.Padding = new Wisej.Web.Padding(12, 9, 12, 9);
+            this.lblAccessibleTable.Size = new System.Drawing.Size(500, 46);
+            this.lblAccessibleTable.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             //
-            // lblSurfacesHeader
+            // cardGrid
             //
-            this.lblSurfacesHeader.AutoSize = false;
-            this.lblSurfacesHeader.Dock = Wisej.Web.DockStyle.Top;
-            this.lblSurfacesHeader.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblSurfacesHeader.ForeColor = System.Drawing.Color.FromArgb(123, 139, 156);
-            this.lblSurfacesHeader.Name = "lblSurfacesHeader";
-            this.lblSurfacesHeader.Size = new System.Drawing.Size(1080, 24);
-            this.lblSurfacesHeader.Text = "The same spindle reading on the other three surfaces - surface 2 is the painted TelemetryGauge above";
+            this.cardGrid.BackColor = System.Drawing.Color.White;
+            this.cardGrid.CssStyle = "border:1px solid #e4eaf1;border-radius:12px;overflow:hidden";
+            this.cardGrid.Dock = Wisej.Web.DockStyle.Fill;
+            this.cardGrid.Name = "cardGrid";
+            this.cardGrid.Controls.Add(this.gridAssets);
+            this.cardGrid.Controls.Add(this.lblAccessibleTable);
+            this.cardGrid.Controls.Add(this.lblGridHeader);
             //
-            // lblSurface1
+            // pnlGapRight
             //
-            this.lblSurface1.AutoSize = false;
-            this.lblSurface1.Dock = Wisej.Web.DockStyle.Top;
-            this.lblSurface1.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblSurface1.Name = "lblSurface1";
-            this.lblSurface1.Size = new System.Drawing.Size(200, 22);
-            this.lblSurface1.Text = "1 - Label + ProgressBar";
+            this.pnlGapRight.Dock = Wisej.Web.DockStyle.Right;
+            this.pnlGapRight.Name = "pnlGapRight";
+            this.pnlGapRight.Size = new System.Drawing.Size(16, 600);
             //
-            // progressReading
+            // lblCanvasHeader
             //
-            this.progressReading.Dock = Wisej.Web.DockStyle.Top;
-            this.progressReading.Maximum = 100;
-            this.progressReading.Minimum = 0;
-            this.progressReading.Name = "progressReading";
-            this.progressReading.Size = new System.Drawing.Size(200, 24);
-            this.progressReading.Value = 34;
+            this.lblCanvasHeader.AutoSize = false;
+            this.lblCanvasHeader.CssStyle = "letter-spacing:.04em;border-bottom:1px solid #e4eaf1";
+            this.lblCanvasHeader.Dock = Wisej.Web.DockStyle.Top;
+            this.lblCanvasHeader.Font = new System.Drawing.Font("default", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.lblCanvasHeader.ForeColor = System.Drawing.Color.FromArgb(90, 107, 125);
+            this.lblCanvasHeader.Name = "lblCanvasHeader";
+            this.lblCanvasHeader.Padding = new Wisej.Web.Padding(14, 0, 14, 0);
+            this.lblCanvasHeader.Size = new System.Drawing.Size(330, 36);
+            this.lblCanvasHeader.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lblCanvasHeader.Text = "WISEJ.WEB.CANVAS · BROWSER";
             //
-            // lblReading
+            // canvasTopology
             //
-            this.lblReading.AutoSize = false;
-            this.lblReading.Dock = Wisej.Web.DockStyle.Top;
-            this.lblReading.Font = new System.Drawing.Font("default", 13F, System.Drawing.FontStyle.Bold);
-            this.lblReading.Name = "lblReading";
-            this.lblReading.Size = new System.Drawing.Size(200, 30);
-            this.lblReading.Text = "34 %";
+            this.canvasTopology.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.canvasTopology.Dock = Wisej.Web.DockStyle.Top;
+            this.canvasTopology.LiveUpdate = false;
+            this.canvasTopology.Name = "canvasTopology";
+            this.canvasTopology.Size = new System.Drawing.Size(330, 258);
+            this.canvasTopology.Redraw += this.canvasTopology_Redraw;
+            this.canvasTopology.MouseDown += this.canvasTopology_MouseDown;
+            this.canvasTopology.MouseMove += this.canvasTopology_MouseMove;
+            this.canvasTopology.MouseUp += this.canvasTopology_MouseUp;
             //
-            // pnlPlain
+            // pnlCanvasFiller
             //
-            this.pnlPlain.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlPlain.Name = "pnlPlain";
-            this.pnlPlain.Controls.Add(this.progressReading);
-            this.pnlPlain.Controls.Add(this.lblReading);
+            this.pnlCanvasFiller.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.pnlCanvasFiller.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlCanvasFiller.Name = "pnlCanvasFiller";
             //
-            // pnlSurface1
+            // btnExport
             //
-            this.pnlSurface1.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlSurface1.Name = "pnlSurface1";
-            this.pnlSurface1.Padding = new Wisej.Web.Padding(8, 0, 8, 0);
-            this.pnlSurface1.Controls.Add(this.pnlPlain);
-            this.pnlSurface1.Controls.Add(this.lblSurface1);
+            this.btnExport.BackColor = System.Drawing.Color.FromArgb(21, 101, 216);
+            this.btnExport.CssStyle = "border-radius:7px;border:none";
+            this.btnExport.Font = new System.Drawing.Font("default", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.btnExport.ForeColor = System.Drawing.Color.White;
+            this.btnExport.Location = new System.Drawing.Point(12, 9);
+            this.btnExport.Name = "btnExport";
+            this.btnExport.Size = new System.Drawing.Size(96, 28);
+            this.btnExport.TabIndex = 0;
+            this.btnExport.Text = "Export PNG";
+            this.btnExport.Click += this.btnExport_Click;
             //
-            // lblSurface3
+            // btnResetView
             //
-            this.lblSurface3.AutoSize = false;
-            this.lblSurface3.Dock = Wisej.Web.DockStyle.Top;
-            this.lblSurface3.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblSurface3.Name = "lblSurface3";
-            this.lblSurface3.Size = new System.Drawing.Size(200, 22);
-            this.lblSurface3.Text = "3 - Wisej.Web.Canvas";
+            this.btnResetView.BackColor = System.Drawing.Color.White;
+            this.btnResetView.CssStyle = "border:1px solid #cdd9e6;border-radius:7px";
+            this.btnResetView.Font = new System.Drawing.Font("default", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            this.btnResetView.ForeColor = System.Drawing.Color.FromArgb(58, 77, 99);
+            this.btnResetView.Location = new System.Drawing.Point(116, 9);
+            this.btnResetView.Name = "btnResetView";
+            this.btnResetView.Size = new System.Drawing.Size(92, 28);
+            this.btnResetView.TabIndex = 1;
+            this.btnResetView.Text = "Reset view";
+            this.btnResetView.Click += this.btnResetView_Click;
             //
-            // canvasSurface
+            // pnlCanvasActions
             //
-            this.canvasSurface.Dock = Wisej.Web.DockStyle.Fill;
-            this.canvasSurface.Name = "canvasSurface";
-            this.canvasSurface.Redraw += this.canvasSurface_Redraw;
+            this.pnlCanvasActions.BackColor = System.Drawing.Color.White;
+            this.pnlCanvasActions.CssStyle = "border-top:1px solid #e4eaf1";
+            this.pnlCanvasActions.Dock = Wisej.Web.DockStyle.Bottom;
+            this.pnlCanvasActions.Name = "pnlCanvasActions";
+            this.pnlCanvasActions.Size = new System.Drawing.Size(330, 46);
+            this.pnlCanvasActions.Controls.Add(this.btnExport);
+            this.pnlCanvasActions.Controls.Add(this.btnResetView);
             //
-            // pnlSurface3
+            // cardCanvas
             //
-            this.pnlSurface3.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlSurface3.Name = "pnlSurface3";
-            this.pnlSurface3.Padding = new Wisej.Web.Padding(8, 0, 8, 0);
-            this.pnlSurface3.Controls.Add(this.canvasSurface);
-            this.pnlSurface3.Controls.Add(this.lblSurface3);
+            this.cardCanvas.BackColor = System.Drawing.Color.White;
+            this.cardCanvas.CssStyle = "border:1px solid #e4eaf1;border-radius:12px;overflow:hidden";
+            this.cardCanvas.Dock = Wisej.Web.DockStyle.Right;
+            this.cardCanvas.Name = "cardCanvas";
+            this.cardCanvas.Size = new System.Drawing.Size(330, 600);
+            this.cardCanvas.Controls.Add(this.pnlCanvasFiller);
+            this.cardCanvas.Controls.Add(this.canvasTopology);
+            this.cardCanvas.Controls.Add(this.pnlCanvasActions);
+            this.cardCanvas.Controls.Add(this.lblCanvasHeader);
             //
-            // lblSurface4
+            // pnlBody
             //
-            this.lblSurface4.AutoSize = false;
-            this.lblSurface4.Dock = Wisej.Web.DockStyle.Top;
-            this.lblSurface4.Font = new System.Drawing.Font("default", 9F, System.Drawing.FontStyle.Bold);
-            this.lblSurface4.Name = "lblSurface4";
-            this.lblSurface4.Size = new System.Drawing.Size(200, 22);
-            this.lblSurface4.Text = "4 - Bitmap + Graphics.FromImage";
-            //
-            // picExport
-            //
-            this.picExport.Dock = Wisej.Web.DockStyle.Fill;
-            this.picExport.Name = "picExport";
-            this.picExport.SizeMode = Wisej.Web.PictureBoxSizeMode.Zoom;
-            //
-            // pnlSurface4
-            //
-            this.pnlSurface4.Dock = Wisej.Web.DockStyle.Fill;
-            this.pnlSurface4.Name = "pnlSurface4";
-            this.pnlSurface4.Padding = new Wisej.Web.Padding(8, 0, 8, 0);
-            this.pnlSurface4.Controls.Add(this.picExport);
-            this.pnlSurface4.Controls.Add(this.lblSurface4);
-            //
-            // layoutSurfaces
-            //
-            this.layoutSurfaces.ColumnCount = 3;
-            this.layoutSurfaces.RowCount = 1;
-            this.layoutSurfaces.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 33.34F));
-            this.layoutSurfaces.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 33.33F));
-            this.layoutSurfaces.ColumnStyles.Add(new Wisej.Web.ColumnStyle(Wisej.Web.SizeType.Percent, 33.33F));
-            this.layoutSurfaces.RowStyles.Add(new Wisej.Web.RowStyle(Wisej.Web.SizeType.Percent, 100F));
-            this.layoutSurfaces.Dock = Wisej.Web.DockStyle.Fill;
-            this.layoutSurfaces.Name = "layoutSurfaces";
-            this.layoutSurfaces.Controls.Add(this.pnlSurface1, 0, 0);
-            this.layoutSurfaces.Controls.Add(this.pnlSurface3, 1, 0);
-            this.layoutSurfaces.Controls.Add(this.pnlSurface4, 2, 0);
-            //
-            // pnlSurfaces
-            //
-            this.pnlSurfaces.Dock = Wisej.Web.DockStyle.Bottom;
-            this.pnlSurfaces.Name = "pnlSurfaces";
-            this.pnlSurfaces.Padding = new Wisej.Web.Padding(12, 4, 12, 8);
-            this.pnlSurfaces.Size = new System.Drawing.Size(1080, 150);
-            this.pnlSurfaces.Controls.Add(this.layoutSurfaces);
-            this.pnlSurfaces.Controls.Add(this.lblSurfacesHeader);
+            this.pnlBody.BackColor = System.Drawing.Color.White;
+            this.pnlBody.Dock = Wisej.Web.DockStyle.Fill;
+            this.pnlBody.Name = "pnlBody";
+            this.pnlBody.Padding = new Wisej.Web.Padding(16, 16, 16, 16);
+            this.pnlBody.Controls.Add(this.cardGrid);
+            this.pnlBody.Controls.Add(this.pnlGapRight);
+            this.pnlBody.Controls.Add(this.cardCanvas);
+            this.pnlBody.Controls.Add(this.pnlGapLeft);
+            this.pnlBody.Controls.Add(this.cardGauge);
             //
             // VisualOperationsPage
             //
+            this.BackColor = System.Drawing.Color.White;
             this.Name = "VisualOperationsPage";
             this.Load += this.VisualOperationsPage_Load;
-            this.Size = new System.Drawing.Size(1080, 660);
-            this.Text = "VisualOperationsStudio - Operations";
-            this.Controls.Add(this.splitMain);
-            this.Controls.Add(this.pnlSurfaces);
-            this.Controls.Add(this.pnlActions);
-            this.Controls.Add(this.listReport);
-            this.Controls.Add(this.lblStatus);
-            this.Controls.Add(this.pnlHeader);
+            this.Size = new System.Drawing.Size(1400, 900);
+            this.Text = "Visual Operations Studio · Capstone";
+            this.Controls.Add(this.pnlBody);
+            this.Controls.Add(this.pnlAppBar);
             this.ResumeLayout(false);
         }
 
         #endregion
 
-        private Wisej.Web.Panel pnlHeader;
-        private Wisej.Web.Panel pnlSurfaces;
-        private Wisej.Web.Label lblSurfacesHeader;
-        private Wisej.Web.TableLayoutPanel layoutSurfaces;
-        private Wisej.Web.Panel pnlSurface1;
-        private Wisej.Web.Label lblSurface1;
-        private Wisej.Web.Panel pnlPlain;
-        private Wisej.Web.Label lblReading;
-        private Wisej.Web.ProgressBar progressReading;
-        private Wisej.Web.Panel pnlSurface3;
-        private Wisej.Web.Label lblSurface3;
-        private Wisej.Web.Canvas canvasSurface;
-        private Wisej.Web.Panel pnlSurface4;
-        private Wisej.Web.Label lblSurface4;
-        private Wisej.Web.PictureBox picExport;
-        private Wisej.Web.Label lblMachine;
-        private Wisej.Web.Label lblSubtitle;
-        private Wisej.Web.Label lblStatus;
-        private Wisej.Web.Panel pnlActions;
-        private Wisej.Web.Button btnTakeReading;
-        private Wisej.Web.Button btnReset;
-        private Wisej.Web.Button btnPlayground;
+        private Wisej.Web.Panel pnlAppBar;
+        private Wisej.Web.Label lblAppTitle;
+        private Wisej.Web.Label lblAppSuffix;
+        private VisualOperationsStudio.Controls.WindowGlyphs glyphs;
         private Wisej.Web.Panel pnlBody;
-        private Wisej.Web.SplitContainer splitMain;
-        private Wisej.Web.Panel pnlText;
-        private Wisej.Web.Label lblTextHeader;
-        private Wisej.Web.DataGridView gridValues;
-        private Wisej.Web.DataGridViewTextBoxColumn colValueName;
-        private Wisej.Web.DataGridViewTextBoxColumn colValueText;
-        private Wisej.Web.ListBox listReport;
-        private Wisej.Web.Button btnDegraded;
-        private Wisej.Web.Button btnMetrics;
-        private Wisej.Web.Panel pnlGauges;
-        private VisualOperationsStudio.Controls.TelemetryGauge gaugeSpindle;
-        private VisualOperationsStudio.Controls.TelemetryGauge gaugeCoolant;
-        private VisualOperationsStudio.Controls.TelemetryGauge gaugeCycle;
-        private Wisej.Web.DataGridView gridOperations;
-        private Wisej.Web.DataGridViewTextBoxColumn colMachine;
-        private Wisej.Web.DataGridViewTextBoxColumn colSite;
-        private Wisej.Web.DataGridViewTextBoxColumn colLastReading;
+        private Wisej.Web.Panel cardGauge;
+        private Wisej.Web.Label lblGaugeHeader;
+        private Wisej.Web.Panel pnlGaugeGap;
+        private VisualOperationsStudio.Controls.TelemetryGauge gaugeCpu;
+        private Wisej.Web.Label lblAccessibleReading;
+        private Wisej.Web.Panel pnlGaugeFiller;
+        private Wisej.Web.Panel pnlGapLeft;
+        private Wisej.Web.Panel cardGrid;
+        private Wisej.Web.Label lblGridHeader;
+        private Wisej.Web.DataGridView gridAssets;
+        private Wisej.Web.DataGridViewTextBoxColumn colAsset;
         private Wisej.Web.DataGridViewTextBoxColumn colHealth;
         private Wisej.Web.DataGridViewTextBoxColumn colTrend;
-        private Wisej.Web.DataGridViewTextBoxColumn colStatusHtml;
+        private Wisej.Web.DataGridViewTextBoxColumn colState;
+        private Wisej.Web.Label lblAccessibleTable;
+        private Wisej.Web.Panel pnlGapRight;
+        private Wisej.Web.Panel cardCanvas;
+        private Wisej.Web.Label lblCanvasHeader;
+        private Wisej.Web.Canvas canvasTopology;
+        private Wisej.Web.Panel pnlCanvasFiller;
+        private Wisej.Web.Panel pnlCanvasActions;
+        private Wisej.Web.Button btnExport;
+        private Wisej.Web.Button btnResetView;
     }
 }

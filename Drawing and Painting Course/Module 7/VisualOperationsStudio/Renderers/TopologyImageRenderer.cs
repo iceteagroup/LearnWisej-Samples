@@ -58,7 +58,7 @@ namespace VisualOperationsStudio.Renderers
                     using (var muted = new SolidBrush(Color.FromArgb(90, 107, 125)))
                     using (var edgePen = new Pen(Color.FromArgb(154, 168, 182), 2f))
                     {
-                        g.DrawString("VisualOperationsStudio - plant topology", title, ink, 24f, 20f);
+                        g.DrawString("Visual Operations Studio - asset topology", title, ink, 24f, 20f);
 
                         if (scene == null || scene.Nodes.Count == 0)
                         {

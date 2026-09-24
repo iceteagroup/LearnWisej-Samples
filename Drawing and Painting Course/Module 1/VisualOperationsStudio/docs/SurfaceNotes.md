@@ -1,7 +1,7 @@
 # SurfaceNotes — what each surface puts on the network, and what survives a resize
 
 Lab 1 deliverable. Measured against this project running on `http://localhost:6001`, Wisej-4 4.1.0,
-`net10.0` (Kestrel), Bootstrap-4 theme, browser viewport 1400×760.
+`net10.0` (Kestrel), Bootstrap-4 theme, browser viewport 1400×900.
 
 All four surfaces read the single `TelemetrySample` field on `VisualOperationsPage`. None of them
 keeps a copy of the value.

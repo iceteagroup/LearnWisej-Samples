@@ -1,30 +1,21 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using VisualOperationsStudio.Controls;
-using VisualOperationsStudio.Geometry;
 using VisualOperationsStudio.Models;
 using Wisej.Web;
 
 namespace VisualOperationsStudio
 {
     /// <summary>
-    /// Three <see cref="TelemetryGauge"/> controls over three <see cref="TelemetrySample"/> readings,
-    /// and an operations grid whose Health and Trend columns paint themselves. The gauges and the cells
-    /// own no state: every value they show comes from the model.
+    /// The operations grid: a thousand bound machines, of which only Health and Trend are painted.
+    /// One <c>UserPaint</c> switch per column and one <c>CellPaint</c> subscription for the whole grid -
+    /// not one control per row. The Status column builds the same state a second time through
+    /// <c>AllowHtml</c>, so the two techniques can be scrolled side by side and compared.
     /// </summary>
     public partial class VisualOperationsPage : Page
     {
-        private static readonly double[] SpindleScript = { 88, 63, 41, 132, 74, 22, 95 };
-
-        private readonly TelemetrySample spindleLoad = new TelemetrySample("Line 3 Press", "Line 3 - Spindle load", "%", 0, 100, 34);
-        private readonly TelemetrySample coolantTemp = new TelemetrySample("Line 3 Press", "Line 3 - Coolant temp", "°C", 0, 120, 61);
-        private readonly TelemetrySample cycleTime = new TelemetrySample("Line 3 Press", "Line 3 - Cycle time", "s", 0, 90, 47);
-
         private readonly List<MachineStatus> machines = MachineStatusGenerator.Generate(1000);
-
-        private int readings;
 
         public VisualOperationsPage()
         {
@@ -32,14 +23,12 @@ namespace VisualOperationsStudio
 
             ConfigureUserPaintedColumns();
             this.gridOperations.DataSource = this.machines;
+            this.lblFooter.Text = $"{this.machines.Count:N0} machines bound · painted cells: Health, Trend";
+        }
 
-            ConfigureGauge(this.gaugeSpindle, this.spindleLoad, 70, 90);
-            ConfigureGauge(this.gaugeCoolant, this.coolantTemp, 85, 100);
-            ConfigureGauge(this.gaugeCycle, this.cycleTime, 60, 75);
-
-            PublishReadings();
-            RefreshComparisonSurfaces();
-            this.lblStatus.Text = $"Ready. Three gauges, and {this.machines.Count:N0} machines with two painted columns.";
+        private void VisualOperationsPage_Load(object sender, EventArgs e)
+        {
+            this.gridOperations.Scroll += this.gridOperations_Scroll;
         }
 
         /// <summary>
@@ -57,7 +46,7 @@ namespace VisualOperationsStudio
         /// One handler for the whole grid. It returns at once for a header row or a column it does not
         /// own, then takes its geometry from the clip rectangle and the row's values from the bound
         /// object in a single step. No allocation beyond the two renderers, no control creation, no
-        /// side effects: this runs again for every cell that scrolls into view.
+        /// side effects: this runs again for every cell that scrolls into view, on request threads.
         /// </summary>
         private void gridOperations_CellPaint(object sender, DataGridViewCellPaintEventArgs e)
         {
@@ -74,199 +63,33 @@ namespace VisualOperationsStudio
             if (machine == null)
                 return;
 
-            var area = Rectangle.Inflate(e.ClipRectangle, -6, -7);
+            var area = Rectangle.Inflate(e.ClipRectangle, -12, -8);
 
             if (isHealth)
-                OperationsCellRenderer.DrawHealthBar(e.Graphics, area, machine.Health, row.Selected);
+                OperationsCellRenderer.DrawHealthBar(e.Graphics, area, machine.Health, machine.Tone, row.Selected);
             else
-                OperationsCellRenderer.DrawSparkline(e.Graphics, area, machine.RecentReadings, row.Selected);
+                OperationsCellRenderer.DrawSparkline(e.Graphics, SparklineBounds(e.ClipRectangle), machine.RecentReadings, machine.Tone, row.Selected);
         }
 
-        /// <summary>The two docked gauges share the row evenly with the filling one.</summary>
-        private void pnlGauges_Resize(object sender, EventArgs e)
+        /// <summary>The walkthrough's Trend cell: a 94 x 18 line, left aligned inside the 118 px column.</summary>
+        private static Rectangle SparklineBounds(Rectangle cell)
         {
-            var third = Math.Max(GaugeGeometry.MinimumSide, (this.pnlGauges.ClientSize.Width - this.pnlGauges.Padding.Horizontal) / 3);
-            this.gaugeSpindle.Width = third;
-            this.gaugeCoolant.Width = third;
+            var width = Math.Min(94, Math.Max(0, cell.Width - 24));
+            return new Rectangle(cell.X + 12, cell.Y + (cell.Height - 18) / 2, width, 18);
         }
 
-        private IEnumerable<TelemetryGauge> Gauges
+        /// <summary>The footer says which rows are on screen, which is the number the lab asks you to watch.</summary>
+        private void gridOperations_Scroll(object sender, ScrollEventArgs e)
         {
-            get
-            {
-                yield return this.gaugeSpindle;
-                yield return this.gaugeCoolant;
-                yield return this.gaugeCycle;
-            }
-        }
-
-        /// <summary>
-        /// A new spindle reading arrives; the other two are re-assigned unchanged. Their setters compare
-        /// and return early, so only one gauge asks to be repainted - which is the whole point.
-        /// </summary>
-        private void btnTakeReading_Click(object sender, EventArgs e)
-        {
-            var raw = SpindleScript[this.readings % SpindleScript.Length];
-            this.readings++;
-
-            this.spindleLoad.Reading = raw;
-
-            var repaints = ApplyModelToGauges();
-
-            this.lblStatus.Text = Math.Abs(raw - this.spindleLoad.Reading) > 0.001
-                ? $"Spindle reading {raw:0} % clamped to {this.spindleLoad.Reading:0} %. Repaints this request: {repaints}."
-                : $"Spindle load now {this.spindleLoad.Reading:0} %. Repaints this request: {repaints}.";
-        }
-
-        /// <summary>
-        /// The playground is a page of its own. The operations page instance is handed to it so coming
-        /// back does not rebuild this screen - and so the session keeps one model, not two.
-        /// </summary>
-        private void btnPlayground_Click(object sender, EventArgs e)
-        {
-            Application.MainPage = new CanvasPlaygroundPage(this);
-        }
-
-        private void btnReset_Click(object sender, EventArgs e)
-        {
-            this.readings = 0;
-            this.spindleLoad.Reading = 34;
-
-            var repaints = ApplyModelToGauges();
-            this.lblStatus.Text = $"Reset to the opening readings. Repaints this request: {repaints}.";
-        }
-
-        private void ConfigureGauge(TelemetryGauge gauge, TelemetrySample source, double warning, double critical)
-        {
-            gauge.Minimum = source.Minimum;
-            gauge.Maximum = source.Maximum;
-            gauge.WarningThreshold = warning;
-            gauge.CriticalThreshold = critical;
-            gauge.Caption = source.Caption;
-            gauge.Unit = source.Unit;
-            gauge.Value = source.Reading;
-        }
-
-        /// <summary>
-        /// Pushes the model onto the gauges and returns how many of them actually asked for a repaint.
-        /// </summary>
-        private int ApplyModelToGauges()
-        {
-            foreach (var gauge in Gauges)
-                gauge.ResetRepaintCount();
-
-            this.gaugeSpindle.Value = this.spindleLoad.Reading;
-            this.gaugeCoolant.Value = this.coolantTemp.Reading;
-            this.gaugeCycle.Value = this.cycleTime.Reading;
-
-            PublishReadings();
-            RefreshComparisonSurfaces();
-
-            return Gauges.Sum(gauge => gauge.RepaintCount);
-        }
-
-        /// <summary>
-        /// The same three numbers as text. A value that exists only inside a picture has been lost for
-        /// part of the audience, so it is published here and through each gauge's AccessibleDescription.
-        /// </summary>
-        private void PublishReadings()
-        {
-            this.lblCaption1.Text = this.spindleLoad.Caption;
-            this.lblValue1.Text = this.spindleLoad.DisplayValue;
-            this.lblCaption2.Text = this.coolantTemp.Caption;
-            this.lblValue2.Text = this.coolantTemp.DisplayValue;
-            this.lblCaption3.Text = this.cycleTime.Caption;
-            this.lblValue3.Text = this.cycleTime.DisplayValue;
-        }
-
-        // ── the Module 1 surfaces, still reading the same model ─────────────────
-
-        /// <summary>
-        /// The Canvas has its laid-out size by Load, so the first scene is drawn here. Redraw then
-        /// rebuilds it after every browser resize, because the browser keeps no bitmap of its own.
-        /// </summary>
-        private void VisualOperationsPage_Load(object sender, EventArgs e)
-        {
-            DrawCanvasScene();
-        }
-
-        /// <summary>
-        /// Surfaces 1, 3 and 4 from Module 1, refreshed from the reading the gauges paint. Surface 2,
-        /// the inline Paint handler, is now the TelemetryGauge control itself.
-        /// </summary>
-        private void RefreshComparisonSurfaces()
-        {
-            RefreshPlainSurface();          // surface 1 - text and a value, no pixels of ours
-            DrawCanvasScene();              // surface 3 - commands the browser executes
-            RefreshOffScreenSurface();      // surface 4 - image bytes, no control involved
-        }
-
-        // ── surface 1: no pixels of ours ────────────────────────────────────────
-
-        private void RefreshPlainSurface()
-        {
-            this.lblReading.Text = $"{this.spindleLoad.Reading:0} %";
-            this.progressReading.Value = (int)Math.Round(this.spindleLoad.Reading);
-        }
-
-        // ── surface 3: the browser draws what the server tells it to ────────────
-
-        private void canvasSurface_Redraw(object sender, EventArgs e)
-        {
-            DrawCanvasScene();
-        }
-
-        /// <summary>
-        /// Rebuilds the whole canvas scene from the model. A Redraw handler that only patches the last
-        /// change is broken by the first resize, because the browser bitmap is gone by then.
-        /// </summary>
-        private void DrawCanvasScene()
-        {
-            var w = this.canvasSurface.Width;
-            var h = this.canvasSurface.Height;
-            if (w <= 0 || h <= 0)
+            var first = this.gridOperations.FirstDisplayedRowIndex;
+            if (first < 0)
                 return;
 
-            this.canvasSurface.ClearRect(0, 0, w, h);
+            var visible = Math.Max(1, this.gridOperations.VisibleRowCount);
+            var last = Math.Min(this.machines.Count, first + visible);
 
-            this.canvasSurface.FillStyle = System.Drawing.Color.WhiteSmoke;
-            this.canvasSurface.FillRect(0, 0, w, h);
-
-            this.canvasSurface.FillStyle = System.Drawing.Color.MediumPurple;
-            this.canvasSurface.FillRect(0, 0, (int)(w * this.spindleLoad.Reading / 100.0), h);
-        }
-
-        // ── surface 4: an image, produced with no control involved ──────────────
-
-        private void RefreshOffScreenSurface()
-        {
-            try
-            {
-                var previous = this.picExport.Image;
-                this.picExport.Image = RenderOffScreen(320, 60);
-                previous?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                this.picExport.Image = null;
-                this.lblStatus.Text = $"Off-screen image not available: {ex.Message}. The other surfaces still show {this.spindleLoad.Reading:0} %.";
-            }
-        }
-
-        private System.Drawing.Image RenderOffScreen(int width, int height)
-        {
-            if (width <= 0 || height <= 0)
-                throw new ArgumentOutOfRangeException(nameof(width), "the off-screen bitmap needs a positive size");
-
-            var bitmap = new System.Drawing.Bitmap(width, height);
-            using (var g = System.Drawing.Graphics.FromImage(bitmap))
-            using (var fill = new System.Drawing.SolidBrush(System.Drawing.Color.Goldenrod))
-            {
-                g.Clear(System.Drawing.Color.White);
-                g.FillRectangle(fill, 0, 0, (float)(width * this.spindleLoad.Reading / 100.0), height);
-            }
-
-            return bitmap;
+            this.lblFooter.Text =
+                $"rows {first + 1:N0}–{last:N0} of {this.machines.Count:N0} · painted cells: Health, Trend";
         }
     }
 }

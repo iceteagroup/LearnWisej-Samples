@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace VisualOperationsStudio.Controls
 {
@@ -18,45 +19,76 @@ namespace VisualOperationsStudio.Controls
         /// <see cref="Brush"/>, which carry state a concurrent paint would corrupt. Creating one per
         /// cell would be a per-cell allocation on the grid's hottest path.
         /// </summary>
-        private static readonly Font CellFont = new Font(FontFamily.GenericSansSerif, 8.25f, FontStyle.Bold);
+        private static readonly Font CellFont = new Font(FontFamily.GenericSansSerif, 11.5f, FontStyle.Bold, GraphicsUnit.Pixel);
 
-        private static readonly Color Track = Color.FromArgb(238, 242, 247);
-        private static readonly Color Good = Color.FromArgb(31, 157, 107);
-        private static readonly Color Warning = Color.FromArgb(232, 161, 60);
-        private static readonly Color Critical = Color.FromArgb(217, 58, 58);
+        private static readonly Color Track = Color.FromArgb(223, 229, 236);
+        private static readonly Color SelectedTrack = Color.FromArgb(210, 222, 238);
+        private static readonly Color Value = Color.FromArgb(70, 88, 106);
+
+        /// <summary>Bar geometry, straight out of the walkthrough's Health cell.</summary>
+        private const int BarWidth = 110;
+        private const int BarHeight = 12;
+        private const int BarRadius = 3;
+        private const int ValueGap = 9;
+        private const int ValueWidth = 34;
 
         /// <summary>
-        /// A threshold-coloured bar. <paramref name="health"/> is clamped, so a value outside 0..100
-        /// cannot draw past the cell.
+        /// A threshold-coloured bar with the number beside it. <paramref name="health"/> is clamped, so
+        /// a value outside 0..100 cannot draw past the cell.
         /// </summary>
-        public static void DrawHealthBar(Graphics graphics, Rectangle bounds, int health, bool selected)
+        public static void DrawHealthBar(Graphics graphics, Rectangle bounds, int health, Color tone, bool selected)
         {
             if (bounds.Width <= 2 || bounds.Height <= 2)
                 return;
 
             var clamped = Math.Min(100, Math.Max(0, health));
-            var filled = (int)Math.Round(bounds.Width * clamped / 100.0);
+            var barWidth = Math.Min(BarWidth, Math.Max(0, bounds.Width - ValueGap - ValueWidth));
+            if (barWidth <= 2)
+                return;
 
-            using (var track = new SolidBrush(selected ? Color.FromArgb(215, 225, 236) : Track))
-            using (var fill = new SolidBrush(ColorFor(clamped)))
+            var bar = new Rectangle(bounds.X, bounds.Y + (bounds.Height - BarHeight) / 2, barWidth, BarHeight);
+            var filled = (int)Math.Round(bar.Width * clamped / 100.0);
+
+            using (var path = RoundedRectangle(bar, BarRadius))
+            using (var track = new SolidBrush(selected ? SelectedTrack : Track))
+            using (var fill = new SolidBrush(tone))
             {
-                graphics.FillRectangle(track, bounds);
+                graphics.FillPath(track, path);
 
                 if (filled > 0)
-                    graphics.FillRectangle(fill, bounds.X, bounds.Y, filled, bounds.Height);
+                {
+                    var state = graphics.BeginContainer();
+                    try
+                    {
+                        graphics.SetClip(path);
+                        graphics.FillRectangle(fill, bar.X, bar.Y, filled, bar.Height);
+                    }
+                    finally
+                    {
+                        graphics.EndContainer(state);
+                    }
+                }
             }
 
             // The number stays readable: a painted cell that shows only a colour has lost the value.
-            var text = clamped + " %";
-            using (var label = new SolidBrush(Color.FromArgb(13, 27, 42)))
+            var text = clamped + "%";
+            using (var label = new SolidBrush(Value))
             {
                 var size = graphics.MeasureString(text, CellFont);
-                graphics.DrawString(
-                    text,
-                    CellFont,
-                    label,
-                    bounds.Right - size.Width - 4,
-                    bounds.Y + (bounds.Height - size.Height) / 2f);
+                var x = bar.Right + ValueGap;
+
+                // A DrawString whose origin is at or past the right edge of the cell does not clip: it
+                // throws out of the fill processor. Measure first, and skip the number when it will not
+                // fit rather than losing the whole cell.
+                if (x + size.Width <= bounds.Right)
+                {
+                    graphics.DrawString(
+                        text,
+                        CellFont,
+                        label,
+                        x,
+                        bounds.Y + (bounds.Height - size.Height) / 2f);
+                }
             }
         }
 
@@ -64,7 +96,7 @@ namespace VisualOperationsStudio.Controls
         /// A polyline over the readings, normalised to the rectangle. Fewer than two points is not a
         /// line, so the cell is left empty instead of throwing.
         /// </summary>
-        public static void DrawSparkline(Graphics graphics, Rectangle bounds, IReadOnlyList<double> readings, bool selected)
+        public static void DrawSparkline(Graphics graphics, Rectangle bounds, IReadOnlyList<double> readings, Color tone, bool selected)
         {
             if (bounds.Width <= 2 || bounds.Height <= 2)
                 return;
@@ -95,15 +127,28 @@ namespace VisualOperationsStudio.Controls
                     bounds.Bottom - normalized * bounds.Height);
             }
 
-            using (var pen = new Pen(selected ? Color.FromArgb(13, 27, 42) : Color.FromArgb(21, 101, 216), 1.6f))
+            using (var pen = new Pen(selected ? Darken(tone) : tone, 2f) { LineJoin = LineJoin.Round, EndCap = LineCap.Round })
             {
                 graphics.DrawLines(pen, points);
             }
         }
 
         /// <summary>The colour a health score maps to. Low is bad.</summary>
-        public static Color ColorFor(int health) =>
-            health < Models.MachineStatus.CriticalBelow ? Critical :
-            health < Models.MachineStatus.WarningBelow ? Warning : Good;
+        public static Color ColorFor(int health) => Models.MachineStatus.ToneFor(health);
+
+        private static Color Darken(Color color) =>
+            Color.FromArgb((int)(color.R * 0.72), (int)(color.G * 0.72), (int)(color.B * 0.72));
+
+        private static GraphicsPath RoundedRectangle(Rectangle bounds, int radius)
+        {
+            var d = radius * 2;
+            var path = new GraphicsPath();
+            path.AddArc(bounds.X, bounds.Y, d, d, 180, 90);
+            path.AddArc(bounds.Right - d - 1, bounds.Y, d, d, 270, 90);
+            path.AddArc(bounds.Right - d - 1, bounds.Bottom - d - 1, d, d, 0, 90);
+            path.AddArc(bounds.X, bounds.Bottom - d - 1, d, d, 90, 90);
+            path.CloseFigure();
+            return path;
+        }
     }
 }

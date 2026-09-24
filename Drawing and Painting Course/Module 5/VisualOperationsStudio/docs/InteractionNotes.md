@@ -10,10 +10,10 @@ comes up: *"Drag finished: N requests, one render each."*
 
 | Gesture | Requests handled | What each one did |
 |---|---|---|
-| A short drag of `Pump 2` (about 120 px, well under a second) | **3** | convert, move the node in world units, re-render the whole scene |
+| A short drag of `Pump-02` (about 120 px, well under a second) | **3** | convert, move the node in world units, re-render the whole scene |
 | A slow two-second drag across the surface | **10–25**, depending on how fast the pointer moves | the same |
 | A wheel zoom | 1 | `ZoomAbout`, then one render |
-| An arrow-key nudge | 1 | move 5 world units (20 with Shift), then one render |
+| An arrow-key nudge | 1 | move 12 world units, then one render |
 
 Wisej.NET already coalesces pointer moves — the browser fires far more `mousemove` events than the
 numbers above — but every one that survives is a full round trip: request, handler, whole-scene render,
@@ -60,13 +60,13 @@ batched scene render wants.
 ## Culling
 
 The visible world rectangle is computed once per render and every node and edge outside it is skipped.
-The header above the node list reports the split: with the demonstration plant it reads
-**"6 drawn, 1 culled"** — the `Outstation` node sits at world (1500, 520), outside the viewport until
+The status line reports the split: with the demonstration plant it reads
+**"Rendered 6 of 7 nodes · the rest are outside the viewport"** — `Spare-09` sits at world (1230, 350), outside the viewport until
 you pan or zoom out to it.
 
 ## Accessibility
 
 The list beside the surface holds the same nodes in the same order, selection is synchronised both
-ways, `Tab` moves to the next node and the arrow keys nudge the selected one (`Shift` for a larger
-step). The status line names the selection and its world position in text. None of the information in
-the picture exists only as pixels.
+ways, `Tab` moves to the next node and `Shift+Tab` to the previous one; the arrow keys nudge the selected
+one by 12 world units. The status line names the selection and its world position in text. None of the
+information in the picture exists only as pixels.

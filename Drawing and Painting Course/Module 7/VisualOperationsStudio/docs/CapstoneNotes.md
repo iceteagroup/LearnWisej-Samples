@@ -7,11 +7,11 @@ Lab 7 deliverable. Measured on this project at `http://localhost:6007`, Wisej-4 
 
 ```
 Models/                  OperationsModel  ── the semantic state, one instance per session
-                           TelemetrySample x3   readings, ranges, units
-                           MachineStatus  x1000 health, recent readings
+                           TelemetrySample      the CPU reading the gauge paints
+                           AssetStatus  x4      load, trend series, state
                            TopologyScene        nodes, edges, selection, viewport
                            RenderMetrics        what every render cost
-                           SeverityOf / SeverityOfHealth   the one set of thresholds
+                           SeverityOf / SeverityOfLoad     the one set of thresholds
 
 Geometry/                pure arithmetic - no Graphics, no control, no session
                            GaugeGeometry        value -> angle, ring, needle, label rectangles
@@ -24,8 +24,8 @@ Controls/                the Wisej.NET adapters
                            TelemetryGauge          Paint  -> an image of a control
                            OperationsCellRenderer  CellPaint -> an image of a cell
 
-Pages                    VisualOperationsPage, TopologyPage
-                           they own no business state; they hold the model and render it
+Pages                    VisualOperationsPage — the capstone screen, all four surfaces at once
+                           it owns no business state; it holds the model and renders it
 ```
 
 One rule holds it together: **the model decides, the geometry measures, the renderer draws.** Before

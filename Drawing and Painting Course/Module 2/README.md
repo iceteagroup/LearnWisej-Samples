@@ -3,10 +3,9 @@
 Local lab build for **Module 2 · Mastering the Control Paint Event**. The inline paint handler from
 Module 1 is retired in favour of a reusable `TelemetryGauge` control: ring, threshold zones, needle,
 numeric value and caption, with all of its coordinate maths in a pure `GaugeGeometry` helper.
-The three remaining Module 1 surfaces - `Label` + `ProgressBar`, a `Wisej.Web.Canvas` and an
-off-screen `Bitmap` in a `PictureBox` - stay on the operations page under the gauges, so the same
-reading can still be compared across surfaces. Surface 2, the inline `Paint` handler, is now the
-`TelemetryGauge` control itself.
+The screen is the three gauge cards and the two buttons that drive them, with a live count of how many
+gauges actually asked to repaint. Each gauge publishes the same reading as a sentence through
+`AccessibleDescription`, so nothing on it exists only as pixels.
 
 This folder is the complete application at this point in the course, with its own solution and port.
 

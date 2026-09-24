@@ -1,13 +1,13 @@
 # PaintCost — what one `TelemetryGauge` repaint costs
 
 Lab 2 deliverable. Measured on this project at `http://localhost:6002`, Wisej-4 4.1.0, `net10.0`
-(Kestrel), Bootstrap-4 theme, browser viewport 1400×760, three gauges on `VisualOperationsPage`.
+(Kestrel), Bootstrap-4 theme, browser viewport 1400×900, three gauges on `VisualOperationsPage`.
 
 ## The painted surface
 
 | | Value |
 |---|---|
-| Painted surface per gauge | 352 × 586 px (the docked cell; the face uses a 296 px disc inside it) |
+| Painted surface per gauge | 417 × 361 px at 1400 × 900 (the card, less its padding; the face uses a 350 px disc inside it) |
 | Objects created per repaint | 5 in the arcs block (2 `Pen`, 3 `SolidBrush`), 2 in the needle block (`GraphicsPath`, `SolidBrush`), 4 in the text block (2 `Font`, 2 `SolidBrush`) |
 | Objects borrowed, never disposed | `e.Graphics` — the surface belongs to Wisej.NET |
 | Bytes per repaint | one rendered image of the painted surface, sent over the session's WebSocket. Wisej.NET does not expose the encoded size to the application, so this is stated as "one image per repaint" rather than as a number this sample could measure honestly. |
@@ -24,7 +24,7 @@ returns when nothing changed, so:
 | **Reset** from a changed spindle value | **1** |
 | Browser resize | 3 — every painted control has to repaint, because every coordinate it uses came from its own size |
 
-The status line reports the count for the request you just made. A handler copied into six panels
+The readout beside the buttons reports the count for the request you just made. A handler copied into six panels
 would produce six pictures, six sets of drawing objects and repaints nobody asked for; that is the
 cost this design is avoiding.
 

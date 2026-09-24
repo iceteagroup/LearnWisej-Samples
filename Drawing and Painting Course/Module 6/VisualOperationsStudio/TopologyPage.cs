@@ -8,40 +8,43 @@ using Wisej.Web;
 namespace VisualOperationsStudio
 {
     /// <summary>
-    /// The Canvas playground turned into a topology editor. The Canvas forgets and the model must not:
-    /// input changes <see cref="TopologyScene"/>, and <see cref="RenderScene"/> is the only method that
-    /// draws. The Redraw event calls that same method, which is why a browser resize simply rebuilds
-    /// the picture.
+    /// The same topology twice: once as <see cref="Wisej.Web.Canvas"/> commands the browser executes,
+    /// and once as PNG bytes produced off screen by <see cref="TopologyImageRenderer"/> - a
+    /// <c>System.Drawing.Managed</c> renderer with no control, no session and no GDI+ underneath it.
+    /// Both read the same <see cref="TopologyScene"/>; the export is never a screenshot of the canvas.
     /// </summary>
     public partial class TopologyPage : Page
     {
-        private readonly VisualOperationsPage operations;
+        private static readonly Color Surface = Color.FromArgb(247, 250, 253);
+        private static readonly Color EdgeColor = Color.FromArgb(168, 188, 207);
+        private static readonly Color LabelColor = Color.FromArgb(31, 45, 58);
 
         /// <summary>
         /// The scene lives on the page instance, so it belongs to this session. A mutable static field
-        /// here would be one plant shared by every user of the application.
+        /// here would be one topology shared by every user of the application.
         /// </summary>
-        private readonly TopologyScene scene = TopologyScene.CreatePlant();
+        private readonly TopologyScene scene = TopologyScene.CreateServices();
 
         private bool dragging;
         private bool panning;
+        private bool fitted;
         private PointF lastPointer;
         private int requestsThisGesture;
-        private bool syncingList;
 
-        public TopologyPage(VisualOperationsPage operations)
+        public TopologyPage()
         {
             InitializeComponent();
-
-            this.operations = operations;
-
-            BuildNodeList();
         }
 
-        private void btnBack_Click(object sender, EventArgs e)
+        private void TopologyPage_Load(object sender, EventArgs e)
         {
-            Application.MainPage = this.operations;
+            // The surface may still measure nothing here, so the first scene is also issued from the
+            // canvas's own Resize - the moment the docked layout finally gives it a size.
+            this.canvasTopology.Resize += this.canvasTopology_Resize;
+            RenderScene();
         }
+
+        private void canvasTopology_Resize(object sender, EventArgs e) => RenderScene();
 
         // ── input: change state, then render. Nothing is drawn inside a handler. ──
 
@@ -57,9 +60,7 @@ namespace VisualOperationsStudio
             this.dragging = hit != null;
             this.panning = hit == null;
 
-            SyncNodeList();
             RenderScene();
-            ReportSelection();
         }
 
         private void canvasTopology_MouseMove(object sender, MouseEventArgs e)
@@ -97,39 +98,25 @@ namespace VisualOperationsStudio
 
         private void canvasTopology_MouseUp(object sender, MouseEventArgs e)
         {
-            if (this.dragging || this.panning)
-            {
-                this.lblStatus.Text =
-                    $"{(this.dragging ? "Drag" : "Pan")} finished: {this.requestsThisGesture} requests, " +
-                    $"one render each. {SelectionText()}";
-            }
-
             this.dragging = false;
             this.panning = false;
+            SetStatus(StatusKind.Idle, "Drag a node, or export the scene as a PNG");
         }
 
         private void canvasTopology_MouseWheel(object sender, MouseEventArgs e)
         {
             this.scene.ZoomAbout(new PointF(e.X, e.Y), e.Delta > 0 ? 1.15f : 1f / 1.15f);
             RenderScene();
-            ReportSelection();
         }
 
         private void canvasTopology_KeyDown(object sender, KeyEventArgs e)
         {
-            // A keyboard-only user can still reach every node and move the selected one.
-            if (e.KeyCode == Keys.Tab || e.KeyCode == Keys.Down && e.Control)
-            {
-                SelectNext();
-                e.Handled = true;
-                return;
-            }
-
+            // A keyboard-only user can still move the selected node.
             var node = this.scene.Selected;
             if (node == null)
                 return;
 
-            var stepSize = e.Shift ? 20f : 5f;
+            const float stepSize = 12f;
             var bounds = node.Bounds;
 
             switch (e.KeyCode)
@@ -143,77 +130,62 @@ namespace VisualOperationsStudio
 
             node.Bounds = bounds;
             e.Handled = true;
-
             RenderScene();
-            ReportSelection();
         }
 
-        private void listNodes_SelectedIndexChanged(object sender, EventArgs e)
+        private void btnFitToView_Click(object sender, EventArgs e)
         {
-            if (this.syncingList || this.listNodes.SelectedIndex < 0)
-                return;
-
-            this.scene.Select(this.scene.Nodes[this.listNodes.SelectedIndex]);
+            this.scene.Fit(this.canvasTopology.Width, this.canvasTopology.Height);
             RenderScene();
-            ReportSelection();
         }
 
-        /// <summary>
-        /// The export never screenshots the Canvas: it renders the same model again, off screen, with no
-        /// control and no session involved, and hands the bytes to the browser as a download.
-        /// </summary>
-        private void btnExport_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                var renderer = new TopologyImageRenderer();
-                var bytes = renderer.Render(this.scene, 1600, 900);
-
-                Application.Download(new MemoryStream(bytes), "plant-topology.png");
-
-                this.lblStatus.Text =
-                    $"Exported {bytes.Length / 1024:N0} KB of PNG in {renderer.LastRenderMilliseconds:0} ms, " +
-                    $"{renderer.LastObjectsDrawn} objects drawn, font: {renderer.ResolvedFontFamily}.";
-            }
-            catch (Exception ex)
-            {
-                // A failed export reaches the user as a message, not as a blank space where a picture
-                // was expected.
-                this.lblStatus.Text = $"Export failed: {ex.Message}. The topology on screen is unaffected.";
-            }
-        }
-
-        private void btnZoomIn_Click(object sender, EventArgs e) => ZoomFromCentre(1.25f);
-
-        private void btnZoomOut_Click(object sender, EventArgs e) => ZoomFromCentre(1f / 1.25f);
-
-        private void btnResetView_Click(object sender, EventArgs e)
+        private void btnResetZoom_Click(object sender, EventArgs e)
         {
             this.scene.Zoom = 1f;
             this.scene.PanX = 40;
             this.scene.PanY = 40;
             RenderScene();
-            ReportSelection();
         }
 
-        private void ZoomFromCentre(float factor)
+        // ── the second renderer: image bytes, with no control involved ──────────
+
+        private void btnExport_Click(object sender, EventArgs e)
         {
-            this.scene.ZoomAbout(new PointF(this.canvasTopology.Width / 2f, this.canvasTopology.Height / 2f), factor);
-            RenderScene();
-            ReportSelection();
+            this.btnExport.Text = "Rendering…";
+            SetStatus(StatusKind.Busy, "Rendering 1200 × 700 into a Bitmap — no control involved…");
+
+            try
+            {
+                var renderer = new TopologyImageRenderer();
+                var bytes = renderer.Render(this.scene, 1200, 700);
+                var name = $"topology-{DateTime.Now:yyyy-MM}.png";
+
+                Application.Download(new MemoryStream(bytes), name);
+
+                SetStatus(
+                    StatusKind.Good,
+                    $"✓ Rendered off-screen in {renderer.LastRenderMilliseconds:0} ms · 1200 × 700 · " +
+                    $"{bytes.Length / 1024:N0} KB · font resolved: {renderer.ResolvedFontFamily}");
+            }
+            catch (Exception ex)
+            {
+                // A failed export reaches the user as a message, not as a blank space where a picture
+                // was expected.
+                SetStatus(StatusKind.Idle, $"Export failed: {ex.Message}. The topology on screen is unaffected.");
+            }
+            finally
+            {
+                this.btnExport.Text = "Export PNG";
+            }
         }
 
-        // ── the one method that draws ───────────────────────────────────────────
+        // ── the one method that draws the live surface ──────────────────────────
 
         private void canvasTopology_Redraw(object sender, EventArgs e)
         {
             RenderScene();
         }
 
-        /// <summary>
-        /// Clears the surface, applies the viewport once with Translate and Scale, draws the edges and
-        /// then the nodes, and restores. Everything outside the visible world rectangle is skipped.
-        /// </summary>
         private void RenderScene()
         {
             var c = this.canvasTopology;
@@ -222,13 +194,17 @@ namespace VisualOperationsStudio
             if (w <= 0 || h <= 0)
                 return;
 
+            if (!this.fitted)
+            {
+                this.scene.Fit(w, h);
+                this.fitted = true;
+            }
+
             c.ClearRect(0, 0, w, h);
-            c.FillStyle = Color.FromArgb(248, 250, 252);
+            c.FillStyle = Surface;
             c.FillRect(0, 0, w, h);
 
             var visible = this.scene.VisibleWorld(w, h);
-            var drawn = 0;
-            var culled = 0;
 
             c.Save();
             try
@@ -236,8 +212,8 @@ namespace VisualOperationsStudio
                 c.Translate((int)this.scene.PanX, (int)this.scene.PanY);
                 c.Scale(this.scene.Zoom, this.scene.Zoom);
 
-                c.StrokeStyle = Color.FromArgb(154, 168, 182);
-                c.LineWidth = 2;
+                c.StrokeStyle = EdgeColor;
+                c.LineWidth = 3;
                 foreach (var edge in this.scene.Edges)
                 {
                     var from = this.scene.Find(edge.FromId);
@@ -246,10 +222,7 @@ namespace VisualOperationsStudio
                         continue;
 
                     if (!visible.IntersectsWith(RectangleF.Union(from.Bounds, to.Bounds)))
-                    {
-                        culled++;
                         continue;
-                    }
 
                     c.BeginPath();
                     c.MoveTo((int)from.Centre.X, (int)from.Centre.Y);
@@ -260,108 +233,91 @@ namespace VisualOperationsStudio
                 foreach (var node in this.scene.Nodes)
                 {
                     if (!visible.IntersectsWith(node.Bounds))
-                    {
-                        culled++;
                         continue;
-                    }
 
                     DrawNode(c, node);
-                    drawn++;
                 }
             }
             finally
             {
                 c.Restore();
             }
-
-            this.lblNodesCount.Text = $"{drawn} drawn, {culled} culled";
         }
 
         private void DrawNode(Canvas c, NodeModel node)
         {
-            var body = node.Severity == "Critical" ? Color.FromArgb(253, 236, 236)
-                : node.Severity == "Warning" ? Color.FromArgb(253, 243, 226)
-                : Color.White;
+            var x = (int)node.Bounds.X;
+            var y = (int)node.Bounds.Y;
+            var width = (int)node.Bounds.Width;
+            var height = (int)node.Bounds.Height;
 
-            var border = node.Severity == "Critical" ? Color.FromArgb(217, 58, 58)
-                : node.Severity == "Warning" ? Color.FromArgb(232, 161, 60)
-                : Color.FromArgb(200, 212, 226);
+            c.FillStyle = Color.White;
+            RoundRect(c, x, y, width, height, 10);
+            c.Fill();
 
-            c.FillStyle = body;
-            c.FillRect((int)node.Bounds.X, (int)node.Bounds.Y, (int)node.Bounds.Width, (int)node.Bounds.Height);
-
-            c.StrokeStyle = node.Selected ? Color.FromArgb(21, 101, 216) : border;
-            c.LineWidth = node.Selected ? 3 : 2;
-            c.BeginPath();
-            c.Rect((int)node.Bounds.X, (int)node.Bounds.Y, (int)node.Bounds.Width, (int)node.Bounds.Height);
+            c.StrokeStyle = node.Tone;
+            c.LineWidth = node.Selected ? 4 : 3;
+            RoundRect(c, x, y, width, height, 10);
             c.Stroke();
 
-            c.TextFont = new Font("default", 10F, FontStyle.Bold);
-            c.TextAlign = CanvasTextAlign.Center;
-            c.TextBaseline = CanvasTextBaseline.Middle;
-            c.FillStyle = Color.FromArgb(13, 27, 42);
-            c.FillText(node.Label, (int)node.Centre.X, (int)node.Centre.Y - 6);
-
-            c.TextFont = new Font("default", 9F, FontStyle.Regular);
-            c.FillStyle = Color.FromArgb(90, 107, 125);
-            c.FillText(node.Severity, (int)node.Centre.X, (int)node.Centre.Y + 12);
-        }
-
-        // ── the list beside the surface, showing the same nodes ─────────────────
-
-        private void BuildNodeList()
-        {
-            this.syncingList = true;
-            try
+            using (var labelFont = new Font("Segoe UI", 16f, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var stateFont = new Font("Segoe UI", 13f, FontStyle.Regular, GraphicsUnit.Pixel))
             {
-                this.listNodes.Items.Clear();
-                foreach (var node in this.scene.Nodes)
-                    this.listNodes.Items.Add($"{node.Label}  -  {node.Severity}");
+                c.TextAlign = CanvasTextAlign.Center;
+                c.TextBaseline = CanvasTextBaseline.Alphabetic;
+
+                c.TextFont = labelFont;
+                c.FillStyle = LabelColor;
+                c.FillText(node.Label, x + width / 2, y + 25);
+
+                c.TextFont = stateFont;
+                c.FillStyle = node.Tone;
+                c.FillText(node.StateWord, x + width / 2, y + 44);
             }
-            finally
+
+            c.TextAlign = CanvasTextAlign.Left;
+        }
+
+        private static void RoundRect(Canvas c, int x, int y, int width, int height, int radius)
+        {
+            var r = Math.Max(0, Math.Min(radius, Math.Min(width, height) / 2));
+
+            c.BeginPath();
+            c.MoveTo(x + r, y);
+            c.LineTo(x + width - r, y);
+            c.Arc(x + width - r, y + r, r, 270f, 360f, false);
+            c.LineTo(x + width, y + height - r);
+            c.Arc(x + width - r, y + height - r, r, 0f, 90f, false);
+            c.LineTo(x + r, y + height);
+            c.Arc(x + r, y + height - r, r, 90f, 180f, false);
+            c.LineTo(x, y + r);
+            c.Arc(x + r, y + r, r, 180f, 270f, false);
+            c.ClosePath();
+        }
+
+        // ── the status strip ────────────────────────────────────────────────────
+
+        private enum StatusKind { Idle, Busy, Good }
+
+        private void SetStatus(StatusKind kind, string text)
+        {
+            this.lblStatus.Text = text;
+
+            switch (kind)
             {
-                this.syncingList = false;
+                case StatusKind.Good:
+                    this.lblStatus.BackColor = Color.FromArgb(236, 248, 241);
+                    this.lblStatus.ForeColor = Color.FromArgb(22, 119, 77);
+                    break;
+                case StatusKind.Busy:
+                    this.lblStatus.BackColor = Color.FromArgb(255, 248, 236);
+                    this.lblStatus.ForeColor = Color.FromArgb(138, 91, 18);
+                    break;
+                default:
+                    this.lblStatus.BackColor = Color.FromArgb(246, 248, 251);
+                    this.lblStatus.ForeColor = Color.FromArgb(90, 107, 125);
+                    break;
             }
-        }
-
-        private void SyncNodeList()
-        {
-            this.syncingList = true;
-            try
-            {
-                this.listNodes.SelectedIndex = this.scene.Nodes.IndexOf(this.scene.Selected);
-            }
-            finally
-            {
-                this.syncingList = false;
-            }
-        }
-
-        private void SelectNext()
-        {
-            var current = this.scene.Nodes.IndexOf(this.scene.Selected);
-            var next = this.scene.Nodes[(current + 1 + this.scene.Nodes.Count) % this.scene.Nodes.Count];
-
-            this.scene.Select(next);
-            SyncNodeList();
-            RenderScene();
-            ReportSelection();
-        }
-
-        private void ReportSelection()
-        {
-            SyncNodeList();
-            this.lblStatus.Text = SelectionText();
-        }
-
-        private string SelectionText()
-        {
-            var node = this.scene.Selected;
-            var view = $"zoom {this.scene.Zoom:0.00}x, pan {this.scene.PanX:0}/{this.scene.PanY:0}";
-
-            return node == null
-                ? $"Nothing selected. View: {view}."
-                : $"{node.Label} selected at {node.Bounds.X:0},{node.Bounds.Y:0} in world units. View: {view}.";
         }
     }
 }

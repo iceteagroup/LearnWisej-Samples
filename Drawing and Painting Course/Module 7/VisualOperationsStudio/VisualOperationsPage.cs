@@ -1,67 +1,112 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Text;
 using VisualOperationsStudio.Controls;
 using VisualOperationsStudio.Diagnostics;
-using VisualOperationsStudio.Geometry;
 using VisualOperationsStudio.Models;
+using VisualOperationsStudio.Renderers;
 using Wisej.Web;
 
 namespace VisualOperationsStudio
 {
     /// <summary>
-    /// The capstone screen. Two of the four surfaces live here - the painted gauges and the painted grid
-    /// cells - and both read the one <see cref="OperationsModel"/> the session owns. The other two, the
-    /// Canvas topology and the PNG export, get the same instance handed to them, so a threshold moved
-    /// once moves everywhere.
+    /// The capstone screen: all four surfaces on one page, all reading the one
+    /// <see cref="OperationsModel"/> the session owns. Control Paint draws the gauge on the server,
+    /// CellPaint draws the Health and Trend cells, Wisej.Web.Canvas sends the topology to the browser,
+    /// and System.Drawing.Managed turns the same scene into PNG bytes - so a threshold moved once moves
+    /// everywhere, and the export can never contradict the screen it came from.
     /// </summary>
     public partial class VisualOperationsPage : Page
     {
-        private static readonly double[] SpindleScript = { 88, 63, 41, 132, 74, 22, 95 };
+        private const int CanvasSceneWidth = 320;
+        private const int CanvasSceneHeight = 250;
+
+        private static readonly Color CanvasSurface = Color.FromArgb(248, 250, 252);
+        private static readonly Color EdgeColor = Color.FromArgb(185, 201, 220);
+        private static readonly Color SelectionColor = Color.FromArgb(21, 101, 216);
 
         /// <summary>The one model behind all four surfaces, owned by this session.</summary>
         private readonly OperationsModel model = new OperationsModel();
 
-        private int readings;
+        private bool dragging;
+        private PointF lastPointer;
 
         public VisualOperationsPage()
         {
             InitializeComponent();
 
             ConfigureUserPaintedColumns();
-            this.gridOperations.DataSource = this.model.Machines;
+            this.gridAssets.DataSource = this.model.Assets;
 
-            foreach (var gauge in Gauges)
-                gauge.Rendered += this.gauge_Rendered;
+            ConfigureGauge();
+            this.gaugeCpu.Rendered += this.gauge_Rendered;
 
-            ConfigureGauge(this.gaugeSpindle, this.model.SpindleLoad, 70, 90);
-            ConfigureGauge(this.gaugeCoolant, this.model.CoolantTemp, 85, 100);
-            ConfigureGauge(this.gaugeCycle, this.model.CycleTime, 60, 75);
-
-            PublishReadings();
-            RefreshComparisonSurfaces();
-            this.lblStatus.Text = $"Ready. Three gauges, and {this.model.Machines.Count:N0} machines with two painted columns.";
+            PublishAccessibleText();
         }
 
-        /// <summary>
-        /// User painting comes before cell painting: a column is switched into user-painted mode, and
-        /// only then does the grid raise CellPaint for it. The handler is subscribed once, here.
-        /// </summary>
+        private void VisualOperationsPage_Load(object sender, EventArgs e)
+        {
+            this.cardCanvas.Resize += this.cardCanvas_Resize;
+            SizeCanvas();
+            RenderTopology();
+
+            // "It degrades gracefully" is a claim, not a fact, until something runs it. The four bad
+            // states are exercised on every start; only a failure is allowed to reach the screen.
+            var failures = DegradedStateCheck.Run().Where(line => line.Contains("FAILED")).ToList();
+            if (failures.Count > 0)
+            {
+                this.lblAccessibleTable.ForeColor = Color.FromArgb(180, 47, 47);
+                this.lblAccessibleTable.Text = "Degraded-state check failed · " + string.Join(" · ", failures);
+            }
+
+            PublishDiagnostics(failures.Count);
+        }
+
+        // ── surface 1: Control Paint, on the server ─────────────────────────────
+
+        private void ConfigureGauge()
+        {
+            var sample = this.model.Cpu;
+
+            this.gaugeCpu.Minimum = sample.Minimum;
+            this.gaugeCpu.Maximum = sample.Maximum;
+            this.gaugeCpu.WarningThreshold = AssetStatus.WarningAbove;
+            this.gaugeCpu.CriticalThreshold = AssetStatus.CriticalAbove;
+            this.gaugeCpu.Caption = sample.Caption;
+            this.gaugeCpu.Unit = sample.Unit;
+            this.gaugeCpu.Value = sample.Reading;
+
+            // The capstone face keeps one arc colour and lets the zone bands carry the severity.
+            this.gaugeCpu.AccentColor = SelectionColor;
+            this.gaugeCpu.ValueColor = Color.FromArgb(13, 27, 42);
+            this.gaugeCpu.WarningZoneColor = Color.FromArgb(232, 161, 60);
+            this.gaugeCpu.CriticalZoneColor = Color.FromArgb(224, 90, 90);
+        }
+
+        /// <summary>Every painted surface reports its own figures to the one metrics recorder.</summary>
+        private void gauge_Rendered(object sender, RenderedEventArgs e)
+        {
+            this.model.Metrics.Record(e.Surface, e.Elapsed, e.Width, e.Height, e.Objects);
+        }
+
+        // ── surface 2: CellPaint, one subscription for the whole grid ───────────
+
         private void ConfigureUserPaintedColumns()
         {
             this.colHealth.UserPaint = true;
             this.colTrend.UserPaint = true;
-            this.gridOperations.CellPaint += this.gridOperations_CellPaint;
+            this.gridAssets.CellPaint += this.gridAssets_CellPaint;
         }
 
         /// <summary>
         /// One handler for the whole grid. It returns at once for a header row or a column it does not
         /// own, then takes its geometry from the clip rectangle and the row's values from the bound
-        /// object in a single step. No allocation beyond the two renderers, no control creation, no
-        /// side effects: this runs again for every cell that scrolls into view.
+        /// object in a single step. This runs again for every cell that scrolls into view, on request
+        /// threads, so it allocates nothing it does not dispose and changes no application state.
         /// </summary>
-        private void gridOperations_CellPaint(object sender, DataGridViewCellPaintEventArgs e)
+        private void gridAssets_CellPaint(object sender, DataGridViewCellPaintEventArgs e)
         {
             if (e.RowIndex < 0)
                 return;
@@ -71,272 +116,279 @@ namespace VisualOperationsStudio
             if (!isHealth && !isTrend)
                 return;
 
-            var row = this.gridOperations.Rows[e.RowIndex];
-            var machine = row.DataBoundItem as MachineStatus;
-            if (machine == null)
+            var row = this.gridAssets.Rows[e.RowIndex];
+            var asset = row.DataBoundItem as AssetStatus;
+            if (asset == null)
                 return;
 
-            var area = Rectangle.Inflate(e.ClipRectangle, -6, -7);
+            var area = Rectangle.Inflate(e.ClipRectangle, -12, -10);
 
             if (isHealth)
-                OperationsCellRenderer.DrawHealthBar(e.Graphics, area, machine.Health, row.Selected);
+                OperationsCellRenderer.DrawLoadBar(e.Graphics, area, asset.Load, asset.Tone, row.Selected);
             else
-                OperationsCellRenderer.DrawSparkline(e.Graphics, area, machine.RecentReadings, row.Selected);
+                OperationsCellRenderer.DrawSparkline(e.Graphics, area, asset.Trend, asset.Tone, row.Selected);
         }
 
-        /// <summary>The two docked gauges share the row evenly with the filling one.</summary>
-        private void pnlGauges_Resize(object sender, EventArgs e)
+        // ── surface 3: Wisej.Web.Canvas, drawn by the browser ───────────────────
+
+        private void cardCanvas_Resize(object sender, EventArgs e)
         {
-            var third = Math.Max(GaugeGeometry.MinimumSide, (this.pnlGauges.ClientSize.Width - this.pnlGauges.Padding.Horizontal) / 3);
-            this.gaugeSpindle.Width = third;
-            this.gaugeCoolant.Width = third;
+            SizeCanvas();
+            RenderTopology();
         }
 
-        private IEnumerable<TelemetryGauge> Gauges
+        /// <summary>Keeps the topology card's aspect ratio, so the scene never has to be squeezed.</summary>
+        private void SizeCanvas()
         {
-            get
-            {
-                yield return this.gaugeSpindle;
-                yield return this.gaugeCoolant;
-                yield return this.gaugeCycle;
-            }
+            var width = this.cardCanvas.ClientSize.Width;
+            if (width <= 0)
+                return;
+
+            this.canvasTopology.Height = (int)Math.Round(width * (double)CanvasSceneHeight / CanvasSceneWidth);
         }
 
-        /// <summary>
-        /// A new spindle reading arrives; the other two are re-assigned unchanged. Their setters compare
-        /// and return early, so only one gauge asks to be repainted - which is the whole point.
-        /// </summary>
-        private void btnTakeReading_Click(object sender, EventArgs e)
+        private void canvasTopology_Redraw(object sender, EventArgs e) => RenderTopology();
+
+        private void canvasTopology_MouseDown(object sender, MouseEventArgs e)
         {
-            var raw = SpindleScript[this.readings % SpindleScript.Length];
-            this.readings++;
+            var pointer = new PointF(e.X, e.Y);
+            this.lastPointer = pointer;
 
-            this.model.SpindleLoad.Reading = raw;
+            var hit = this.model.Topology.HitTest(ToScene(pointer));
+            if (hit != null)
+                this.model.Topology.Select(hit);
 
-            var repaints = ApplyModelToGauges();
-
-            this.lblStatus.Text = Math.Abs(raw - this.model.SpindleLoad.Reading) > 0.001
-                ? $"Spindle reading {raw:0} % clamped to {this.model.SpindleLoad.Reading:0} %. Repaints this request: {repaints}."
-                : $"Spindle load now {this.model.SpindleLoad.Reading:0} %. Repaints this request: {repaints}.";
+            this.dragging = hit != null;
+            RenderTopology();
         }
 
-        /// <summary>Every painted surface reports its own figures to the one metrics recorder.</summary>
-        private void gauge_Rendered(object sender, RenderedEventArgs e)
+        private void canvasTopology_MouseMove(object sender, MouseEventArgs e)
         {
-            this.model.Metrics.Record(e.Surface, e.Elapsed, e.Width, e.Height, e.Objects);
+            if (!this.dragging)
+                return;
+
+            var node = this.model.Topology.Selected;
+            if (node == null)
+                return;
+
+            var scale = SceneScale();
+            if (scale <= 0f)
+                return;
+
+            var bounds = node.Bounds;
+            bounds.X += (e.X - this.lastPointer.X) / scale;
+            bounds.Y += (e.Y - this.lastPointer.Y) / scale;
+            node.Bounds = bounds;
+
+            this.lastPointer = new PointF(e.X, e.Y);
+            RenderTopology();
         }
 
-        /// <summary>
-        /// The topology editor is a page of its own. The operations page instance is handed to it so
-        /// coming back does not rebuild this screen - and so the session keeps one model, not two.
-        /// </summary>
-        private void btnPlayground_Click(object sender, EventArgs e)
+        private void canvasTopology_MouseUp(object sender, MouseEventArgs e) => this.dragging = false;
+
+        private void btnResetView_Click(object sender, EventArgs e)
         {
-            Application.MainPage = new TopologyPage(this, this.model);
+            var fresh = TopologyScene.CreateAssets();
+            for (var i = 0; i < this.model.Topology.Nodes.Count && i < fresh.Nodes.Count; i++)
+                this.model.Topology.Nodes[i].Bounds = fresh.Nodes[i].Bounds;
+
+            RenderTopology();
         }
 
-        private void btnReset_Click(object sender, EventArgs e)
+        private float SceneScale()
         {
-            this.readings = 0;
-            this.model.SpindleLoad.Reading = 34;
+            var w = this.canvasTopology.Width;
+            var h = this.canvasTopology.Height;
+            if (w <= 0 || h <= 0)
+                return 0f;
 
-            var repaints = ApplyModelToGauges();
-            this.lblStatus.Text = $"Reset to the opening readings. Repaints this request: {repaints}.";
+            return Math.Min(w / (float)CanvasSceneWidth, h / (float)CanvasSceneHeight);
         }
 
-        private void ConfigureGauge(TelemetryGauge gauge, TelemetrySample source, double warning, double critical)
+        private PointF ToScene(PointF screen)
         {
-            gauge.Minimum = source.Minimum;
-            gauge.Maximum = source.Maximum;
-            gauge.WarningThreshold = warning;
-            gauge.CriticalThreshold = critical;
-            gauge.Caption = source.Caption;
-            gauge.Unit = source.Unit;
-            gauge.Value = source.Reading;
-        }
+            var scale = SceneScale();
+            if (scale <= 0f)
+                return screen;
 
-        /// <summary>
-        /// Pushes the model onto the gauges and returns how many of them actually asked for a repaint.
-        /// </summary>
-        private int ApplyModelToGauges()
-        {
-            foreach (var gauge in Gauges)
-                gauge.ResetRepaintCount();
+            var originX = (this.canvasTopology.Width - CanvasSceneWidth * scale) / 2f;
+            var originY = (this.canvasTopology.Height - CanvasSceneHeight * scale) / 2f;
 
-            this.gaugeSpindle.Value = this.model.SpindleLoad.Reading;
-            this.gaugeCoolant.Value = this.model.CoolantTemp.Reading;
-            this.gaugeCycle.Value = this.model.CycleTime.Reading;
-
-            PublishReadings();
-            RefreshComparisonSurfaces();
-
-            return Gauges.Sum(gauge => gauge.RepaintCount);
-        }
-
-        /// <summary>
-        /// Every value the graphics show, as an ordinary table. A reading that exists only inside a
-        /// picture has been lost for part of the audience, and the severity chips in the grid carry a
-        /// word as well as a colour for the same reason.
-        /// </summary>
-        private void PublishReadings()
-        {
-            var counts = this.model.MachineSeverityCounts();
-            var rows = new List<NameValue>();
-
-            foreach (var sample in this.model.Readings)
-                rows.Add(new NameValue(sample.Caption, sample.DisplayValue));
-
-            rows.Add(new NameValue("Machines - normal", counts[Severity.Normal].ToString("N0")));
-            rows.Add(new NameValue("Machines - warning", counts[Severity.Warning].ToString("N0")));
-            rows.Add(new NameValue("Machines - critical", counts[Severity.Critical].ToString("N0")));
-            rows.Add(new NameValue("Topology nodes", this.model.Topology.Nodes.Count.ToString()));
-
-            var selected = this.model.Topology.Selected;
-            rows.Add(new NameValue("Topology selection", selected == null ? "none" : $"{selected.Label} ({selected.Severity})"));
-
-            this.gridValues.DataSource = rows;
-        }
-
-        /// <summary>One row of the accessible table.</summary>
-        public class NameValue
-        {
-            public NameValue(string name, string text)
-            {
-                Name = name;
-                Text = text;
-            }
-
-            public string Name { get; }
-
-            public string Text { get; }
-        }
-
-        // ── capstone diagnostics ────────────────────────────────────────────────
-
-        private void btnDegraded_Click(object sender, EventArgs e)
-        {
-            Report("Degraded states");
-            foreach (var line in DegradedStateCheck.Run())
-                Report("  " + line);
-
-            this.lblStatus.Text = "Degraded checks finished - see the report below.";
-        }
-
-        private void btnMetrics_Click(object sender, EventArgs e)
-        {
-            Report("Render metrics (median of what this session has recorded)");
-
-            foreach (var surface in new[] { "gauge.paint", "topology.export" })
-            {
-                var median = this.model.Metrics.Median(surface);
-                Report(median == null
-                    ? $"  {surface,-18} not drawn yet in this session"
-                    : $"  {surface,-18} {median:0.0} ms over {this.model.Metrics.Count(surface)} renders");
-            }
-
-            foreach (var sample in this.model.Metrics.Samples.Reverse().Take(6))
-                Report("  " + sample);
-
-            this.lblStatus.Text = "Render metrics written to the report below.";
-        }
-
-        private void Report(string line)
-        {
-            this.listReport.Items.Add(line);
-            while (this.listReport.Items.Count > 200)
-                this.listReport.Items.RemoveAt(0);
-
-            this.listReport.SelectedIndex = this.listReport.Items.Count - 1;
-        }
-
-        // ── the Module 1 surfaces, still reading the same model ─────────────────
-
-        /// <summary>
-        /// The Canvas has its laid-out size by Load, so the first scene is drawn here. Redraw then
-        /// rebuilds it after every browser resize, because the browser keeps no bitmap of its own.
-        /// </summary>
-        private void VisualOperationsPage_Load(object sender, EventArgs e)
-        {
-            DrawCanvasScene();
+            return new PointF((screen.X - originX) / scale, (screen.Y - originY) / scale);
         }
 
         /// <summary>
-        /// Surfaces 1, 3 and 4 from Module 1, refreshed from the reading the gauges paint. Surface 2,
-        /// the inline Paint handler, is now the TelemetryGauge control itself.
+        /// The whole scene, rebuilt from the model. The browser keeps pixels and pixels do not survive,
+        /// so Redraw calls exactly this method after every resize.
         /// </summary>
-        private void RefreshComparisonSurfaces()
+        private void RenderTopology()
         {
-            RefreshPlainSurface();          // surface 1 - text and a value, no pixels of ours
-            DrawCanvasScene();              // surface 3 - commands the browser executes
-            RefreshOffScreenSurface();      // surface 4 - image bytes, no control involved
-        }
-
-        // ── surface 1: no pixels of ours ────────────────────────────────────────
-
-        private void RefreshPlainSurface()
-        {
-            this.lblReading.Text = $"{this.model.SpindleLoad.Reading:0} %";
-            this.progressReading.Value = (int)Math.Round(this.model.SpindleLoad.Reading);
-        }
-
-        // ── surface 3: the browser draws what the server tells it to ────────────
-
-        private void canvasSurface_Redraw(object sender, EventArgs e)
-        {
-            DrawCanvasScene();
-        }
-
-        /// <summary>
-        /// Rebuilds the whole canvas scene from the model. A Redraw handler that only patches the last
-        /// change is broken by the first resize, because the browser bitmap is gone by then.
-        /// </summary>
-        private void DrawCanvasScene()
-        {
-            var w = this.canvasSurface.Width;
-            var h = this.canvasSurface.Height;
+            var c = this.canvasTopology;
+            var w = c.Width;
+            var h = c.Height;
             if (w <= 0 || h <= 0)
                 return;
 
-            this.canvasSurface.ClearRect(0, 0, w, h);
+            var scale = SceneScale();
+            if (scale <= 0f)
+                return;
 
-            this.canvasSurface.FillStyle = System.Drawing.Color.WhiteSmoke;
-            this.canvasSurface.FillRect(0, 0, w, h);
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
-            this.canvasSurface.FillStyle = System.Drawing.Color.MediumPurple;
-            this.canvasSurface.FillRect(0, 0, (int)(w * this.model.SpindleLoad.Reading / 100.0), h);
+            c.ClearRect(0, 0, w, h);
+            c.FillStyle = CanvasSurface;
+            c.FillRect(0, 0, w, h);
+
+            c.Save();
+            try
+            {
+                c.Translate((int)Math.Round((w - CanvasSceneWidth * scale) / 2f), (int)Math.Round((h - CanvasSceneHeight * scale) / 2f));
+                c.Scale(scale, scale);
+
+                c.StrokeStyle = EdgeColor;
+                c.LineWidth = 2;
+                foreach (var edge in this.model.Topology.Edges)
+                {
+                    var from = this.model.Topology.Find(edge.FromId);
+                    var to = this.model.Topology.Find(edge.ToId);
+                    if (from == null || to == null)
+                        continue;
+
+                    c.BeginPath();
+                    c.MoveTo((int)from.Centre.X, (int)from.Centre.Y);
+                    c.LineTo((int)to.Centre.X, (int)to.Centre.Y);
+                    c.Stroke();
+                }
+
+                foreach (var node in this.model.Topology.Nodes)
+                    DrawNode(c, node);
+            }
+            finally
+            {
+                c.Restore();
+            }
+
+            stopwatch.Stop();
+            this.model.Metrics.Record(
+                "topology.canvas",
+                stopwatch.Elapsed,
+                w,
+                h,
+                this.model.Topology.Nodes.Count + this.model.Topology.Edges.Count);
         }
 
-        // ── surface 4: an image, produced with no control involved ──────────────
+        private void DrawNode(Canvas c, NodeModel node)
+        {
+            var x = (int)node.Bounds.X;
+            var y = (int)node.Bounds.Y;
+            var width = (int)node.Bounds.Width;
+            var height = (int)node.Bounds.Height;
+            var outline = node.Selected ? SelectionColor : node.Tone;
 
-        private void RefreshOffScreenSurface()
+            c.FillStyle = Color.White;
+            RoundRect(c, x, y, width, height, 7);
+            c.Fill();
+
+            c.StrokeStyle = outline;
+            c.LineWidth = node.Selected ? 3 : 2;
+            RoundRect(c, x, y, width, height, 7);
+            c.Stroke();
+
+            using (var font = new Font("Segoe UI", node.Selected ? 13f : 12.5f, node.Selected ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Pixel))
+            {
+                c.TextFont = font;
+                c.TextAlign = CanvasTextAlign.Center;
+                c.TextBaseline = CanvasTextBaseline.Middle;
+                c.FillStyle = node.Selected ? SelectionColor : node.TextTone;
+                c.FillText(node.Label, x + width / 2, y + height / 2);
+                c.TextAlign = CanvasTextAlign.Left;
+            }
+        }
+
+        private static void RoundRect(Canvas c, int x, int y, int width, int height, int radius)
+        {
+            var r = Math.Max(0, Math.Min(radius, Math.Min(width, height) / 2));
+
+            c.BeginPath();
+            c.MoveTo(x + r, y);
+            c.LineTo(x + width - r, y);
+            c.Arc(x + width - r, y + r, r, 270f, 360f, false);
+            c.LineTo(x + width, y + height - r);
+            c.Arc(x + width - r, y + height - r, r, 0f, 90f, false);
+            c.LineTo(x + r, y + height);
+            c.Arc(x + r, y + height - r, r, 90f, 180f, false);
+            c.LineTo(x, y + r);
+            c.Arc(x + r, y + r, r, 180f, 270f, false);
+            c.ClosePath();
+        }
+
+        // ── surface 4: System.Drawing.Managed, no control involved ──────────────
+
+        private void btnExport_Click(object sender, EventArgs e)
         {
             try
             {
-                var previous = this.picExport.Image;
-                this.picExport.Image = RenderOffScreen(320, 60);
-                previous?.Dispose();
+                var renderer = new TopologyImageRenderer();
+                var bytes = renderer.Render(this.model.Topology, 1200, 700);
+
+                this.model.Metrics.Record(
+                    "topology.export",
+                    TimeSpan.FromMilliseconds(renderer.LastRenderMilliseconds),
+                    1200,
+                    700,
+                    renderer.LastObjectsDrawn);
+
+                Application.Download(new MemoryStream(bytes), $"topology-{DateTime.Now:yyyy-MM}.png");
+                PublishDiagnostics(0);
             }
             catch (Exception ex)
             {
-                this.picExport.Image = null;
-                this.lblStatus.Text = $"Off-screen image not available: {ex.Message}. The other surfaces still show {this.model.SpindleLoad.Reading:0} %.";
+                // A failed export reaches the user as a message, not as a blank space where a picture
+                // was expected.
+                this.lblAccessibleTable.ForeColor = Color.FromArgb(180, 47, 47);
+                this.lblAccessibleTable.Text = $"Export failed: {ex.Message}. The three live surfaces are unaffected.";
             }
         }
 
-        private System.Drawing.Image RenderOffScreen(int width, int height)
-        {
-            if (width <= 0 || height <= 0)
-                throw new ArgumentOutOfRangeException(nameof(width), "the off-screen bitmap needs a positive size");
+        // ── the textual equivalent, beside the pixels ───────────────────────────
 
-            var bitmap = new System.Drawing.Bitmap(width, height);
-            using (var g = System.Drawing.Graphics.FromImage(bitmap))
-            using (var fill = new System.Drawing.SolidBrush(System.Drawing.Color.Goldenrod))
+        /// <summary>
+        /// Every value the graphics show, as ordinary text. A reading that exists only inside a picture
+        /// has been lost for part of the audience, which is why the gauge also carries its reading as a
+        /// sentence and every severity chip carries a shape as well as a colour.
+        /// </summary>
+        private void PublishAccessibleText()
+        {
+            var severity = this.model.SeverityOf(this.model.Cpu).ToString().ToLowerInvariant();
+
+            this.lblAccessibleReading.Text =
+                $"AccessibleDescription: <b>&#8220;{this.model.Cpu.MachineName} CPU {this.model.Cpu.Reading:0}%, {severity}&#8221;</b>";
+
+            this.lblAccessibleTable.Text = this.model.AccessibleTable();
+            this.gaugeCpu.AccessibleDescription = this.gaugeCpu.ReadingText;
+        }
+
+        /// <summary>
+        /// The measured figures behind the capstone notes. They are published through the page's
+        /// accessible description rather than as another panel on screen: the numbers belong in
+        /// CapstoneNotes.md, not in the operator's way.
+        /// </summary>
+        private void PublishDiagnostics(int failures)
+        {
+            var text = new StringBuilder("Visual Operations Studio capstone. ");
+
+            foreach (var surface in new[] { "gauge.paint", "topology.canvas", "topology.export" })
             {
-                g.Clear(System.Drawing.Color.White);
-                g.FillRectangle(fill, 0, 0, (float)(width * this.model.SpindleLoad.Reading / 100.0), height);
+                var median = this.model.Metrics.Median(surface);
+                if (median.HasValue)
+                    text.Append($"{surface} median {median.Value:0.0} ms over {this.model.Metrics.Count(surface)} renders. ");
             }
 
-            return bitmap;
+            text.Append(failures == 0
+                ? "Degraded-state checks: empty data, zero size, inverted range and missing font all degraded without throwing."
+                : $"Degraded-state checks: {failures} failed.");
+
+            AccessibleDescription = text.ToString();
         }
     }
 }

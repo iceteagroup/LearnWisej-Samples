@@ -4,10 +4,9 @@ Local lab build for **Module 5 · Interactive Canvas and Hit Testing**. The Canv
 topology editor: `NodeModel`, `EdgeModel` and a per-session `TopologyScene` in world coordinates, one
 `RenderScene` method, `ToWorld`/`ToScreen` conversions, hit testing, drag, pan, zoom about the pointer,
 off-screen culling and a keyboard path.
-The three remaining Module 1 surfaces - `Label` + `ProgressBar`, a `Wisej.Web.Canvas` and an
-off-screen `Bitmap` in a `PictureBox` - stay on the operations page under the gauges, so the same
-reading can still be compared across surfaces. Surface 2, the inline `Paint` handler, is now the
-`TelemetryGauge` control itself.
+The topology editor is the application's start page: the surface with its zoom controls, the node list
+beside it, and a status line that names the selection, the render requests a gesture cost and what
+culling skipped.
 
 This folder is the complete application at this point in the course, with its own solution and port.
 

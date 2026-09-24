@@ -160,6 +160,20 @@ namespace VisualOperationsStudio.Controls
         public string ReadingText =>
             $"{this.caption}: {this.value:0.#} {this.unit}, range {this.minimum:0.#} to {this.maximum:0.#}, {Severity()}";
 
+        /// <summary>
+        /// The colour of the active arc. Left empty, the arc takes the colour of the zone the value is
+        /// in; set, the arc keeps one colour and the zone bands alone carry the severity - which is how
+        /// the capstone screen draws it.
+        /// </summary>
+        public Color AccentColor { get; set; } = Color.Empty;
+
+        /// <summary>The colour of the numeric reading. Empty means "the same colour as the arc".</summary>
+        public Color ValueColor { get; set; } = Color.Empty;
+
+        public Color WarningZoneColor { get; set; } = Color.FromArgb(246, 217, 168);
+
+        public Color CriticalZoneColor { get; set; } = Color.FromArgb(243, 182, 182);
+
         private void PaintGauge(PaintEventArgs e)
         {
             var area = e.ClipRectangle;
@@ -175,12 +189,12 @@ namespace VisualOperationsStudio.Controls
 
             var warnAt = GaugeGeometry.Normalize(this.warningThreshold, this.minimum, this.maximum);
             var critAt = GaugeGeometry.Normalize(this.criticalThreshold, this.minimum, this.maximum);
-            var active = ZoneColor();
+            var active = AccentColor.IsEmpty ? ZoneColor() : AccentColor;
 
-            using (var track = new Pen(Color.FromArgb(221, 228, 236), layout.RingThickness))
+            using (var track = new Pen(Color.FromArgb(231, 237, 244), layout.RingThickness))
             using (var activePen = new Pen(active, layout.RingThickness) { EndCap = LineCap.Round })
-            using (var warning = new SolidBrush(Color.FromArgb(246, 217, 168)))
-            using (var critical = new SolidBrush(Color.FromArgb(243, 182, 182)))
+            using (var warning = new SolidBrush(WarningZoneColor))
+            using (var critical = new SolidBrush(CriticalZoneColor))
             using (var hole = new SolidBrush(BackColor))
             {
                 e.Graphics.DrawArc(track, layout.RingBounds, layout.StartAngle, layout.FullSweep);
@@ -197,7 +211,7 @@ namespace VisualOperationsStudio.Controls
             parts += 4;   // track, two zone pies, active arc
 
             DrawNeedle(e.Graphics, layout);
-            DrawText(e.Graphics, layout, active);
+            DrawText(e.Graphics, layout, ValueColor.IsEmpty ? active : ValueColor);
             parts += 3;   // needle, value, caption
 
             stopwatch.Stop();

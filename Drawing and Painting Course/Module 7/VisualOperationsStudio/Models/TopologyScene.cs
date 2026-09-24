@@ -27,12 +27,25 @@ namespace VisualOperationsStudio.Models
         /// <summary>World-space geometry. Screen coordinates never touch the model.</summary>
         public RectangleF Bounds { get; set; }
 
-        /// <summary>"Normal", "Warning" or "Critical".</summary>
+        /// <summary>"None", "Normal", "Warning" or "Critical". "None" is a link, not an asset.</summary>
         public string Severity { get; }
 
         public bool Selected { get; set; }
 
         public PointF Centre => new PointF(Bounds.X + Bounds.Width / 2f, Bounds.Y + Bounds.Height / 2f);
+
+        /// <summary>
+        /// The outline and label colour, from the one set of thresholds. A selected node is drawn in
+        /// the selection colour instead, which the renderer decides - not the model.
+        /// </summary>
+        public Color Tone =>
+            Severity == "Critical" ? Color.FromArgb(224, 90, 90) :
+            Severity == "Warning" ? Color.FromArgb(232, 161, 60) :
+            Severity == "Normal" ? Color.FromArgb(31, 157, 107) :
+            Color.FromArgb(185, 201, 220);
+
+        /// <summary>A link node carries no state of its own, so its label stays neutral.</summary>
+        public Color TextTone => Severity == "None" ? Color.FromArgb(70, 88, 106) : Tone;
     }
 
     /// <summary>A link between two nodes, by id.</summary>
@@ -142,25 +155,27 @@ namespace VisualOperationsStudio.Models
             Zoom = zoom;
         }
 
-        /// <summary>The demonstration plant: six pumps and tanks, plus the lines between them.</summary>
-        public static TopologyScene CreatePlant()
+        /// <summary>
+        /// The four assets of the capstone screen and the line that joins them, in the world
+        /// coordinates the walkthrough's topology card is drawn from. PUMP-04 opens selected, which is
+        /// the same asset the painted gauge and the first grid row show.
+        /// </summary>
+        public static TopologyScene CreateAssets()
         {
-            var scene = new TopologyScene { PanX = 40, PanY = 40 };
+            var scene = new TopologyScene();
 
-            scene.Nodes.Add(new NodeModel("tank-1", "Feed tank", new RectangleF(40, 60, 150, 70), "Normal"));
-            scene.Nodes.Add(new NodeModel("pump-1", "Pump 1", new RectangleF(260, 40, 130, 60), "Normal"));
-            scene.Nodes.Add(new NodeModel("pump-2", "Pump 2", new RectangleF(260, 150, 130, 60), "Warning"));
-            scene.Nodes.Add(new NodeModel("press-3", "Line 3 Press", new RectangleF(470, 90, 160, 80), "Critical"));
-            scene.Nodes.Add(new NodeModel("oven-4", "Cure oven", new RectangleF(700, 40, 140, 70), "Normal"));
-            scene.Nodes.Add(new NodeModel("tank-2", "Waste tank", new RectangleF(700, 170, 140, 70), "Normal"));
-            scene.Nodes.Add(new NodeModel("far-1", "Outstation", new RectangleF(1500, 520, 150, 70), "Normal"));
+            scene.Nodes.Add(new NodeModel("pump", "PUMP-04", new RectangleF(30, 50, 80, 38), "Warning"));
+            scene.Nodes.Add(new NodeModel("line", "LINE-A", new RectangleF(132, 112, 76, 36), "None"));
+            scene.Nodes.Add(new NodeModel("mix", "MIX-11", new RectangleF(218, 52, 74, 36), "Critical"));
+            scene.Nodes.Add(new NodeModel("dry", "DRY-02", new RectangleF(68, 182, 74, 36), "Normal"));
+            scene.Nodes.Add(new NodeModel("pack", "PACK-07", new RectangleF(208, 177, 76, 36), "Warning"));
 
-            scene.Edges.Add(new EdgeModel("e1", "tank-1", "pump-1"));
-            scene.Edges.Add(new EdgeModel("e2", "tank-1", "pump-2"));
-            scene.Edges.Add(new EdgeModel("e3", "pump-1", "press-3"));
-            scene.Edges.Add(new EdgeModel("e4", "pump-2", "press-3"));
-            scene.Edges.Add(new EdgeModel("e5", "press-3", "oven-4"));
-            scene.Edges.Add(new EdgeModel("e6", "press-3", "tank-2"));
+            scene.Edges.Add(new EdgeModel("e1", "pump", "line"));
+            scene.Edges.Add(new EdgeModel("e2", "line", "mix"));
+            scene.Edges.Add(new EdgeModel("e3", "line", "dry"));
+            scene.Edges.Add(new EdgeModel("e4", "line", "pack"));
+
+            scene.Select(scene.Find("pump"));
 
             return scene;
         }

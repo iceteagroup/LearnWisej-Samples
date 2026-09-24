@@ -16,32 +16,29 @@ namespace VisualOperationsStudio.Models
     {
         public OperationsModel()
         {
-            SpindleLoad = new TelemetrySample("Line 3 Press", "Line 3 - Spindle load", "%", 0, 100, 34);
-            CoolantTemp = new TelemetrySample("Line 3 Press", "Line 3 - Coolant temp", "°C", 0, 120, 61);
-            CycleTime = new TelemetrySample("Line 3 Press", "Line 3 - Cycle time", "s", 0, 90, 47);
+            Cpu = new TelemetrySample("PUMP-04", "CPU · PUMP-04", "%", 0, 100, 72);
 
-            Machines = MachineStatusGenerator.Generate(1000);
-            Topology = TopologyScene.CreatePlant();
+            Assets = new List<AssetStatus>
+            {
+                new AssetStatus("PUMP-04", 72, AssetStatus.TrendFor(0.4)),
+                new AssetStatus("MIX-11", 91, AssetStatus.TrendFor(1.6)),
+                new AssetStatus("DRY-02", 38, AssetStatus.TrendFor(2.7)),
+                new AssetStatus("PACK-07", 64, AssetStatus.TrendFor(3.9)),
+            };
+
+            Topology = TopologyScene.CreateAssets();
             Metrics = new RenderMetrics();
         }
 
-        public TelemetrySample SpindleLoad { get; }
-
-        public TelemetrySample CoolantTemp { get; }
-
-        public TelemetrySample CycleTime { get; }
+        /// <summary>The reading the painted gauge shows. The grid's PUMP-04 row shows the same number.</summary>
+        public TelemetrySample Cpu { get; }
 
         public IEnumerable<TelemetrySample> Readings
         {
-            get
-            {
-                yield return SpindleLoad;
-                yield return CoolantTemp;
-                yield return CycleTime;
-            }
+            get { yield return Cpu; }
         }
 
-        public List<MachineStatus> Machines { get; }
+        public List<AssetStatus> Assets { get; }
 
         public TopologyScene Topology { get; }
 
@@ -50,16 +47,14 @@ namespace VisualOperationsStudio.Models
         /// <summary>
         /// The one set of severity thresholds. Every surface asks this, so none of them can drift.
         /// </summary>
-        public Severity SeverityOf(TelemetrySample sample, double warning, double critical) =>
-            sample.Reading >= critical ? Severity.Critical :
-            sample.Reading >= warning ? Severity.Warning : Severity.Normal;
+        public Severity SeverityOf(TelemetrySample sample) => SeverityOfLoad((int)sample.Reading);
 
-        public Severity SeverityOfHealth(int health) =>
-            health < MachineStatus.CriticalBelow ? Severity.Critical :
-            health < MachineStatus.WarningBelow ? Severity.Warning : Severity.Normal;
+        public Severity SeverityOfLoad(int load) =>
+            load > AssetStatus.CriticalAbove ? Severity.Critical :
+            load > AssetStatus.WarningAbove ? Severity.Warning : Severity.Normal;
 
-        /// <summary>How many machines are in each state, for the accessible table.</summary>
-        public Dictionary<Severity, int> MachineSeverityCounts()
+        /// <summary>How many assets are in each state, for the accessible table.</summary>
+        public Dictionary<Severity, int> AssetSeverityCounts()
         {
             var counts = new Dictionary<Severity, int>
             {
@@ -68,10 +63,23 @@ namespace VisualOperationsStudio.Models
                 { Severity.Critical, 0 },
             };
 
-            foreach (var machine in Machines)
-                counts[SeverityOfHealth(machine.Health)]++;
+            foreach (var asset in Assets)
+                counts[asset.State]++;
 
             return counts;
+        }
+
+        /// <summary>
+        /// Every value the graphics show, as one line of text. A reading that exists only inside a
+        /// picture has been lost for part of the audience.
+        /// </summary>
+        public string AccessibleTable()
+        {
+            var parts = new List<string>();
+            foreach (var asset in Assets)
+                parts.Add($"{asset.Asset} {asset.Load}% {asset.StateWord}");
+
+            return "Accessible data table · " + string.Join(" · ", parts);
         }
     }
 

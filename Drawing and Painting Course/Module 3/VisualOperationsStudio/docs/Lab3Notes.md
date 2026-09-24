@@ -12,7 +12,7 @@ Lab 3 deliverable. Measured on this project at `http://localhost:6003`, Wisej-4 
 | `DataGridViewCellPaintEventArgs.RowIndex` | first guard | Negative means a header, not a data row. |
 | `DataGridViewCellPaintEventArgs.ColumnIndex` | second guard | Anything that is not one of the two target columns returns immediately. |
 | `PaintEventArgs.Graphics` | inherited | The surface. It belongs to Wisej.NET and is never disposed here. |
-| `PaintEventArgs.ClipRectangle` | inherited | The cell's own rectangle, origin `0,0`, e.g. `{0,0,199,31}` for a Health cell. |
+| `PaintEventArgs.ClipRectangle` | inherited | The cell's own rectangle, origin `0,0`, e.g. `{0,0,167,33}` for a Health cell. |
 | `DataGridViewRow.DataBoundItem` | in the handler | The bound `MachineStatus` in one O(1) step — no searching a list while the grid scrolls. |
 | `DataGridViewRow.Selected` | in the handler | Selected rows get their own track and line colours, or a painted cell looks broken the moment somebody clicks it. |
 
@@ -27,34 +27,37 @@ everything that appears in the cell. A Windows Forms example copied straight acr
   threads, so anything it touches must be safe for concurrent calls — this is why the one shared object
   in `OperationsCellRenderer` is a `Font` (immutable) and every `Pen` and `Brush` is created and disposed
   inside the call.
-- Painted surfaces arrive after the page does: a large grid's cells and the gauges fill in over the first
-  seconds. Painted controls must also live in a layout that resizes with the browser — a gauge inside a
-  fixed-height band never receives the resize that produces its first picture, which is why the page uses
-  a `SplitContainer` rather than a fixed top band.
+- Painted surfaces arrive after the page does: a large grid's cells fill in over the first seconds, and a
+  screenshot taken too early shows an empty Health and Trend column. Painted surfaces must also live in a
+  layout that resizes with the browser — one inside a fixed-height band never receives the resize that
+  produces its first picture, which is why the grid is docked `Fill`.
+- `DrawString` whose origin sits at or past the right edge of the cell does not clip: it throws
+  `DivideByZeroException` out of the fill processor. The Health cell measures its number first and only
+  draws it when it fits.
 - A column with no `DataPropertyName` still gets cells, and still raises `CellPaint` — which is what the
   Trend column relies on, since there is no text under its sparkline.
 
 ## Painted columns vs. the `AllowHtml` column
 
-The grid carries both, side by side, on the same 1,000 rows: `Health (painted)` and `Trend (painted)`
-against `Status (AllowHtml)`, which renders the same severity as a coloured markup chip.
+The grid carries both, side by side, on the same 1,000 rows: the painted `Health` and `Trend` columns
+against `Status · HTML`, which renders the same severity as a coloured markup chip.
 
 | | Painted cell | `AllowHtml` cell |
 |---|---|---|
-| What it can express | any geometry — a proportional bar, a polyline over twelve readings | text, colour, an icon, a badge |
+| What it can express | any geometry — a proportional bar, a polyline over eight readings | text, colour, an icon, a badge |
 | Cost per visible cell | a server render and an image | a string already in the row's data |
 | Cost on a 1,000-row scroll | one handler call per painted cell that scrolls into view | none beyond the markup already sent |
 | Selection | must be handled by hand (`row.Selected`) | follows the theme |
 | Accessibility | pixels; the value has to be published separately | real text a screen reader can read |
 | Searchable / selectable text | no | yes |
 
-**Which one would I ship?** The `AllowHtml` status chip, for the severity. It says `Warning 40%` in
+**Which one would I ship?** The `AllowHtml` status chip, for the severity. It says `Warning` in
 words and colour, it is readable by assistive technology, it costs nothing per scroll, and it follows
 the theme. Painting earns its place only in the Trend column, where the information *is* the shape:
-twelve readings as a line cannot be expressed in markup without shipping a chart per row.
+eight readings as a line cannot be expressed in markup without shipping a chart per row.
 
 The Health bar sits in between, and is kept here as the honest comparison: it is a proportional bar,
-which markup could approximate with a styled `div`. It draws its number inside the cell for exactly
+which markup could approximate with a styled `div`. It draws its number beside the bar for exactly
 that reason — a painted cell showing only a colour has lost the value.
 
 A third option exists and beats both when the user has to *interact* with the cell rather than only

@@ -1,25 +1,32 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using VisualOperationsStudio.Controls;
-using VisualOperationsStudio.Geometry;
 using VisualOperationsStudio.Models;
 using Wisej.Web;
 
 namespace VisualOperationsStudio
 {
     /// <summary>
-    /// Three <see cref="TelemetryGauge"/> controls over three <see cref="TelemetrySample"/> readings,
-    /// with the same numbers in plain text beside them. The gauges own no state: every value they show
-    /// comes from the model, and every property they expose clamps and repaints at most once.
+    /// Three <see cref="TelemetryGauge"/> controls over three <see cref="TelemetrySample"/> readings.
+    /// The gauges own no state: every value they show comes from the model, and every property they
+    /// expose clamps, returns early when nothing changed, and repaints at most once - which is what the
+    /// "Repaints this request" readout beside the buttons counts.
+    /// The same numbers are published as a sentence through each gauge's <c>AccessibleDescription</c>,
+    /// so nothing on this page exists only as pixels.
     /// </summary>
     public partial class VisualOperationsPage : Page
     {
         private static readonly double[] SpindleScript = { 88, 63, 41, 132, 74, 22, 95 };
 
-        private readonly TelemetrySample spindleLoad = new TelemetrySample("Line 3 Press", "Line 3 - Spindle load", "%", 0, 100, 34);
-        private readonly TelemetrySample coolantTemp = new TelemetrySample("Line 3 Press", "Line 3 - Coolant temp", "°C", 0, 120, 61);
-        private readonly TelemetrySample cycleTime = new TelemetrySample("Line 3 Press", "Line 3 - Cycle time", "s", 0, 90, 47);
+        /// <summary>Card height as a fraction of card width, taken from the walkthrough's 300 x 267 card.</summary>
+        private const double CardAspect = 0.89;
+        private const int CardGap = 18;
+
+        private readonly TelemetrySample spindleLoad = new TelemetrySample("Line 3 Press", "Line 3 · Spindle load", "%", 0, 100, 34);
+        private readonly TelemetrySample coolantTemp = new TelemetrySample("Line 3 Press", "Line 3 · Coolant temp", "°C", 0, 120, 61);
+        private readonly TelemetrySample cycleTime = new TelemetrySample("Line 3 Press", "Line 3 · Cycle time", "s", 0, 90, 47);
 
         private int readings;
 
@@ -31,17 +38,35 @@ namespace VisualOperationsStudio
             ConfigureGauge(this.gaugeCoolant, this.coolantTemp, 85, 100);
             ConfigureGauge(this.gaugeCycle, this.cycleTime, 60, 75);
 
-            PublishReadings();
-            RefreshComparisonSurfaces();
-            this.lblStatus.Text = "Ready. Three gauges, three readings.";
+            ShowRepaints(0);
         }
 
-        /// <summary>The two docked gauges share the row evenly with the filling one.</summary>
-        private void pnlGauges_Resize(object sender, EventArgs e)
+        private void VisualOperationsPage_Load(object sender, EventArgs e)
         {
-            var third = Math.Max(GaugeGeometry.MinimumSide, (this.pnlGauges.ClientSize.Width - this.pnlGauges.Padding.Horizontal) / 3);
-            this.gaugeSpindle.Width = third;
-            this.gaugeCoolant.Width = third;
+            LayoutCards();
+
+            // The docked layout has just given each gauge its real size. A painted control that is
+            // never invalidated after it is laid out keeps whatever it drew while it measured nothing.
+            foreach (var gauge in Gauges)
+                gauge.Invalidate();
+        }
+
+        /// <summary>
+        /// The three cards share the row evenly, and the row keeps the card proportions of the
+        /// walkthrough so the painted face never has to be squeezed into a cell it does not fit.
+        /// </summary>
+        private void pnlBody_Resize(object sender, EventArgs e) => LayoutCards();
+
+        private void LayoutCards()
+        {
+            var available = this.pnlBody.ClientSize.Width - this.pnlBody.Padding.Horizontal - CardGap * 2;
+            if (available <= 0)
+                return;
+
+            var cardWidth = available / 3;
+            this.pnlCard1.Width = cardWidth;
+            this.pnlCard2.Width = cardWidth;
+            this.pnlGauges.Height = (int)Math.Round(cardWidth * CardAspect);
         }
 
         private IEnumerable<TelemetryGauge> Gauges
@@ -64,12 +89,7 @@ namespace VisualOperationsStudio
             this.readings++;
 
             this.spindleLoad.Reading = raw;
-
-            var repaints = ApplyModelToGauges();
-
-            this.lblStatus.Text = Math.Abs(raw - this.spindleLoad.Reading) > 0.001
-                ? $"Spindle reading {raw:0} % clamped to {this.spindleLoad.Reading:0} %. Repaints this request: {repaints}."
-                : $"Spindle load now {this.spindleLoad.Reading:0} %. Repaints this request: {repaints}.";
+            ShowRepaints(ApplyModelToGauges());
         }
 
         private void btnReset_Click(object sender, EventArgs e)
@@ -77,8 +97,7 @@ namespace VisualOperationsStudio
             this.readings = 0;
             this.spindleLoad.Reading = 34;
 
-            var repaints = ApplyModelToGauges();
-            this.lblStatus.Text = $"Reset to the opening readings. Repaints this request: {repaints}.";
+            ShowRepaints(ApplyModelToGauges());
         }
 
         private void ConfigureGauge(TelemetryGauge gauge, TelemetrySample source, double warning, double critical)
@@ -104,114 +123,15 @@ namespace VisualOperationsStudio
             this.gaugeCoolant.Value = this.coolantTemp.Reading;
             this.gaugeCycle.Value = this.cycleTime.Reading;
 
-            PublishReadings();
-            RefreshComparisonSurfaces();
-
             return Gauges.Sum(gauge => gauge.RepaintCount);
         }
 
-        /// <summary>
-        /// The same three numbers as text. A value that exists only inside a picture has been lost for
-        /// part of the audience, so it is published here and through each gauge's AccessibleDescription.
-        /// </summary>
-        private void PublishReadings()
+        private void ShowRepaints(int repaints)
         {
-            this.lblCaption1.Text = this.spindleLoad.Caption;
-            this.lblValue1.Text = this.spindleLoad.DisplayValue;
-            this.lblCaption2.Text = this.coolantTemp.Caption;
-            this.lblValue2.Text = this.coolantTemp.DisplayValue;
-            this.lblCaption3.Text = this.cycleTime.Caption;
-            this.lblValue3.Text = this.cycleTime.DisplayValue;
-        }
-
-        // ── the Module 1 surfaces, still reading the same model ─────────────────
-
-        /// <summary>
-        /// The Canvas has its laid-out size by Load, so the first scene is drawn here. Redraw then
-        /// rebuilds it after every browser resize, because the browser keeps no bitmap of its own.
-        /// </summary>
-        private void VisualOperationsPage_Load(object sender, EventArgs e)
-        {
-            DrawCanvasScene();
-        }
-
-        /// <summary>
-        /// Surfaces 1, 3 and 4 from Module 1, refreshed from the reading the gauges paint. Surface 2,
-        /// the inline Paint handler, is now the TelemetryGauge control itself.
-        /// </summary>
-        private void RefreshComparisonSurfaces()
-        {
-            RefreshPlainSurface();          // surface 1 - text and a value, no pixels of ours
-            DrawCanvasScene();              // surface 3 - commands the browser executes
-            RefreshOffScreenSurface();      // surface 4 - image bytes, no control involved
-        }
-
-        // ── surface 1: no pixels of ours ────────────────────────────────────────
-
-        private void RefreshPlainSurface()
-        {
-            this.lblReading.Text = $"{this.spindleLoad.Reading:0} %";
-            this.progressReading.Value = (int)Math.Round(this.spindleLoad.Reading);
-        }
-
-        // ── surface 3: the browser draws what the server tells it to ────────────
-
-        private void canvasSurface_Redraw(object sender, EventArgs e)
-        {
-            DrawCanvasScene();
-        }
-
-        /// <summary>
-        /// Rebuilds the whole canvas scene from the model. A Redraw handler that only patches the last
-        /// change is broken by the first resize, because the browser bitmap is gone by then.
-        /// </summary>
-        private void DrawCanvasScene()
-        {
-            var w = this.canvasSurface.Width;
-            var h = this.canvasSurface.Height;
-            if (w <= 0 || h <= 0)
-                return;
-
-            this.canvasSurface.ClearRect(0, 0, w, h);
-
-            this.canvasSurface.FillStyle = System.Drawing.Color.WhiteSmoke;
-            this.canvasSurface.FillRect(0, 0, w, h);
-
-            this.canvasSurface.FillStyle = System.Drawing.Color.MediumPurple;
-            this.canvasSurface.FillRect(0, 0, (int)(w * this.spindleLoad.Reading / 100.0), h);
-        }
-
-        // ── surface 4: an image, produced with no control involved ──────────────
-
-        private void RefreshOffScreenSurface()
-        {
-            try
-            {
-                var previous = this.picExport.Image;
-                this.picExport.Image = RenderOffScreen(320, 60);
-                previous?.Dispose();
-            }
-            catch (Exception ex)
-            {
-                this.picExport.Image = null;
-                this.lblStatus.Text = $"Off-screen image not available: {ex.Message}. The other surfaces still show {this.spindleLoad.Reading:0} %.";
-            }
-        }
-
-        private System.Drawing.Image RenderOffScreen(int width, int height)
-        {
-            if (width <= 0 || height <= 0)
-                throw new ArgumentOutOfRangeException(nameof(width), "the off-screen bitmap needs a positive size");
-
-            var bitmap = new System.Drawing.Bitmap(width, height);
-            using (var g = System.Drawing.Graphics.FromImage(bitmap))
-            using (var fill = new System.Drawing.SolidBrush(System.Drawing.Color.Goldenrod))
-            {
-                g.Clear(System.Drawing.Color.White);
-                g.FillRectangle(fill, 0, 0, (float)(width * this.spindleLoad.Reading / 100.0), height);
-            }
-
-            return bitmap;
+            this.lblRepaints.Text = $"Repaints this request: {repaints}";
+            this.lblRepaints.ForeColor = repaints > 0
+                ? Color.FromArgb(31, 157, 107)
+                : Color.FromArgb(90, 107, 125);
         }
     }
 }

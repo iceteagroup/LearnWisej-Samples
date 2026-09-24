@@ -21,17 +21,27 @@ namespace VisualOperationsStudio.Models
         /// <summary>Stable across renders, drags and zooms - the selection is remembered by id.</summary>
         public string Id { get; }
 
+        /// <summary>The name on the node, for example "Pump-02".</summary>
         public string Label { get; }
 
         /// <summary>World-space geometry. Screen coordinates never touch the model.</summary>
         public RectangleF Bounds { get; set; }
 
-        /// <summary>"Normal", "Warning" or "Critical".</summary>
+        /// <summary>"OK", "Warning" or "Critical".</summary>
         public string Severity { get; }
 
         public bool Selected { get; set; }
 
+        /// <summary>The keyboard focus ring, which moves with Tab without changing the selection.</summary>
+        public bool Focused { get; set; }
+
         public PointF Centre => new PointF(Bounds.X + Bounds.Width / 2f, Bounds.Y + Bounds.Height / 2f);
+
+        /// <summary>The health colour of the band across the top of the node.</summary>
+        public Color Tone =>
+            Severity == "Critical" ? Color.FromArgb(214, 69, 69) :
+            Severity == "Warning" ? Color.FromArgb(232, 161, 60) :
+            Color.FromArgb(31, 157, 107);
     }
 
     /// <summary>A link between two nodes, by id.</summary>
@@ -104,6 +114,15 @@ namespace VisualOperationsStudio.Models
                 node.Selected = true;
         }
 
+        public void Focus(NodeModel node)
+        {
+            for (var i = 0; i < Nodes.Count; i++)
+                Nodes[i].Focused = false;
+
+            if (node != null)
+                node.Focused = true;
+        }
+
         /// <summary>
         /// World to screen: apply the zoom, then the pan offset. <see cref="ToWorld"/> runs it backwards.
         /// </summary>
@@ -151,25 +170,49 @@ namespace VisualOperationsStudio.Models
             PanY += (after.Y - before.Y) * Zoom;
         }
 
-        /// <summary>The demonstration plant: six pumps and tanks, plus the lines between them.</summary>
+        /// <summary>Fits every node into <paramref name="width"/> x <paramref name="height"/>.</summary>
+        public void Fit(int width, int height)
+        {
+            if (Nodes.Count == 0 || width <= 0 || height <= 0)
+                return;
+
+            var bounds = Nodes[0].Bounds;
+            for (var i = 1; i < Nodes.Count; i++)
+                bounds = RectangleF.Union(bounds, Nodes[i].Bounds);
+
+            const int margin = 40;
+            var zoom = Math.Min(
+                (width - margin * 2) / Math.Max(1f, bounds.Width),
+                (height - margin * 2) / Math.Max(1f, bounds.Height));
+
+            Zoom = Math.Min(MaximumZoom, Math.Max(MinimumZoom, zoom));
+            PanX = (width - bounds.Width * Zoom) / 2f - bounds.X * Zoom;
+            PanY = (height - bounds.Height * Zoom) / 2f - bounds.Y * Zoom;
+        }
+
+        /// <summary>
+        /// The demonstration plant. The seven nodes and their world coordinates are the ones the
+        /// walkthrough draws, Spare-09 included: it sits far enough out to be culled at most zooms.
+        /// </summary>
         public static TopologyScene CreatePlant()
         {
-            var scene = new TopologyScene { PanX = 40, PanY = 40 };
+            var scene = new TopologyScene { PanX = 40, PanY = 40, Zoom = 0.72f };
 
-            scene.Nodes.Add(new NodeModel("tank-1", "Feed tank", new RectangleF(40, 60, 150, 70), "Normal"));
-            scene.Nodes.Add(new NodeModel("pump-1", "Pump 1", new RectangleF(260, 40, 130, 60), "Normal"));
-            scene.Nodes.Add(new NodeModel("pump-2", "Pump 2", new RectangleF(260, 150, 130, 60), "Warning"));
-            scene.Nodes.Add(new NodeModel("press-3", "Line 3 Press", new RectangleF(470, 90, 160, 80), "Critical"));
-            scene.Nodes.Add(new NodeModel("oven-4", "Cure oven", new RectangleF(700, 40, 140, 70), "Normal"));
-            scene.Nodes.Add(new NodeModel("tank-2", "Waste tank", new RectangleF(700, 170, 140, 70), "Normal"));
-            scene.Nodes.Add(new NodeModel("far-1", "Outstation", new RectangleF(1500, 520, 150, 70), "Normal"));
+            scene.Nodes.Add(new NodeModel("ingest", "Ingest-01", new RectangleF(30, 90, 180, 78), "OK"));
+            scene.Nodes.Add(new NodeModel("valve", "Valve-07", new RectangleF(300, 30, 180, 78), "OK"));
+            scene.Nodes.Add(new NodeModel("pump", "Pump-02", new RectangleF(300, 220, 180, 78), "Warning"));
+            scene.Nodes.Add(new NodeModel("mixer", "Mixer-A", new RectangleF(540, 125, 180, 78), "OK"));
+            scene.Nodes.Add(new NodeModel("silo", "Silo-03", new RectangleF(900, 30, 180, 78), "OK"));
+            scene.Nodes.Add(new NodeModel("export", "Export-01", new RectangleF(900, 235, 180, 78), "Critical"));
+            scene.Nodes.Add(new NodeModel("spare", "Spare-09", new RectangleF(1230, 350, 180, 78), "OK"));
 
-            scene.Edges.Add(new EdgeModel("e1", "tank-1", "pump-1"));
-            scene.Edges.Add(new EdgeModel("e2", "tank-1", "pump-2"));
-            scene.Edges.Add(new EdgeModel("e3", "pump-1", "press-3"));
-            scene.Edges.Add(new EdgeModel("e4", "pump-2", "press-3"));
-            scene.Edges.Add(new EdgeModel("e5", "press-3", "oven-4"));
-            scene.Edges.Add(new EdgeModel("e6", "press-3", "tank-2"));
+            scene.Edges.Add(new EdgeModel("e1", "ingest", "valve"));
+            scene.Edges.Add(new EdgeModel("e2", "ingest", "pump"));
+            scene.Edges.Add(new EdgeModel("e3", "valve", "mixer"));
+            scene.Edges.Add(new EdgeModel("e4", "pump", "mixer"));
+            scene.Edges.Add(new EdgeModel("e5", "mixer", "silo"));
+            scene.Edges.Add(new EdgeModel("e6", "mixer", "export"));
+            scene.Edges.Add(new EdgeModel("e7", "export", "spare"));
 
             return scene;
         }

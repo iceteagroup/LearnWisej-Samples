@@ -11,7 +11,7 @@ namespace VisualOperationsStudio
         /// </summary>
         static void Main(NameValueCollection args)
         {
-            Application.MainPage = new VisualOperationsPage();
+            Application.MainPage = new CanvasPlaygroundPage();
         }
     }
 }

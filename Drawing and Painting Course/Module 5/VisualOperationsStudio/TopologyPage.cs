@@ -13,7 +13,16 @@ namespace VisualOperationsStudio
     /// </summary>
     public partial class TopologyPage : Page
     {
-        private readonly VisualOperationsPage operations;
+        private static readonly Color Surface = Color.FromArgb(247, 249, 252);
+        private static readonly Color GridLine = Color.FromArgb(227, 234, 243);
+        private static readonly Color EdgeColor = Color.FromArgb(157, 180, 204);
+        private static readonly Color NodeBorder = Color.FromArgb(205, 217, 230);
+        private static readonly Color SelectedBorder = Color.FromArgb(21, 101, 216);
+        private static readonly Color FocusRing = Color.FromArgb(125, 90, 224);
+        private static readonly Color LabelColor = Color.FromArgb(31, 45, 58);
+        private static readonly Color IdColor = Color.FromArgb(107, 127, 148);
+
+        private const int GridStep = 28;
 
         /// <summary>
         /// The scene lives on the page instance, so it belongs to this session. A mutable static field
@@ -26,19 +35,42 @@ namespace VisualOperationsStudio
         private PointF lastPointer;
         private int requestsThisGesture;
         private bool syncingList;
+        private int culledLastRender;
 
-        public TopologyPage(VisualOperationsPage operations)
+        public TopologyPage()
         {
             InitializeComponent();
-
-            this.operations = operations;
 
             BuildNodeList();
         }
 
-        private void btnBack_Click(object sender, EventArgs e)
+        private void TopologyPage_Load(object sender, EventArgs e)
         {
-            Application.MainPage = this.operations;
+            this.pnlZoom.BringToFront();
+
+            // The surface may still measure nothing here, so the first scene is also issued from the
+            // canvas's own Resize - the moment the docked layout finally gives it a size.
+            this.canvasTopology.Resize += this.canvasTopology_Resize;
+
+            PlaceZoomControls();
+            RenderScene();
+            ShowZoom();
+        }
+
+        private void canvasTopology_Resize(object sender, EventArgs e)
+        {
+            PlaceZoomControls();
+            RenderScene();
+        }
+
+        /// <summary>The zoom controls float over the bottom left corner of the surface.</summary>
+        private void PlaceZoomControls()
+        {
+            var host = this.pnlCanvasHost.ClientSize;
+            if (host.Height <= 0)
+                return;
+
+            this.pnlZoom.Location = new Point(12, Math.Max(0, host.Height - this.pnlZoom.Height - 12));
         }
 
         // ── input: change state, then render. Nothing is drawn inside a handler. ──
@@ -51,13 +83,17 @@ namespace VisualOperationsStudio
 
             var hit = this.scene.HitTest(pointer);
             this.scene.Select(hit);
+            this.scene.Focus(hit);
 
             this.dragging = hit != null;
             this.panning = hit == null;
 
             SyncNodeList();
             RenderScene();
-            ReportSelection();
+
+            SetStatus(hit == null
+                ? "Ready · click a node to select it"
+                : $"Selected: {hit.Label}", hit == null ? StatusTone.Idle : StatusTone.Ok);
         }
 
         private void canvasTopology_MouseMove(object sender, MouseEventArgs e)
@@ -82,24 +118,32 @@ namespace VisualOperationsStudio
                     bounds.X += dx / this.scene.Zoom;
                     bounds.Y += dy / this.scene.Zoom;
                     node.Bounds = bounds;
+
+                    SetStatus($"Dragging {node.Label} · {this.requestsThisGesture} render requests", StatusTone.Warn);
                 }
             }
             else
             {
                 this.scene.PanX += dx;
                 this.scene.PanY += dy;
+                SetStatus($"Panning · {this.requestsThisGesture} render requests", StatusTone.Warn);
             }
 
+            // Every pointer move is one request and one render. That is the number the lab measures.
             RenderScene();
         }
 
         private void canvasTopology_MouseUp(object sender, MouseEventArgs e)
         {
-            if (this.dragging || this.panning)
+            if (this.dragging)
             {
-                this.lblStatus.Text =
-                    $"{(this.dragging ? "Drag" : "Pan")} finished: {this.requestsThisGesture} requests, " +
-                    $"one render each. {SelectionText()}";
+                var node = this.scene.Selected;
+                if (node != null)
+                    SetStatus($"{node.Label} moved to world {node.Bounds.X:0}, {node.Bounds.Y:0} · gesture ended", StatusTone.Ok);
+            }
+            else if (this.panning)
+            {
+                SetStatus($"Pan ended · {this.requestsThisGesture} requests, one render each", StatusTone.Ok);
             }
 
             this.dragging = false;
@@ -110,15 +154,22 @@ namespace VisualOperationsStudio
         {
             this.scene.ZoomAbout(new PointF(e.X, e.Y), e.Delta > 0 ? 1.15f : 1f / 1.15f);
             RenderScene();
-            ReportSelection();
+            ShowZoom();
+
+            var selected = this.scene.Selected;
+            SetStatus(
+                selected == null
+                    ? $"Zoom {this.scene.Zoom:0.00}x about the pointer"
+                    : $"Zoom {this.scene.Zoom:0.00}x about the pointer · {selected.Label} still selected",
+                StatusTone.Idle);
         }
 
         private void canvasTopology_KeyDown(object sender, KeyEventArgs e)
         {
             // A keyboard-only user can still reach every node and move the selected one.
-            if (e.KeyCode == Keys.Tab || e.KeyCode == Keys.Down && e.Control)
+            if (e.KeyCode == Keys.Tab)
             {
-                SelectNext();
+                SelectNext(e.Shift ? -1 : 1);
                 e.Handled = true;
                 return;
             }
@@ -127,7 +178,7 @@ namespace VisualOperationsStudio
             if (node == null)
                 return;
 
-            var stepSize = e.Shift ? 20f : 5f;
+            const float stepSize = 12f;
             var bounds = node.Bounds;
 
             switch (e.KeyCode)
@@ -143,7 +194,7 @@ namespace VisualOperationsStudio
             e.Handled = true;
 
             RenderScene();
-            ReportSelection();
+            SetStatus($"{node.Label} selected with the keyboard · nudged {stepSize:0} world units", StatusTone.Ok);
         }
 
         private void listNodes_SelectedIndexChanged(object sender, EventArgs e)
@@ -151,30 +202,35 @@ namespace VisualOperationsStudio
             if (this.syncingList || this.listNodes.SelectedIndex < 0)
                 return;
 
-            this.scene.Select(this.scene.Nodes[this.listNodes.SelectedIndex]);
+            var node = this.scene.Nodes[this.listNodes.SelectedIndex];
+            this.scene.Select(node);
+            this.scene.Focus(node);
+
             RenderScene();
-            ReportSelection();
+            SetStatus($"{node.Label} selected in the list · same scene, same selection", StatusTone.Ok);
         }
 
         private void btnZoomIn_Click(object sender, EventArgs e) => ZoomFromCentre(1.25f);
 
         private void btnZoomOut_Click(object sender, EventArgs e) => ZoomFromCentre(1f / 1.25f);
 
-        private void btnResetView_Click(object sender, EventArgs e)
+        private void btnFit_Click(object sender, EventArgs e)
         {
-            this.scene.Zoom = 1f;
-            this.scene.PanX = 40;
-            this.scene.PanY = 40;
+            this.scene.Fit(this.canvasTopology.Width, this.canvasTopology.Height);
             RenderScene();
-            ReportSelection();
+            ShowZoom();
+            SetStatus($"Fit to view · zoom {this.scene.Zoom:0.00}x", StatusTone.Idle);
         }
 
         private void ZoomFromCentre(float factor)
         {
             this.scene.ZoomAbout(new PointF(this.canvasTopology.Width / 2f, this.canvasTopology.Height / 2f), factor);
             RenderScene();
-            ReportSelection();
+            ShowZoom();
+            SetStatus($"Zoom {this.scene.Zoom:0.00}x about the centre", StatusTone.Idle);
         }
+
+        private void ShowZoom() => this.lblZoom.Text = $"{this.scene.Zoom:0.00}x";
 
         // ── the one method that draws ───────────────────────────────────────────
 
@@ -196,8 +252,10 @@ namespace VisualOperationsStudio
                 return;
 
             c.ClearRect(0, 0, w, h);
-            c.FillStyle = Color.FromArgb(248, 250, 252);
+            c.FillStyle = Surface;
             c.FillRect(0, 0, w, h);
+
+            DrawGrid(c, w, h);
 
             var visible = this.scene.VisibleWorld(w, h);
             var drawn = 0;
@@ -209,7 +267,7 @@ namespace VisualOperationsStudio
                 c.Translate((int)this.scene.PanX, (int)this.scene.PanY);
                 c.Scale(this.scene.Zoom, this.scene.Zoom);
 
-                c.StrokeStyle = Color.FromArgb(154, 168, 182);
+                c.StrokeStyle = EdgeColor;
                 c.LineWidth = 2;
                 foreach (var edge in this.scene.Edges)
                 {
@@ -219,14 +277,11 @@ namespace VisualOperationsStudio
                         continue;
 
                     if (!visible.IntersectsWith(RectangleF.Union(from.Bounds, to.Bounds)))
-                    {
-                        culled++;
                         continue;
-                    }
 
                     c.BeginPath();
-                    c.MoveTo((int)from.Centre.X, (int)from.Centre.Y);
-                    c.LineTo((int)to.Centre.X, (int)to.Centre.Y);
+                    c.MoveTo((int)from.Bounds.Right, (int)(from.Bounds.Y + from.Bounds.Height / 2f));
+                    c.LineTo((int)to.Bounds.X, (int)(to.Bounds.Y + to.Bounds.Height / 2f));
                     c.Stroke();
                 }
 
@@ -247,41 +302,137 @@ namespace VisualOperationsStudio
                 c.Restore();
             }
 
-            this.lblNodesCount.Text = $"{drawn} drawn, {culled} culled";
+            if (culled > 0 && culled != this.culledLastRender)
+            {
+                SetStatus(
+                    $"Rendered {drawn} of {this.scene.Nodes.Count} nodes · the rest are outside the viewport",
+                    StatusTone.Warn);
+            }
+
+            this.culledLastRender = culled;
+        }
+
+        /// <summary>
+        /// The background grid, drawn in screen space before the viewport transform, so its lines stay
+        /// one pixel wide whatever the zoom is.
+        /// </summary>
+        private void DrawGrid(Canvas c, int w, int h)
+        {
+            var step = GridStep * this.scene.Zoom;
+            if (step < 6f)
+                return;
+
+            c.StrokeStyle = GridLine;
+            c.LineWidth = 1;
+            c.BeginPath();
+
+            for (var x = this.scene.PanX % step; x < w; x += step)
+            {
+                c.MoveTo((int)x, 0);
+                c.LineTo((int)x, h);
+            }
+
+            for (var y = this.scene.PanY % step; y < h; y += step)
+            {
+                c.MoveTo(0, (int)y);
+                c.LineTo(w, (int)y);
+            }
+
+            c.Stroke();
         }
 
         private void DrawNode(Canvas c, NodeModel node)
         {
-            var body = node.Severity == "Critical" ? Color.FromArgb(253, 236, 236)
-                : node.Severity == "Warning" ? Color.FromArgb(253, 243, 226)
-                : Color.White;
+            var x = (int)node.Bounds.X;
+            var y = (int)node.Bounds.Y;
+            var width = (int)node.Bounds.Width;
+            var height = (int)node.Bounds.Height;
 
-            var border = node.Severity == "Critical" ? Color.FromArgb(217, 58, 58)
-                : node.Severity == "Warning" ? Color.FromArgb(232, 161, 60)
-                : Color.FromArgb(200, 212, 226);
+            c.FillStyle = Color.White;
+            RoundRect(c, x, y, width, height, 10);
+            c.Fill();
 
-            c.FillStyle = body;
-            c.FillRect((int)node.Bounds.X, (int)node.Bounds.Y, (int)node.Bounds.Width, (int)node.Bounds.Height);
+            // The health band across the top: the only colour the node body carries.
+            c.FillStyle = node.Tone;
+            RoundRect(c, x, y, width, 7, 3);
+            c.Fill();
 
-            c.StrokeStyle = node.Selected ? Color.FromArgb(21, 101, 216) : border;
-            c.LineWidth = node.Selected ? 3 : 2;
-            c.BeginPath();
-            c.Rect((int)node.Bounds.X, (int)node.Bounds.Y, (int)node.Bounds.Width, (int)node.Bounds.Height);
+            c.StrokeStyle = node.Selected ? SelectedBorder : NodeBorder;
+            c.LineWidth = node.Selected ? 3 : 1;
+            RoundRect(c, x, y, width, height, 10);
             c.Stroke();
 
-            c.TextFont = new Font("default", 10F, FontStyle.Bold);
-            c.TextAlign = CanvasTextAlign.Center;
-            c.TextBaseline = CanvasTextBaseline.Middle;
-            c.FillStyle = Color.FromArgb(13, 27, 42);
-            c.FillText(node.Label, (int)node.Centre.X, (int)node.Centre.Y - 6);
+            using (var labelFont = new Font("Segoe UI", 17f, FontStyle.Bold, GraphicsUnit.Pixel))
+            using (var idFont = new Font("Consolas", 13f, FontStyle.Regular, GraphicsUnit.Pixel))
+            {
+                c.TextAlign = CanvasTextAlign.Left;
+                c.TextBaseline = CanvasTextBaseline.Alphabetic;
 
-            c.TextFont = new Font("default", 9F, FontStyle.Regular);
-            c.FillStyle = Color.FromArgb(90, 107, 125);
-            c.FillText(node.Severity, (int)node.Centre.X, (int)node.Centre.Y + 12);
+                c.TextFont = labelFont;
+                c.FillStyle = LabelColor;
+                c.FillText(node.Label, x + 14, y + 36);
+
+                c.TextFont = idFont;
+                c.FillStyle = IdColor;
+                c.FillText(node.Id, x + 14, y + 60);
+            }
+
+            if (node.Selected)
+            {
+                // Four handles, big enough for a thumb: nothing on this surface is a DOM control.
+                c.FillStyle = SelectedBorder;
+                foreach (var corner in new[]
+                {
+                    new Point(x, y), new Point(x + width, y),
+                    new Point(x, y + height), new Point(x + width, y + height),
+                })
+                {
+                    RoundRect(c, corner.X - 5, corner.Y - 5, 10, 10, 2);
+                    c.Fill();
+                }
+            }
+
+            if (node.Focused && !node.Selected)
+            {
+                c.Save();
+                try
+                {
+                    c.SetLineDash(new[] { 5, 4 });
+                    c.StrokeStyle = FocusRing;
+                    c.LineWidth = 2;
+                    RoundRect(c, x - 7, y - 7, width + 14, height + 14, 13);
+                    c.Stroke();
+                }
+                finally
+                {
+                    c.Restore();
+                }
+            }
+        }
+
+        private static void RoundRect(Canvas c, int x, int y, int width, int height, int radius)
+        {
+            var r = Math.Max(0, Math.Min(radius, Math.Min(width, height) / 2));
+
+            c.BeginPath();
+            c.MoveTo(x + r, y);
+            c.LineTo(x + width - r, y);
+            c.Arc(x + width - r, y + r, r, 270f, 360f, false);
+            c.LineTo(x + width, y + height - r);
+            c.Arc(x + width - r, y + height - r, r, 0f, 90f, false);
+            c.LineTo(x + r, y + height);
+            c.Arc(x + r, y + height - r, r, 90f, 180f, false);
+            c.LineTo(x, y + r);
+            c.Arc(x + r, y + r, r, 180f, 270f, false);
+            c.ClosePath();
         }
 
         // ── the list beside the surface, showing the same nodes ─────────────────
 
+        /// <summary>
+        /// Nothing on the canvas is a DOM control, so the same scene is published as a list: a
+        /// keyboard-only or screen-reader user reaches every node through it.
+        /// </summary>
         private void BuildNodeList()
         {
             this.syncingList = true;
@@ -289,7 +440,13 @@ namespace VisualOperationsStudio
             {
                 this.listNodes.Items.Clear();
                 foreach (var node in this.scene.Nodes)
-                    this.listNodes.Items.Add($"{node.Label}  -  {node.Severity}");
+                {
+                    var tone = ColorTranslator.ToHtml(node.Tone);
+                    this.listNodes.Items.Add(
+                        "<span style=\"display:inline-flex;align-items:center;gap:8px\">" +
+                        $"<span style=\"width:8px;height:8px;border-radius:999px;background:{tone}\"></span>" +
+                        $"{node.Label}</span>");
+                }
             }
             finally
             {
@@ -310,31 +467,32 @@ namespace VisualOperationsStudio
             }
         }
 
-        private void SelectNext()
+        private void SelectNext(int direction)
         {
             var current = this.scene.Nodes.IndexOf(this.scene.Selected);
-            var next = this.scene.Nodes[(current + 1 + this.scene.Nodes.Count) % this.scene.Nodes.Count];
+            var count = this.scene.Nodes.Count;
+            var next = this.scene.Nodes[((current + direction) % count + count) % count];
 
             this.scene.Select(next);
+            this.scene.Focus(next);
+
             SyncNodeList();
             RenderScene();
-            ReportSelection();
+            SetStatus($"{next.Label} selected with the keyboard", StatusTone.Ok);
         }
 
-        private void ReportSelection()
-        {
-            SyncNodeList();
-            this.lblStatus.Text = SelectionText();
-        }
+        // ── the status strip ────────────────────────────────────────────────────
 
-        private string SelectionText()
-        {
-            var node = this.scene.Selected;
-            var view = $"zoom {this.scene.Zoom:0.00}x, pan {this.scene.PanX:0}/{this.scene.PanY:0}";
+        private enum StatusTone { Idle, Ok, Warn, Bad }
 
-            return node == null
-                ? $"Nothing selected. View: {view}."
-                : $"{node.Label} selected at {node.Bounds.X:0},{node.Bounds.Y:0} in world units. View: {view}.";
+        private void SetStatus(string text, StatusTone tone)
+        {
+            this.lblStatus.Text = text;
+            this.lblStatus.ForeColor =
+                tone == StatusTone.Ok ? Color.FromArgb(31, 157, 107) :
+                tone == StatusTone.Bad ? Color.FromArgb(192, 57, 43) :
+                tone == StatusTone.Warn ? Color.FromArgb(184, 118, 15) :
+                Color.FromArgb(90, 107, 125);
         }
     }
 }

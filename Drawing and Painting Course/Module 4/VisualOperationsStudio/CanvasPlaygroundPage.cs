@@ -9,36 +9,97 @@ namespace VisualOperationsStudio
     /// A set of browser Canvas 2D examples ported to the documented <see cref="Wisej.Web.Canvas"/> API.
     /// Everything is drawn by <see cref="DrawPlayground"/>, which the Redraw event calls, so the scene
     /// comes back after a resize: the browser keeps pixels, and pixels do not survive.
+    /// The five sections are laid out in a fixed 940 x 428 scene and mapped onto the real surface with a
+    /// single Translate/Scale pair, so the composition is the same at any window size.
     /// </summary>
     public partial class CanvasPlaygroundPage : Page
     {
-        private readonly VisualOperationsPage operations;
+        private const int SceneWidth = 940;
+        private const int SceneHeight = 428;
 
-        public CanvasPlaygroundPage(VisualOperationsPage operations)
+        private static readonly Color Background = Color.FromArgb(14, 21, 32);
+        private static readonly Color LabelColor = Color.FromArgb(111, 143, 176);
+        private static readonly Color CellStroke = Color.FromArgb(39, 55, 74);
+
+        private static readonly string[] TransformLabels =
+        {
+            "Save · Translate · Restore",
+            "Save · Scale · Restore",
+            "Save · Rotate(45) · Restore",
+            "Save · SetTransform · Restore",
+        };
+
+        private static readonly Color[] TransformColors =
+        {
+            Color.FromArgb(26, 134, 255),
+            Color.FromArgb(31, 174, 90),
+            Color.FromArgb(232, 161, 60),
+            Color.FromArgb(199, 125, 255),
+        };
+
+        private static readonly int[] CellX = { 20, 250, 480, 710 };
+
+        /// <summary>How many of the five sections the last render issued. Redraw repeats that state.</summary>
+        private int sections = 5;
+
+        /// <summary>The "Resize surface" button toggles this, which is what clears the browser bitmap.</summary>
+        private bool narrowed;
+
+        public CanvasPlaygroundPage()
         {
             InitializeComponent();
-
-            this.operations = operations;
         }
 
-        private void btnBack_Click(object sender, EventArgs e)
-        {
-            Application.MainPage = this.operations;
-        }
-
-        private void canvasPlayground_Redraw(object sender, EventArgs e)
+        /// <summary>
+        /// The canvas already reports its laid-out size by Load, so the first scene is issued here.
+        /// Redraw is not guaranteed to arrive before the page is shown, and a scene drawn only from
+        /// Redraw leaves the surface empty until something resizes it.
+        /// </summary>
+        private void CanvasPlaygroundPage_Load(object sender, EventArgs e)
         {
             DrawPlayground();
         }
 
+        private void canvasPlayground_Redraw(object sender, EventArgs e)
+        {
+            // The browser threw the bitmap away. Nothing is recovered: the scene is issued again.
+            DrawPlayground();
+
+            if (this.narrowed || this.sections == 5)
+                this.lblStatus.Text = "Scene rebuilt from the model — nothing was recovered";
+        }
+
+        private void btnRender_Click(object sender, EventArgs e)
+        {
+            this.sections = 5;
+            DrawPlayground();
+            this.lblStatus.Text = "Scene complete · one UI update, LiveUpdate = false";
+        }
+
+        /// <summary>
+        /// Changes the surface size. The browser clears the bitmap when it does that and raises Redraw,
+        /// which is the failure a scene drawn once in Load never survives.
+        /// </summary>
+        private void btnResizeSurface_Click(object sender, EventArgs e)
+        {
+            this.narrowed = !this.narrowed;
+            this.pnlSurface.Padding = this.narrowed
+                ? new Padding(200, 4, 200, 90)
+                : new Padding(20, 4, 20, 8);
+
+            this.lblStatus.Text = "Surface cleared · waiting for Redraw";
+        }
+
         // ── the one method that draws ───────────────────────────────────────────
+
+        private void DrawPlayground() => DrawPlayground(this.sections);
 
         /// <summary>
         /// Rebuilds the whole scene from nothing. Every Canvas example below begins a new path before it
         /// draws: skip that and a later stroke drags the previous outline along with it, which is the
         /// commonest way a translated browser example goes wrong.
         /// </summary>
-        private void DrawPlayground()
+        private void DrawPlayground(int show)
         {
             var c = this.canvasPlayground;
             var w = c.Width;
@@ -47,210 +108,377 @@ namespace VisualOperationsStudio
                 return;
 
             c.ClearRect(0, 0, w, h);
+            c.FillStyle = Background;
+            c.FillRect(0, 0, w, h);
 
-            // Four columns, two rows of sections.
-            var column = Math.Max(160, w / 4);
-            var row = Math.Max(120, (h - 40) / 2);
+            var scale = Math.Min(w / (float)SceneWidth, h / (float)SceneHeight);
+            if (scale <= 0f)
+                return;
 
-            DrawPathsAndFills(c, 0, 0, column, row);
-            DrawGradients(c, column, 0, column, row);
-            DrawTransforms(c, column * 2, 0, column * 2, row);
-            DrawState(c, 0, row, w, row);
+            var originX = (int)Math.Round((w - SceneWidth * scale) / 2f);
+            var originY = (int)Math.Round((h - SceneHeight * scale) / 2f);
+
+            // One Save/Restore pair around the whole scene transform. Everything inside works in the
+            // fixed 940 x 428 scene coordinates.
+            c.Save();
+            try
+            {
+                c.Translate(originX, originY);
+                c.Scale(scale, scale);
+
+                if (show >= 1) DrawPathSection(c);
+                if (show >= 2) DrawRectangleSection(c);
+                if (show >= 3) DrawGradientSection(c);
+                if (show >= 4) DrawTransformSection(c, scale, originX, originY);
+                if (show >= 5) DrawStateSection(c);
+            }
+            finally
+            {
+                c.Restore();
+            }
         }
 
-        // ── section 1: paths, fills and a placed caption ────────────────────────
+        // ── 1: BeginPath · MoveTo · LineTo · Stroke ─────────────────────────────
 
-        private void DrawPathsAndFills(Canvas c, int x, int y, int width, int height)
+        private void DrawPathSection(Canvas c)
         {
-            SectionTitle(c, "Paths and fills", x, y);
+            Label(c, "BeginPath · MoveTo · LineTo · Stroke", 20, 28);
 
-            // A stroked polyline. BeginPath first, always.
+            int[,] points =
+            {
+                { 20, 150 }, { 60, 110 }, { 100, 132 }, { 140, 84 },
+                { 180, 106 }, { 220, 68 }, { 260, 94 },
+            };
+
             c.BeginPath();
-            c.StrokeStyle = Color.FromArgb(21, 101, 216);
+            c.StrokeStyle = Color.FromArgb(79, 195, 247);
             c.LineWidth = 3;
-            c.MoveTo(x + 24, y + height - 40);
-            c.LineTo(x + 24 + width / 5, y + 60);
-            c.LineTo(x + 24 + width / 5 * 2, y + height - 80);
-            c.LineTo(x + 24 + width / 5 * 3, y + 90);
+            c.LineCap = CanvasLineCap.Round;
+            c.LineJoin = CanvasLineJoin.Round;
+            c.MoveTo(points[0, 0], points[0, 1]);
+            for (var i = 1; i < points.GetLength(0); i++)
+                c.LineTo(points[i, 0], points[i, 1]);
+
+            // The polyline only appears at Stroke(): nothing is drawn while the path is being built.
             c.Stroke();
-
-            c.FillStyle = Color.FromArgb(31, 157, 107);
-            c.FillRect(x + 24, y + height - 34, 70, 22);
-
-            c.FillStyle = Color.FromArgb(232, 161, 60);
-            c.FillRect(x + 104, y + height - 34, 70, 22);
-
-            // The browser's text-measuring call is not part of the documented Wisej.NET surface, so the
-            // caption is placed with the alignment and baseline properties instead of measured.
-            Caption(c, "BeginPath - MoveTo - LineTo - Stroke - FillRect", x + 24, y + height - 8);
+            c.LineCap = CanvasLineCap.Butt;
         }
 
-        // ── section 2: gradients are objects, not inline strings ────────────────
+        // ── 2: FillRect · TextAlign · TextBaseline ──────────────────────────────
 
-        private void DrawGradients(Canvas c, int x, int y, int width, int height)
+        private void DrawRectangleSection(Canvas c)
         {
-            SectionTitle(c, "Gradients", x, y);
+            Label(c, "FillRect · TextAlign · TextBaseline", 300, 28);
 
-            var bar = new Rectangle(x + 24, y + 50, width - 60, 46);
-            var linear = c.CreateLinearGradient(
-                bar.Left, bar.Top, bar.Right, bar.Top,
-                new object[]
-                {
-                    // Each stop is an object with a "stop" (0..1) and a "color" the client theme can
-                    // resolve - a hex string or a theme colour name, not a System.Drawing.Color.
-                    new { stop = 0f, color = "#1f9d6b" },
-                    new { stop = 0.6f, color = "#e8a13c" },
-                    new { stop = 1f, color = "#d93a3a" },
-                });
+            c.FillStyle = Color.FromArgb(47, 111, 208);
+            RoundRect(c, 300, 42, 112, 54, 3);
+            c.Fill();
+
+            c.FillStyle = Color.FromArgb(31, 174, 90);
+            RoundRect(c, 300, 106, 168, 26, 3);
+            c.Fill();
+
+            c.Save();
+            try
+            {
+                c.SetLineDash(new[] { 3, 3 });
+                c.StrokeStyle = Color.FromArgb(66, 86, 109);
+                c.LineWidth = 1;
+                c.BeginPath();
+                c.MoveTo(384, 140);
+                c.LineTo(384, 156);
+                c.Stroke();
+            }
+            finally
+            {
+                c.Restore();
+            }
+
+            // There is no measureText on this surface: the caption is centred with TextAlign instead.
+            using (var font = new Font("Segoe UI", 15f, FontStyle.Bold, GraphicsUnit.Pixel))
+            {
+                c.TextFont = font;
+                c.TextAlign = CanvasTextAlign.Center;
+                c.TextBaseline = CanvasTextBaseline.Alphabetic;
+                c.FillStyle = Color.FromArgb(214, 228, 243);
+                c.FillText("Zone A · 72 %", 384, 172);
+                c.TextAlign = CanvasTextAlign.Left;
+            }
+        }
+
+        // ── 3: gradients are objects, not inline strings ────────────────────────
+
+        private void DrawGradientSection(Canvas c)
+        {
+            Label(c, "CreateLinearGradient · CreateRadialGradient", 580, 28);
+
+            // Each stop is an object with a "stop" (0..1) and a "color". An array of pairs compiles and
+            // then fills near-black, which is the one mistake this call punishes silently.
+            var linear = c.CreateLinearGradient(580, 42, 910, 42, new object[]
+            {
+                new { stop = 0f, color = "#1a86ff" },
+                new { stop = 0.5f, color = "#7d5ae0" },
+                new { stop = 1f, color = "#e05a8a" },
+            });
 
             c.FillStyle = linear;
-            c.FillRect(bar.X, bar.Y, bar.Width, bar.Height);
+            RoundRect(c, 580, 42, 330, 38, 6);
+            c.Fill();
 
-            var radius = Math.Min(70, height / 3);
-            var cx = x + 24 + radius;
-            var cy = y + height - radius - 40;
-            var radial = c.CreateRadialGradient(
-                cx - radius / 3, cy - radius / 3, radius / 8f, cx, cy, radius,
-                new object[]
-                {
-                    new { stop = 0f, color = "#b4d6ff" },
-                    new { stop = 1f, color = "#1565d8" },
-                });
+            var radial = c.CreateRadialGradient(617, 120, 0f, 628, 134, 38f, new object[]
+            {
+                new { stop = 0f, color = "#ffeec2" },
+                new { stop = 0.45f, color = "#e8a13c" },
+                new { stop = 1f, color = "#7d3f0c" },
+            });
 
             c.FillStyle = radial;
             c.BeginPath();
-            c.Arc(cx, cy, radius, 0f, 360f, false);
+            c.Arc(628, 134, 38, 0f, 360f, false);       // a full circle is 0 to 360 degrees, not 2 * PI
             c.Fill();
 
-            Caption(c, "CreateLinearGradient / CreateRadialGradient", x + 24, y + height - 8);
+            using (var font = new Font("Segoe UI", 13f, FontStyle.Regular, GraphicsUnit.Pixel))
+            {
+                c.TextFont = font;
+                c.TextAlign = CanvasTextAlign.Left;
+                c.TextBaseline = CanvasTextBaseline.Alphabetic;
+                c.FillStyle = Color.FromArgb(159, 192, 232);
+                c.FillText("colour stops in,", 684, 128);
+                c.FillText("one style object out", 684, 146);
+            }
         }
 
-        // ── section 3: every transform inside Save/Restore ──────────────────────
+        // ── 4: four transforms, each bracketed by Save and Restore ──────────────
 
-        private void DrawTransforms(Canvas c, int x, int y, int width, int height)
+        private void DrawTransformSection(Canvas c, float sceneScale, int originX, int originY)
         {
-            SectionTitle(c, "Transforms - each bracketed by Save/Restore", x, y);
+            for (var i = 0; i < 4; i++)
+            {
+                var x = CellX[i];
+                const int y = 178;
 
-            var box = Math.Min(54, height / 4);
-            var baseY = y + 60;
-            var step = Math.Max(120, width / 4);
+                Cell(c, x, y, 210, 112, TransformLabels[i]);
 
-            // Translate
-            c.Save();
-            c.Translate(x + 24, baseY);
-            c.FillStyle = Color.FromArgb(21, 101, 216);
-            c.FillRect(0, 0, box, box);
-            c.Restore();
+                c.Save();
+                try
+                {
+                    switch (i)
+                    {
+                        case 0:
+                            c.Translate(x + 62, y + 62);
+                            break;
+                        case 1:
+                            c.Translate(x + 62, y + 62);
+                            c.Scale(1.45f, 1.45f);
+                            break;
+                        case 2:
+                            c.Translate(x + 62, y + 62);
+                            c.Rotate(45f);              // the browser example's rotate(Math.PI / 4)
+                            break;
+                        default:
+                            // SetTransform REPLACES the current matrix, scene transform included, so the
+                            // scene's scale and origin have to be folded into the call by hand.
+                            c.SetTransform(
+                                sceneScale,
+                                0.28f * sceneScale,
+                                -0.18f * sceneScale,
+                                sceneScale,
+                                originX + (int)Math.Round((x + 62) * sceneScale),
+                                originY + (int)Math.Round((y + 62) * sceneScale));
+                            break;
+                    }
 
-            // Scale
-            c.Save();
-            c.Translate(x + 24 + step, baseY);
-            c.Scale(1.4f, 0.7f);
-            c.FillStyle = Color.FromArgb(31, 157, 107);
-            c.FillRect(0, 0, box, box);
-            c.Restore();
-
-            // Rotate: the browser example rotates by Math.PI / 4 radians.
-            // Wisej.NET Canvas.Rotate takes degrees, so Math.PI / 4 == 45.
-            c.Save();
-            c.Translate(x + 24 + step * 2 + box / 2, baseY + box / 2);
-            c.Rotate(45f);
-            c.FillStyle = Color.FromArgb(232, 161, 60);
-            c.FillRect(-box / 2, -box / 2, box, box);
-            c.Restore();
-
-            // SetTransform: scale, skew and translate in one call.
-            c.Save();
-            c.SetTransform(1f, 0.32f, 0f, 1f, x + 24 + step * 3, baseY);
-            c.FillStyle = Color.FromArgb(125, 90, 224);
-            c.FillRect(0, 0, box, box);
-            c.Restore();
-
-            var labelY = baseY + box + 18;
-            Caption(c, "Translate", x + 24, labelY);
-            Caption(c, "Scale", x + 24 + step, labelY);
-            Caption(c, "Rotate(45) = Math.PI / 4", x + 24 + step * 2, labelY);
-            Caption(c, "SetTransform", x + 24 + step * 3, labelY);
+                    c.GlobalAlpha = 0.92f;
+                    c.FillStyle = TransformColors[i];
+                    RoundRect(c, -26, -16, 52, 32, 4);
+                    c.Fill();
+                    c.GlobalAlpha = 1f;
+                }
+                finally
+                {
+                    // Take this Restore out and every section drawn after it inherits the transform.
+                    c.Restore();
+                }
+            }
         }
 
-        // ── section 4: clip, alpha, dash and shadow are all Canvas state ────────
+        // ── 5: clip, alpha, dash and shadow are all Canvas state ────────────────
 
-        private void DrawState(Canvas c, int x, int y, int width, int height)
+        private void DrawStateSection(Canvas c)
         {
-            SectionTitle(c, "State - clip, alpha, dash, shadow", x, y);
+            const int y = 304;
 
-            var top = y + 54;
-            var size = Math.Min(110, height - 90);
-            var column = Math.Max(180, width / 4);
-
-            // A clipping region, inside its own save/restore pair.
+            // Clip()
+            Cell(c, CellX[0], y, 210, 108, "Clip()");
             c.Save();
-            c.BeginPath();
-            c.Arc(x + 24 + size / 2, top + size / 2, size / 2, 0f, 360f, false);
-            c.Clip();
-            c.FillStyle = Color.FromArgb(21, 101, 216);
-            c.FillRect(x + 24, top, size, size);
-            c.FillStyle = Color.FromArgb(255, 255, 255);
-            c.FillRect(x + 24, top + size / 2, size, size / 2);
-            c.Restore();
+            try
+            {
+                c.BeginPath();
+                c.Arc(CellX[0] + 66, y + 58, 42, 0f, 360f, false);
+                c.Clip();
 
-            // Reduced transparency.
-            c.Save();
-            c.GlobalAlpha = 0.35f;
-            c.FillStyle = Color.FromArgb(217, 58, 58);
-            c.FillRect(x + 24 + column, top, size, size);
-            c.FillStyle = Color.FromArgb(31, 157, 107);
-            c.FillRect(x + 24 + column + size / 3, top + size / 3, size, size);
-            c.Restore();
+                c.FillStyle = Color.FromArgb(79, 195, 247);
+                for (var k = 0; k < 8; k++)
+                    c.FillRect(CellX[0] + 24 + k * 12, y + 16, 7, 86);
+            }
+            finally
+            {
+                c.Restore();
+            }
 
-            // A dashed rule.
             c.Save();
-            c.SetLineDash(new[] { 12, 8 });
-            c.StrokeStyle = Color.FromArgb(90, 107, 125);
-            c.LineWidth = 2;
-            c.BeginPath();
-            c.MoveTo(x + 24 + column * 2, top + size / 2);
-            c.LineTo(x + 24 + column * 2 + size, top + size / 2);
+            try
+            {
+                c.SetLineDash(new[] { 4, 4 });
+                c.StrokeStyle = Color.FromArgb(45, 66, 86);
+                c.LineWidth = 1;
+                c.BeginPath();
+                c.Arc(CellX[0] + 66, y + 58, 42, 0f, 360f, false);
+                c.Stroke();
+            }
+            finally
+            {
+                c.Restore();
+            }
+
+            // GlobalAlpha
+            Cell(c, CellX[1], y, 210, 108, "GlobalAlpha");
+            c.Save();
+            try
+            {
+                c.GlobalAlpha = 0.4f;
+                c.FillStyle = Color.FromArgb(26, 134, 255);
+                RoundRect(c, CellX[1] + 34, y + 34, 70, 58, 5);
+                c.Fill();
+
+                c.FillStyle = Color.FromArgb(224, 90, 138);
+                RoundRect(c, CellX[1] + 78, y + 46, 70, 46, 5);
+                c.Fill();
+            }
+            finally
+            {
+                c.Restore();
+            }
+
+            // SetLineDash
+            Cell(c, CellX[2], y, 210, 108, "SetLineDash");
+            c.Save();
+            try
+            {
+                c.LineWidth = 3;
+                c.SetLineDash(new[] { 14, 7 });
+                c.StrokeStyle = Color.FromArgb(126, 224, 160);
+                c.BeginPath();
+                c.MoveTo(CellX[2] + 22, y + 52);
+                c.LineTo(CellX[2] + 188, y + 52);
+                c.Stroke();
+
+                c.SetLineDash(new[] { 3, 6 });
+                c.StrokeStyle = Color.FromArgb(255, 210, 125);
+                c.BeginPath();
+                c.MoveTo(CellX[2] + 22, y + 82);
+                c.LineTo(CellX[2] + 188, y + 82);
+                c.Stroke();
+            }
+            finally
+            {
+                c.Restore();
+            }
+
+            // Shadow
+            Cell(c, CellX[3], y, 210, 108, "ShadowBlur · ShadowOffset");
+            c.Save();
+            try
+            {
+                c.ShadowColor = Color.FromArgb(128, 0, 0, 0);
+                c.ShadowBlur = 10;
+                c.ShadowOffsetX = 6;
+                c.ShadowOffsetY = 8;
+                c.FillStyle = Color.FromArgb(234, 242, 251);
+                RoundRect(c, CellX[3] + 40, y + 34, 118, 50, 7);
+                c.Fill();
+            }
+            finally
+            {
+                c.Restore();
+            }
+
+            using (var font = new Font("Segoe UI", 13f, FontStyle.Bold, GraphicsUnit.Pixel))
+            {
+                c.TextFont = font;
+                c.TextAlign = CanvasTextAlign.Center;
+                c.TextBaseline = CanvasTextBaseline.Alphabetic;
+                c.FillStyle = Color.FromArgb(34, 64, 94);
+                c.FillText("Node 12", CellX[3] + 99, y + 64);
+                c.TextAlign = CanvasTextAlign.Left;
+            }
+        }
+
+        // ── small helpers ───────────────────────────────────────────────────────
+
+        /// <summary>One of the eight dark cells the transform and state sections are drawn inside.</summary>
+        private void Cell(Canvas c, int x, int y, int width, int height, string caption)
+        {
+            c.Save();
+            try
+            {
+                c.GlobalAlpha = 0.03f;
+                c.FillStyle = Color.White;
+                RoundRect(c, x, y, width, height, 9);
+                c.Fill();
+            }
+            finally
+            {
+                c.Restore();
+            }
+
+            c.StrokeStyle = CellStroke;
+            c.LineWidth = 1;
+            RoundRect(c, x, y, width, height, 9);
             c.Stroke();
-            c.Restore();
 
-            // A shadowed card.
-            c.Save();
-            c.ShadowColor = Color.FromArgb(120, 13, 27, 42);
-            c.ShadowBlur = 14;
-            c.ShadowOffsetX = 4;
-            c.ShadowOffsetY = 6;
-            c.FillStyle = Color.White;
-            c.FillRect(x + 24 + column * 3, top + 10, size + 30, size - 20);
-            c.Restore();
-
-            var captionY = top + size + 20;
-            Caption(c, "Clip()", x + 24, captionY);
-            Caption(c, "GlobalAlpha", x + 24 + column, captionY);
-            Caption(c, "SetLineDash", x + 24 + column * 2, captionY);
-            Caption(c, "ShadowColor / ShadowBlur / ShadowOffset", x + 24 + column * 3, captionY);
+            using (var font = new Font("Consolas", 10.5f, FontStyle.Bold, GraphicsUnit.Pixel))
+            {
+                c.TextFont = font;
+                c.TextAlign = CanvasTextAlign.Left;
+                c.TextBaseline = CanvasTextBaseline.Alphabetic;
+                c.FillStyle = LabelColor;
+                c.FillText(caption, x + 10, y + 16);
+            }
         }
 
         /// <summary>
         /// Text is placed with TextAlign and TextBaseline rather than measured: the browser's
         /// measureText call is not part of the documented Wisej.NET Canvas surface.
         /// </summary>
-        private void Caption(Canvas c, string text, int x, int y)
+        private void Label(Canvas c, string text, int x, int y)
         {
-            c.TextFont = new Font("default", 10F, FontStyle.Regular);
-            c.TextAlign = CanvasTextAlign.Left;
-            c.TextBaseline = CanvasTextBaseline.Top;
-            c.FillStyle = Color.FromArgb(90, 107, 125);
-            c.FillText(text, x, y);
+            using (var font = new Font("Consolas", 11f, FontStyle.Bold, GraphicsUnit.Pixel))
+            {
+                c.TextFont = font;
+                c.TextAlign = CanvasTextAlign.Left;
+                c.TextBaseline = CanvasTextBaseline.Alphabetic;
+                c.FillStyle = LabelColor;
+                c.FillText(text, x, y);
+            }
         }
 
-        private void SectionTitle(Canvas c, string text, int x, int y)
+        /// <summary>A rounded rectangle path. Angles are degrees on this surface, not radians.</summary>
+        private static void RoundRect(Canvas c, int x, int y, int width, int height, int radius)
         {
-            c.TextFont = new Font("default", 11F, FontStyle.Bold);
-            c.TextAlign = CanvasTextAlign.Left;
-            c.TextBaseline = CanvasTextBaseline.Top;
-            c.FillStyle = Color.FromArgb(13, 27, 42);
-            c.FillText(text, x + 24, y + 18);
+            var r = Math.Max(0, Math.Min(radius, Math.Min(width, height) / 2));
+
+            c.BeginPath();
+            c.MoveTo(x + r, y);
+            c.LineTo(x + width - r, y);
+            c.Arc(x + width - r, y + r, r, 270f, 360f, false);
+            c.LineTo(x + width, y + height - r);
+            c.Arc(x + width - r, y + height - r, r, 0f, 90f, false);
+            c.LineTo(x + r, y + height);
+            c.Arc(x + r, y + height - r, r, 90f, 180f, false);
+            c.LineTo(x, y + r);
+            c.Arc(x + r, y + r, r, 180f, 270f, false);
+            c.ClosePath();
         }
 
         // ── the one place LiveUpdate is turned on ───────────────────────────────
@@ -263,32 +491,29 @@ namespace VisualOperationsStudio
         private void btnProgressive_Click(object sender, EventArgs e)
         {
             var c = this.canvasPlayground;
-            var w = c.Width;
-            var h = c.Height;
-            if (w <= 0 || h <= 0)
+            if (c.Width <= 0 || c.Height <= 0)
                 return;
 
             c.LiveUpdate = true;
+            this.lblLiveUpdate.Text = "LiveUpdate = true";
             try
             {
-                DrawPlayground();
-
-                var y = h - 70;
-                for (var step = 0; step < 8; step++)
+                for (var step = 1; step <= 5; step++)
                 {
-                    c.FillStyle = Color.FromArgb(21, 101, 216);
-                    c.FillRect(24 + step * 44, y, 34, 22);
-                    Thread.Sleep(140);
+                    this.sections = step;
+                    DrawPlayground(step);
+                    this.lblStatus.Text = $"Rendering · DrawPlayground() section {step} of 5";
+                    Thread.Sleep(450);
                 }
             }
             finally
             {
                 c.LiveUpdate = false;
+                this.lblLiveUpdate.Text = "LiveUpdate = false";
             }
 
-            this.lblStatus.Text =
-                "Progressive draw: LiveUpdate on sends each step as its own message (8 here). " +
-                "The main render sends the whole scene in one.";
+            this.sections = 5;
+            this.lblStatus.Text = "Scene complete · one UI update, LiveUpdate = false";
         }
     }
 }

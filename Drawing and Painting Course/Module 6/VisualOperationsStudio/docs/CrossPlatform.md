@@ -1,7 +1,7 @@
 # CrossPlatform — rendering a PNG on the server, and where that code can run
 
 Lab 6 deliverable. Measured on this project at `http://localhost:6006`, Wisej-4 4.1.0,
-`TopologyImageRenderer`, export size 1600 × 900.
+`TopologyImageRenderer`, export size 1200 × 700.
 
 ## Three names, one thing
 
@@ -60,14 +60,14 @@ job that needs the image runs.
 
 | | Value |
 |---|---|
-| Output | 1600 × 900 PNG, 37 KB |
-| Objects drawn | 13 (6 edges + 7 nodes) |
-| First export in a session | **1043 ms** (JIT plus the font-collection probe) |
-| Subsequent exports | **≈ 504 ms** |
+| Output | 1200 × 700 PNG, 60 KB |
+| Objects drawn | 10 (5 edges + 5 nodes) |
+| First export in a session | **≈ 1850 ms** (JIT plus the font-collection probe) |
+| Subsequent exports | **≈ 450 ms** |
 | Font resolved | `Microsoft Sans Serif (runtime fallback)` — no font file is shipped in `Fonts/` |
 | Controls involved | none: no `using Wisej.Web;` appears in `TopologyImageRenderer.cs` |
 
-Half a second for thirteen shapes is almost all PNG encoding of a 1.44-megapixel surface, not drawing.
+Most of that time is PNG encoding of a 0.84-megapixel surface, not drawing.
 That is the obvious thing to optimise, and Module 7 does exactly that by exporting a smaller bitmap.
 
 ## Size bounds

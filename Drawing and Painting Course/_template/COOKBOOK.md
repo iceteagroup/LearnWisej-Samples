@@ -39,6 +39,14 @@ The API is close but not identical. What is missing or different, verified again
 | `DrawString(text, font, brush, PointF, StringFormat)` | draws **nothing** |
 | — | measure with `MeasureString` and draw with `DrawString(text, font, brush, float x, float y)` |
 
+**`DrawString` past the right edge throws instead of clipping.** Give `DrawString(text, font, brush, x, y)`
+an `x` at or beyond the surface's width and it does not draw nothing — it raises
+`DivideByZeroException` from `SixLabors.ImageSharp.Drawing`'s fill processor, several frames below
+`Graphics.DrawNativeClipped`. On a control the exception is swallowed and the surface is simply blank;
+inside a `try`/`catch` around an off-screen render it surfaces as a mysterious "Attempted to divide by
+zero." while the rest of the screen works. It happens on any narrow layout, so **measure first and skip
+the string when it will not fit** — the same rule the gauge's caption already follows.
+
 `Graphics` does have `BeginContainer`, `EndContainer`, `Transform`, `ResetTransform`, `SetClip`,
 `MeasureString`, and the usual `Draw*`/`Fill*` family. `GraphicsPath`, `StringFormat`,
 `LinearGradientBrush`, `PrivateFontCollection` and `ImageFormat` are all present.

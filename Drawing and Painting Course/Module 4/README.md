@@ -4,10 +4,8 @@ Local lab build for **Module 4 · Canvas and the HTML5 2D Model**. A `CanvasPlay
 of browser Canvas 2D examples to the documented `Wisej.Web.Canvas` API: paths and fills, a placed
 caption, linear and radial gradients, four transform blocks bracketed by `Save`/`Restore`, and a state
 section with a clip, a reduced alpha, a dash pattern and a shadow.
-The three remaining Module 1 surfaces - `Label` + `ProgressBar`, a `Wisej.Web.Canvas` and an
-off-screen `Bitmap` in a `PictureBox` - stay on the operations page under the gauges, so the same
-reading can still be compared across surfaces. Surface 2, the inline `Paint` handler, is now the
-`TelemetryGauge` control itself.
+The playground is the application's start page: a toolbar with `Render`, `Resize surface` and
+`Progressive (LiveUpdate)`, the dark drawing surface, and a status line naming what the last render did.
 
 This folder is the complete application at this point in the course, with its own solution and port.
 
