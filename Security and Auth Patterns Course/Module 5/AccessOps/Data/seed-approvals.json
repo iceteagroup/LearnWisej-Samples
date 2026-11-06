@@ -1,0 +1,10 @@
+{
+  "_comment": "Demo approval requests. department is the department the request is charged to (the scope rule); the grid shows the requester's own department.",
+  "requests": [
+    { "id": 4104, "requesterId": 4115, "subject": "Audit software licence",       "department": "Finance",    "amount": 3150,  "status": "Pending" },
+    { "id": 4112, "requesterId": 3077, "subject": "Planning tool seat",           "department": "Operations", "amount": 860,   "status": "Approved" },
+    { "id": 4115, "requesterId": 3104, "subject": "Supplier contract review",     "department": "Operations", "amount": 41900, "status": "Pending" },
+    { "id": 4117, "requesterId": 3092, "subject": "Analytics training",           "department": "Operations", "amount": 3150,  "status": "Pending" },
+    { "id": 4118, "requesterId": 3081, "subject": "Site equipment refresh",       "department": "Operations", "amount": 12400, "status": "Pending" }
+  ]
+}

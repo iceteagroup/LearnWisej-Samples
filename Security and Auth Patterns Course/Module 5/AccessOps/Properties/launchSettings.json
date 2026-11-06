@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "AccessOps": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:6405",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)",
+        "Oidc__ClientSecret": "DEMO-ONLY-accessops-test-idp-secret"
+      }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# Runtime data written by the AccessOps samples: the SQLite database, uploaded documents, the
+# quarantine folder and log files. All of it lives outside the web root and none of it is source.
+AccessOpsData/
+*.db
+*.db-shm
+*.db-wal

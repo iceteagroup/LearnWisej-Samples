@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    TEST DOUBLE - NEVER DEPLOY.
+    A minimal OpenID Connect provider ("Contoso Identity") for the AccessOps lab: authorization code
+    flow with PKCE, discovery, JWKS, token, userinfo, revocation and end-session endpoints, and a fixed
+    set of demo users. It exists so the lab runs on localhost without an external account or a real
+    client secret. It refuses to start outside the Development environment and binds to localhost.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>AccessOps.TestIdentityProvider</RootNamespace>
+    <UserSecretsId>accessops-security-course-test-idp</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="Data\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

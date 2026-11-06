@@ -1,0 +1,12 @@
+{
+  "_comment": "Demo document records (metadata only in Modules 2-4; the files themselves arrive with the Module 5 document store).",
+  "documents": [
+    { "id": 9001, "title": "Q3 headcount plan.xlsx",        "department": "Operations", "classification": "Confidential", "sizeBytes": 88064,   "updated": "2026-11-04" },
+    { "id": 9002, "title": "Supplier audit 2026.pdf",       "department": "Operations", "classification": "Internal",     "sizeBytes": 742400,  "updated": "2026-11-03" },
+    { "id": 9003, "title": "Shift premium review.docx",     "department": "Operations", "classification": "Confidential", "sizeBytes": 56320,   "updated": "2026-11-02" },
+    { "id": 9004, "title": "Salary review 2026.pdf",        "department": "Finance",    "classification": "Confidential", "sizeBytes": 421888,  "updated": "2026-11-05" },
+    { "id": 9005, "title": "Payroll variance.xlsx",         "department": "Finance",    "classification": "Confidential", "sizeBytes": 98304,   "updated": "2026-11-02" },
+    { "id": 9006, "title": "Board pack — Q1.pdf",           "department": "Executive",  "classification": "Restricted",   "sizeBytes": 3984588, "updated": "2026-11-02" },
+    { "id": 9007, "title": "Vendor contract — Meridian.pdf","department": "Legal",      "classification": "Restricted",   "sizeBytes": 1258291, "updated": "2026-10-30" }
+  ]
+}

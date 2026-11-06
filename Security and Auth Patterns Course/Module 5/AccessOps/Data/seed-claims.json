@@ -1,0 +1,8 @@
+{
+  "_comment": "Per-employee grants and denials (the claims of the identity store). Denial wins over any grant or role.",
+  "claims": [
+    { "employeeId": 4131, "kind": "grant", "permission": "UploadDocument" },
+    { "employeeId": 4187, "kind": "deny",  "permission": "ManageUsers" },
+    { "employeeId": 2101, "kind": "grant", "permission": "UploadDocument" }
+  ]
+}

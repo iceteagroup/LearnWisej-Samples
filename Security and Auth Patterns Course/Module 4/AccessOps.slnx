@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="AccessOps/AccessOps.csproj" />
+  <Project Path="AccessOps.Tests/AccessOps.Tests.csproj" />
+  <Project Path="AccessOps.TestIdentityProvider/AccessOps.TestIdentityProvider.csproj" />
+</Solution>

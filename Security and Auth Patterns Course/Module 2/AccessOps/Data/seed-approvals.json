@@ -1,0 +1,9 @@
+{
+  "_comment": "Demo approval requests.",
+  "requests": [
+    { "id": 4101, "requesterId": 4131, "subject": "Contractor access — 30 days", "department": "Operations", "amount": 0,     "status": "Pending" },
+    { "id": 4103, "requesterId": 4120, "subject": "Field tablet replacement",    "department": "Operations", "amount": 1240,  "status": "Pending" },
+    { "id": 4104, "requesterId": 4115, "subject": "Audit software licence",      "department": "Finance",    "amount": 3150,  "status": "Pending" },
+    { "id": 4105, "requesterId": 4102, "subject": "Site badge reissue",          "department": "Operations", "amount": 0,     "status": "Approved" }
+  ]
+}

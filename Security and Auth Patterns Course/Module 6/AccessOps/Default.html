@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AccessOps</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <script>
+        // Sign-out hand-off (see Pages/SignOutFlow.cs). The server calls accessOpsEnded(word) just
+        // before it ends the session; after the reload the word becomes the ?ended= query the
+        // sign-in page reads - or, for an external sign-in, a trip through /account/signout so the
+        // identity provider's session ends too. Only these six words are ever accepted.
+        var accessOpsWords = ["idle", "signout", "expired", "idle-external", "signout-external", "expired-external"];
+        window.accessOpsEnded = function (word) {
+            if (accessOpsWords.indexOf(word) >= 0)
+                sessionStorage.setItem("AccessOps.Ended", word);
+            return true;
+        };
+        (function () {
+            var ended = sessionStorage.getItem("AccessOps.Ended");
+            if (accessOpsWords.indexOf(ended) < 0)
+                return;
+            sessionStorage.removeItem("AccessOps.Ended");
+            if (/-external$/.test(ended))
+                location.replace("account/signout?reason=" + ended.replace("-external", ""));
+            else
+                history.replaceState(null, "", "Default.html?ended=" + ended);
+        })();
+
+        // A page function the server calls with Application.Call("showToast", text): the text is an
+        // argument and is set as textContent - it is never parsed as HTML or script.
+        window.showToast = function (text) {
+            var toast = document.createElement("div");
+            toast.textContent = String(text);
+            toast.style.cssText = "position:fixed;right:24px;bottom:64px;z-index:100000;padding:10px 16px;border-radius:8px;" +
+                "background:#155e40;color:#fff;font:600 13px Segoe UI,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.2)";
+            document.body.appendChild(toast);
+            setTimeout(function () { toast.remove(); }, 4000);
+            return true;
+        };
+    </script>
+    <script src="wisej.wx"></script>
+</head>
+<body>
+
+</body>
+</html>

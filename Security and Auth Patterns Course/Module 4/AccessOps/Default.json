@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "AccessOps.Program.Main, AccessOps",
+  "theme": "Bootstrap-4",
+  "sessionTimeout": 1200,
+  "autoReload": true
+}

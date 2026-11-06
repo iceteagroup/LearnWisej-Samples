@@ -1,0 +1,5 @@
+{
+  "url": "Default.html",
+  "startup": "AccessOps.Program.Main, AccessOps",
+  "theme": "Bootstrap-4"
+}

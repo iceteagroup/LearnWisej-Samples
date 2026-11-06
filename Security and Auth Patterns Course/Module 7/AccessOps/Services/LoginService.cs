@@ -1,0 +1,138 @@
+using System;
+using System.Linq;
+using Microsoft.Extensions.Logging;
+
+namespace AccessOps.Services
+{
+    public sealed class LoginResult
+    {
+        private LoginResult(bool succeeded, LoginOutcome outcome, int employeeId)
+        {
+            this.Succeeded = succeeded;
+            this.Outcome = outcome;
+            this.EmployeeId = employeeId;
+        }
+
+        public bool Succeeded { get; }
+
+        /// <summary>The real reason. For the audit table only; the screen shows one sentence.</summary>
+        public LoginOutcome Outcome { get; }
+
+        public int EmployeeId { get; }
+
+        public static LoginResult Verified(int employeeId, LoginOutcome outcome) => new(true, outcome, employeeId);
+        public static LoginResult Refused(LoginOutcome outcome) => new(false, outcome, 0);
+    }
+
+    /// <summary>
+    /// The only path that signs anybody in. Throttle, verify, audit every outcome; on success a
+    /// fresh session ID and only then the <see cref="SessionContext"/>.
+    /// </summary>
+    public sealed class LoginService
+    {
+        private readonly EmployeeRepository _employees;
+        private readonly PasswordService _passwords;
+        private readonly LoginThrottle _throttle;
+        private readonly LoginAuditService _audit;
+        private readonly IAccessOpsSession _session;
+        private readonly PermissionService _permissions;
+        private readonly LoginRateLimiter _rate;
+        private readonly ILogger<LoginService> _log;
+
+        public LoginService(EmployeeRepository employees, PasswordService passwords, LoginThrottle throttle,
+            LoginAuditService audit, IAccessOpsSession session, PermissionService permissions, LoginRateLimiter rate,
+            ILogger<LoginService> log = null)
+        {
+            _rate = rate;
+            _log = log;
+            _permissions = permissions;
+            _employees = employees;
+            _passwords = passwords;
+            _throttle = throttle;
+            _audit = audit;
+            _session = session;
+        }
+
+        /// <summary>Failures recorded against a user name in the current window (for the footer).</summary>
+        public int FailuresFor(string userName) => _throttle.FailuresFor(Normalize(userName));
+
+        public LoginResult SignIn(string userName, string password)
+        {
+            var name = Normalize(userName);
+            var address = _session.ClientAddress;
+
+            // Module 7: the rate limit is taken first - before the lockout check and before the hash,
+            // so a burst costs the server nothing; the screen shows the same sentence as a wrong
+            // password and the audit trail the real reason
+            if (!_rate.TryTake(name, address))
+                return Refuse(name, address, LoginOutcome.RateLimited);
+
+            // locked: refused before the hash is computed
+            if (_throttle.IsLocked(name, address))
+                return Refuse(name, address, LoginOutcome.LockedOut);
+
+            // an unknown name still pays for one full derivation, so it is not faster to refuse
+            var stored = _employees.FindCredential(name);
+            var verified = _passwords.Verify(password ?? "", stored ?? StoredCredential.Dummy);
+
+            if (stored == null)
+            {
+                _throttle.RegisterFailure(name, address);
+                return Refuse(name, address, LoginOutcome.UnknownUser);
+            }
+            if (!verified)
+            {
+                _throttle.RegisterFailure(name, address);
+                return Refuse(name, address, LoginOutcome.BadCredential);
+            }
+
+            var employee = _employees.Find(stored.EmployeeId);
+            if (employee == null || employee.IsDisabled)
+                return Refuse(name, address, LoginOutcome.Disabled);
+
+            // from Module 4 people sign in through the identity provider; the password path is
+            // kept for named service accounts only - same sentence on screen, real reason audited
+            if (!employee.IsServiceAccount)
+                return Refuse(name, address, LoginOutcome.NotServiceAccount);
+
+            _throttle.Reset(name);
+            _audit.Write(name, address, LoginOutcome.Success);
+            _session.Establish(BuildContext(employee, "Password"));
+            return LoginResult.Verified(employee.Id, LoginOutcome.Success);
+        }
+
+        /// <summary>
+        /// Signs in an employee the external sign-in already identified and mapped (see
+        /// ExternalIdentityMapper, which wrote the audit row). The identity provider said who;
+        /// the permission set is still resolved here, from the local record.
+        /// </summary>
+        public LoginResult SignInExternal(int employeeId, string method)
+        {
+            var employee = _employees.Find(employeeId);
+            if (employee == null || employee.IsDisabled)
+                return LoginResult.Refused(LoginOutcome.ExternalRejected);
+
+            _session.Establish(BuildContext(employee, method));
+            return LoginResult.Verified(employee.Id, LoginOutcome.ExternalSuccess);
+        }
+
+        private SessionContext BuildContext(EmployeeAccount employee, string method)
+        {
+            var roles = (employee.Roles ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return new SessionContext(
+                employee.Id, employee.UserName, employee.DisplayName, employee.Department, employee.IsManager,
+                roles, DateTime.UtcNow, _session.ClientAddress, _session.UserAgent, method,
+                _permissions.ResolveFor(employee), _employees.DirectReports(employee.Id), DateTime.UtcNow);
+        }
+
+        private LoginResult Refuse(string name, string address, LoginOutcome outcome)
+        {
+            _audit.Write(name, address, outcome);
+            // the outcome and the address - never the password, not even a wrong one
+            _log?.LogWarning("Password sign-in refused: {Outcome} from {Address}", outcome, address);
+            return LoginResult.Refused(outcome);
+        }
+
+        private static string Normalize(string userName) => (userName ?? "").Trim().ToLowerInvariant();
+    }
+}

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AccessOps</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+    <script>
+        // Sign-out hand-off (see Pages/SignOutFlow.cs). The server calls accessOpsEnded("idle" or
+        // "signout") just before it ends the session; after the reload the reason becomes the
+        // ?ended= query the login page reads. Only these two words are ever accepted.
+        window.accessOpsEnded = function (reason) {
+            if (reason === "idle" || reason === "signout")
+                sessionStorage.setItem("AccessOps.Ended", reason);
+            return true;
+        };
+        (function () {
+            var ended = sessionStorage.getItem("AccessOps.Ended");
+            if (ended === "idle" || ended === "signout") {
+                sessionStorage.removeItem("AccessOps.Ended");
+                history.replaceState(null, "", "Default.html?ended=" + ended);
+            }
+        })();
+    </script>
+    <script src="wisej.wx"></script>
+</head>
+<body>
+
+</body>
+</html>

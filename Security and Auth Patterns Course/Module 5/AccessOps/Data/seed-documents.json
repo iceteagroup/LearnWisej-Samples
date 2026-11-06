@@ -1,0 +1,14 @@
+{
+  "_comment": "Demo document records. The files themselves are generated at first run (small, valid demo PDFs and Office files) and written to the document store outside the web root under server-generated names.",
+  "documents": [
+    { "id": 9001, "title": "Q3 headcount plan.xlsx",        "department": "Operations", "classification": "Confidential", "sizeBytes": 0, "updated": "2026-11-04" },
+    { "id": 9002, "title": "Supplier audit 2026.pdf",       "department": "Operations", "classification": "Internal",     "sizeBytes": 0, "updated": "2026-11-03" },
+    { "id": 9003, "title": "Shift premium review.docx",     "department": "Operations", "classification": "Confidential", "sizeBytes": 0, "updated": "2026-11-02" },
+    { "id": 9004, "title": "Salary review 2026.pdf",        "department": "Finance",    "classification": "Confidential", "sizeBytes": 0, "updated": "2026-11-06" },
+    { "id": 4471, "title": "Supplier contract 4471.pdf",    "department": "Finance",    "classification": "Confidential", "sizeBytes": 0, "updated": "2026-11-06" },
+    { "id": 9005, "title": "Payroll variance.xlsx",         "department": "Finance",    "classification": "Confidential", "sizeBytes": 0, "updated": "2026-11-02" },
+    { "id": 9008, "title": "Audit response letter.docx",    "department": "Finance",    "classification": "Internal",     "sizeBytes": 0, "updated": "2026-10-30" },
+    { "id": 9006, "title": "Board pack — Q1.pdf",           "department": "Executive",  "classification": "Restricted",   "sizeBytes": 0, "updated": "2026-11-02" },
+    { "id": 9007, "title": "Vendor contract — Meridian.pdf","department": "Legal",      "classification": "Restricted",   "sizeBytes": 0, "updated": "2026-10-30" }
+  ]
+}
