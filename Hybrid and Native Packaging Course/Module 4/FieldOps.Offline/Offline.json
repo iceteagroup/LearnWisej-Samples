@@ -1,0 +1,13 @@
+//
+// FieldOps.Offline - the Local app's configuration (Wisej.NET Hybrid Local Application template).
+//
+// url:            the start page served by the embedded server.
+// sessionTimeout: 0 - the Local app belongs to the person holding the device; it never times out.
+// startup:        the Local app's own entry point (OfflineProgram.cs).
+//
+{
+	"url": "Offline.html",
+	"theme": "Bootstrap-4",
+	"sessionTimeout": 0,
+	"startup": "FieldOps.Offline.Program.Main, FieldOps.Offline"
+}

@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "FieldOps.Program.Main, FieldOps",
+  "theme": "Bootstrap-4",
+  "debug": true,
+  "sessionTimeout": 1800
+}

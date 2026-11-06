@@ -1,0 +1,18 @@
+# Delivery model comparison — FieldOps
+
+Four ways one FieldOps codebase can reach a user, scored on the five things the lesson names.
+Every cell ends with what it means for FieldOps specifically.
+
+| | Browser tab | Installed PWA | Hybrid **Remote** Application | Hybrid **Local** Application |
+|---|---|---|---|---|
+| **Where the code runs** | The Wisej.NET app on the FieldOps server; the tab renders and reports. → *Dispatchers need nothing installed; every handler is ours to log and fix.* | Same server. The PWA is the browser in its own window; the service worker caches static files only. → *No difference for the C#: `WorkOrderService` still runs on the server.* | Same server. The MAUI client (`Wisej-4-Hybrid-Native`) opens `config.StartupUrl` in WebView2 / WebView / WKWebView. → *One FieldOps deployment serves the office and the vans.* | An embedded EmbedIO server **inside the client** runs the Wisej.NET app (`UseWisejOffline<OfflineStartup>()`). → *A copy of FieldOps' business rules lives on every phone.* |
+| **Offline behaviour** | Nothing works without the server. → *A technician in the Harborview plant room loses the list until signal returns.* | Shell and an offline page from the cache; **no event handler runs**. → *We can show "last synced 09:12, 4 orders" read-only; a status change cannot be made.* | Screens stop when the connection drops; with a Local fallback the client switches after `OfflineTimeout` ms. → *Remote-only: design the reconnect message, not an offline promise.* | Handlers run with no network at all. → *A technician can move WO-4181 to Completed in the basement — and we must sync it later.* |
+| **Device access** | Web permissions only; `Device.Valid` is false. → *Photos arrive through the `Upload` control.* | Same as the browser; `Device.Valid` is false. → *Same Upload fallback; no title bar, file system or notifications from C#.* | Full `Wisej.Hybrid.Device` API from server-side C#. → *`btnTakePhoto` appears; camera, location, local notifications, files on the laptop.* | Full `Device` API, plus direct .NET MAUI / platform calls in the local project (`<UseMaui>true</UseMaui>`). → *Same features; the extra native reach is rarely needed by FieldOps.* |
+| **How updates ship** | Server deploy; next load has it. → *A screen fix reaches dispatchers in minutes.* | Server deploy + service-worker update flow (cache version bump). → *Must bump `fieldops-shell-vN` or the installed window keeps the old shell.* | Server deploy for every screen/handler change; a store release **only** when the client project changes (permission, icon, Hybrid package bump). → *Most FieldOps fixes never touch a store.* | **Every** change, even a one-line screen fix, is a store release. → *A fix waits for build, signing and review on four platforms.* |
+| **Cost** | Hosting only. → *Already paid for.* | HTTPS, icons, a worker to maintain. → *Small; mostly testing the update path.* | Store accounts, signing certificates, a Mac for iOS/Mac Catalyst builds, test devices, Hybrid licence. → *One-off setup, then low running cost.* | All of Remote's costs **plus** the sync design, conflict rules and per-release store work. → *The most expensive option to run, by far.* |
+
+**Reading the table for FieldOps:** the browser is mandatory (dispatchers, proof the app works);
+the PWA is cheap but does not solve the plant-room problem; the Hybrid client is what gives
+technicians the camera and a home-screen app; Local is the only thing that keeps handlers running
+without signal, and it is paid for in sync and release work. The decision record
+([DeliveryDecisionRecord.md](DeliveryDecisionRecord.md)) takes it from here.

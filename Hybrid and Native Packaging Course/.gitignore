@@ -1,0 +1,13 @@
+# The Wisej.NET Hybrid licence key never enters the repository. Each module's client reads it
+# from FieldOps.Client/HybridLicense.props (copy HybridLicense.props.example) or from the
+# WISEJ_HYBRID_LICENSE environment variable.
+**/HybridLicense.props
+
+# MSIX / APK output and local publish profiles with machine paths
+**/AppPackages/
+**/*.msix
+**/*.apk
+**/*.aab
+
+# Release signing settings of the build agent (Module 6)
+**/Signing.props

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FieldOps</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1565d8" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: #fff; color: #1f2d3a; }
+        .bar { height: 42px; background: #1565d8; color: #fff; display: flex; align-items: center; padding: 0 18px; font-size: 14.5px; font-weight: 700; }
+        .bar span { margin-left: 9px; font-weight: 500; opacity: .85; font-size: 13px; }
+        main { padding: 20px 22px 24px; max-width: 920px; }
+        .banner { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #fff5e6; border: 1px solid #f0cf95; border-left: 4px solid #e8a13c; border-radius: 9px; }
+        .banner b { flex: none; width: 22px; height: 22px; border-radius: 999px; background: #e8a13c; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+        .banner p { margin: 0; font-size: 13px; color: #7a4d0d; line-height: 1.4; }
+        .synced { margin-top: 18px; font-size: 12px; font-weight: 800; color: #5a6b7d; text-transform: uppercase; letter-spacing: .05em; }
+        .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 12px; }
+        .tile { background: #f8fafc; border: 1px solid #e4eaf1; border-radius: 11px; padding: 13px 15px; }
+        .tile .k { font-size: 11px; font-weight: 800; color: #5a6b7d; text-transform: uppercase; letter-spacing: .04em; }
+        .tile .v { font-size: 20px; font-weight: 800; margin-top: 6px; }
+        .rows { margin-top: 16px; }
+        .row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid #f0f3f7; font-size: 12.5px; }
+        .row .n { font-family: Consolas, monospace; color: #1565d8; font-weight: 700; }
+        .row .d { margin-left: auto; color: #8a9aab; }
+        .actions { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+        button { padding: 7px 16px; border-radius: 7px; font: 700 12.5px "Segoe UI", system-ui, sans-serif; background: #1565d8; color: #fff; border: 0; cursor: pointer; }
+        .hint { font-size: 12px; color: #8a9aab; }
+        .none { margin-top: 18px; font-size: 13px; color: #5a6b7d; }
+        @media (max-width: 600px) { .tiles { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="bar">FieldOps<span>· My work orders</span></div>
+    <main>
+        <div class="banner"><b>!</b><p>No connection to the FieldOps server. This is the last summary that reached the device — nothing here can be changed.</p></div>
+        <div id="summary"></div>
+        <div class="actions">
+            <button id="retry" type="button">Retry connection</button>
+            <span class="hint" id="hint">Status changes and photos need the server.</span>
+        </div>
+    </main>
+    <script>
+        // A read-only snapshot. Nothing here is queued, nothing pretends to be saved.
+        (function () {
+            var host = document.getElementById("summary");
+            var s = null;
+            try { s = JSON.parse(localStorage.getItem("fieldops.summary")); } catch (e) { }
+            function esc(t) { var d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML; }
+            if (!s) {
+                host.innerHTML = '<div class="none">No work-order summary has reached this device yet. Open FieldOps once with a connection.</div>';
+            } else {
+                var day = new Date(s.syncedIso).toDateString() === new Date().toDateString() ? "today" : new Date(s.syncedIso).toLocaleDateString();
+                host.innerHTML =
+                    '<div class="synced">Last synced ' + esc(s.syncedAt) + ' · ' + esc(day) + ' · ' + esc(s.technician) + '</div>' +
+                    '<div class="tiles">' +
+                    '<div class="tile" style="border-top:3px solid #1565d8"><div class="k">Open work orders</div><div class="v" style="color:#1565d8">' + esc(s.openCount) + '</div></div>' +
+                    '<div class="tile" style="border-top:3px solid #1f9d6b"><div class="k">Next site</div><div class="v" style="color:#1f9d6b">' + esc(s.nextSite) + '</div></div>' +
+                    '<div class="tile" style="border-top:3px solid #e8a13c"><div class="k">Due before 14:00</div><div class="v" style="color:#e8a13c">' + esc(s.dueBefore14) + '</div></div>' +
+                    '</div><div class="rows">' +
+                    (s.rows || []).map(function (r) {
+                        return '<div class="row"><span class="n">' + esc(r.number) + '</span><span>' + esc(r.site) + '</span><span class="d">' + esc(r.due) + '</span></div>';
+                    }).join("") + '</div>';
+            }
+
+            // Retry: only a real answer from the server counts. Then a FRESH session from
+            // Default.html - never a dead UI that looks live.
+            document.getElementById("retry").addEventListener("click", function () {
+                var hint = document.getElementById("hint");
+                hint.textContent = "Checking…";
+                fetch("/Default.html?probe=" + Date.now(), { cache: "no-store" })
+                    .then(function (r) { if (!r.ok) throw new Error(r.status); location.replace("/"); })
+                    .catch(function () { hint.textContent = "Still no connection. Status changes and photos need the server."; });
+            });
+        })();
+    </script>
+</body>
+</html>

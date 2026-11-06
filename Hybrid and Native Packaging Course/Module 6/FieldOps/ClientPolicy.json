@@ -1,0 +1,12 @@
+// The server/client compatibility rule (ClientReleasePolicy). Server 2.6.0.
+// Platform keys are Device.System.Platform values: Android, iOS, MacCatalyst, WinUI.
+{
+  "serverVersion": "2.6.0",
+  "whatsNew": "Photos are now resized on the phone before upload, and the reminder opens the right work order.",
+  "platforms": {
+    "Android":     { "minimum": "2.4.0", "latest": "2.6.0", "storeName": "Managed Google Play", "storeUrl": "market://details?id=com.contoso.fieldops" },
+    "iOS":         { "minimum": "2.4.0", "latest": "2.6.0", "storeName": "Company Portal",      "storeUrl": "companyportal://" },
+    "MacCatalyst": { "minimum": "2.4.0", "latest": "2.6.0", "storeName": "Company Portal",      "storeUrl": "companyportal://" },
+    "WinUI":       { "minimum": "2.4.0", "latest": "2.6.0", "storeName": "Company Portal",      "storeUrl": "companyportal:" }
+  }
+}

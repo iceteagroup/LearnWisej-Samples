@@ -1,0 +1,116 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!--
+	  FieldOps.Client - the Wisej.NET Hybrid client (.NET MAUI), created from the
+	  "Wisej.NET 4 Hybrid Client Application" template. It references Wisej-4-Hybrid-Native and
+	  hosts the FieldOps Wisej.NET app in WebView2 (Windows) / WKWebView (Mac Catalyst).
+
+	  One client project, every platform:
+	    Android        net9.0-android            (any machine with the Android workload)
+	    Windows        net9.0-windows10.0.19041.0 (on Windows)
+	    iOS, macOS     net9.0-ios, net9.0-maccatalyst (added only when building on a Mac: Xcode,
+	                   the matching .NET SDK and MAUI workloads, and signing are required)
+	  The build loop (Module 4):
+	    dotnet workload restore FieldOps.Client.csproj
+	    dotnet build -t:Run -f net9.0-android        (emulator; the server is http://10.0.2.2:6305/)
+	    dotnet build -t:Run -f net9.0-ios            (iOS Simulator, on a Mac)
+		-->
+	<PropertyGroup>
+		<TargetFrameworks>net9.0-android</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+		<OutputType>Exe</OutputType>
+		<RootNamespace>FieldOps.Client</RootNamespace>
+		<UseMaui>true</UseMaui>
+		<SingleProject>true</SingleProject>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+		<NoWarn>0028</NoWarn>
+
+		<!-- Display name -->
+		<ApplicationTitle>FieldOps</ApplicationTitle>
+
+		<!-- App Identifier -->
+		<ApplicationId>com.contoso.fieldops</ApplicationId>
+
+		<!-- Versions -->
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+		<ApplicationVersion>1</ApplicationVersion>
+
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
+	</PropertyGroup>
+
+	<!--
+	  Wisej.NET Hybrid projects do not support trimming, linking or AOT at the moment.
+	  The block applies to EVERY configuration, Release included.
+	-->
+	<PropertyGroup>
+		<Optimize>false</Optimize>
+		<EnableAssemblyILStripping>false</EnableAssemblyILStripping>
+		<MtouchLink>None</MtouchLink>
+		<MtouchUseLlvm>False</MtouchUseLlvm>
+		<RunAOTCompilation>False</RunAOTCompilation>
+		<PublishTrimmed>False</PublishTrimmed>
+	</PropertyGroup>
+
+	<!--
+	  Windows packaging: MSIX, as the template has it. The packaged client is the one that can host
+	  the Local app (the embedded server needs a package identity). For a quick Remote-only run
+	  without deploying a package, build with -p:WindowsPackageType=None and start the .exe
+	  (Device.System.PackagingModel then reports Unpackaged). Publish and signing: Module 3 README
+	  and Module 6.
+	-->
+
+	<ItemGroup>
+		<!-- App Icon -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" />
+
+		<!-- Splash Screen -->
+		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1565D8" BaseSize="456,456" />
+
+		<!-- Images -->
+		<MauiImage Include="Resources\Images\*" />
+
+		<!-- Custom Fonts -->
+		<MauiFont Include="Resources\Fonts\*" />
+
+		<!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- MAUI 9 for the net9.0 targets the Hybrid 4.1.7 packages ship. -->
+		<PackageReference Include="Microsoft.Maui.Controls" Version="9.0.120" />
+		<PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.120" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+		<PackageReference Include="Wisej-4-Hybrid-Native" Version="4.1.7" />
+		<PackageReference Include="EmbedIO" Version="3.5.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- The Local app: FieldOps on an embedded EmbedIO server inside this client. -->
+		<ProjectReference Include="..\FieldOps.Offline\FieldOps.Offline.csproj" />
+	</ItemGroup>
+
+	<!--
+	  The Wisej.NET Hybrid licence key. NEVER committed: it comes from HybridLicense.props next to
+	  this file (git-ignored; copy HybridLicense.props.example) or from the WISEJ_HYBRID_LICENSE
+	  environment variable, and is compiled into obj/ as HybridLicense.Key. Empty = unlicensed build,
+	  which still builds and runs.
+	-->
+	<Import Project="HybridLicense.props" Condition="Exists('HybridLicense.props')" />
+	<PropertyGroup>
+		<WisejHybridLicenseKey Condition="'$(WisejHybridLicenseKey)' == ''">$(WISEJ_HYBRID_LICENSE)</WisejHybridLicenseKey>
+	</PropertyGroup>
+	<ItemGroup>
+		<Compile Include="$(BaseIntermediateOutputPath)HybridLicense.g.cs" Visible="false" />
+	</ItemGroup>
+	<Target Name="GenerateHybridLicense" BeforeTargets="BeforeBuild;CoreCompile">
+		<WriteLinesToFile File="$(BaseIntermediateOutputPath)HybridLicense.g.cs" Overwrite="true" WriteOnlyWhenDifferent="true"
+			Lines="// generated from WisejHybridLicenseKey - do not commit;namespace FieldOps.Client { internal static class HybridLicense { public const string Key = &quot;$(WisejHybridLicenseKey)&quot;%3B } }" />
+	</Target>
+</Project>

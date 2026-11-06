@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "FieldOps": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:6305",
+      "environmentVariables": {
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+      }
+    }
+  }
+}

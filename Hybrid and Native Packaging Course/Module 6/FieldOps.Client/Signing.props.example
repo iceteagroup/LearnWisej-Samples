@@ -1,0 +1,20 @@
+<Project>
+  <!--
+    Copy to Signing.props (git-ignored) on the machine or build agent that signs releases.
+    Never commit the real file. Passwords are NOT here: set FIELDOPS_UPLOAD_STORE_PASS and
+    FIELDOPS_UPLOAD_KEY_PASS in the environment (or the CI secret store).
+  -->
+  <PropertyGroup>
+    <!-- Windows: thumbprint of the code-signing certificate in CurrentUser\My; its subject must equal
+         the Publisher in Platforms/Windows/Package.appxmanifest. -->
+    <FieldOpsCertificateThumbprint>0000000000000000000000000000000000000000</FieldOpsCertificateThumbprint>
+
+    <!-- Android: the upload keystore enrolled in Play App Signing. -->
+    <FieldOpsUploadKeystore>C:\secure\fieldops-upload.keystore</FieldOpsUploadKeystore>
+    <FieldOpsUploadKeyAlias>fieldops-upload</FieldOpsUploadKeyAlias>
+
+    <!-- Apple (on the Mac): the distribution identity and the provisioning profile name. -->
+    <FieldOpsAppleCodesignKey>Apple Distribution: Contoso Field Services (TEAMID1234)</FieldOpsAppleCodesignKey>
+    <FieldOpsAppleProvisioningProfile>FieldOps Custom App Distribution</FieldOpsAppleProvisioningProfile>
+  </PropertyGroup>
+</Project>

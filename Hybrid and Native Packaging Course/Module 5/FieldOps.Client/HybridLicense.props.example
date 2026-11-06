@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Copy this file to HybridLicense.props (same folder) and put YOUR Wisej.NET Hybrid licence key
+    in it. HybridLicense.props is git-ignored: the key never enters the repository.
+    Alternative: set the WISEJ_HYBRID_LICENSE environment variable before building.
+    Leave it empty and the client still builds and runs, unlicensed.
+  -->
+  <PropertyGroup>
+    <WisejHybridLicenseKey>your-wisej-hybrid-licence-key</WisejHybridLicenseKey>
+  </PropertyGroup>
+</Project>

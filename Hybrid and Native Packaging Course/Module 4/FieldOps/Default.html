@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FieldOps</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-store" />
+
+    <!-- The install contract: manifest, theme colour of the app bar, iOS icon. -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#1565d8" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+
+    <style>
+        /* "A new version of FieldOps is ready." - shown by the controllerchange listener. */
+        #fieldops-update {
+            position: fixed; left: 0; right: 0; top: 42px; z-index: 100000;
+            display: none; align-items: center; gap: 12px; padding: 9px 16px;
+            background: #eaf3ff; border-bottom: 1px solid #bcd8fb;
+            font: 600 12.5px/1.3 "Segoe UI", system-ui, sans-serif; color: #123b6e;
+        }
+        #fieldops-update .icon { width: 20px; height: 20px; border-radius: 999px; background: #1565d8; color: #fff;
+            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+        #fieldops-update button { margin-left: auto; font: 800 12px "Segoe UI", system-ui, sans-serif; color: #fff;
+            background: #1565d8; border: 0; border-radius: 7px; padding: 5px 13px; cursor: pointer; }
+    </style>
+
+    <script>
+        // ─────────────────────────────────────────────────────────────────────────────────────
+        // The PWA's client half. Plain web code: Wisej.NET has no PWA API and needs none.
+        // The server decides WHEN things happen (Application.Eval); this file only does what
+        // must happen in the browser: keep the install event, register the worker, store the
+        // summary for the offline page, and offer the reload when a new worker takes over.
+        // ─────────────────────────────────────────────────────────────────────────────────────
+        (function () {
+            var deferredPrompt = null;
+            var fieldOps = window.fieldOps = {
+                cachedShell: null,
+
+                // Stop the browser's own banner, keep the event for the in-page button.
+                _keep: function (e) { e.preventDefault(); deferredPrompt = e; },
+
+                // Called by the server after the first successful session. Returns whether an
+                // install offer is available, so the server knows whether to show the button.
+                showInstallButton: function () {
+                    if (window.matchMedia("(display-mode: standalone)").matches) return false;
+                    return !!deferredPrompt;
+                },
+
+                // Runs inside the button's click ("execute" client event): prompt() needs the gesture.
+                install: function (button) {
+                    if (!deferredPrompt) return;
+                    var e = deferredPrompt;
+                    deferredPrompt = null;
+                    e.prompt();
+                    e.userChoice.then(function (choice) {
+                        console.log("[FieldOps] install " + choice.outcome);
+                        if (choice.outcome === "accepted" && button && button.exclude) button.exclude();
+                    });
+                },
+
+                // After every successful load: the compact, read-only snapshot for offline.html.
+                saveSummary: function (summary) {
+                    try { localStorage.setItem("fieldops.summary", JSON.stringify(summary)); }
+                    catch (err) { console.warn("[FieldOps] summary not stored", err); }
+                },
+
+                // Build-stamp mismatch reported by the server: look for a newer worker now.
+                checkForUpdate: function () {
+                    if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update(); });
+                },
+
+                // Tell the technician, do not surprise them: reload only on their tap.
+                showReloadBar: function () {
+                    var bar = document.getElementById("fieldops-update");
+                    if (bar) bar.style.display = "flex";
+                }
+            };
+
+            window.addEventListener("beforeinstallprompt", fieldOps._keep);
+            window.addEventListener("appinstalled", function () { console.log("[FieldOps] appinstalled"); });
+
+            if ("serviceWorker" in navigator) {
+                var hadController = !!navigator.serviceWorker.controller;
+                navigator.serviceWorker.register("sw.js").then(function (reg) {
+                    console.log("[FieldOps] sw.js registered, scope " + reg.scope);
+                });
+                // A NEW worker took control of a page that already had one: a deployment happened.
+                navigator.serviceWorker.addEventListener("controllerchange", function () {
+                    if (hadController) fieldOps.showReloadBar();
+                    hadController = true;
+                });
+            }
+
+            // Which shell cache does this browser hold? The server compares it at session start.
+            if (window.caches) caches.keys().then(function (names) {
+                fieldOps.cachedShell = names.filter(function (n) { return n.indexOf("fieldops-shell-") === 0; })[0] || null;
+            });
+
+            document.addEventListener("DOMContentLoaded", function () {
+                var bar = document.createElement("div");
+                bar.id = "fieldops-update";
+                bar.innerHTML = '<span class="icon">↻</span><span>A new version of FieldOps is ready.</span><button type="button">Reload</button>';
+                bar.querySelector("button").addEventListener("click", function () { location.reload(); });
+                document.body.appendChild(bar);
+            });
+        })();
+    </script>
+    <script src="wisej.wx"></script>
+</head>
+<body>
+
+</body>
+</html>

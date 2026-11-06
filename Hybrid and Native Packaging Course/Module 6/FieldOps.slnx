@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="FieldOps/FieldOps.csproj" />
+  <Project Path="FieldOps.Client/FieldOps.Client.csproj" />
+  <Project Path="FieldOps.Offline/FieldOps.Offline.csproj" />
+</Solution>

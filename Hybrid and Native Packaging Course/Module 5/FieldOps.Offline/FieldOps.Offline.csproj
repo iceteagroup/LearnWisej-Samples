@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    FieldOps.Offline - the Local app, created from the "Wisej.NET 4 Hybrid Local Application"
+    template. It runs FieldOps on an embedded EmbedIO server INSIDE FieldOps.Client, so its
+    handlers keep running with no network. It targets the same platforms as the client.
+
+    It contains no screen of its own: the pages, the model and the services are the FieldOps web
+    project's source files, compiled in here (linked below). One codebase, two hosts. Only the
+    entry points differ: OfflineStartup (the embedded server) and OfflineProgram (the session).
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net9.0-android</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
+		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('osx'))">$(TargetFrameworks);net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+    <RootNamespace>FieldOps.Offline</RootNamespace>
+    <NoWarn>CA1416;WFO1000</NoWarn>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">11.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">13.1</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="favicon.ico" />
+    <None Remove="Offline.html" />
+    <None Remove="Offline.json" />
+  </ItemGroup>
+
+  <!-- Embedded into the assembly and served by the embedded server (Wisej-4-Hybrid build targets). -->
+  <ItemGroup>
+    <HybridAsset Include="favicon.ico" />
+    <HybridAsset Include="Offline.html" />
+    <HybridAsset Include="Offline.json" />
+  </ItemGroup>
+
+  <!-- The FieldOps screens and services, shared with the web project - not copied. -->
+  <ItemGroup>
+    <Compile Include="..\FieldOps\**\*.cs"
+             Exclude="..\FieldOps\Startup.cs;..\FieldOps\Program.cs;..\FieldOps\bin\**;..\FieldOps\obj\**"
+             LinkBase="FieldOps" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EmbedIO" Version="3.5.2" />
+    <PackageReference Include="Wisej-4" Version="4.1.7" />
+    <PackageReference Include="Wisej-4-Hybrid" Version="4.1.7" />
+  </ItemGroup>
+
+</Project>
