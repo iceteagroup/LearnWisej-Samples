@@ -54,9 +54,11 @@ dotnet build ..\FieldOps.Client\FieldOps.Client.csproj -f net9.0-windows10.0.190
 
 The Local fallback needs the **packaged** Windows client: open `FieldOps.slnx` in Visual Studio,
 start `FieldOps.Client` with the *Windows Machine* (MSIX) profile. See Module 3. Each module's
-`FieldOps.slnx` marks the client **Deploy** and maps it to **x64**, which that profile requires; if
-Visual Studio still reports "The project needs to be deployed before we can debug", tick Deploy for
-FieldOps.Client in Build > Configuration Manager, and make sure Windows Developer Mode is on.
+`FieldOps.slnx` marks the client **Deploy**, which that profile requires, and on Windows the client
+lists `net9.0-windows10.0.19041.0` first so Visual Studio debugs the Windows target rather than the
+Android one (check the framework in the debug-target dropdown if the Output pane shows emulator
+checks). If Visual Studio still reports "The project needs to be deployed before we can debug", tick
+Deploy for FieldOps.Client in Build > Configuration Manager, and make sure Windows Developer Mode is on.
 
 ## The Hybrid licence key
 

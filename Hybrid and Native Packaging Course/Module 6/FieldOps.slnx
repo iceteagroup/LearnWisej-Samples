@@ -1,23 +1,8 @@
 <Solution>
-  <!--
-    FieldOps.Client is a packaged (MSIX) MAUI app on Windows: Visual Studio debugs it only when the
-    solution deploys it, and the Windows package needs a real architecture, so the client builds as
-    x64 under every solution platform and is marked Deploy. The web app and the Local app stay Any CPU.
-  -->
-  <Configurations>
-    <BuildType Name="Debug" />
-    <BuildType Name="Release" />
-    <Platform Name="Any CPU" />
-    <Platform Name="x64" />
-  </Configurations>
-  <Project Path="FieldOps/FieldOps.csproj">
-    <Platform Solution="*|x64" Project="Any CPU" />
-  </Project>
+  <!-- FieldOps.Client is a packaged (MSIX) MAUI app: Visual Studio debugs it only when the solution deploys it. -->
+  <Project Path="FieldOps/FieldOps.csproj" />
   <Project Path="FieldOps.Client/FieldOps.Client.csproj">
-    <Platform Solution="*|Any CPU" Project="x64" />
     <Deploy />
   </Project>
-  <Project Path="FieldOps.Offline/FieldOps.Offline.csproj">
-    <Platform Solution="*|x64" Project="Any CPU" />
-  </Project>
+  <Project Path="FieldOps.Offline/FieldOps.Offline.csproj" />
 </Solution>
