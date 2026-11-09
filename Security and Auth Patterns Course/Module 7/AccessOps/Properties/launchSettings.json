@@ -1,9 +1,20 @@
 {
   "profiles": {
-    "AccessOps": {
+    "AccessOps (partner)": {
       "commandName": "Project",
+      "commandLineArgs": "--AccessOps:Route=Partner",
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:6407",
+      "applicationUrl": "https://localhost:6407",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+      }
+    },
+    "AccessOps (intranet)": {
+      "commandName": "Project",
+      "commandLineArgs": "--AccessOps:Route=Intranet",
+      "launchBrowser": true,
+      "applicationUrl": "http://localhost:6408",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "WEBSITE_PATH": "$(MSBuildProjectDirectory)"

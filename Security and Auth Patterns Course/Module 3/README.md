@@ -1,108 +1,118 @@
 # AccessOps · Security & Auth Patterns · Module 3
 
-Local lab build for **Module 3 · Authorization: Roles, Claims and Permissions**. The approvals
-screen from the walkthrough - *AccessOps · Approvals*, the navigation built from the permission set
-(`N of 5 entries · from SessionContext.Permissions`), the request grid with its Action column
-(*Approve*, *Approve · not your report*, *— no approval rights*, *Approved*), the refusal banner and
-the `STATUS` strip - on top of services that decide on the server, and an xUnit project that
-proves it without a browser.
+**Windows Impersonation and Delegation.** The intranet route of Module 2 (Windows sign-in through the
+host's Negotiate challenge, the grant mapped from the account SID) now opens on the confidential-documents
+reader: the blue `AccessOps · Confidential documents` window with the area strip, the list **Document ·
+Title · Folder · Last read** (DOC-201 Salary bands 2027 `labuser-only`, DOC-202 Vendor contract archive
+`pool-only`, DOC-203 Audit sample (F03) `labuser-only`, DOC-204 Tenant B legal hold `tenant-b`), the
+**Identity trace** table (Document · Step · App subject · Request identity · Effective token · Outcome)
+and the status line. Clicking a document sends only its ID: `DocumentCatalog.ResolveApprovedPath` runs
+the Module 1 resource policy first and maps the ID to a canonical path under one approved root, then
+`ScopedDocumentReader.Read` reads the file inside `WindowsIdentity.RunImpersonated` with the request's
+Windows token and records the before / inside / after rows. Four plain messages: "DOC-201 opened ·
+effective identity back to the pool", "DOC-202 could not be opened with your Windows account. The
+request was logged.", "DOC-203 could not be opened. The file is missing; the request was logged.",
+"DOC-204 is outside your access. Nothing was opened." — no path, SID or exception text on screen.
 
-> **Wisej.NET version.** These samples target the released **Wisej-4 4.1.7**. Module 2's passkey
-> sign-in (a Wisej.NET 4.2 component) is not part of them; nothing in this module depends on it.
+Solution: `AccessOps.slnx` = `AccessOps/` (`net10.0`, `Wisej-4` 4.1.7, `Microsoft.Data.Sqlite` 10.0.14,
+`Microsoft.AspNetCore.Authentication.Negotiate` 10.0.14) + `PolicyHarness/`. Fixture script
+`tools/Setup-Fixtures.ps1`, IIS location file `iis/` (from Module 2), written deliverables in `docs/`.
+Data and fixture files in `AccessOpsData/` (git-ignored). Built from Module 2 (its IIS, challenge and
+provider docs stay in `Module 2/docs`).
 
 ## Run it
 
-```bash
-cd "Security and Auth Patterns Course/Module 3/AccessOps"
-dotnet run -f net10.0 --urls http://localhost:6403
+```powershell
+cd "Security and Auth Patterns Course\Module 3"
+powershell -ExecutionPolicy Bypass -File tools\Setup-Fixtures.ps1     # approved root + ACLs (re-runnable; -Remove to clean up)
+dotnet build AccessOps.slnx
+dotnet run --project AccessOps --urls http://localhost:6403
+dotnet run --project PolicyHarness
 ```
 
-```bash
-cd "Security and Auth Patterns Course/Module 3"
-dotnet test
-```
+Open `http://localhost:6403` in Edge/Chrome on the same machine (silent Negotiate for localhost; see
+Module 2). The Debug console prints one `AccessOps.IdentityTrace` line per row, with the SIDs, the
+token's logon group, the path and the exception — the detail the screen leaves out.
 
-Demo accounts (password in [Data/seed-credentials.json](AccessOps/Data/seed-credentials.json)):
-`d.ortiz` (Operations employee), `m.keller` (Operations manager of Dana Ortiz, Priya Nair and Ines
-Duarte), `s.reyes` (Administrator), plus Module 2's `r.almeida` and `k.osei`. Sign in as each in its
-own tab - every tab is its own session.
+In the lab environment: `tools\Setup-Fixtures.ps1 -PoolAccount "IIS APPPOOL\AccessOps Intranet" -LabUser "LAB\dana.ortiz"`,
+publish as in `Module 2/docs/iis-publish-and-rollback.md`, and set `AccessOps:ApprovedRoot` if the
+fixtures live elsewhere.
+
+### Demo accounts (invented, local only)
+
+As in Module 2: no passwords; the Windows account running the app is mapped to `reader1` (Reader,
+tenant A) — `--AccessOps:CurrentWindowsUser=visitor1` for an account without a grant (every document
+is then "outside your access", zero scopes opened — the same rule as the harness case "no Reader (M3)";
+not clicked through in the app for this module).
 
 ## What to try
 
-| Who | Action | Expected result |
-|---|---|---|
-| `d.ortiz` | Read the navigation | *Dashboard · Documents · Approvals* - `3 of 5 entries` |
-| `d.ortiz` | Documents | Operations documents only (`scope: Operations only · filtered in the query`) |
-| `d.ortiz` | Approvals | The Operations queue, every Action `— no approval rights`; status *Own department only · no approval rights* |
-| `m.keller` | Approvals | `2 in your reports · 1 outside them`; REQ-4115 reads *Approve · not your report* |
-| `m.keller` | Click the REQ-4115 action cell anyway | The service refuses: *You are not allowed to do that…*, status *Approval refused — logged*, and a `DENIED ApproveRequest … REQ-4115` line in the server log |
-| `m.keller` | Click *Approve* on REQ-4118 | *REQ-4118 approved · recorded in the server log*; the row reads *Approved* |
-| `s.reyes` | Read the navigation, open Admin console | *Dashboard · Documents · Employees · Admin console*; every account with roles, claims and the set they resolve to; Documents shows every department |
-| `s.reyes` | Select an account, **Force re-resolve**, then click any area in that account's session | *Permissions re-resolved by an administrator: …* |
-| anyone | `dotnet test` | 15 passing tests, including the forged request |
-
-## Lab tasks → where in the code
-
-| Deliverable | Where |
+| Action | Expected result |
 |---|---|
-| `Permission` enumeration (the seven actions) | [Permissions.cs](AccessOps/Services/Permissions.cs) |
-| Role → permission map in configuration | `Permissions:Roles` in [appsettings.json](AccessOps/appsettings.json) |
-| `PermissionService.ResolveFor` - roles, claim grants and denials (denial wins), immutable sorted set | [PermissionService.cs](AccessOps/Services/PermissionService.cs), claims in the `employee_claims` table |
-| Set, department and direct reports attached to the `SessionContext` once at sign-in | `BuildContext` in [LoginService.cs](AccessOps/Services/LoginService.cs), [SessionContext.cs](AccessOps/Services/SessionContext.cs) |
-| `Authorize.Require` - reads the session, logs user/permission/target, throws `NotAuthorizedException` | [Authorize.cs](AccessOps/Services/Authorize.cs) |
-| Guard as the first line of every `DocumentService` and `ApprovalService` method | [DocumentService.cs](AccessOps/Services/DocumentService.cs), [ApprovalService.cs](AccessOps/Services/ApprovalService.cs) |
-| Department predicate composed into the document query | `DocumentRepository.List` |
-| `GetForApproverAsync(requestId, approverId)` returning null outside the manager's reports | `ApprovalRepository` |
-| UI from the same set: admin console only with `ManageUsers`, upload hidden without `UploadDocument`, Approve explained | [ConsolePage.cs](AccessOps/Pages/ConsolePage.cs), [DocumentsView.cs](AccessOps/Pages/DocumentsView.cs), [ApprovalsView.cs](AccessOps/Pages/ApprovalsView.cs) |
-| "Force re-resolve" for a named employee | [PermissionRefreshService.cs](AccessOps/Services/PermissionRefreshService.cs), [AdminView.cs](AccessOps/Pages/AdminView.cs) |
-| Negative test with a forged request | [AccessOps.Tests/AuthorizationTests.cs](AccessOps.Tests/AuthorizationTests.cs); results in [docs/AuthorizationEvidence.md](docs/AuthorizationEvidence.md) |
+| Open the page | the list with four documents, "—" in Last read, empty Identity trace, status "Ready" |
+| Click **DOC-201** | rows `Before · ITGLLC2\you · Readable as pool`, `Inside · you · Impersonation · Read 18 KB`, `After · you · Scope closed` (tinted); chip **Read as user**; status (green) "DOC-201 opened · effective identity back to the pool" |
+| Click **DOC-202** | `Before · Access denied (ACL)`, `Inside · … · Impersonation · Access denied (ACL)`, `After · Reverted`; chip **Denied (ACL)**; status (red) "DOC-202 could not be opened with your Windows account. The request was logged." |
+| Click **DOC-203** (F03) | rows labelled `DOC-203 F03`: `Before · File missing`, `Inside · Impersonation · FileNotFoundException`, `After · Reverted`; chip **File missing**; status (amber) "DOC-203 could not be opened. The file is missing; the request was logged." |
+| Click **DOC-204** | one row `Policy · Denied before any scope`; chip **Not allowed**; status (red) "DOC-204 is outside your access. Nothing was opened."; audit `scoped-read B / DOC-204 denied tenant`, no `file.read` |
+| App log | per row `identity-trace … effective=… effectiveSid=… level=None/Impersonation logon=… outcome=… detail=<path or exception>`; audit `scoped-read` (policy) + `file.read` (outcome) with one correlation ID |
+| `dotnet run --project PolicyHarness` | Module 1/2 cases plus six Module 3 cases: allowed DOC-201 and approved F03 open a scope; tenant B, no Reader, unknown ID, a catalog row escaping the root: denied at **zero scopes** — `docs/policy-harness-output.txt` |
 
-## Verified
+## Lab deliverables → where
 
-- `dotnet test`: 15/15 passing (list in [docs/AuthorizationEvidence.md](docs/AuthorizationEvidence.md)).
-- Browser pane (`accessops-m3`, 1400x900): `d.ortiz`, `m.keller` and `s.reyes` signed in one after
-  the other in the same tab; navigation counts 3/4/4; the out-of-scope click refused with the banner
-  and the `DENIED` log line; REQ-4118 approved; the admin console lists 5 accounts; force re-resolve
-  rebuilt the set at the session's next action. The generated SQL with the department predicate was
-  read from `preview_logs`. No server errors.
+| Deliverable (plan) | Where |
+|---|---|
+| ScopedDocumentReader with a server-resolved canonical path | `AccessOps/Documents/ScopedDocumentReader.cs` (from the pack's `net8/WindowsScopedRead.cs`), `Documents/DocumentCatalog.cs` (`ResolveApprovedPath`: policy → catalog → canonical path under the root), `Documents/DocumentService.cs` (`Authorize`), `Infrastructure/ConfidentialFileStore.cs`, `tools/Setup-Fixtures.ps1`, `docs/acl-fixtures.md` |
+| Before, inside and after identity and outcome matrix | `Documents/IdentityTrace.cs`; `docs/identity-outcome-matrix.md` (observed here + lab expected) |
+| Forced-failure reversion trace | `docs/forced-failure-reversion-trace.md` (F03, observed) |
+| Impersonate setting and StartTask comparison across HTTP and WebSocket | `docs/impersonate-setting-and-starttask.md` (.NET Framework: documented; .NET 10: observed with `Identity/ImpersonationObserver.cs`) |
+| Second-hop classification and migration decision for the remote resource | `docs/second-hop-decision.md` (F04; decision: restricted service identity + explicit audit) |
 
-## Answers to the review questions
+Lab steps → code/docs: 0 Module 2 + harness; 2 fixture folders → `Setup-Fixtures.ps1`; 3
+`DocumentCatalog.ResolveApprovedPath`; 4 `ScopedDocumentReader.Read` (`RunImpersonated(identity.AccessToken, …)`);
+net48 shape → `impersonate-setting-and-starttask.md` §A; 5 `IdentityTrace` (Name/User/ImpersonationLevel,
+identities disposed) → matrix; 6 F03 → reversion trace; 7 impersonate on/off, StartTask, HTTP/WebSocket,
+F04 → §B–C, `second-hop-decision.md`; 8 four plain messages → `Pages/DocumentsView.cs`; 9 harness +
+matrix marking + decision.
 
-1. **An auditor granted approval rights mid-session.** With this design the new permission takes
-   effect at the next sign-in, or at the next action after an administrator presses *Force
-   re-resolve* (the `PermissionsResolvedUtc` stamp is compared with the request). Resolving once is
-   deliberate: no database round trip per click and no two answers inside one workflow. Making it
-   immediate means checking a version stamp on every service call (or pushing a revocation to the
-   session) - more load, and a stamp every server can read.
-2. **Filtering in the grid's DataSource instead.** The screen would look the same, but every other
-   department's rows would have left the database, been held in the process, possibly logged, and -
-   as Module 1 showed - any of them bound to the grid would sit in the browser's data model. A paging
-   or export change later would expose them; the count would leak their existence today.
-3. **Service or repository for the manager check.** The service decides (it knows the caller); the
-   repository applies the rule it is handed (`approverId` is an argument, so it stays testable and
-   reusable). If the check lived only in a repository that read the session, the repository could no
-   longer serve callers with other rights (a nightly job, an admin report). If it lived only in the
-   page, every other caller would bypass it. "Both" duplicates the rule and lets the copies drift;
-   here the predicate is in the query and the decision - and the refusal log - is in the service.
+## Verified here / only in the lab environment
 
-## Where this sample differs from the lesson
+Verified on this machine (Windows 11 Pro, `WORKGROUP`, one local account, .NET 10, Kestrel Negotiate,
+browser pane 1400x900 + headless Chrome, 2026-11-09): build 0 warnings / 0 errors; Release publish has
+no `IdentityDiagnosticsView` / `ImpersonationObserver`; PolicyHarness green; all four "Show every path"
+outcomes in the browser pane with the exact status texts; `RunImpersonated` with the **WebSocket
+request's** `WindowsIdentity` (via `IHttpContextAccessor`) gives `ImpersonationLevel = Impersonation`
+inside and reverts on return, on the ACL exception and on F03 (after = before); the policy denial opens no
+scope; an ACL denial on an existing file and a missing file are told apart; with `"impersonate": true` on
+.NET 10 the events fire in the order ImpersonationBegin → ThreadBegin → ImpersonationEnd → ThreadEnd, for
+requests, WebSocket events and `StartTask`, with WebSocket on and off, and nothing is impersonated.
 
-- **Shell layout.** Module 2's video showed a left navigation column, Module 3's video a top strip;
-  the sample follows each module's video, so the console's navigation moves to the top here.
-- **People and rows.** The video's admin sees five navigation entries including *Approvals*, but its
-  permission set (`ViewAllDocuments, ManageUsers, ViewAuditTrail`) has nothing that opens the
-  approval queue; the sample builds the navigation strictly from the set, so the admin sees four.
-  The video's employee view lists two requests; the sample's department rule shows the employee the
-  whole Operations queue (four rows), all marked *— no approval rights*.
-- **REQ-4115.** In the video Sam Whitfield (Legal) is in Miriam's queue. Requests carry the department
-  they are charged to: REQ-4115 is charged to Operations (so it is in her queue) while Sam reports to
-  Legal (so it is *not your report*). The grid's Department column shows the requester's department,
-  as in the video.
-- **Clicking an out-of-scope row.** The video demonstrates the refusal with a forged call from a test;
-  the sample has that test, and additionally lets a click on a row the UI marks *not your report*
-  reach the service, which refuses it - the UI marking is a hint, the service is the rule.
-- **Upload.** The upload button exists only for `UploadDocument` holders (`r.almeida`), and is
-  disabled: the document store arrives in Module 5. The Module 5 starting point describes a naive
-  upload already in place; these samples never ship that insecure version.
-- **Audit.** Module 3 records refusals and approvals in the server log; the audit table is Module 6.
-- **Passkeys (Wisej.NET 4.2).** Not implemented in any module; see Module 2.
+Only in the lab environment: the ACL **flip** between the pool and a different lab user (one machine,
+one account: the NTLM loopback token is the same logon session — `docs/acl-fixtures.md`), IIS Windows
+Authentication, the .NET Framework sandbox (`Application.UserIdentity`, default impersonation,
+`using (identity.Impersonate())`), Kerberos, delegation and the second hop (F04).
+
+## Where this sample differs from the lesson or video
+
+- **Navigation:** the video window has a left menu (Dashboard · Documents · Approvals · Employees);
+  the sample keeps the course's area strip (`Departments · Employees · Documents · Approvals · Admin console`).
+- **Identities in the trace:** the video shows `LAB\dana.ortiz` vs `IIS APPPOOL\AccessOps`; here the
+  pool and the user are the same account (`ITGLLC2\…`), and only `· Impersonation` marks the inside row.
+  Hence DOC-201 reads "Readable as pool" before the scope (video: "Access denied (ACL)"), and DOC-202 is
+  denied before *and* inside (video intro chip "Read as pool"): local mode cannot flip the outcome.
+- **Before row for F03:** the video shows only Inside/After for DOC-203; the sample records Before too
+  (the lab compares before and after).
+- **Folder of DOC-204:** the video column says "outside grant"; the real fixture folder is `tenant-b`.
+- **App subject:** `acct …7f3a` (redacted account ID, as in Modules 1–2) instead of the video's `acct 4127`.
+- **Document IDs are strings** (`DOC-201`); the lesson's code takes `int documentId`. The signature is
+  otherwise the lesson's: `Read(HttpContext context, string documentId)`.
+- **How a read starts:** the video shows no button; a click on a document row runs the read.
+- **Request identity source:** the lesson's code reads `context.User`; the sample passes the current
+  request from `IHttpContextAccessor` (the WebSocket request), because `Application.User` on a WebSocket
+  event is the page-load identity whose token may already be disposed (observed, Module 2 README).
+- **Baseline read:** the before row opens (does not read) the file as the process — a lab probe, so the
+  matrix has a baseline outcome; production code would not touch the file outside the scope.
+- **Document list:** lists all four catalog IDs (the lab needs DOC-204 to show the policy deny); the
+  read itself is always decided by the policy.
+- **Logon group in the log:** the trace log adds the token's logon-type group (INTERACTIVE/NETWORK/
+  SERVICE/BATCH), which is how the loopback-token fact was found.
+- `IdentityTrace` is the Module 3 class; Module 1–2's Debug lifecycle logger is renamed `LifecycleTrace`.

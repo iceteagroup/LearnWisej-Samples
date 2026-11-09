@@ -1,0 +1,54 @@
+AccessOps PolicyHarness · Module 7 · .NET 10.0.11
+
+-- RecordPolicy - both routes (M1, M2, M7)
+PASS allow (intranet)      reader1, A / 17                          allowed    calls +1
+PASS allow (partner)       dana, A / 17                             allowed    calls +1
+PASS tenant (F02, intranet) reader1, B / 17                         tenant     calls +0
+PASS tenant (F02, partner) dana, B / 17                             tenant     calls +0
+PASS missing role (M2)     visitor1, host-authenticated             role       calls +0
+PASS missing grant (M2)    unmapped Windows SID                     missing    calls +0
+PASS foreign grant claim   kai presents dana's grant ID             account    calls +0
+PASS expired grant         reader1 at the grant's expiry            expired    calls +0
+PASS revoked grant         reader1 after an admin revoke            revoked    calls +0
+
+-- Scoped reads (M3, F03, F04)
+PASS scoped read allowed   reader1, DOC-201                         scope      calls +1
+PASS F03 approved          reader1, DOC-203 (missing file: fails inside, reverts) scope      calls +1
+PASS policy first          reader1, DOC-204 (tenant B)              tenant     calls +0
+PASS second hop (F04)      reader1, DOC-205 on files.contoso.test   delegation calls +0
+PASS outside the root      reader1, DOC-299 -> ../outside           path       calls +0
+PASS no Reader             visitor1, DOC-201                        role       calls +0
+
+-- Sign-out and continuation (M4, F05, F11)
+PASS sign-out              tab 1 signs out, 2 grants revoked        revoked    calls +0
+PASS stale tab (F05)       tab 2 Export after the sign-out          revoked    calls +0
+PASS continuation (F11)    returnUrl=https://evil.example           -> /       calls +0
+PASS continuation (F11)    returnUrl=//evil.example                 -> /       calls +0
+PASS continuation          returnUrl=/Default.html                  kept       calls +0
+
+-- Federation and the shared hand-off (M5, F07, F08, F12)
+PASS federated sign-in     dana: one grant                          1 grant    calls +0
+PASS callback repeated (F07) the same handle again                  no grant   calls +0
+PASS unapproved tenant (F08) kai, tenant C                          no grant   calls +0
+PASS other issuer          dana's subject from another issuer       no grant   calls +0
+PASS node loss (F12)       consumed callback retried on node B      safe deny  calls +0
+PASS node loss (F12)       parked callback resumes on node B        1 grant    calls +0
+PASS node loss (F12)       and only once                            safe deny  calls +0
+PASS in-memory hand-off    lost with the node (Module 5 design)     fresh      calls +0
+
+-- Passkeys (M6, F09, F10)
+PASS passkey challenge     first use                                accepted   calls +0
+PASS passkey replay        the same challenge again                 refused    calls +0
+PASS wrong owner (F09)     dana's credential, jo's user handle      refused    calls +0
+PASS counter policy        7 then 7 (non-zero, not increasing)      anomaly    calls +0
+PASS store race            read twice, commit the first             Updated    calls +0
+PASS store race            commit the stale second read             Conflict   calls +0
+PASS deleted (F10)         delete, then commit                      NotFound   calls +0
+
+-- Rollback (M7)
+PASS rollback              revoked grants after rolling back the build kept       calls +0
+PASS rollback              stale tab (F05) repeated after the rollback revoked    calls +0
+
+Repository reads in total: 2 (one allowed read per route; every deny at zero calls)
+Impersonation scopes opened: 2 (only after an allow)
+Grants in total: 9 · revoked: 3 · open hand-offs: 0

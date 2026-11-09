@@ -1,0 +1,34 @@
+AccessOps Module 4 · server log of the browser walk, 2026-11-09 (Kestrel, Development, https://localhost:6404 + http://localhost:6444)
+Lines as written by the app (category prefix dropped). No password, name, session ID, cookie value or token appears.
+
+warn WebSocket upgrade refused: origin not allowed (present=True) path=/ws.wx
+warn WebSocket upgrade refused: origin not allowed (present=False) path=/ws.wx
+info login subject=u-4676d29a6661 address=a-b11a283e0c3e outcome=BadCredential grant=- correlation=43a96224831a
+info login subject=u-2f34827dc186 address=a-b11a283e0c3e outcome=Disabled grant=- correlation=c521a56f99c0
+info login subject=u-4676d29a6661 address=a-b11a283e0c3e outcome=Succeeded grant=G-8ff0… correlation=6a3ce652fbdf
+info ApplicationRefresh · RefreshSessionId() · rotated=True · isWebSocket=False
+info ApplicationPrincipal.Establish · subject=s-f5b345fa1932 · grant=G-8ff0…
+info POST /auth/cookie · grant=G-8ff0… · Set-Cookie (value redacted): AccessOps.Auth=(redacted); path=/; secure; samesite=strict; httponly
+info audit subject=s-f5b345fa1932 action=export resource=A / 17 classification=Confidential decision=allowed reason=- correlation=f61f77163079
+info export allowed grant=G-8ff0… repositoryReads=+1 correlation=f61f77163079
+info login subject=s-f5b345fa1932 address=a-b11a283e0c3e outcome=SignedOut grant=G-8ff0… +1 revoked correlation=94fb06b5119e
+info POST /auth/signout · grant=none revokedNow=False · Set-Cookie (value redacted): AccessOps.Auth=(redacted); expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=strict; httponly
+info login subject=u-4676d29a6661 address=a-b11a283e0c3e outcome=Succeeded grant=G-875b… correlation=86d823229b21
+info login subject=u-4676d29a6661 address=a-b11a283e0c3e outcome=Succeeded grant=G-32ef… correlation=e193dc2e8b15
+info ApplicationRefresh · RefreshSessionId() · rotated=True · isWebSocket=False
+info ApplicationPrincipal.Establish · subject=s-f5b345fa1932 · grant=G-875b…
+info ApplicationRefresh · RefreshSessionId() · rotated=True · isWebSocket=False
+info ApplicationPrincipal.Establish · subject=s-f5b345fa1932 · grant=G-32ef…
+info POST /auth/cookie · grant=G-32ef… · Set-Cookie (value redacted): AccessOps.Auth=(redacted); path=/; secure; samesite=strict; httponly
+info POST /auth/cookie · grant=G-875b… · Set-Cookie (value redacted): AccessOps.Auth=(redacted); path=/; secure; samesite=strict; httponly
+info login subject=s-f5b345fa1932 address=a-b11a283e0c3e outcome=SignedOut grant=G-875b… +2 revoked correlation=668bbcc5b16a
+info POST /auth/signout · grant=none revokedNow=False · Set-Cookie (value redacted): AccessOps.Auth=(redacted); expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=strict; httponly
+info audit subject=s-f5b345fa1932 action=export resource=A / 17 classification=- decision=denied reason=grant correlation=2c487f57fb61
+info export denied reason=grant grant=G-32ef… repositoryReads=+0 correlation=2c487f57fb61
+info audit subject=s-f5b345fa1932 action=export resource=A / 17 classification=- decision=denied reason=grant correlation=d8f79acb1424
+info export denied reason=grant grant=G-32ef… repositoryReads=+0 correlation=d8f79acb1424
+
+Raw WebSocket upgrade requests to wss://localhost:6404/ws.wx sent with a small Node.js client (Origin header as shown; "-" = no Origin):
+Origin https://evil.example -> 403
+Origin - -> 403
+Origin https://localhost:6404 -> 101 (upgraded)

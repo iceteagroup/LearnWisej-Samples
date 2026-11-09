@@ -1,228 +1,249 @@
 # AccessOps cookbook - Wisej-4 4.1.7 / .NET 10
 
-Everything here was established by building and running the AccessOps labs against the public
-`Wisej-4` **4.1.7** package from nuget.org, and reading the result back. Each entry says how.
+Everything here was established by building and running the AccessOps lab samples of the
+**Security & Auth Patterns** course against the public `Wisej-4` / `Wisej-4-WebAuthn` **4.1.7**
+packages from nuget.org on .NET 10 (Windows 11, workgroup PC, Kestrel), and reading the result back.
+Each entry says how. "M*n*" names the module whose sample established it; "earlier edition" marks a
+fact from the previous version of these samples (same packages, re-checked where noted).
 
-## Structure
+## Structure and ports
 
-One solution per module under `Module N/`, the web application in `Module N/AccessOps`
-(namespace `AccessOps`), ports 6401-6407. From Module 3 the solution also carries
-`AccessOps.Tests` (xUnit, `dotnet test`), from Module 4 `AccessOps.TestIdentityProvider` (a local
-OpenID Connect test double on 6414-6417). Single target `net10.0`.
+- One solution per module: `Module N/AccessOps.slnx` with `AccessOps/` (`Microsoft.NET.Sdk.Web`,
+  `net10.0`, namespace `AccessOps`), `PolicyHarness/` (console, no Wisej.NET), from M4
+  `AccessOps.Tests/` (xUnit), from M5 `AccessOps.TestIdentityProvider/` (a local OpenID Connect test
+  double - never deploy). Written lab deliverables in `Module N/docs/`.
+- Ports: app **640N** (M1-M3 `http://localhost:640N`; M4-M7 `https://localhost:640N`), test IdP
+  **641N** (M5 6415, M6 6416, M7 6417), the Development-only http listener **644N** (M4-M7). M7 runs
+  one build twice: partner 6407 (+6447), intranet 6408.
+- The curriculum forks after M1: intranet chain M2 → M3 (Windows sign-in, impersonation), partner
+  chain M4 → M5 → M6 (own sign-in, OpenID Connect, passkeys); M7 = M6 with M3's route ported in, one
+  process per route (`AccessOps:Route = Intranet | Partner`).
+- Runtime data in `Module N/AccessOpsData/` beside the project folder, so outside the web root
+  (`WebRootPath = "./"` is the project folder); the course `.gitignore` excludes it and `*.db*`.
 
-Runtime data (SQLite database, documents, quarantine, logs) lives in `Module N/AccessOpsData/`,
-beside the project folder and therefore outside the web root (`WebRootPath = "./"` is the project
-folder). The course `.gitignore` keeps it out of git.
+## Packages
 
-## Package versions
+- `Wisej-4` **4.1.7** has **no** `Wisej.Web.Passkey`, `Wisej.Web.OAuthClient` or
+  `IPasskeyCredentialStore` (Wisej.NET 4.2). Reflection over `Wisej.Framework.dll` 4.1.7.0:
+  `GetType(...)` returns null for all three (earlier edition). Federation is ASP.NET Core's OpenID
+  Connect handler; passkeys are the `Wisej-4-WebAuthn` 4.1.7 extension.
+- `Microsoft.Data.Sqlite` **10.0.14**: `10.0.0` pulls `SQLitePCLRaw.lib.e_sqlite3` 2.1.11 (restore
+  warning NU1903); 10.0.14 restores clean (earlier edition).
+- `Microsoft.AspNetCore.Authentication.Negotiate` / `.OpenIdConnect` **10.0.14** run beside
+  `app.UseWisej()` (M2, M5, M7 builds: 0 warnings).
+- `GenerateAssemblyInfo=false` (the Wisej.NET template default) drops the generated `UserSecretsId`
+  attribute: `dotnet user-secrets set` wrote the value but `WebApplication.CreateBuilder` never loaded
+  it. `GenerateAssemblyInfo=true` fixes it (earlier edition; M5-M7 rely on it).
+- `ForwardedHeadersOptions.KnownIPNetworks` (`System.Net.IPNetwork`) exists on .NET 10 and compiles
+  without an obsolete warning; M7 clears `KnownProxies` and `KnownIPNetworks` before adding the
+  configured ones (M7 build).
 
-- `Wisej-4` **4.1.7**, the released package. It has **no** `Wisej.Web.Passkey`,
-  `Wisej.Web.OAuthClient` or `IPasskeyCredentialStore` - those arrive with Wisej.NET 4.2. Checked
-  by reflection over `lib/net8.0/Wisej.Framework.dll` (file version 4.1.7.0): `GetType(...)`
-  returns null for all three.
-- `Microsoft.Data.Sqlite` **10.0.14**. `10.0.0` pulls `SQLitePCLRaw.lib.e_sqlite3` 2.1.11, which
-  restore flags as `NU1903` (high, GHSA-2m69-gcr7-jv3q); 10.0.14 pulls 2.1.13 and restores clean.
+## Session and principal
 
-## Members verified in 4.1.7 (reflection)
+- **Startup order (M1):** `Program.Main` runs before `ApplicationStart` on the first HTTP load; both
+  see `Application.User` with AuthenticationType "(none)" and `IsAuthenticated` false on Kestrel
+  without host authentication. Logged.
+- **Rotating the session ID (M1, M4, M7):** verify on the click, park, `Application.Reload()`, then in
+  `ApplicationRefresh` call `Application.RefreshSessionId()` before `Application.User = …`. Observed:
+  the ID changed, `sessionStorage["Wisej.SessionId"]` adopted it, the principal and
+  `Application.Session` survived, a later F5 kept the same ID. From a WebSocket click the server
+  switched IDs but the browser never adopted it (the next request created a new session) - earlier
+  edition, re-confirmed in M1.
+- **The old ID is refused (M7):** in the browser pane the anonymous ID was saved, the user signed in
+  (ID rotated), the old ID was written back into `sessionStorage["Wisej.SessionId"]` and the tab
+  reloaded: the tab got a third, new ID and the anonymous sign-in page.
+- `Application.StartTask` (M1): `Application.User` returns the session override and `IsWebSocket` is
+  true when started from a click; `Application.Update(this, action)` from inside updates the UI.
+- Raw `Task.Run` (M1): `Application.SessionId` empty, AuthenticationType "(none)", `IsWebSocket`
+  false - but `Application.Update(component, action)` still updated the right session's UI and
+  `Application.Download` inside it worked.
+- `IHttpContextAccessor.HttpContext` (after `AddHttpContextAccessor()`) is non-null during Wisej
+  WebSocket events and inside a raw `Task.Run` started from one (ASP.NET Core's AsyncLocal flows,
+  Wisej's session does not) (M1).
+- **Application principal on the intranet route (M7):** `ApplicationPrincipal.Establish` in
+  `Program.Main` replaces the host's `WindowsIdentity` as `Application.User` for the session; later
+  WebSocket events see the claims principal (no disposed Windows token), while the scoped read still
+  takes the live request token from `IHttpContextAccessor`. Observed in the review (cases 1, 4, 5).
+- `Application.Exit()` with `"autoReload": true` reloads the tab into a new session; without it the
+  4.1.7 client calls `window.close()` (earlier edition). `await Application.CallAsync(js)` waits for a
+  JS promise (a fetch); `Application.Exit()` afterwards works (M4).
+- Each browser-pane tab is its own session; `sessionStorage.clear(); location.reload()` starts a fresh
+  one (M1). Navigating a tab to the same URL kept its session (M7: a signed-in partner tab re-attached
+  after the partner route was switched off and on).
 
-`Application`: `RefreshSessionId()`, `SetSessionTimeout(int)`, `Exit()`, `Reload()`,
-`Navigate(url, target)`, `RunInContext(IWisejComponent, Action)`, `Update(IWisejComponent, Action)`,
-`Download(Stream, string, Action<string>)`, `Download(string, string, Action<string>)`,
-`Call(string, params object[])`, `Eval(string)`, `StartTask(Action)`; properties `Session`
-(dynamic), `SessionId`, `User`, `IsAuthenticated`, `UserHostAddress`, `UserAgent`, `QueryString`,
-`IsSecure`, `IsWebSocket`, `Url`, `StartupUrl`, `Cookies`, `Services`, `Configuration`, `Browser`;
-events `SessionTimeout` (HandledEventHandler), `ApplicationStart`, `ApplicationExit`,
-`ApplicationRefresh`, `BeginRequest`, `ThreadException`.
+## Negotiate on Kestrel (intranet route)
 
-`Application.Cookies.Add(name, value, domain, expires, secure, httpOnly, sameSite)` exists; the
-last parameter is the nested enum `Wisej.Base.Cookie.SameSiteMode`.
+- `AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNegotiate()` +
+  `FallbackPolicy = DefaultPolicy` + `UseAuthentication`/`UseAuthorization` before `UseWisej()`
+  challenges every Wisej request and static file; an anonymous request never reaches `Program.Main`
+  (M2, logged).
+- Kestrel Negotiate offers only `WWW-Authenticate: Negotiate`. NTLM costs 401 → 401 → 200 on every new
+  connection; the 200 carries a `Negotiate <token>` header (redact it). Wisej's WebSocket upgrade
+  `/ws.wx` goes through the same handshake (401, 401, 101) (M2, challenge trace).
+- `Application.User.Identity` is a `WindowsIdentity` with AuthenticationType "NTLM" in `Program.Main`
+  on a workgroup PC (M2); `new HostFaultPage().Show()` from `Program.Main` makes it the main page (M2).
+- On a WebSocket event `Application.User` (without an app principal) is the identity captured on the
+  page load; its token belongs to the connection that signed in - in the pane `Name`/`User` threw
+  `ObjectDisposedException` on the first click (M2). Map the SID once in `Program.Main`.
+- Clients: the browser pane (Chromium) answers Negotiate for `http://localhost` silently; headless
+  Chrome needs `--auth-server-allowlist=localhost`; `curl.exe --negotiate -u :` works; PowerShell 7
+  `Invoke-WebRequest -UseDefaultCredentials` over http needs `-AllowUnencryptedAuthentication` (M2).
+  A .NET `HttpClient` with `SocketsHttpHandler { Credentials = CredentialCache.DefaultCredentials }`
+  got 200 from the intranet route of the same process; without credentials 401 `Negotiate` (M7, case 1).
+- The Release publish ships `Microsoft.AspNetCore.Authentication.Negotiate.dll` and generates a
+  `web.config` with `hostingModel="inprocess"` (M2, M7).
 
-`Application.Services` is `Wisej.Services.ServiceProvider`; `ServiceLifetime` is
-`Shared, Session, Thread, Transient`.
+## Impersonation (`WindowsIdentity.RunImpersonated`)
 
-`MessageBox.Show(text, caption, buttons, icon, defaultButton, modal, allowHtml = true, ...)` -
-**allowHtml defaults to true**. Pass `allowHtml: false` whenever the text contains user input.
+- `IHttpContextAccessor.HttpContext` on a WebSocket event is the socket's upgrade request with a live
+  `WindowsIdentity`; `RunImpersonated(identity.AccessToken, …)` works with it. In HTTP-only mode the
+  ajax request's identity works the same way (M3).
+- It reverts on return and on throw (ACL exception and `FileNotFoundException`): the after row equals
+  the before row (M3 trace; M7 case 4 compares name and `ImpersonationLevel` before and after).
+- On localhost the NTLM loopback token belongs to the caller's interactive logon session (same SID,
+  INTERACTIVE group, level Impersonation): ACLs cannot separate the pool from the user on one machine;
+  the "denied before, allowed inside" flip needs two accounts (M3).
+- .NET 10 with `"impersonate": true`: `ImpersonationBegin` → `ThreadBegin` → `ImpersonationEnd` →
+  `ThreadEnd` (`Handled=False`) fire for HTTP requests, WebSocket events and `StartTask`, WebSocket on
+  and off; the effective identity stays the process (level None) (M3, logged). In a `StartTask` from an
+  HTTP-only click `Application.User` is anonymous; from a WebSocket click it is still NTLM (M3).
+- `Default.json` is read from the project folder (`WEBSITE_PATH`); editing it and restarting changes
+  `impersonate` and `enableWebSocket` (M3).
+- Re-running an `icacls` fixture script needs an owner `/reset` of the folder first; without it
+  `Set-Content` truncated the denied file to 0 bytes and then failed (M3).
+- A UNC path (`\\files.contoso.test\…`) is refused in the catalog before any scope when it is not an
+  approved delegation target - no SMB timeout, 0 file calls (M7 case 5).
 
-`Wisej.Core.Configuration` (what `Application.Configuration` returns) exposes `SessionTimeout`,
-`SessionStorage`, `Secure`, `ValidateClient`, `ValidateResources`, `MaxSessions`,
-`MaxSessionsPerClient`, `Debug`, `EnableWebSocket`, `Settings`, ... - so a screen can report the
-real values instead of repeating Default.json from memory.
+## Cookies, antiforgery, origin, ingress
 
-Upload: `UploadedEventArgs.Files` is `Wisej.Core.HttpFileCollection`; each `HttpPostedFile` has
-`FileName`, `ContentType`, `ContentLength`, `InputStream`, `LastModified`, `SaveAs(path)`.
+- An origin guard placed before `UseWisej()` cannot use `HttpContext.WebSockets.IsWebSocketRequest`
+  (false there: the WebSockets middleware is added later); check the `Upgrade: websocket` header (M4).
+  M7 case 8: an upgrade with `Origin: https://evil.example` → 403.
+- Endpoints mapped "before `UseWisej()`" run at the end of the pipeline (WebApplication appends the
+  endpoint middleware last). In TestHost a terminal `app.Run` hides them; use `MapFallback("{**path}")` (M4).
+- ASP.NET Core refuses to issue an antiforgery cookie with `SecurePolicy.Always` on a plain HTTP
+  request; Chrome does accept the Secure auth cookie on `http://localhost` (M4).
+- `POST /auth/cookie` without an antiforgery token → 400; `/auth/continue?returnUrl=https://evil.example/…`
+  → 302 `/` (M7 case 8, real HTTP).
+- **Cookies on localhost are shared across ports.** The M7 partner route received the M6 sample's
+  `AccessOps.Antiforgery` cookie (protected with M6's key ring) and logged `The key {…} was not found in
+  the key ring` before issuing a fresh token (M7 log). Harmless here; give samples distinct cookie names
+  if they must run side by side.
+- `Application.Cookies[name]` reads an HttpOnly cookie written by ASP.NET Core on the next page load;
+  `Application.Cookies.Add(…, secure, httpOnly, Wisej.Base.Cookie.SameSiteMode.Strict)` works from a page
+  load (earlier edition, M5).
+- With `app.UseWhen(cx => !cx.Request.Path.Value.EndsWith(".json", …), a => a.UseFileServer())`:
+  `/Default.json`, `/appsettings.json` and `/ingress.json` → 404 (M7 curl).
+- **Ingress switch (M7):** a JSON file added with `AddJsonFile(…, reloadOnChange: true)` and read per
+  request by the first middleware of the partner pipeline; writing `"PartnerRoute": "Off"` (temp file +
+  `File.Move(overwrite)`) made the route answer 503 within **0.3 s**, without a restart; "On" brought it
+  back. Existing Wisej sessions were not ended by it.
+- The 4.1.7 client honours `"secure": true`: loaded over `http://localhost` it navigated itself to
+  https (earlier edition). M7 writes it into the **published** Default.json only
+  (`tools/Publish-Release.ps1`).
 
-## What the browser holds for a DataGridView (Module 1)
+## OpenID Connect handler (partner route)
 
-Read back in the browser pane with
-`qx.core.ObjectRegistry` -> the `wisej.web.datagrid.DataModel` -> `getRowData(3).data`.
+- With `ResponseMode = Query` the handler sends no `response_mode` parameter (M5); the default is
+  `form_post`. Correlation and nonce cookies must be `Lax` (cross-site top-level callback); the hand-off
+  cookie works as `Strict` (earlier edition).
+- At Warning level the handler logs the `.AspNetCore.Correlation.<id>` cookie name; set
+  `Microsoft.AspNetCore.Authentication` to Error for a clean log (M5).
+- In tests the handler uses `ConfigurationManager`, not `Options.Configuration`: set a
+  `StaticConfigurationManager` (M5).
+- A forged callback `/signin-oidc?code=…&state=…` ends in `OnRemoteFailure` (`Unable to unprotect the
+  message.State.`) → 302 `/Default.html?signin=failed`, 0 grants (M5; M7 case 10 over real HTTP).
+- **Restart mid-flow, shared key ring (M7):** the tab waited at the provider's login form while the
+  partner process was stopped and started again; the callback validated on the new process (keys
+  persisted with `PersistKeysToFileSystem` + `SetApplicationName`), the hand-off came from the shared
+  store, one grant, session rotated.
+- **Restart mid-flow, different key ring (M7):** the same with `DataProtection:KeyPath` pointing at a
+  new folder: `OnRemoteFailure` classified `state`, the fixed failure sentence, 0 grants. A key ring per
+  node breaks every callback that lands on the other node.
+- `ShowDialogAsync` buttons with a `DialogResult` do not close the dialog; call `Close()` (M4).
 
-- Bound to `EmployeeListItem` (Id, DisplayName, Department, Role, ManagerName) with four columns
-  (`AutoGenerateColumns = false`): the client row is
-  `{"1":"Kwame Osei","2":"Finance","3":"Manager","4":"A. Lindqvist"}`. **Properties without a
-  column are not sent** - the Id stayed on the server.
-- The same grid with one extra column bound to `Id` and `Visible = false`: the client row is
-  `{..., "4":"A. Lindqvist","5":"4187"}`. **A hidden column is serialized to the browser.**
-  `Visible = false` changes what is drawn, not what is sent. The only way to keep a salary band
-  on the server is to never give it a column (or a property of a bound row).
+## WebAuthn extension (`Wisej-4-WebAuthn` 4.1.7)
 
-## Static files and .json
+- **Bug 1 - user verification:** `wisej.ext.WebAuthn.js` reads the UV flag from bit 1 instead of bit 2,
+  so `AuthenticatorData.UserVerified` is false for real authenticators. Workaround: read UP / UV / BE
+  from the flags byte of `AuthenticatorData.Base64` (`AuthenticatorFlags.Read`) (M6: virtual
+  authenticator in headless Chrome + unit tests).
+- **Bug 2 - ES256:** `WebAuthn.Validate` rejects genuine ES256 signatures whose r or s is shorter than
+  32 bytes (about 1 in 128). Workaround: re-encode r and s as 33-byte DER integers before calling it
+  (`Identity/Es256Signature.cs`); 2,000 signed assertions pass afterwards (M6 test).
+- `CredentialsResponse` and its parts have public setters (synthetic responses in tests);
+  `PublicKey(json)` accepts `{CredentialID, Data{"1","3","-1","-2","-3"}}`; `System.JSON.Stringify`
+  round-trips it; the counter after `CreateAsync` over the virtual authenticator is 1;
+  `IsUserVerifyingPlatformAuthenticatorAvailableAsync` returned true with a virtual authenticator and in
+  the pane on a Windows Hello PC (M6).
+- `WebAuthn.GetAsync` sends no RP ID: register and sign in on the same host (M6).
+- M7 case 11 (software authenticator, real `PasskeyService`): valid → `Accepted`, replay →
+  `ChallengeRejected`, account A's credential with account B's user handle → `NoMatchingKey`, deleted
+  credential → `NoMatchingKey`; grants +1.
 
-With `WebRootPath = "./"` the project folder is the web root, so `Default.json` and
-`appsettings.json` sit in it. With
-`app.UseWhen(cx => !cx.Request.Path.Value.EndsWith(".json", StringComparison.OrdinalIgnoreCase), a => a.UseFileServer())`
-a `fetch` from the running page returned: `/Default.json` 404, `/appsettings.json` 404,
-`/Data/seed-employees.json` 404, `/Default.html` 200, `/AccessOps.csproj` 404 (unknown content type,
-the static file middleware refuses it anyway).
+## Shared store across processes and nodes (M7)
 
-## SQLite
+- Two processes (the two routes) open one SQLite file. Eight parallel connections redeeming one handle
+  with `DELETE … RETURNING` failed with `SQLite Error 5: 'database is locked'` until each connection
+  ran `PRAGMA busy_timeout = 5000` (and the file was switched to `journal_mode = WAL`); then exactly one
+  redeem won (test `F12_of_two_nodes_racing_for_one_handle_exactly_one_wins`, run 3x).
+- `DELETE … RETURNING payload, expires_at` (Microsoft.Data.Sqlite 10.0.14) is a single-use consume:
+  hand-off handles (hashed) and passkey challenges moved from process memory to the store this way; a
+  second "node" (a new store instance) resumes a parked hand-off once and refuses a consumed one
+  (tests + review case 12).
+- `PersistKeysToFileSystem` without a protector logs `No XML encryptor configured. Key {…} may be
+  persisted to storage in unencrypted form.` at startup - protect the ring in production.
+- `Microsoft.Data.Sqlite` turns foreign keys on: seed parents first (earlier edition, all modules).
 
-`Microsoft.Data.Sqlite` turns `PRAGMA foreign_keys` **on** for every connection. A seed that
-inserts an employee before its manager fails with `SQLite Error 19: FOREIGN KEY constraint
-failed`; `PRAGMA defer_foreign_keys = ON` inside the seeding transaction checks the keys at commit.
+## Logging and correlation
 
-## Browser pane
+- Over the WebSocket ASP.NET Core's scope is per connection (`RequestPath: /ws.wx`, one `TraceId` for
+  many clicks): a per-click correlation ID must be your own `ILogger.BeginScope` (earlier edition).
+- With `Logging:Console:IncludeScopes = true`, a **dictionary** scope state printed as
+  ``System.Collections.Generic.Dictionary`2[…]`` by the simple console formatter; a message-template
+  scope `BeginScope("Correlation={Correlation}", label)` printed `=> Correlation=rr-07-…` (M7).
+- In Wisej async click handlers, log lines written **after** some `await`s carried no scope at all -
+  not even a scope opened after the await (rollback steps after `await Task.Delay`, review case 8 after
+  three `await`ed HTTP calls in one run but not in another). The audit rows kept their correlation ID
+  because AccessOps passes it explicitly. Carry the correlation ID in your own objects across awaits
+  (M7, observed; cause not isolated).
 
-The pane in this environment is small; screenshots come back at roughly 324x208 for a 1400x900
-viewport. Read state with `get_page_text`, `find` and `javascript_tool`, and use screenshots for
-layout only. Grid cells are not in the accessibility tree; click rows by coordinate.
+## Grid and UI gotchas
 
-## Session ID renewal: `Application.RefreshSessionId()` (Module 2)
+- A bound `DataGridView` sends only the properties that have a column; a hidden column (`Visible =
+  false`) **is** serialized to the browser (earlier edition, read back from the client data model).
+- `DataGridViewColumn.AllowHtml` renders fixed pill markup; `DataGridViewCellStyle` has no
+  `SelectionBackColor`/`SelectionForeColor`; `CellBorderStyle = Horizontal` and
+  `ShowColumnVisibilityMenu = false` exist (M1).
+- `UserControl` has no `AcceptButton`; `TextBox.InputType.Type = TextBoxType.Password` works (M1).
+- Default control `Margin` (3) misaligns the first button in a `FlowLayoutPanel` against siblings with
+  `Margin(8,0,0,0)`; set `Margin = 0`. Three 28-px glyph labels in a 96-px FlowLayoutPanel wrapped until
+  `Margin = 0` (M1).
+- A one-row `TableLayoutPanel` of bordered cards clipped the cards' bottom border until a
+  `RowStyle(SizeType.Percent, 100)` was added (M7 screenshot before/after).
+- `MessageBox.Show` / `AlertBox.Show` default `allowHtml` to true: pass `allowHtml: false` whenever the
+  text can contain input (earlier edition; M6-M7 use it). An `AlertBox` appears bottom-right and closes
+  itself after a few seconds (M7 screenshot).
+- A grid re-bound with `DataSource = …` loses its current row; set `CurrentCell` again (earlier edition).
+- `#if DEBUG` around a page type and its only entry removes it from `dotnet publish -c Release` (M1:
+  byte search of the dll). **But** string literals passed to a method whose body is `#if DEBUG` stay in
+  the Release dll: the demo password `"Reports-demo-31"` passed to `DemoHash(hasher, "…")` was found in
+  the M7 Release dll (UTF-16 search) although Release seeds no hash - the M4-M6 seeds use the same
+  call shape (not re-checked there). M7 moved the literals inside the `#if DEBUG` block; the publish
+  check then found 0 hits.
 
-Logged `Application.SessionId` and `Application.IsWebSocket` around the call:
+## Browser-pane testing
 
-- **From a WebSocket event (a button click):** the server switched to the new ID
-  (`0f72… → aa50…`), but the browser never adopted it. Its next request created a brand-new
-  session (`e7ea…`, `Program.Main` ran again) and the signed-in state was gone.
-- **From a page load (HTTP, inside `Application.ApplicationRefresh`):** `b942… → 2e9f…`, the
-  browser's `sessionStorage["Wisej.SessionId"]` became `2e9f…`, and a further reload kept the
-  session (ApplicationRefresh fired again with the same page).
-- **From `Program.Main`** (also a page load) the call works the same way.
-
-So AccessOps verifies the password on the click, parks the verified context under a pending key
-(it is not the session identity yet), calls `Application.Reload()`, and on the page load calls
-`RefreshSessionId()` first and only then stores the `SessionContext`
-(`Infrastructure/WisejSession.cs`). The order the lesson asks for - new ID, then identity - holds.
-
-## Ending a session: `Application.Exit()` (Module 2)
-
-- The 4.1.7 client handles the exit action by dropping its session ID and calling
-  `Wisej.onExit`, which is `location.reload()` when the configuration's `autoReload` is true and
-  **`window.close()`** otherwise. With the default, a script-opened tab simply closed. AccessOps
-  sets `"autoReload": true` in Default.json so the tab reloads into a new session on the login page.
-- Script sent with `Application.Eval` in the same request as `Application.Exit()` never ran - the
-  exit won. To tell the next page why the session ended, AccessOps calls a page function with
-  `Application.Call("accessOpsEnded", callback, "idle")` and calls `Exit()` in the callback; the
-  function keeps the word in sessionStorage and Default.html turns it into `?ended=idle`.
-- `Application.SessionTimeout` with `"sessionTimeout": 60` fired 61 s after the last click; with
-  `e.Handled = true` no prolong dialog appeared and the handler's sign-out ran (audit row
-  `SignOutIdle`, reload to the login page with the idle sentence).
-
-## Cookies written from Wisej.NET (Module 2)
-
-`Application.Cookies.Add(name, value, null, expires, true, true, Wisej.Base.Cookie.SameSiteMode.Strict)`
-written during `ApplicationRefresh` (a page load) on `http://localhost`: `document.cookie` is empty
-(HttpOnly), and a new session in the same browser (sessionStorage cleared, page reloaded) read the
-value back through `Application.Cookies[name]` in `Program.Main` and signed in through the
-remembered-device path. Chrome accepted the `Secure` flag on `http://localhost`.
-
-## Client address
-
-`Application.UserHostAddress` reported `::1` for some requests and `127.0.0.1` for others from the
-same browser pane. A per-address throttle keyed on the raw string counts them separately; behind a
-real proxy the address comes from `app.UseForwardedHeaders()` for the proxies you trust.
-
-## External sign-in on 4.1.7: ASP.NET Core OpenID Connect + a Wisej.NET hand-off (Module 4)
-
-Verified end to end in the browser pane against the module's test identity provider:
-
-- `Microsoft.AspNetCore.Authentication.OpenIdConnect` **10.0.14** works beside `app.UseWisej()`.
-  `app.UseAuthentication()` and the `MapGet` endpoints are registered before `UseWisej()`; the
-  handler's `/signin-oidc` and `/signout-callback-oidc` are served by the authentication middleware.
-- The handler's default `ResponseMode` is **`form_post`** (seen in the authorize URL). The test
-  provider answers with a query redirect; set `ResponseMode = OpenIdConnectResponseMode.Query` so the
-  request says what the provider does.
-- On plain `http://localhost` set `CorrelationCookie.SameSite` and `NonceCookie.SameSite` to `Lax`:
-  the handler's default `None` without `Secure` is rejected by the browser. The callback is a
-  top-level GET, so Lax cookies are sent.
-- In `OnTokenValidated` the identity is parked server-side and the browser gets a random handle in an
-  HttpOnly cookie; `ctx.HandleResponse()` skips the cookie sign-in entirely (`SaveTokens = false`,
-  tokens kept from `ctx.TokenEndpointResponse`).
-- **`Application.Cookies[name]` reads an HttpOnly cookie written by ASP.NET Core** on the next page
-  load, both in `Program.Main` (new session) and in `ApplicationRefresh` (the tab's session survived
-  the round trip through the provider - the session ID in sessionStorage is untouched by same-tab
-  navigation).
-- A forged callback (`/signin-oidc?code=forged&state=forged`) ends in `OnRemoteFailure` with
-  `Unable to unprotect the message.State.`
-- `Results.SignOut(props, cookie, OpenIdConnect)` from a GET endpoint sends the browser to the
-  provider's `end_session_endpoint` with `post_logout_redirect_uri = …/signout-callback-oidc`, then
-  to `props.RedirectUri`.
-- A refresh-token grant with `IHttpClientFactory` against `options.ConfigurationManager`'s
-  `TokenEndpoint` works from a Wisej.NET async handler (`await`, then `Application.Update(this)`).
-
-## Uploads, downloads and the share-link endpoint (Module 5)
-
-- The 4.1.7 `Upload` control renders an `<input type="file">` whose `accept` is the
-  `AllowedFileTypes` value (`.pdf,.docx,.xlsx`). It can be driven from a test without a file
-  picker: build a `File`, put it in a `DataTransfer`, assign `input.files` and dispatch `change`;
-  the server's `Uploaded` event fires with `e.Files[0].FileName`, `.ContentLength`, `.InputStream`.
-- The browser encodes `"` in a multipart file name as `%22`: an upload named
-  `<img src=x onerror="…">.pdf` arrived as `<img src=x onerror=%22…%22>.pdf`. Shown in a `Label`, a
-  grid cell and through `Application.Call` → `textContent`, it stayed text (no element created).
-- `Application.Download(new MemoryStream(bytes), name)` from a click handler streams the file to the
-  current session; there is no URL to share.
-- A minimal-API share endpoint with `(int id, long? exp, string sig, ...)` binds a missing `exp` or
-  `sig` as null (so the endpoint can answer 404 like every other failure, instead of a binding 400).
-  `Results.File(bytes, contentType, name)` sends
-  `Content-Disposition: attachment; filename="…"; filename*=UTF-8''…`.
-- `builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = …)` is the host ceiling that
-  matches `Upload.MaxFileSize` (an `int`, bytes).
-
-## Audit, correlation, secrets (Module 6)
-
-- `GenerateAssemblyInfo=false` (the Wisej.NET project template default) also switches off the
-  generated `UserSecretsId` attribute: `dotnet user-secrets set` wrote the values, but
-  `WebApplication.CreateBuilder` never loaded them (`Oidc:ClientSecret is not configured`). With
-  `GenerateAssemblyInfo=true` (no `AssemblyInfo.cs` in the project) the secrets load in Development.
-- `ILogger.BeginScope(dictionary)` opened at the top of a Wisej.NET click handler flows into every
-  log line written during the click, including services and `HttpClient`. A custom
-  `ILoggerProvider` that implements `ISupportExternalScope` receives the scopes; over the WebSocket
-  ASP.NET Core's own scope is per connection (`RequestPath: /ws.wx`, one `TraceId` for many clicks),
-  so the per-click correlation ID has to be your own.
-- Scope dictionaries from `HttpClient` logging carry a `{OriginalFormat}` key - drop keys starting
-  with `{` in the sink.
-- `ShowDialog()` without `await` keeps the calling handler (and its `using` scope) open until the
-  dialog closes; end the command before showing a dialog.
-- A grid re-bound with `DataSource = …` loses its current row; keep the selected id and set
-  `CurrentCell` again, or the next toolbar action lands on row 0.
-- SQLite has no grants: an INSERT-only audit table is two `BEFORE UPDATE/DELETE … RAISE(ABORT, …)`
-  triggers; `DROP TRIGGER` by the file owner removes them, which is why the hash chain matters.
-
-## Host hardening (Module 7)
-
-- The 4.1.7 client honours `"secure": true` in Default.json: loaded over `http://localhost`, it
-  navigated itself to `https://localhost:6407/`. Wisej.NET has one Default.json, so the lab keeps
-  `false` and a publish target (`AfterTargets="Publish"`, `ReadAllText` + `Replace` +
-  `WriteLinesToFile`) writes `true` into the published copy.
-- `Application.Configuration.Secure`, `.ValidateClient`, `.SessionStorage` (enum value `Session`)
-  read the live values; `sessionStorage` holds `Wisej.SessionId`, `Wisej.TabId`,
-  `Wisej.StartupUrl`; `document.cookie` stays empty.
-- CSP the 4.1.7 client ran under, enforced, with no violation reports across sign-in, the OIDC round
-  trip, grids, dialogs, uploads and sign-out:
-  `default-src 'self'; script-src 'unsafe-inline' 'unsafe-eval' 'self'; style-src 'unsafe-inline' 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'`
-  (`connect-src 'self'` covers the same-origin WebSocket in Chromium).
-- After switching from report-only to enforce, a revalidated (304) `fetch('/Default.html')` showed
-  both headers from the browser cache; `cache: 'no-store'` showed only the new one.
-- The OIDC hand-off cookie works as `SameSite=Strict`: it is set on the cross-site `/signin-oidc`
-  response and read by the start page's own same-origin `app.wx` request. The handler's correlation
-  and nonce cookies must stay `Lax` (they ride the provider's cross-site callback).
-- `Upload.MaxFileSize`: a larger file is never sent; the control raises `Error` with
-  `UploadErrorEventArgs.ErrorType == UploadErrorType.FileTooLarge`, `FileNames`, `FileSizes`
-  (events: `Uploading` (cancellable), `Uploaded`, `Error`, `Progress`). Without an `Error` handler the
-  user sees nothing.
-- A raw POST over the Kestrel `MaxRequestBodySize` to `/app.wx` is dropped (`Request body too
-  large`); the browser reports `Failed to fetch`.
-- Endpoint rate limits (`AddRateLimiter` + `RequireRateLimiting`) work beside `UseWisej()`; a click
-  cannot be limited that way - the login token bucket lives in the login service.
-- `Microsoft.AspNetCore.TestHost` 10.0.14 runs the same middleware in xUnit with `https://` and a
-  real host name, so redirect + HSTS are testable without a certificate (`UseHsts` never sends the
-  header for `localhost`).
+- The pane is small (screenshots ~314x202 for a 1400x900 viewport): read state with `get_page_text`,
+  `find`, `read_page` and `javascript_tool`; use headless Chrome (CDP, 1400x900) for screenshots and
+  `Input.dispatchMouseEvent` at an element's `getBoundingClientRect()` centre to click Wisej buttons
+  (M7: the review's toolbar buttons were not returned by `find`).
+- A background pane tab does not render a reloaded Wisej page until it is fronted (`tabs_select`) (M4).
+- The pane does not trust the HTTPS dev certificate (`ERR_CERT_AUTHORITY_INVALID`); M4-M7 offer the
+  Development-only `AccessOps:LocalHttpVerification` listener on `http://localhost:644N` (refused outside
+  Development); passkeys then need that origin in `WebAuthn:AllowedOrigins` and the IdP its redirect URI.
+- The pane has a five-server limit for `preview_start`; start extra servers with `dotnet run --no-build`
+  and an explicit `--urls`. Two routes of one project: build once, run both with `--no-build`, or the
+  second build fails on the locked dll (M7).
+- Stopping a process by command-line match must exclude the shell that runs the match (the M7 run's
+  pattern also matched the bash processes executing it).

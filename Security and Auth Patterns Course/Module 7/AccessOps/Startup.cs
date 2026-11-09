@@ -1,16 +1,28 @@
 using System;
+using System.IO;
+using System.Net;
 using AccessOps;
+using AccessOps.Documents;
+using AccessOps.Identity;
 using AccessOps.Infrastructure;
-using AccessOps.Services;
+using AccessOps.Security;
+using Microsoft.AspNetCore.Authentication.Negotiate;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Wisej.Core;
 
-// AccessOps host. Wisej.NET 4 is an ordinary ASP.NET Core application: everything that is not
-// the Wisej.NET UI (an endpoint, a header, a limit) is configured here, in this one file.
+// AccessOps, Module 7: ONE build, started once per entry point - like the course's two IIS
+// applications. AccessOps:Route = Intranet (Windows integrated authentication: IIS in production,
+// Kestrel Negotiate in the lab; scoped reads) or Partner (public HTTPS: own sign-in, OpenID Connect,
+// passkeys). Both routes end in the same application principal and the same RecordPolicy, over the
+// same durable store. Everything below the route switch is identical on every node of a route:
+// forwarded headers from the known proxies only, one shared Data Protection key ring and
+// application name, no downloadable .json, the grant read from the store on every call.
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -18,96 +30,151 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     WebRootPath = "./"
 });
 
-// Logging: one provider for console and file, with the redaction policy applied at the sink and the
-// command's correlation scope on every line (Infrastructure/RedactingLogger.cs).
-var logFolder = System.IO.Path.GetFullPath(System.IO.Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["AccessOps:DataRoot"] ?? "../AccessOpsData", "logs"));
-builder.Logging.ClearProviders();
-builder.Logging.AddProvider(new RedactingLoggerProvider(logFolder));
+var route = Enum.TryParse<AccessOpsRoute>(builder.Configuration["AccessOps:Route"], ignoreCase: true, out var r)
+    ? r
+    : throw new InvalidOperationException("AccessOps:Route must be 'Intranet' or 'Partner' (one process per entry point; see README.md).");
 
-// Secrets - the connection string, the OIDC client secret, the share-link signing key - come from
-// configuration layered as appsettings.json < user secrets (Development) < environment variables.
-// None is in a tracked file; each is checked below and the app refuses to start without it.
+// The shared data folder (database, audit key, Data Protection keys, the ingress switch file).
+var database = AccessOpsDatabase.FromConfiguration(builder.Configuration, builder.Environment.ContentRootPath);
+builder.Configuration.AddJsonFile(Path.Combine(database.DataRoot, IngressSwitch.FileName), optional: true, reloadOnChange: true);
 
-// The data lives outside the web root: the web root is this project folder, the database is in
-// the module's AccessOpsData folder beside it.
-builder.Services.AddSingleton(sp => AccessOpsDatabase.FromConfiguration(builder.Configuration, builder.Environment.ContentRootPath));
+// ---- identical on every node, both routes ------------------------------------------------------
 
-// Process-wide services. None of them holds a user: identity is read from the session of the
-// calling thread through IAccessOpsSession, every time.
-builder.Services.AddSingleton<IAccessOpsSession, WisejSession>();
-builder.Services.AddSingleton<PasswordService>();
-builder.Services.AddSingleton<LoginThrottle>();
+// Shared cookie-protection keys: every node that must read another node's correlation, nonce or
+// authentication cookie uses the same key ring and the same application name.
+var keyPath = builder.Configuration["DataProtection:KeyPath"] ?? "keys";
+if (!Path.IsPathRooted(keyPath))
+    keyPath = Path.Combine(database.DataRoot, keyPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keyPath))
+    .SetApplicationName(builder.Configuration["DataProtection:ApplicationName"] ?? "AccessOps");
+
+// Behind a TLS-terminating proxy the scheme, host and client address come from forwarded headers -
+// honoured only from the proxies and networks named in configuration (Hosting:KnownProxies,
+// Hosting:KnownNetworks). The defaults (loopback) are cleared first so nothing is trusted implicitly.
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    o.ForwardLimit = 1;
+    o.KnownProxies.Clear();
+    o.KnownIPNetworks.Clear();
+    foreach (var proxy in builder.Configuration.GetSection("Hosting:KnownProxies").Get<string[]>() ?? Array.Empty<string>())
+        o.KnownProxies.Add(IPAddress.Parse(proxy));
+    foreach (var network in builder.Configuration.GetSection("Hosting:KnownNetworks").Get<string[]>() ?? Array.Empty<string>())
+        o.KnownIPNetworks.Add(System.Net.IPNetwork.Parse(network));
+    foreach (var host in builder.Configuration.GetSection("Hosting:AllowedHosts").Get<string[]>() ?? Array.Empty<string>())
+        o.AllowedHosts.Add(host);
+});
+
+// Data and process-wide services (none of them holds a user). Both routes register the same
+// policy and stores; the intranet process also needs the partner services because its release
+// review runs the partner cases against the shared store.
+builder.Services.AddSingleton(database);
+builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddSingleton(new PasswordHasher());
 builder.Services.AddSingleton<AuditService>();
-builder.Services.AddSingleton<LoginAuditService>();
-builder.Services.AddSingleton<PermissionEditorService>();
-builder.Services.AddSingleton<EmployeeRepository>();
-builder.Services.AddSingleton<PermissionService>();
-builder.Services.AddSingleton<IAuthorize, Authorize>();
+builder.Services.AddSingleton<LoginAudit>();
+builder.Services.AddSingleton<AccountStore>();
+builder.Services.AddSingleton<GrantStore>();
+builder.Services.AddSingleton<LoginThrottle>();
 builder.Services.AddSingleton<LoginService>();
 builder.Services.AddSingleton<SignOutService>();
-builder.Services.AddSingleton<EmployeeDirectoryService>();
-builder.Services.AddSingleton<DocumentRepository>();
+builder.Services.AddSingleton<CookieHandoffStore>();
+builder.Services.AddSingleton<ExternalHandoffStore>();
+builder.Services.AddSingleton<CountingDocumentRepository>();
+builder.Services.AddSingleton<IDocumentRepository>(sp => sp.GetRequiredService<CountingDocumentRepository>());
+builder.Services.AddSingleton<RecordPolicy>();
 builder.Services.AddSingleton<DocumentService>();
-
-// Documents: the store outside the web root, the upload gate, delivery through the session, share links.
-// The host's request limit is the same ceiling as Upload.MaxFileSize (plus room for the multipart
-// envelope), so a hand-built post cannot go around the control.
-var maxUpload = builder.Configuration.GetValue<long>("Storage:MaxFileSizeBytes", 20 * 1024 * 1024);
-builder.WebHost.ConfigureKestrel(k => k.Limits.MaxRequestBodySize = maxUpload + 64 * 1024);
-builder.Services.AddSingleton(sp => DocumentStore.FromConfiguration(builder.Configuration, builder.Environment.ContentRootPath));
-builder.Services.AddSingleton(new UploadGate(maxUpload));
-builder.Services.AddSingleton<IFileDelivery, WisejFileDelivery>();
-builder.Services.AddSingleton<ShareLinkService>();
-builder.Services.AddSingleton<ApprovalRepository>();
-builder.Services.AddSingleton<ApprovalService>();
-builder.Services.AddSingleton<AdminService>();
-builder.Services.AddSingleton<PermissionRefreshService>();
-
-// External sign-in: the ASP.NET Core OpenID Connect handler (Infrastructure/OpenIdConnectSetup.cs)
-// and the one seam the pages use (IExternalSignIn).
-builder.AddAccessOpsOpenIdConnect();
-builder.Services.AddHttpClient();
+builder.Services.AddSingleton<ExportService>();
 builder.Services.AddSingleton<ExternalIdentityMapper>();
-builder.Services.AddSingleton<IExternalSignIn, WisejExternalSignIn>();
-builder.Services.AddSingleton<HrProfileClient>();
+builder.Services.AddSingleton<WisejExternalSignIn>();
+builder.Services.AddSingleton<IExternalSignIn>(sp => sp.GetRequiredService<WisejExternalSignIn>());
+builder.Services.AddSingleton(RelyingPartySettings.FromConfiguration(builder.Configuration));
+builder.Services.AddSingleton<PasskeyChallengeStore>();
+builder.Services.AddSingleton<PasskeyCredentialStore>();
+builder.Services.AddSingleton<PasskeyService>();
+builder.Services.AddSingleton<WindowsAccountMap>();
+builder.Services.AddSingleton<ConfidentialFileStore>();
+builder.Services.AddSingleton<IdentityTraceLog>();
+builder.Services.AddHttpContextAccessor();   // the scoped read takes the request's Windows token from here
 
-// Module 7: the host's part - forwarded headers, HTTPS + HSTS, the security headers, cookie policy,
-// request limits and the share-link rate limit (Infrastructure/Hardening.cs).
-var hardening = builder.AddAccessOpsHardening();
-builder.Services.AddSingleton(new LoginRateLimiter(hardening.LoginBurst, TimeSpan.FromSeconds(hardening.LoginRefillSeconds), () => DateTime.UtcNow));
+// ---- the route ----------------------------------------------------------------------------------
+
+var localHttp = false;
+if (route == AccessOpsRoute.Intranet)
+{
+    // Every request is challenged, like an IIS application with Anonymous off and Windows
+    // Authentication on (iis/windows-auth.location.xml): the 401 happens before Program.Main.
+    builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNegotiate();
+    builder.Services.AddAuthorization(o => o.FallbackPolicy = o.DefaultPolicy);
+}
+else
+{
+    // AccessOps:LocalHttpVerification is a Development-only switch for checking the partner route
+    // on http://localhost in a browser that does not trust the HTTPS development certificate.
+    localHttp = builder.Configuration.GetValue("AccessOps:LocalHttpVerification", false);
+    if (localHttp && !builder.Environment.IsDevelopment())
+        throw new InvalidOperationException("AccessOps:LocalHttpVerification is allowed in the Development environment only.");
+
+    // the host cookie + antiforgery, then the OpenID Connect handler (code + PKCE); the client
+    // secret comes from user secrets or Oidc__ClientSecret, never from a tracked file
+    builder.AddAccessOpsOpenIdConnect(requireHttps: !localHttp);
+}
+
+// LAB FAULT INJECTION (Debug + Development only): a hand-off handle that can be redeemed twice, so
+// the release review's stop condition "a replay accepted as a fresh sign-in" can be seen to fire.
+#if DEBUG
+HandoffTable.ReplayableForLab = builder.Environment.IsDevelopment()
+    && builder.Configuration.GetValue("AccessOps:FaultInjection:ReplayableHandoff", false);
+#endif
 
 var app = builder.Build();
 
-// First in the pipeline, before any endpoint and before app.UseWisej(), so every response carries
-// the headers - the Wisej.NET pages, the OIDC callback and the share-link URL alike.
-app.UseAccessOpsHardening();
-
 AppHost.Services = app.Services;
+AppHost.Route = route;
+AppHost.IsDevelopment = app.Environment.IsDevelopment();
 
-var database = app.Services.GetRequiredService<AccessOpsDatabase>();
-database.EnsureCreated(app.Services.GetRequiredService<PasswordService>());
-app.Logger.LogInformation("AccessOps data folder: {DataRoot}", database.DataRoot);
-var store = app.Services.GetRequiredService<DocumentStore>();
-if (store.IsUnderWebRoot(app.Environment.WebRootPath ?? app.Environment.ContentRootPath))
-    throw new InvalidOperationException("The document store must be outside the web root.");
-app.Services.GetRequiredService<DocumentRepository>().EnsureSeedFiles(store);
-app.Services.GetRequiredService<ShareLinkService>();   // fails now if the signing key is missing
-app.Logger.LogInformation("Audit chain check at start-up: {Result}",
-    app.Services.GetRequiredService<AuditService>().VerifyChain() is long broken ? "BROKEN at entry " + broken : "intact");
-app.Logger.LogInformation("Hardening: HTTPS {Https}, CSP {Csp}, share-link bucket {Burst}+{Rate}/min, login bucket {LoginBurst} per {Refill}s",
-    hardening.RequireHttps ? "required (redirect + HSTS)" : "NOT required (development profile)",
-    hardening.CspReportOnly ? "report-only" : "enforced", hardening.ShareLinkBurst, hardening.ShareLinkPerMinute,
-    hardening.LoginBurst, hardening.LoginRefillSeconds);
+database.EnsureCreated(app.Services.GetRequiredService<PasswordHasher>());
+Subject.UseOpaqueKey(database.LoadOrCreateOpaqueKey());
+app.Logger.LogInformation("AccessOps route: {Route} · data folder: {DataRoot} · key ring: {KeyPath}", route, database.DataRoot, keyPath);
+#if DEBUG
+if (HandoffTable.ReplayableForLab)
+    app.Logger.LogWarning("LAB FAULT INJECTION ON: hand-off handles can be redeemed twice (AccessOps:FaultInjection:ReplayableHandoff)");
+#endif
 
-// ASP.NET Core endpoints beside the Wisej.NET app: /account/signin, /signin-oidc (the handler),
-// /account/signout. Mapped before app.UseWisej(); they have no Wisej.NET session.
-app.MapAccessOpsAccountEndpoints();
+app.UseForwardedHeaders();
 
-// The signed, expiring share link (Infrastructure/ShareLinkEndpoint.cs).
-app.MapShareLinks().RequireRateLimiting(Hardening.ShareLinkPolicy);
+if (route == AccessOpsRoute.Intranet)
+{
+    // Fixture: the Windows account running this lab is mapped to an intranet account (reader1 by
+    // default, visitor1 for the host-authenticated deny) so the lab works on any machine.
+    var mappedAs = app.Configuration["AccessOps:CurrentWindowsUser"] ?? "reader1";
+    if (OperatingSystem.IsWindows())
+        app.Services.GetRequiredService<WindowsAccountMap>().MapCurrentWindowsUser(mappedAs);
+    app.Logger.LogInformation("Intranet route: Negotiate on every request; this Windows account is mapped to {Account}; approved root {Root}",
+        mappedAs, app.Services.GetRequiredService<ConfidentialFileStore>().ApprovedRoot);
 
-// Where browsers report Content-Security-Policy violations (Infrastructure/Hardening.cs).
-app.MapCspReports();
+    // the redacted challenge trace: scheme and status only, never a token or an Authorization value
+    app.UseMiddleware<ChallengeTrace>();
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
+else
+{
+    // The ingress switch first: with the partner route off nothing behind it runs.
+    app.UseMiddleware<IngressSwitch>();
+
+    // Refuse a WebSocket upgrade from a foreign Origin before Wisej.NET sees it.
+    app.UseAccessOpsOriginGuard();
+
+    // UseAuthentication + /account/signin (challenge) + /account/signout; the handler answers
+    // /signin-oidc and /signout-callback-oidc.
+    app.MapAccessOpsAccountEndpoints();
+    app.UseAuthorization();
+
+    // /auth/antiforgery, /auth/cookie, /auth/signout, /auth/status, /auth/continue
+    app.MapAccessOpsAuthEndpoints();
+}
 
 // Add Wisej.NET (HTTP + WebSocket endpoints).
 app.UseWisej();

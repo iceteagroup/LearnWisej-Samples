@@ -1,128 +1,141 @@
 # AccessOps · Security & Auth Patterns · Module 4
 
-Local lab build for **Module 4 · OAuth and OpenID Connect Integration**. The sign-in page from the
-walkthrough - *Sign in with your work account →*, the *SERVICE ACCOUNTS ONLY* password row, the
-`STATUS · authorization code flow · PKCE` strip - the portal it lands on (*SessionContext built*,
-*signed in via Contoso Identity*), and a local **test identity provider** so the whole round trip
-runs on localhost without an external account or a real client secret.
+**Custom Sign In and Session Security.** The partner route opens on the blue
+`AccessOps · Partner sign-in` window of the walkthrough: "Sign in to AccessOps", "Partner route ·
+documents and approval requests", **User name**, **Password**, **Sign in**, a status banner and
+the `SERVER  LoginThrottle · failures N of 5` line at the bottom. Every refusal - wrong password,
+unknown name, disabled account, unapproved tenant, lockout - shows the same red sentence "That user
+name and password combination is not valid." A good password shows "Signing in…", the tab
+reloads, the session ID rotates on that page load and `ConsolePage` replaces the login view:
+`AccessOps · Documents` with the side strip **Documents · Approvals · Sign out**, the Documents
+heading with **Export** and the grid **ID · Title · Tenant · Class** (17 Supplier contract —
+Fabrikam, 21 Approval request AR-204, 24 Partner onboarding checklist, all Tenant A). **Sign out**
+revokes the account's login grants, expires the host cookie over HTTPS and ends the session; the
+tab comes back with "You have signed out. Sign in to continue." A tab that was open elsewhere still
+shows Export, and its next click answers "Your sign-in has ended. Sign in again to continue." with
+zero repository reads.
 
-> **Wisej.NET version - read this first.** The lesson teaches the `Wisej.Web.OAuthClient`
-> component (and Module 2 the `Passkey` component), both introduced in **Wisej.NET 4.2**. These
-> samples target the released **Wisej-4 4.1.7**, which has neither. External sign-in here uses
-> **ASP.NET Core's OpenID Connect handler** (authorization code flow with PKCE) configured in
-> `Startup.cs` before `app.UseWisej()`, and the Wisej.NET session maps the validated identity at
-> the next page load. The pages call one seam, [`IExternalSignIn`](AccessOps/Services/IExternalSignIn.cs),
-> so moving to `OAuthClient` when 4.2 ships replaces one class.
+Solution `AccessOps.slnx` = `AccessOps/` (Wisej.NET web app, `net10.0`, `Wisej-4` 4.1.7,
+`Microsoft.Data.Sqlite` 10.0.14) + `AccessOps.Tests/` (xUnit, `Microsoft.AspNetCore.TestHost`
+10.0.14) + `PolicyHarness/` (plain .NET console). Started from a copy of Module 1; Module 1's
+training verifier, admin console and diagnostics view are replaced by the partner sign-in.
+Data (SQLite database, audit-pseudonym key) lives in `AccessOpsData/` beside the project, outside
+the web root, git-ignored. Module 5 starts from this folder.
 
-## Run it - two servers
+## Run it
 
-```bash
-# 1. the test identity provider (TEST DOUBLE - never deploy), port 6414
-cd "Security and Auth Patterns Course/Module 4/AccessOps.TestIdentityProvider"
-dotnet run --urls http://localhost:6414
-
-# 2. AccessOps, port 6404
-cd "Security and Auth Patterns Course/Module 4/AccessOps"
-dotnet run -f net10.0 --urls http://localhost:6404
+```powershell
+cd "Security and Auth Patterns Course\Module 4"
+dotnet build AccessOps.slnx
+dotnet run --project AccessOps --urls https://localhost:6404      # HTTPS dev certificate
+dotnet test AccessOps.slnx
+dotnet run --project PolicyHarness
 ```
 
-```bash
-cd "Security and Auth Patterns Course/Module 4"
-dotnet test          # 21 tests
+`https://localhost:6404` needs the ASP.NET Core development certificate to be **trusted** by your
+browser (`dotnet dev-certs https --trust`, your decision). To check the sample in a browser that
+does not trust it (the course machine's browser pane did not), run a second, plain-HTTP listener
+in Development only:
+
+```powershell
+$env:AccessOps__LocalHttpVerification = "true"
+$env:AccessOps__AllowedOrigins__1 = "http://localhost:6444"
+dotnet run --project AccessOps --urls "https://localhost:6404;http://localhost:6444"
 ```
 
-Open <http://localhost:6404>. Demo identities at the provider are in
-[AccessOps.TestIdentityProvider/Data/users.json](AccessOps.TestIdentityProvider/Data/users.json)
-(`dana.ellis@…` - linked to a local Operations manager, `jo.newman@…` - unknown locally, provisioned
-on first login, `theo.grant@…` - linked to a disabled employee). The service account `svc.reports`
-and its demo password are in [AccessOps/Data/seed-credentials.json](AccessOps/Data/seed-credentials.json).
-The client secret both servers share is an obviously-demo value supplied by the environment through
-each project's `Properties/launchSettings.json` (`Oidc__ClientSecret`, `Clients__accessops__Secret`).
+`AccessOps:LocalHttpVerification` lets only the antiforgery cookie follow the request scheme
+(ASP.NET Core refuses to issue a Secure-only antiforgery cookie on plain HTTP); the host ticket stays
+`Secure` (Chrome accepts Secure cookies on `http://localhost`). The app refuses to start with it
+outside Development. Fresh fixtures: stop the app and delete `AccessOpsData/`.
 
-## The test identity provider
+### Demo accounts (invented, local only, Debug builds only)
 
-[AccessOps.TestIdentityProvider](AccessOps.TestIdentityProvider/Program.cs) ("Contoso Identity") is a
-test double, marked as such in its code, its pages and its log, and it refuses to start outside the
-Development environment. It implements: discovery (`/.well-known/openid-configuration`), JWKS (an RSA
-key generated at start-up, in memory), `/connect/authorize` (exact redirect-URI match, PKCE S256
-mandatory, the sign-in page, a simulated second factor, single sign-on through its own session
-cookie), `/connect/token` (one-time 60-second codes, PKCE verification, client authentication, RS256 ID
-tokens, refresh-token rotation), `/connect/userinfo`, `/connect/revoke`, `/connect/endsession`, and one
-protected API (`/api/hr/profile`) AccessOps calls with the access token.
+| User name | Password | Account | Result |
+|---|---|---|---|
+| `partner.ana@fabrikam.test` | `Fabrikam-demo-17` | Ana Ruiz, tenant A, Reader | signs in |
+| `partner.old@fabrikam.test` | `Fabrikam-demo-old` | disabled, tenant A | generic failure |
+| `partner.kai@northwind.test` | `Northwind-demo-23` | tenant C (not approved) | generic failure |
+
+Passwords are PBKDF2-HMAC-SHA256 (210,000 iterations, 16-byte salt) hashes derived when a **Debug**
+build seeds the database; a Release build seeds the accounts without any password hash, so no
+fixture secret ships.
 
 ## What to try
 
+Use two tabs (each tab is its own Wisej.NET session; the lab's "two browser profiles" also gives
+each its own cookies).
+
 | Action | Expected result |
 |---|---|
-| **Sign in with your work account**, `dana.ellis@…` | Contoso Identity's page (scopes `openid profile email offline_access hr.read`), *Approve the sign-in on your phone*, then the portal: *Dana Ellis · Department manager · Operations · signed in via Contoso Identity*, status `Signed in via Contoso Identity`, `sub 4f21-9ac0 · 3 documents in scope` |
-| **Sign out**, then sign in again | *You have signed out of AccessOps and of Contoso Identity.* - and the provider asks for the password again |
-| `jo.newman@…` | Provisioned on first login: `1 of 5 entries`, *SessionContext built · provisioned, no roles* |
-| `theo.grant@…` | *Sign-in did not complete. If this keeps happening, contact your administrator.* (audit `ExternalRejected`) |
-| Open `/signin-oidc?code=forged&state=forged` | *Sign-in did not complete. Try again.* - the handler refused the state |
-| `svc.reports` on the password row | The service-account session (`Signed in with a service account`); `d.ortiz` there gets the generic sentence |
+| `partner.ana@fabrikam.test` + a wrong password | "That user name and password combination is not valid." (red), `LoginThrottle · failures 1 of 5`, password box empty |
+| `partner.old@fabrikam.test` + `Fabrikam-demo-old` | the same sentence (audit: `Disabled`) |
+| `partner.kai@northwind.test` + `Northwind-demo-23` | the same sentence (audit: `TenantNotApproved`) |
+| `partner.ana…` + five wrong passwords, then `Fabrikam-demo-17` | "failures 5 of 5", then the same sentence: locked for 15 minutes (audit: `LockedOut`) |
+| `partner.ana…` + `Fabrikam-demo-17` (fresh name or after 15 min) | "Signing in…", reload, `AccessOps · Documents`; log `RefreshSessionId() · rotated=True · isWebSocket=False` |
+| Console: Export (row 17 selected) | `record-A-17.txt` downloads, "Record 17 exported · Supplier contract — Fabrikam" (green) |
+| Tab 1 and tab 2 signed in as Ana; tab 1: Sign out | tab 1 reloads: "You have signed out. Sign in to continue.", SERVER "grant revoked · context cleared · Application.Exit()" |
+| Tab 2 (stale, fixture **F05**): Export | "Your sign-in has ended. Sign in again to continue." (red); log `export denied reason=grant … repositoryReads=+0`; no new grant |
+| Tab 2: refresh (F5), Export | console stays (same session), Export denied again, 0 reads |
+| Tab 2: `fetch('/auth/status')` in the console | `401` (the host cookie's grant check) |
+| `fetch('/auth/signout', {method:'POST'})` without a token (forged post, **F11**) | `400`, nothing changes |
+| WebSocket upgrade to `/ws.wx` with `Origin: https://evil.example` (**F11**) | `403` before Wisej.NET; own origin `101` |
+| `/auth/continue?returnUrl=//evil.example` (also `/\evil.example`, `https://evil.example/x`) (**F11**) | redirect to `/` |
+| `dotnet test` | 36 tests green (`docs/test-output.txt`) |
+| `dotnet run --project PolicyHarness` | one allowed export, every deny at zero repository calls (`docs/policy-harness-output.txt`) |
 
-## Lab tasks → where in the code
+## Lab deliverables → where
 
-| Deliverable | Where |
+| Deliverable (plan) | Where |
 |---|---|
-| OpenID Connect configuration (code flow, PKCE, scopes) with the secret out of source | [OpenIdConnectSetup.cs](AccessOps/Infrastructure/OpenIdConnectSetup.cs), `Oidc` in [appsettings.json](AccessOps/appsettings.json), `Oidc__ClientSecret` from the environment |
-| Success and failure handling (the `Authenticated` / `AuthenticationFailed` roles) | `OnTokenValidated` / `OnRemoteFailure` in OpenIdConnectSetup; `TryCompleteOnPageLoad` in [WisejExternalSignIn.cs](AccessOps/Infrastructure/WisejExternalSignIn.cs); neutral sentences in [Program.cs](AccessOps/Program.cs) |
-| Claim mapping by issuer + subject, first-login provisioning with no rights in the same transaction as the audit row, disabled account refused | [ExternalIdentityMapper.cs](AccessOps/Services/ExternalIdentityMapper.cs), `external_logins` table |
-| `SessionContext` built locally, permissions from `PermissionService`, fresh session ID | `LoginService.SignInExternal`, `WisejSession.Establish` (page load → `RefreshSessionId()` first) |
-| Downstream API with the access token; refresh and expiry | [HrProfileClient.cs](AccessOps/Services/HrProfileClient.cs), `GetAccessTokenAsync` in WisejExternalSignIn, the expiry sign-out in [DashboardView.cs](AccessOps/Pages/DashboardView.cs) |
-| Local login fallback for service accounts only | `IsServiceAccount` check in [LoginService.cs](AccessOps/Services/LoginService.cs), [SignInPage.cs](AccessOps/Pages/SignInPage.cs) |
-| Sign-out covering both sessions | [SignOutFlow.cs](AccessOps/Pages/SignOutFlow.cs) → Default.html → `/account/signout` (cookie + OpenID Connect sign-out → provider end-session) |
-| Where the secret lives, where tokens are kept, how long, who can revoke | [docs/ExternalSignInNotes.md](docs/ExternalSignInNotes.md) |
-| The seam for the 4.2 component | [IExternalSignIn.cs](AccessOps/Services/IExternalSignIn.cs) |
+| Login view with generic failures, throttling and disabled-account handling | `Pages/LoginPage.cs` (`btnSignIn_Click`), `Identity/LoginService.cs` (`SignInResult.GenericFailure`, dummy credential, tenant/disabled policy), `Identity/LoginThrottle.cs` (5 per name, 20 per address, 15 min), `Identity/PasswordHasher.cs`, `Security/LoginAudit.cs` (`login_audit`, append-only) |
+| Principal establishment with session ID rotation | `Identity/SignInHandoff.cs` (`Park` → `Application.Reload()`; `CompleteOnPageLoad`: `RefreshSessionId()` first, grant recheck, `ApplicationPrincipal.Establish`, boolean `rotated` log), `Identity/ApplicationPrincipal.cs`, `Program.cs` (`ApplicationRefresh` swaps in `ConsolePage`) |
+| HTTPS cookie endpoint with redacted Set-Cookie attributes | `Infrastructure/HostAuthentication.cs` (cookie scheme Secure/HttpOnly/SameSite=Strict, antiforgery, `/auth/antiforgery`, `/auth/cookie`, `/auth/signout`, `/auth/status`, `OnValidatePrincipal`), `Infrastructure/CookieHandoffStore.cs` (single-use 60 s handle), `Default.html` (`AccessOpsAuth`); captured lines in `docs/run-trace.txt` |
+| GrantStore with revocation enforced across open tabs | `Security/GrantStore.cs` (`G-` + 128 random bits, account, tenant, expiry, revoked), `Documents/ExportService.cs` (grant claim → current grant → tenant → record → repository), `Identity/SignOutService.cs`; F05 in `GrantAndExportTests` and the browser walk |
+| Auth-state transition chart and forged post, wrong origin and continuation URL tests | `docs/auth-state-chart.md`; `Infrastructure/WebSocketOriginGuard.cs`, `Security/ReturnUrlPolicy.cs` (+ `/auth/continue`); `AccessOps.Tests/HostEndpointTests.cs` |
 
-## Verified
+Lab steps → code: 2 `LoginPage`/`LoginService`/`LoginThrottle`; 3 `GrantStore`/`ExportService`;
+4 `SignInHandoff`/`Program.OnPageLoad`; 5 `Startup.cs` + `HostAuthentication`; 6
+`WebSocketOriginGuard`, `ReturnUrlPolicy`; 7–8 the What-to-try rows; 9 `docs/auth-state-chart.md`.
 
-Both servers in the browser pane (`accessops-idp-m4` was a temporary launch entry for port 6414):
-every row of *What to try*, plus a token refresh (provider access-token lifetime set to 70 s for the
-test, then restored to 300) and the refresh-impossible path (provider restarted → *Your sign-in has
-expired*). Logs and the audit rows are in [docs/ExternalSignInNotes.md](docs/ExternalSignInNotes.md).
-`dotnet test`: 21/21.
+## Verified here / only in the lab environment
 
-## Answers to the review questions
+Verified on this machine (Windows 11, .NET 10.0.303 SDK, Kestrel, browser pane at 1400x900 plus a
+headless Chrome for full-size screenshots): build 0 warnings / 0 errors; 36 tests; PolicyHarness;
+every row of "What to try" in two tabs on `http://localhost:6444` (the verification listener, see
+Run it); the raw WebSocket upgrades against `https://localhost:6404`; the Set-Cookie attributes in
+the log; the log grep for passwords (0 hits).
 
-1. **A captured authorization code.** Exchanging it needs the PKCE code verifier, which never left the
-   server, and the client secret; the code is also single-use and expires in 60 seconds. With the
-   OpenID Connect handler PKCE is on by default (`UsePkce = true`); the test provider makes S256
-   mandatory.
-2. **Five minutes at the multi-factor prompt and the Wisej.NET session evicted.** The callback is an
-   ASP.NET Core endpoint with no Wisej.NET session; it parks the validated identity and sends the
-   browser to Default.html. A brand-new session runs `Program.Main`, which redeems the hand-off just
-   as `ApplicationRefresh` would have. What must be true: the hand-off is redeemable on any page load
-   (both `Main` and `ApplicationRefresh` call `TryCompleteOnPageLoad`), and it outlives the wait (two
-   minutes here - longer waits fail safe with *Sign-in did not complete*).
-3. **Signed straight back in after Sign out.** The provider's session survived; the sign-out did not go
-   to the end-session endpoint. Here that is `Results.SignOut(..., OpenIdConnectDefaults.AuthenticationScheme)`
-   in `/account/signout`; with the 4.2 component it is `SignOut(..., signOutAtProvider: true, ...)`.
+Not verified here: the browser pane does not trust the HTTPS development certificate
+(`ERR_CERT_AUTHORITY_INVALID`), so the UI walk ran on the HTTP verification listener; "two browser
+profiles" - the pane has one profile, so both tabs shared the cookie jar (the Wisej.NET sessions,
+the grants and the deny are per tab and were observed; the host-cookie side was checked per request
+and in `HostEndpointTests`). Counters behind a load balancer and a real TLS-terminating proxy
+(`UseForwardedHeaders` is configured for loopback only) are lab-environment items.
 
-## Where this sample differs from the lesson
+## Where this sample differs from the lesson or video
 
-- **`OAuthClient` (Wisej.NET 4.2) is not used.** Not built as taught: the `oauth` component on the
-  sign-in page, `Provider`/`Authority`/`ClientId` properties, `ResolvedRedirectUri`, `SignIn()`, the
-  `ProviderResolved`/`SigningIn`/`Authenticating`/`Authenticated`/`AuthenticationFailed`/`TokenExpired`/`SignedOut`
-  events, `OAuthPrincipal`, `GetAccessToken()`/`RefreshAccessToken()`, `SignOut(revokeTokens, signOutAtProvider, ...)`,
-  the `WISEJ_OAUTH_<PROVIDER>_CLIENT_SECRET` / `settings.oauth` / `WISEJ_OAUTH_SECRETS_FILE` secret
-  chain and Popup mode. Each lab deliverable is met with ASP.NET Core's OpenID Connect handler and
-  the code named above. Affected deliverables: *OAuthClient configuration with secrets kept out of
-  source* (met with `Oidc:*` configuration and `Oidc__ClientSecret`), *Authenticated and
-  AuthenticationFailed handling* (met with the handler events and the page-load hand-off).
-- **No `Application.User`.** The 4.2 component sets `Application.User`; this sample keeps the identity
-  in the `SessionContext` only, which is what every AccessOps service reads.
-- **Replayed callback → `Expired`.** The lab names the component's `OAuthError.Expired`. Here a
-  replayed or forged callback is refused by the handler (state cannot be unprotected / correlation
-  cookie gone); the browser check used a forged state. A replayed hand-off handle is refused by
-  `ExternalHandoffStore` (unit test).
-- **Test identity provider instead of Keycloak/Entra.** The lab suggests a Keycloak realm or an Entra
-  tenant; no external account may be used here, so the module ships its own test double.
-- **Remember-me removed.** Module 2's *Remember this device* is gone: the Module 4 sign-in page has no
-  such control, and a device token would be a second, local way in beside the provider.
-- **Portal.** The video's portal lists Finance, Operations and Security documents for an Operations
-  manager; the department rule from Module 3 still applies, so Dana Ellis sees the three Operations
-  documents.
-- **Idle sign-out of an external session** also ends the provider session (both sessions), as the
-  explicit sign-out does - otherwise a shared machine would sign the next person in silently.
-- **Passkeys (Wisej.NET 4.2).** Not implemented; see Module 2.
+- **Window title:** the video's mock reads "AccessOps — Partner sign-in"; the app uses the course's
+  `AccessOps · <Area>` form ("AccessOps · Partner sign-in", "AccessOps · Documents").
+- **No area strip:** the Module 4 mock has no `Departments · Employees · …` strip; the console uses
+  the mock's side strip (Documents · Approvals · Sign out). Approvals is an empty screen (not built
+  in this lab).
+- **"Checking…" button state:** the mock greys the button while checking; the check runs in one
+  click handler, so the app shows "Signing in…" only after it passed.
+- **SERVER line:** kept as the mock shows it. It counts failures for the typed name, unknown names
+  included, so it never tells whether an account exists; a production login view would not show it.
+- **Sign-out scope:** the video says "Grant G-7f3a… revoked by tab 1 sign-out"; here each sign-in has
+  its own grant and sign-out revokes every active grant of the account, which is what makes tab 2's
+  stale export fail.
+- **Grid selection:** Wisej's Bootstrap-4 theme draws the selected row grey, not the mock's light
+  blue.
+- **Grant IDs** are `G-` + 32 hex characters, shown as `G-xxxx…` (the mock's `G-7f3a…` is an example).
+- **Host cookie hand-off:** the lesson says the session "creates" the handle; here the page load
+  creates it and the page's own script posts it to `/auth/cookie` with an antiforgery token
+  (`Application.Call`, value passed as an argument).
+- **Sign-out sequencing:** `await Application.CallAsync("AccessOpsAuth.signOut", "signout")` (the
+  POST to `/auth/signout`) and only then `Application.Exit()` - script sent in the same response as
+  `Exit()` never runs.
+- **ApplicationPrincipal:** as the lesson says, this copy assigns `Application.User` without rotating;
+  `SignInHandoff` rotates once on the load, before `Establish` (Module 1's copy rotated inside).
+- **Verification listener:** `AccessOps:LocalHttpVerification` is not part of the lesson; it exists
+  only so the sample can be checked in a browser that does not trust the dev certificate.

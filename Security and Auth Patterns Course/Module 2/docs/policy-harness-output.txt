@@ -1,0 +1,12 @@
+AccessOps PolicyHarness · Module 2 · .NET 10.0.11
+
+PASS authorized reader     reader grant, tenant A, record 17    allowed  repository calls +1
+PASS tenant boundary (F02) reader grant, tenant B, record 17    denied   repository calls +0
+PASS missing role          visitor grant (no read right)        denied   repository calls +0
+PASS unknown grant         no such grant ID                     denied   repository calls +0
+PASS authenticated, no Reader (M2) CONTOSO\visitor1, A / 17     denied   repository calls +0
+PASS authenticated, unmapped (M2)  Windows SID with no account  denied   repository calls +0
+PASS expired grant         reader grant at its expiry           denied   repository calls +0
+PASS revoked grant (F05)   reader grant revoked, A / 17         denied   repository calls +0
+
+Repository reads in total: 1 (one allowed read, every deny at zero calls)

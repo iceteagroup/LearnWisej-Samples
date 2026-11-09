@@ -1,0 +1,39 @@
+AccessOps Module 5 · server logs of the headless-Chrome walk, 2026-11-09 (fresh database; AccessOps on https://localhost:6405 + http://localhost:6445, Contoso Identity on http://localhost:6415)
+Lines as written (category prefix dropped). Kestrel's WebSocket-reset errors when the headless browser was killed are left out.
+
+--- AccessOps
+info login subject=x-callback address=a-callback outcome=ExternalRefused grant=correlation correlation=df3d68c2ed67
+warn external sign-in failed at the callback · reason=correlation · grants total=0
+info ID token validated (signature, iss, aud, exp, nonce) · sub …-ellis · parked for the Wisej.NET page load
+info login subject=x-49a0bc5dfdc1 address=a-d0c67eb0b082 outcome=Succeeded grant=G-7eac… oidc correlation=77af3895357f
+info page load · RefreshSessionId() · rotated=True · isWebSocket=False · method=oidc
+info ApplicationPrincipal.Establish · subject=s-24c4255bd684 · grant=G-7eac…
+info external sign-in completed · sub …-ellis → acct …31e5 · tenant A (AccessOps data) · grants total=1
+info POST /auth/cookie · grant=G-7eac… · Set-Cookie (value redacted): AccessOps.Auth=(redacted); path=/; secure; samesite=strict; httponly
+info login subject=x-callback address=a-callback outcome=ExternalRefused grant=correlation correlation=d25c003236c3
+warn external sign-in failed at the callback · reason=correlation · grants total=1
+info audit subject=s-24c4255bd684 action=export resource=A / 17 classification=Confidential decision=allowed reason=- correlation=140030d8019e
+info export allowed grant=G-7eac… repositoryReads=+1 correlation=140030d8019e
+info login subject=s-24c4255bd684 address=a-d0c67eb0b082 outcome=SignedOut grant=G-7eac… +1 revoked correlation=c4cd491a68fa
+info POST /auth/signout · grant=none revokedNow=False · Set-Cookie (value redacted): AccessOps.Auth=(redacted); expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=strict; httponly
+info POST /account/signout · ending the provider session (end_session_endpoint)
+info login subject=x-callback address=a-callback outcome=ExternalRefused grant=access_denied correlation=9d749f2144e8
+warn external sign-in failed at the callback · reason=access_denied · grants total=1
+info ID token validated (signature, iss, aud, exp, nonce) · sub …i-berg · parked for the Wisej.NET page load
+info login subject=x-becd8b3df4b9 address=a-d0c67eb0b082 outcome=ExternalRefused grant=unapproved_tenant correlation=abcca43e9d1d
+warn external sign-in refused · reason=unapproved_tenant · grants total=1 · correlation=abcca43e9d1d
+
+--- Contoso Identity (test provider)
+warn TEST IDENTITY PROVIDER - NEVER DEPLOY. Issuer http://localhost:6415, disposable tenant contoso-lab, 3 demo users, 1 client(s).
+info authorize: sign-in page shown (PKCE S256 challenge received)
+info authorize: sign-in page shown (PKCE S256 challenge received)
+info authorize: 4f21-9ac0-dana-ellis signed in at the IdP (second factor approved)
+info authorize: IdP session reused for 4f21-9ac0-dana-ellis - no credentials asked
+info token: code redeemed for 4f21-9ac0-dana-ellis (client authenticated, PKCE S256 verified)
+info lab: replaying the last callback of this browser (F07)
+info endsession: IdP session of 4f21-9ac0-dana-ellis ended
+info authorize: sign-in page shown (PKCE S256 challenge received)
+info authorize: access_denied returned to the client (second factor denied)
+info authorize: sign-in page shown (PKCE S256 challenge received)
+info authorize: c77d-21b4-kai-berg signed in at the IdP (second factor approved)
+info token: code redeemed for c77d-21b4-kai-berg (client authenticated, PKCE S256 verified)

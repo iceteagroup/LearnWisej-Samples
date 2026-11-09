@@ -1,8 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <!--
-    AccessOps - Security & Auth Patterns course lab (one solution per module).
-    Run with:  dotnet run -f net10.0 with urls http://localhost:640N   (N = module number)
+    AccessOps - Security & Auth Patterns course, Module 3 (Windows Impersonation and
+    Delegation): the confidential-documents reader on top of the Module 2 intranet route.
+    Run it from the module folder: see README.md (port 6403, http). Create the fixture folders
+    first: tools/Setup-Fixtures.ps1.
+
+    Windows sign-in is the Kestrel Negotiate handler here (IIS Windows Authentication in the lab).
+    The scoped read uses WindowsIdentity.RunImpersonated (Windows only).
+
+    Debug builds compile the training-only pieces (IdentityDiagnosticsView, the identity trace).
+    They sit inside #if DEBUG, so a Release build or publish does not contain them at all.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -22,9 +30,6 @@
     <Content Update="Web.config">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
-    <Content Update="Data\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +45,7 @@
   <ItemGroup>
     <PackageReference Include="Wisej-4" Version="4.1.7" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="10.0.14" />
   </ItemGroup>
 
 </Project>

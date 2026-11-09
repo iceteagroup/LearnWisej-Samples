@@ -1,8 +1,8 @@
-using System;
 using System.Collections.Specialized;
-using AccessOps.Infrastructure;
+using System.Security.Principal;
+using AccessOps.Identity;
 using AccessOps.Pages;
-using AccessOps.Services;
+using AccessOps.Security;
 using Wisej.Web;
 
 namespace AccessOps
@@ -10,90 +10,35 @@ namespace AccessOps
     internal static class Program
     {
         /// <summary>
-        /// Wisej.NET session entry point (Default.json "startup"). Runs once per browser tab: the
-        /// session ID lives in the tab's sessionStorage, so every tab is its own session.
+        /// Wisej.NET session entry point (Default.json "startup") of the intranet route. By the time
+        /// it runs, the host has already answered the Windows challenge: a 401 never reaches this
+        /// method. It reads the host principal through <c>Application.IsAuthenticated</c> and
+        /// <c>Application.User</c>, requires a <see cref="WindowsIdentity"/>, and looks the
+        /// AccessOps grant up from the account SID. The Windows account is evidence; the grant is
+        /// the permission, and <c>DocumentService</c> denies a null grant.
         /// </summary>
         static void Main(NameValueCollection args)
         {
-            // Idle limit: Default.json "sessionTimeout" (seconds). We replace the built-in prolong
-            // dialog with the same sign-out the button uses - a prolong button anyone walking past
-            // can click defeats the limit.
-            Application.SessionTimeout += (s, e) =>
+#if DEBUG
+            LifecycleTrace.Write("Startup · Program.Main");
+#endif
+            // IIS (or Kestrel Negotiate) answered the challenge; Wisej captured HttpContext.User.
+            if (!Application.IsAuthenticated ||
+                Application.User?.Identity is not WindowsIdentity windows)
             {
-                e.Handled = true;
-                SignOutFlow.SignOut(SignOutReason.Idle);
-            };
-
-            // Page loads (HTTP, not WebSocket) are where the session ID can be renewed and where an
-            // HttpOnly cookie can be written. See WisejSession.Establish.
-            Application.ApplicationRefresh += (s, e) => OnPageLoad();
-
-            if (TrySignInRememberedDevice())
-            {
-                Application.MainPage = new ConsolePage();
+                new HostFaultPage().Show();   // host layer, not an app deny
                 return;
             }
 
-            var ended = Application.QueryString["ended"];
-            Application.MainPage = new LoginPage(NoticeFor(ended), MetaFor(ended));
+            // The Windows account is evidence; the grant is the permission.
+            var sid = windows.User?.Value;
+            var grant = AccessGrants.FindForAccount(sid);
+            var user = new IntranetUser(
+                WindowsName.Redact(windows.Name),
+                AccessGrants.SubjectForAccount(sid),
+                grant);
+
+            new MainPage(user).Show();   // DocumentService denies a null grant
         }
-
-        private static void OnPageLoad()
-        {
-            var session = (WisejSession)AppHost.Get<IAccessOpsSession>();
-            if (session.CompletePendingSignIn())
-            {
-                var login = Application.MainPage;
-                Application.MainPage = new ConsolePage();
-                login?.Dispose();
-            }
-
-            WritePendingDeviceCookie();
-        }
-
-        private static bool TrySignInRememberedDevice()
-        {
-            var token = Application.Cookies[RememberedDeviceService.CookieName];
-            if (string.IsNullOrEmpty(token))
-                return false;
-
-            var employeeId = AppHost.Get<RememberedDeviceService>().Redeem(token);
-            if (employeeId == null)
-                return false;
-
-            return AppHost.Get<LoginService>().SignInRememberedDevice(employeeId.Value).Succeeded;
-        }
-
-        private static void WritePendingDeviceCookie()
-        {
-            if (Application.Session["PendingDeviceCookie"] is not PendingDeviceCookie pending)
-                return;
-
-            Application.Session["PendingDeviceCookie"] = null;
-            Application.Cookies.Add(
-                RememberedDeviceService.CookieName, pending.Token, null, pending.ExpiresUtc,
-                true, true, Wisej.Base.Cookie.SameSiteMode.Strict);
-        }
-
-        // The query value only picks one of two fixed sentences; nothing it carries is displayed.
-        private static string NoticeFor(string ended) => ended switch
-        {
-            "idle" => IdleSentence(Application.Configuration.SessionTimeout),
-            "signout" => "You have signed out. Sign in to continue.",
-            _ => null
-        };
-
-        private static string IdleSentence(int seconds)
-        {
-            var minutes = Math.Max(1, seconds / 60);
-            return $"Your session ended after {minutes} minute{(minutes == 1 ? "" : "s")} of inactivity. Sign in to continue.";
-        }
-
-        private static string MetaFor(string ended) => ended switch
-        {
-            "idle" => "e.Handled = true · context cleared · sign-out audited · Application.Exit()",
-            "signout" => "context cleared · sign-out audited · Application.Exit()",
-            _ => null
-        };
     }
 }

@@ -1,0 +1,41 @@
+AccessOps Module 6 · server logs of the headless-Chrome runs with Chrome's virtual authenticator (CDP WebAuthn domain), 2026-11-09
+AccessOps on http://localhost:6446 (Development verification listener), Contoso Identity on http://localhost:6416. Kestrel's WebSocket-reset errors when the headless browser was killed are left out.
+
+--- run 1 and run 2 (WebAuthn:AllowedOrigins includes http://localhost:6446 for this run)
+info ID token validated (signature, iss, aud, exp, nonce) · sub …-ellis · parked for the Wisej.NET page load
+info login subject=x-fdbf46fe7bbf address=a-5942d8d371de outcome=Succeeded grant=G-93ad… oidc correlation=e2e403a06ab8
+info page load · RefreshSessionId() · rotated=True · isWebSocket=False · method=oidc
+info ApplicationPrincipal.Establish · subject=s-eab3be75c25b · grant=G-93ad…
+info external sign-in completed · sub …-ellis → acct …31e5 · tenant A (AccessOps data) · grants total=1
+info POST /auth/cookie · grant=G-93ad… · Set-Cookie (value redacted): AccessOps.Auth=(redacted); path=/; secure; samesite=strict; httponly
+info audit subject=s-eab3be75c25b action=passkey.enroll resource=credential …92I= classification=- decision=allowed reason=- correlation=1661-b088
+info passkey.create · ticket …3c6c · credential …92I= · handle …fe6f · alg ES256 · type ok · origin ok · stored · reference 1661-b088
+info login subject=s-eab3be75c25b address=a-5942d8d371de outcome=SignedOut grant=G-93ad… +1 revoked correlation=18b2a85474e1
+info POST /auth/signout · grant=none revokedNow=False · Set-Cookie (value redacted): AccessOps.Auth=(redacted); expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=strict; httponly
+info POST /account/signout · ending the provider session (end_session_endpoint)
+info audit subject=s-eab3be75c25b action=passkey.signin resource=credential …92I= classification=- decision=allowed reason=- correlation=0734-bf26
+info passkey.get · ticket …1620 · credential …92I= · handle …fe6f · signature ok · type ok · origin ok · rpIdHash ok · UP=True UV=True (extension property UV=False) · BE=False · counter 1→2 · commit=Updated · grant G-5bb2… · reference 0734-bf26
+info page load · RefreshSessionId() · rotated=True · isWebSocket=False · method=passkey
+info ApplicationPrincipal.Establish · subject=s-eab3be75c25b · grant=G-5bb2…
+info POST /auth/cookie · grant=G-5bb2… · Set-Cookie (value redacted): AccessOps.Auth=(redacted); path=/; secure; samesite=strict; httponly
+info login subject=s-eab3be75c25b address=a-5942d8d371de outcome=SignedOut grant=G-5bb2… +1 revoked correlation=bef548213237
+info POST /auth/signout · grant=none revokedNow=False · Set-Cookie (value redacted): AccessOps.Auth=(redacted); expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=strict; httponly
+info audit subject=anonymous action=passkey.signin resource=credential - classification=- decision=denied reason=BrowserFailed correlation=2626-4bfa
+warn passkey.signin refused · reason=BrowserFailed · ticket …45af · handle … · grants total=2 · reference 2626-4bfa
+info ID token validated (signature, iss, aud, exp, nonce) · sub …-ellis · parked for the Wisej.NET page load
+info login subject=x-fdbf46fe7bbf address=a-5942d8d371de outcome=Succeeded grant=G-d865… oidc correlation=db1f3f948b81
+info page load · RefreshSessionId() · rotated=True · isWebSocket=False · method=oidc
+info ApplicationPrincipal.Establish · subject=s-eab3be75c25b · grant=G-d865…
+info external sign-in completed · sub …-ellis → acct …31e5 · tenant A (AccessOps data) · grants total=3
+info POST /auth/cookie · grant=G-d865… · Set-Cookie (value redacted): AccessOps.Auth=(redacted); path=/; secure; samesite=strict; httponly
+info audit subject=s-eab3be75c25b action=passkey.enroll resource=credential …pXI= classification=- decision=allowed reason=- correlation=c72d-8b4c
+info passkey.create · ticket …823b · credential …pXI= · handle …fe6f · alg ES256 · type ok · origin ok · stored · reference c72d-8b4c
+info audit subject=s-eab3be75c25b action=passkey.rename resource=credential row …8d3d classification=- decision=allowed reason=- correlation=e0042ad20239
+info audit subject=s-eab3be75c25b action=passkey.delete resource=credential row …8d3d classification=- decision=allowed reason=- correlation=59a5a489a9db
+info login subject=s-eab3be75c25b address=a-5942d8d371de outcome=SignedOut grant=G-d865… +1 revoked correlation=5af4f719c6ae
+info POST /auth/signout · grant=none revokedNow=False · Set-Cookie (value redacted): AccessOps.Auth=(redacted); expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=strict; httponly
+info POST /account/signout · ending the provider session (end_session_endpoint)
+
+--- run 2, after a restart WITHOUT http://localhost:6446 in WebAuthn:AllowedOrigins (the unapproved-origin outcome)
+info audit subject=anonymous action=passkey.signin resource=credential …pXI= classification=- decision=denied reason=OriginRejected correlation=5aab-b93e
+warn passkey.signin refused · reason=OriginRejected · ticket …7f93 · handle …fe6f · grants total=3 · reference 5aab-b93e

@@ -1,0 +1,106 @@
+AccessOps.Tests · Module 7 · dotnet test AccessOps.slnx (xUnit, net10.0, Debug) · 2026-11-09
+101 tests: the Module 4-6 suites (84 cases; two reason assertions updated to RecordPolicy's reason names) + RecordPolicyTests (17 cases, Module 7)
+
+Passed AccessOps.Tests.ExternalSignInTests.A_provider_denial_lands_on_the_sign_in_view_with_no_grant
+Passed AccessOps.Tests.ExternalSignInTests.F06_a_forged_or_foreign_state_lands_on_the_sign_in_view_with_no_grant
+Passed AccessOps.Tests.ExternalSignInTests.F07_a_hand_off_handle_redeems_once_and_expires
+Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Correlation failed.", reason: "correlation")
+Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Message contains error: 'access_denied', error_des"···, reason: "access_denied")
+Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Something else", reason: "other")
+Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Unable to unprotect the message.State.", reason: "state")
+Passed AccessOps.Tests.ExternalSignInTests.Issuer_and_subject_map_to_the_local_account_with_tenant_and_role_from_AccessOps_data
+Passed AccessOps.Tests.ExternalSignInTests.One_sign_in_creates_exactly_one_grant
+Passed AccessOps.Tests.ExternalSignInTests.The_challenge_asks_for_the_code_flow_with_PKCE_and_minimal_scopes
+Passed AccessOps.Tests.ExternalSignInTests.The_mapper_refuses_before_any_grant(issuer: "http://localhost:6417", subject: "0000-nobody-unmapped", reason: "unknown_login")
+Passed AccessOps.Tests.ExternalSignInTests.The_mapper_refuses_before_any_grant(issuer: "http://localhost:6417", subject: "c77d-21b4-kai-berg", reason: "unapproved_tenant")
+Passed AccessOps.Tests.ExternalSignInTests.The_mapper_refuses_before_any_grant(issuer: "https://evil.example", subject: "4f21-9ac0-dana-ellis", reason: "unknown_login")
+Passed AccessOps.Tests.ExternalSignInTests.The_provider_sign_out_post_needs_an_antiforgery_token
+Passed AccessOps.Tests.GrantAndExportTests.A_cookie_handle_redeems_once_and_expires
+Passed AccessOps.Tests.GrantAndExportTests.A_grant_claim_naming_another_accounts_grant_is_denied
+Passed AccessOps.Tests.GrantAndExportTests.A_grant_expires_and_can_be_revoked
+Passed AccessOps.Tests.GrantAndExportTests.Export_runs_the_repository_only_after_the_grant_and_the_tenant_pass
+Passed AccessOps.Tests.GrantAndExportTests.F05_a_stale_tab_is_denied_after_sign_out_in_another_tab_with_zero_reads_and_no_new_grant
+Passed AccessOps.Tests.GrantAndExportTests.Grant_ids_are_opaque_128_bit_random_values
+Passed AccessOps.Tests.HostEndpointTests.Cookie_hand_off_issues_a_Secure_HttpOnly_SameSite_Strict_ticket_and_sign_out_revokes_it
+Passed AccessOps.Tests.HostEndpointTests.F11_a_WebSocket_upgrade_from_a_foreign_origin_never_reaches_Wisej(origin: "https://evil.example", expected: Forbidden)
+Passed AccessOps.Tests.HostEndpointTests.F11_a_WebSocket_upgrade_from_a_foreign_origin_never_reaches_Wisej(origin: "https://localhost", expected: OK)
+Passed AccessOps.Tests.HostEndpointTests.F11_a_WebSocket_upgrade_from_a_foreign_origin_never_reaches_Wisej(origin: null, expected: Forbidden)
+Passed AccessOps.Tests.HostEndpointTests.F11_a_forged_post_without_or_with_a_wrong_token_changes_nothing
+Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "//evil.example", location: "/")
+Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "/Default.html?record=17", location: "/Default.html?record=17")
+Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "/\\evil.example", location: "/")
+Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "https://evil.example/", location: "/")
+Passed AccessOps.Tests.HostEndpointTests.The_host_cookie_stops_working_when_its_grant_is_revoked_elsewhere
+Passed AccessOps.Tests.LoginServiceTests.A_service_account_password_creates_exactly_one_grant_before_the_principal_exists
+Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "nobody@fabrikam.test", password: "Fabrikam-demo-17", expected: UnknownUser)
+Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "partner.ana@fabrikam.test", password: "Fabrikam-demo-17", expected: NotAllowedHere)
+Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "partner.kai@northwind.test", password: "Northwind-demo-23", expected: TenantNotApproved)
+Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "partner.old@fabrikam.test", password: "Fabrikam-demo-old", expected: Disabled)
+Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "svc.reports", password: "wrong-password", expected: BadCredential)
+Passed AccessOps.Tests.LoginServiceTests.No_password_value_reaches_the_login_audit_the_audit_or_a_log_line
+Passed AccessOps.Tests.LoginServiceTests.The_fifth_failure_locks_the_name_and_then_even_the_right_password_is_refused
+Passed AccessOps.Tests.LoginServiceTests.The_parked_sign_in_has_no_place_for_a_password_or_a_token
+Passed AccessOps.Tests.LoginServiceTests.Twenty_failures_from_one_address_lock_the_address_for_every_name
+Passed AccessOps.Tests.LoginServiceTests.Unknown_names_are_counted_like_real_ones
+Passed AccessOps.Tests.PasskeyTests.A_counter_that_goes_backwards_is_refused_as_an_anomaly
+Passed AccessOps.Tests.PasskeyTests.A_sign_in_that_loses_the_race_to_a_delete_creates_no_grant
+Passed AccessOps.Tests.PasskeyTests.Counter_policy(stored: 0, received: 0, accepted: True)
+Passed AccessOps.Tests.PasskeyTests.Counter_policy(stored: 0, received: 1, accepted: True)
+Passed AccessOps.Tests.PasskeyTests.Counter_policy(stored: 7, received: 0, accepted: False)
+Passed AccessOps.Tests.PasskeyTests.Counter_policy(stored: 7, received: 3, accepted: False)
+Passed AccessOps.Tests.PasskeyTests.Counter_policy(stored: 7, received: 7, accepted: False)
+Passed AccessOps.Tests.PasskeyTests.Counter_policy(stored: 7, received: 8, accepted: True)
+Passed AccessOps.Tests.PasskeyTests.Enrollment_needs_a_current_grant_and_a_recent_sign_in
+Passed AccessOps.Tests.PasskeyTests.Enrollment_refusals(broken: "account")
+Passed AccessOps.Tests.PasskeyTests.Enrollment_refusals(broken: "challenge")
+Passed AccessOps.Tests.PasskeyTests.Enrollment_refusals(broken: "origin")
+Passed AccessOps.Tests.PasskeyTests.Enrollment_refusals(broken: "type")
+Passed AccessOps.Tests.PasskeyTests.Enrollment_stores_a_key_that_later_validates_and_an_ascii_user_handle
+Passed AccessOps.Tests.PasskeyTests.Every_other_check_refuses_without_a_grant(broken: "challenge")
+Passed AccessOps.Tests.PasskeyTests.Every_other_check_refuses_without_a_grant(broken: "presence")
+Passed AccessOps.Tests.PasskeyTests.Every_other_check_refuses_without_a_grant(broken: "rpid")
+Passed AccessOps.Tests.PasskeyTests.Every_other_check_refuses_without_a_grant(broken: "tampered")
+Passed AccessOps.Tests.PasskeyTests.Every_other_check_refuses_without_a_grant(broken: "type")
+Passed AccessOps.Tests.PasskeyTests.Every_other_check_refuses_without_a_grant(broken: "verification")
+Passed AccessOps.Tests.PasskeyTests.Outcome1_a_valid_passkey_signs_account_A_in_with_one_grant(algorithm: ES256)
+Passed AccessOps.Tests.PasskeyTests.Outcome1_a_valid_passkey_signs_account_A_in_with_one_grant(algorithm: RS256)
+Passed AccessOps.Tests.PasskeyTests.Outcome2_account_As_credential_presented_for_account_B_finds_no_key
+Passed AccessOps.Tests.PasskeyTests.Outcome3_an_unapproved_origin_is_refused_even_with_a_valid_signature
+Passed AccessOps.Tests.PasskeyTests.Outcome4_a_replayed_response_is_refused_because_the_challenge_was_consumed
+Passed AccessOps.Tests.PasskeyTests.Outcome5_a_cancelled_prompt_burns_the_challenge_and_creates_no_grant
+Passed AccessOps.Tests.PasskeyTests.Rename_and_delete_touch_only_the_signed_in_owners_credentials
+Passed AccessOps.Tests.PasskeyTests.Short_ES256_components_validate_after_re_encoding
+Passed AccessOps.Tests.PasskeyTests.Store_race_delete_before_commit_NotFound_and_the_row_stays_gone
+Passed AccessOps.Tests.PasskeyTests.Store_race_read_twice_commit_first_Updated_then_stale_Conflict
+Passed AccessOps.Tests.PasskeyTests.The_log_carries_no_full_credential_id_user_handle_or_signature
+Passed AccessOps.Tests.PasskeyTests.The_unique_key_refuses_the_same_credential_under_a_second_account
+Passed AccessOps.Tests.PasskeyTests.User_verification_is_read_from_the_signed_flags_byte_not_the_extension_property
+Passed AccessOps.Tests.RecordPolicyTests.A_passkey_challenge_issued_on_one_instance_is_consumed_once_on_another
+Passed AccessOps.Tests.RecordPolicyTests.A_role_claim_decides_nothing
+Passed AccessOps.Tests.RecordPolicyTests.Allow_the_intranet_reader_reads_A17_with_one_repository_call
+Passed AccessOps.Tests.RecordPolicyTests.Allow_the_partner_route_reaches_the_same_decision
+Passed AccessOps.Tests.RecordPolicyTests.An_expired_handoff_does_not_resume
+Passed AccessOps.Tests.RecordPolicyTests.Expired_grant_is_denied_at_its_expiry
+Passed AccessOps.Tests.RecordPolicyTests.F12_a_handoff_parked_on_node_A_redeems_once_on_node_B
+Passed AccessOps.Tests.RecordPolicyTests.F12_of_two_nodes_racing_for_one_handle_exactly_one_wins
+Passed AccessOps.Tests.RecordPolicyTests.Ingress_switch_off_answers_503_for_every_partner_request
+Passed AccessOps.Tests.RecordPolicyTests.Missing_grant_an_unmapped_windows_account_is_denied
+Passed AccessOps.Tests.RecordPolicyTests.Missing_role_a_host_authenticated_visitor_is_denied
+Passed AccessOps.Tests.RecordPolicyTests.Revoked_grant_is_denied_even_though_the_principal_still_carries_it
+Passed AccessOps.Tests.RecordPolicyTests.Scoped_read_authorization_uses_the_same_decision_without_a_repository_call
+Passed AccessOps.Tests.RecordPolicyTests.Tenant_A_asking_for_tenant_B_record_17_is_denied_before_the_repository(who: "partner")
+Passed AccessOps.Tests.RecordPolicyTests.Tenant_A_asking_for_tenant_B_record_17_is_denied_before_the_repository(who: "reader1")
+Passed AccessOps.Tests.RecordPolicyTests.The_deny_audit_row_carries_no_grant_id_and_the_click_correlation
+Passed AccessOps.Tests.RecordPolicyTests.The_store_keeps_only_a_hash_of_the_handle
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "", expected: "/")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/", expected: "/")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "//evil.example", expected: "/")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/Default.html?record=17", expected: "/Default.html?record=17")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/\\evil.example", expected: "/")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/\t/evil.example", expected: "/")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "evil.example", expected: "/")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "https://evil.example/x", expected: "/")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "https://partners.accessops.example/welcome", expected: "https://partners.accessops.example/welcome")
+Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: null, expected: "/")
+
+Total tests: 101 · Passed: 101 · Failed: 0

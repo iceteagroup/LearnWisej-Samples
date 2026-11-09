@@ -1,0 +1,20 @@
+AccessOps PolicyHarness · Module 3 · .NET 10.0.11
+
+PASS authorized reader     reader grant, tenant A, record 17    allowed  repository calls +1
+PASS tenant boundary (F02) reader grant, tenant B, record 17    denied   repository calls +0
+PASS missing role          visitor grant (no read right)        denied   repository calls +0
+PASS unknown grant         no such grant ID                     denied   repository calls +0
+PASS authenticated, no Reader (M2) CONTOSO\visitor1, A / 17     denied   repository calls +0
+PASS authenticated, unmapped (M2)  Windows SID with no account  denied   repository calls +0
+PASS expired grant         reader grant at its expiry           denied   repository calls +0
+PASS revoked grant (F05)   reader grant revoked, A / 17         denied   repository calls +0
+
+PASS scoped read allowed (M3)   reader, DOC-201 (tenant A)      allowed  scopes +1
+PASS F03 is approved (M3)       reader, DOC-203 (file missing)  allowed  scopes +1
+PASS policy first (M3)          reader, DOC-204 (tenant B)      denied   scopes +0
+PASS no Reader (M3)             visitor1 grant, DOC-201         denied   scopes +0
+PASS unknown ID (M3)            reader, DOC-999                 denied   scopes +0
+PASS outside the root (M3)      reader, DOC-299 -> ../outside   denied   scopes +0
+Impersonation scopes opened: 2 (only after an allow; every deny at zero scopes)
+
+Repository reads in total: 1 (one allowed read, every deny at zero calls)

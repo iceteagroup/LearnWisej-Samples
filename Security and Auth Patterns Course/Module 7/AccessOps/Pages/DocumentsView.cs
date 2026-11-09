@@ -1,286 +1,298 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
+using AccessOps.Documents;
+using AccessOps.Identity;
 using AccessOps.Infrastructure;
-using AccessOps.Services;
+using AccessOps.Security;
 using AccessOps.UI;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Wisej.Web;
 
 namespace AccessOps.Pages
 {
     /// <summary>
-    /// The confidential documents screen of the capstone. Every byte goes through
-    /// <see cref="DocumentService"/>; on top of Module 5 the screen now says how it is being served:
-    /// the banner and the footer strip are computed from the live request and the live Wisej.NET
-    /// configuration (Application.IsSecure, Application.Configuration), not typed in.
+    /// The intranet route's confidential-documents reader (from Module 3; Module 7 adds DOC-205, the
+    /// F04 remote share, and decides through <see cref="RecordPolicy"/>). The Module 3 walkthrough: the list Document · Title ·
+    /// Folder · Last read, the "Identity trace" table (Document · Step · App subject · Request
+    /// identity · Effective token · Outcome) and the status line. Clicking a document asks the
+    /// <see cref="ScopedDocumentReader"/> for it by ID. The screen shows four distinct plain
+    /// messages (allowed, ACL denial, policy denial, missing file) and never a path, SID or
+    /// exception text; the trace log keeps the detail.
     /// </summary>
-    internal sealed class DocumentsView : UserControl
+    public class DocumentsView : UserControl
     {
-        private readonly IAreaHost _host;
-        private readonly DocumentService _documents = AppHost.Get<DocumentService>();
+        private const int MaxTraceRows = 12;
 
-        private readonly Panel pnlToolbar = new Panel();
-        private readonly Upload uploadDocument = new Upload();
-        private readonly Button btnDownload = new Button();
-        private readonly Button btnShareLink = new Button();
-        private readonly MessageStrip pnlConnection = new MessageStrip();
-        private readonly MessageStrip pnlNotice = new MessageStrip();
-        private readonly DataGridView gridDocuments = new DataGridView();
-        private readonly Label lblEmpty = new Label();
-        private readonly Panel pnlFooter = new Panel();
-        private readonly Label lblPosture = new Label();
+        private readonly RecordPolicy _policy = AppHost.Get<RecordPolicy>();
+        private readonly ILogger _log = AppHost.Get<ILoggerFactory>().CreateLogger("AccessOps.Documents");
+        private readonly ConfidentialFileStore _files = AppHost.Get<ConfidentialFileStore>();
+        private readonly IdentityTraceLog _traceLog = AppHost.Get<IdentityTraceLog>();
+        private readonly AuditService _audit = AppHost.Get<AuditService>();
+        private readonly IntranetUser _user;
 
-        public DocumentsView(IAreaHost host)
+        private readonly DataGridView grdDocuments = new DataGridView();
+        private readonly DataGridView grdTrace = new DataGridView();
+        private readonly StatusLine lblStatus = new StatusLine();
+        private readonly Dictionary<string, (string Text, string Tone)> _lastRead = new();
+        private readonly List<IdentityTraceRow> _traceRows = new();
+        private List<DocumentRow> _rows;
+
+        /// <summary>Builds the screen for the Windows user <c>Program.Main</c> found.</summary>
+        public DocumentsView(IntranetUser user)
         {
-            _host = host;
-            this.Name = "viewDocuments";
+            _user = user;
+            this.Name = "DocumentsView";
             this.BackColor = Color.White;
-            var me = AppHost.Get<IAccessOpsSession>().Current;
 
-            pnlToolbar.Name = "pnlToolbar";
-            pnlToolbar.Dock = DockStyle.Top;
-            pnlToolbar.Height = 52;
-            pnlToolbar.BackColor = Theme.Strip;
-            pnlToolbar.Padding = new Padding(16, 10, 16, 10);
-            pnlToolbar.CssStyle = "border-bottom:1px solid #e4eaf1;";
+            grdDocuments.Name = "grdDocuments";
+            grdDocuments.Dock = DockStyle.Top;
+            grdDocuments.Height = 30 + 5 * 36 + 2;
+            DataGridStyle.Apply(grdDocuments, rowHeight: 36);
+            grdDocuments.ColumnHeadersHeight = 30;
+            grdDocuments.Columns.Add(DataGridStyle.MonoColumn("colDocument", "Document", nameof(DocumentRow.Document), 92, Theme.Accent, bold: true));
+            grdDocuments.Columns.Add(DataGridStyle.Column("colTitle", "Title", nameof(DocumentRow.Title), 200, fill: true));
+            grdDocuments.Columns.Add(DataGridStyle.MonoColumn("colFolder", "Folder", nameof(DocumentRow.Folder), 120, Theme.Body));
+            var lastRead = DataGridStyle.Column("colLastRead", "Last read", nameof(DocumentRow.LastRead), 128);
+            lastRead.AllowHtml = true;   // chip markup built here from fixed texts
+            grdDocuments.Columns.Add(lastRead);
+            grdDocuments.CellClick += grdDocuments_CellClick;
 
-            pnlToolbar.Controls.Add(new Label
+            var traceTitle = new Label
             {
-                Name = "lblStore",
-                Text = "store: the AccessOpsData folder — outside the web root",
-                Dock = DockStyle.Right,
-                AutoSize = true,
-                Font = Theme.Mono(12f),
-                ForeColor = Theme.Muted,
-                TextAlign = ContentAlignment.MiddleRight
-            });
+                Name = "lblTraceTitle",
+                Text = "Identity trace",
+                Dock = DockStyle.Top,
+                Height = 34,
+                Padding = new Padding(14, 12, 14, 0),
+                Font = Theme.Px(13f, FontStyle.Bold),
+                ForeColor = ColorTranslator.FromHtml("#0d1b2a")
+            };
 
-            btnDownload.Name = "btnDownload";
-            btnDownload.Text = "Download";
-            btnDownload.Dock = DockStyle.Left;
-            btnDownload.Width = 96;
-            Theme.StyleButton(btnDownload, primary: false);
-            btnDownload.Click += btnDownload_Click;
+            grdTrace.Name = "grdTrace";
+            grdTrace.Dock = DockStyle.Fill;
+            DataGridStyle.Apply(grdTrace, rowHeight: 34);
+            grdTrace.Font = Theme.Px(12f);
+            grdTrace.Columns.Add(DataGridStyle.MonoColumn("colTraceDocument", "Document", nameof(TraceGridRow.Document), 110, Theme.Accent, bold: true));
+            var step = DataGridStyle.Column("colStep", "Step", nameof(TraceGridRow.Step), 70);
+            step.DefaultCellStyle.Font = Theme.Px(12f, FontStyle.Bold);
+            grdTrace.Columns.Add(step);
+            grdTrace.Columns.Add(DataGridStyle.Column("colAppSubject", "App subject", nameof(TraceGridRow.AppSubject), 110));
+            grdTrace.Columns.Add(DataGridStyle.MonoColumn("colRequest", "Request identity", nameof(TraceGridRow.RequestIdentity), 150, Theme.Body));
+            var effective = DataGridStyle.Column("colEffective", "Effective token", nameof(TraceGridRow.EffectiveToken), 200, fill: true);
+            effective.AllowHtml = true;   // colour only; the name is HTML-encoded
+            grdTrace.Columns.Add(effective);
+            var outcome = DataGridStyle.Column("colOutcome", "Outcome", nameof(TraceGridRow.Outcome), 200);
+            outcome.AllowHtml = true;
+            grdTrace.Columns.Add(outcome);
 
-            // the Upload control posts the file to the server and raises Uploaded. AllowedFileTypes only
-            // narrows the browser's picker; MaxFileSize is checked again by the gate on the server, and
-            // the host refuses a larger request body before either (Kestrel MaxRequestBodySize).
-            uploadDocument.Name = "uploadDocument";
-            uploadDocument.Text = "Upload document";
-            uploadDocument.Dock = DockStyle.Left;
-            uploadDocument.Width = 140;
-            uploadDocument.AllowedFileTypes = ".pdf,.docx,.xlsx";
-            uploadDocument.MaxFileSize = (int)AppHost.Get<UploadGate>().MaxBytes;
-            uploadDocument.AllowMultipleFiles = false;
-            uploadDocument.BackColor = Theme.Accent;
-            uploadDocument.ForeColor = Color.White;
-            uploadDocument.Font = Theme.Px(12.5f, FontStyle.Bold);
-            uploadDocument.CssStyle = "border-radius:7px;";
-            uploadDocument.Uploaded += uploadDocument_Uploaded;
-            uploadDocument.Error += uploadDocument_Error;
+            var tracePanel = new Panel { Name = "pnlTrace", Dock = DockStyle.Fill, Padding = new Padding(14, 0, 14, 12) };
+            tracePanel.Controls.Add(grdTrace);
+            var traceHost = new Panel { Name = "pnlTraceHost", Dock = DockStyle.Fill };
+            traceHost.Controls.Add(tracePanel);
+            traceHost.Controls.Add(traceTitle);
 
-            pnlToolbar.Controls.Add(btnDownload);
-            // hidden, not disabled: without UploadDocument this user can never upload in AccessOps
-            if (me.Has(Permission.UploadDocument))
-            {
-                pnlToolbar.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 11 });
-                pnlToolbar.Controls.Add(uploadDocument);
-            }
+            // Dock order is the reverse of Controls.Add.
+            this.Controls.Add(traceHost);
+            this.Controls.Add(grdDocuments);
+            this.Controls.Add(lblStatus);
 
-            pnlConnection.Name = "pnlConnection";
-            pnlNotice.Name = "pnlNotice";
-
-            gridDocuments.Name = "gridDocuments";
-            gridDocuments.Dock = DockStyle.Fill;
-            DataGridStyle.Apply(gridDocuments);
-            gridDocuments.Columns.Add(DataGridStyle.Column("colDocument", "Document", nameof(DocumentListItem.Reference), 118));
-            gridDocuments.Columns.Add(DataGridStyle.Column("colTitle", "Title", nameof(DocumentListItem.Title), 300, fill: true));
-            gridDocuments.Columns.Add(DataGridStyle.Column("colDepartment", "Department", nameof(DocumentListItem.Department), 140));
-            gridDocuments.Columns.Add(DataGridStyle.Column("colClass", "Class", nameof(DocumentListItem.Classification), 128));
-            gridDocuments.Columns["colDocument"].DefaultCellStyle.ForeColor = Theme.Accent;
-            gridDocuments.Columns["colDocument"].DefaultCellStyle.Font = Theme.Mono(12.5f, FontStyle.Bold);
-            gridDocuments.Columns["colClass"].DefaultCellStyle.ForeColor = Theme.Warn;
-            gridDocuments.Columns["colClass"].DefaultCellStyle.Font = Theme.Px(12.5f, FontStyle.Bold);
-
-            lblEmpty.Name = "lblEmpty";
-            lblEmpty.Dock = DockStyle.Fill;
-            lblEmpty.Text = "No documents you may open\nThe list only ever contains records the service already cleared.";
-            lblEmpty.Font = Theme.Px(14f, FontStyle.Bold);
-            lblEmpty.ForeColor = Theme.Muted;
-            lblEmpty.TextAlign = ContentAlignment.MiddleCenter;
-            lblEmpty.Visible = false;
-
-            // footer strip: the session ID's home and the flags on the cookies AccessOps writes, plus Share link
-            pnlFooter.Name = "pnlFooter";
-            pnlFooter.Dock = DockStyle.Bottom;
-            pnlFooter.Height = 52;
-            pnlFooter.BackColor = ColorTranslator.FromHtml("#f8fafc");
-            pnlFooter.Padding = new Padding(16, 10, 16, 10);
-            pnlFooter.CssStyle = "border-top:1px solid #e4eaf1;";
-
-            lblPosture.Name = "lblPosture";
-            lblPosture.Dock = DockStyle.Fill;
-            lblPosture.Font = Theme.Mono(11.5f);
-            lblPosture.ForeColor = ColorTranslator.FromHtml("#7d8ea0");
-            lblPosture.TextAlign = ContentAlignment.MiddleLeft;
-
-            btnShareLink.Name = "btnShareLink";
-            btnShareLink.Text = "Share link";
-            btnShareLink.Dock = DockStyle.Right;
-            btnShareLink.Width = 110;
-            Theme.StyleButton(btnShareLink, primary: true);
-            btnShareLink.Click += btnShareLink_Click;
-
-            pnlFooter.Controls.Add(lblPosture);
-            pnlFooter.Controls.Add(btnShareLink);
-
-            this.Controls.Add(gridDocuments);
-            this.Controls.Add(lblEmpty);
-            this.Controls.Add(pnlNotice);
-            this.Controls.Add(pnlConnection);
-            this.Controls.Add(pnlToolbar);
-            this.Controls.Add(pnlFooter);
-
-            ShowPosture();
-            Reload("Ready", StatusTone.Idle);
+            LoadDocuments();
+            lblStatus.Show("Ready", StatusTone.Idle);
         }
 
-        /// <summary>The banner and the footer, from the live request and the live configuration.</summary>
-        private void ShowPosture()
+        private void LoadDocuments()
         {
-            var config = Application.Configuration;
-            var hardening = AppHost.Get<HardeningOptions>();
-            var secure = Application.IsSecure;
-            var validated = config.ValidateClient;
-            var csp = hardening.CspReportOnly ? "CSP report-only" : "headers set";
-
-            if (secure)
-                pnlConnection.Show($"Encrypted over HTTPS and WSS · {csp} · {(validated ? "client validated" : "client NOT validated")} · own cookies flagged", validated ? StatusTone.Ok : StatusTone.Warn);
-            else
-                pnlConnection.Show($"Plain HTTP — development profile · {csp} · {(validated ? "client validated" : "client NOT validated")} · HTTPS and HSTS apply where Hardening:RequireHttps is on", StatusTone.Warn);
-
-            var storage = config.SessionStorage.ToString();
-            storage = storage.Equals("Session", StringComparison.OrdinalIgnoreCase) ? "sessionStorage"
-                : storage.Equals("Local", StringComparison.OrdinalIgnoreCase) ? "localStorage" : storage.ToLowerInvariant();
-            lblPosture.Text = $"session ID: {storage} · secure: {config.Secure.ToString().ToLowerInvariant()} · validateClient: {validated.ToString().ToLowerInvariant()} · " +
-                $"own cookies: {(secure ? "Secure; " : "")}HttpOnly; SameSite=Strict";
+            // IDs, titles and fixture folders only: the path is resolved on the server, per read.
+            _rows = _files.List().Select(f => new DocumentRow(f.DocumentId, f.Title, f.Folder)).ToList();
+            RefreshGrids();
         }
 
-        private void Reload(string status, StatusTone tone)
+        private void grdDocuments_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            var rows = _documents.List();
-            gridDocuments.DataSource = rows;
-            gridDocuments.Visible = rows.Count > 0;
-            lblEmpty.Visible = rows.Count == 0;
-            _host.Report(status, tone, rows.Count == 0 ? "0 documents" : $"{rows.Count} documents · streamed, never linked");
+            if (e.RowIndex >= 0 && grdDocuments.Rows[e.RowIndex].DataBoundItem is DocumentRow row)
+                OpenDocument(row.Document);
         }
 
-        private DocumentListItem Selected => gridDocuments.CurrentRow?.DataBoundItem as DocumentListItem;
-
-        private void uploadDocument_Uploaded(object sender, UploadedEventArgs e)
+        /// <summary>
+        /// One scoped read, synchronously on the event's thread. The request identity comes from
+        /// the current request (the WebSocket request, through <c>IHttpContextAccessor</c>), whose
+        /// token is live while the socket is open - not from <c>Application.User</c>, which on a
+        /// WebSocket event is the page-load identity (disposed when its connection closed).
+        /// </summary>
+        private void OpenDocument(string documentId)
         {
-            if (e.Files.Count == 0)
-                return;
-
-            var file = e.Files[0];
-            _host.Report("Reading the file header…", StatusTone.Idle);
-            Application.Update(this);
-
-            byte[] content;
-            using (var buffer = new MemoryStream())
+            // one correlation ID per click: the trace lines, the policy decision and the audit share it
+            using var scope = Correlation.Begin(_log, Correlation.NewLabel("click"));
+            if (!OperatingSystem.IsWindows())
             {
-                file.InputStream.CopyTo(buffer);
-                content = buffer.ToArray();
-            }
-
-            using var command = Command.Begin("Document.Upload");
-            var result = _documents.Upload(command.Context, file.FileName, content);
-            if (!result.Decision.Accepted)
-            {
-                // the rule they broke and the limits to meet; the file is gone from the server
-                pnlNotice.Show(result.Decision.Message, StatusTone.Bad);
-                _host.Report("Upload refused — " + result.Decision.FailedCheck.ToString().ToLowerInvariant() + " check · audited", StatusTone.Bad);
+                lblStatus.Show("Windows sign-in is not available on this server. Nothing was opened.", StatusTone.Bad);
                 return;
             }
 
-            var me = AppHost.Get<IAccessOpsSession>().Current;
-            pnlNotice.Show($"{result.Decision.DisplayName} accepted, scanned and filed under {me.Department}. It is stored under a name the server generated.", StatusTone.Ok);
-            Reload("Upload accepted — quarantine clean", StatusTone.Ok);
+            var context = AppHost.Get<IHttpContextAccessor>().HttpContext;
+            var subject = Subject.From(Application.User);   // the application principal of this session
+            var trace = new IdentityTrace(documentId, subject, _traceLog);
+            var catalog = new DocumentCatalog(subject, _files, _policy,
+                AppHost.Get<Microsoft.Extensions.Configuration.IConfiguration>().GetSection("AccessOps:DelegationTargets").Get<string[]>());
+            var reader = new ScopedDocumentReader(catalog, trace);
 
-            // safe interop: the file name is an argument to an existing page function, never script text
-            Application.Call("showToast", "Filed: " + result.Decision.DisplayName);
-        }
-
-        // Module 7 review finding: a file over Upload.MaxFileSize was refused by the client with no
-        // word to the user and no trace on the server. The control reports it here; nothing was sent.
-        private void uploadDocument_Error(object sender, UploadErrorEventArgs e)
-        {
-            using var command = Command.Begin("Document.Upload");
-            var name = e.FileNames?.FirstOrDefault() ?? "The file";
-            var limitMb = AppHost.Get<UploadGate>().MaxBytes / (1024 * 1024);
-            var message = e.ErrorType == UploadErrorType.FileTooLarge
-                ? $"{name} was refused: it is larger than the {limitMb} MB limit. Nothing was uploaded."
-                : $"{name} could not be uploaded. Reference {command.Context.CorrelationId}.";
-            AppHost.Get<AuditService>().Record(command.Context, "Document.Upload", "Document", "-",
-                e.ErrorType == UploadErrorType.FileTooLarge ? "Refused:Size(client)" : "Failed");
-            pnlNotice.Show(message, StatusTone.Bad);
-            _host.Report("Upload refused before it was sent — size check · audited", StatusTone.Bad);
-        }
-
-        private void btnDownload_Click(object sender, EventArgs e)
-        {
-            var doc = Selected;
-            if (doc == null)
-            {
-                _host.Report("Select a document first.", StatusTone.Idle);
-                return;
-            }
-
-            using var command = Command.Begin("Document.Download " + doc.Id);
+            string status, chip, chipTone, outcome = null, reason = null;
+            StatusTone tone;
             try
             {
-                _documents.Download(command.Context, doc.Id);
-                pnlNotice.Clear();
-                _host.Report($"{doc.Reference} streamed to this session · audited", StatusTone.Ok);
+                reader.Read(context, documentId);   // the bytes are not shown: the lab is about who opened the file
+                status = $"{documentId} opened · effective identity back to the pool";
+                tone = StatusTone.Ok;
+                (chip, chipTone, outcome) = ("Read as user", "ok", "allowed");
             }
-            catch (NotAuthorizedException ex)
+            catch (AccessDeniedException denied) when (denied.Reason == "delegation")
             {
-                pnlNotice.Show(ex.Message, StatusTone.Bad);
-                _host.Report("Download refused — audited", StatusTone.Bad);
+                status = $"{documentId} is on a remote share that AccessOps does not open with your Windows account. Nothing was opened.";
+                tone = StatusTone.Bad;
+                (chip, chipTone) = ("Second hop", "bad");
+            }
+            catch (AccessDeniedException)
+            {
+                status = $"{documentId} is outside your access. Nothing was opened.";
+                tone = StatusTone.Bad;
+                (chip, chipTone) = ("Not allowed", "bad");     // audited by the policy itself
+            }
+            catch (UnauthorizedAccessException) when (trace.ScopeOpened)
+            {
+                status = $"{documentId} could not be opened with your Windows account. The request was logged.";
+                tone = StatusTone.Bad;
+                (chip, chipTone, outcome, reason) = ("Denied (ACL)", "bad", "failed", "acl");
+            }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+            {
+                status = $"{documentId} could not be opened. The file is missing; the request was logged.";
+                tone = StatusTone.Warn;
+                (chip, chipTone, outcome, reason) = ("File missing", "warn", "failed", "missing");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                status = "Windows sign-in is not available on this request. Nothing was opened.";
+                tone = StatusTone.Bad;
+                (chip, chipTone) = ("Not allowed", "bad");
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex, "Scoped read failed. correlation={CorrelationId}", catalog.CorrelationId);
+                status = "The document could not be opened. Try again later.";
+                tone = StatusTone.Warn;
+                (chip, chipTone, outcome, reason) = ("Failed", "warn", "failed", "error");
+            }
+
+            if (outcome != null)
+                _audit.Write(new AuditEvent(subject.Opaque, "file.read", documentId, null, outcome, reason, catalog.CorrelationId ?? AuditService.NewCorrelationId()));
+
+            var shown = documentId;
+            if (trace.InsideFailure is FileNotFoundException)
+                shown += " F03";
+            foreach (var row in trace.Rows)
+                _traceRows.Add(new IdentityTraceRow
+                {
+                    Document = shown,
+                    Step = row.Step,
+                    AppSubject = row.AppSubject,
+                    RequestIdentity = row.RequestIdentity,
+                    EffectiveToken = row.EffectiveToken,
+                    Outcome = row.Outcome,
+                    Tone = row.Tone
+                });
+            while (_traceRows.Count > MaxTraceRows)
+                _traceRows.RemoveAt(0);
+
+            _lastRead[documentId] = (chip, chipTone);
+            RefreshGrids();
+            Select(documentId);
+            lblStatus.Show(status, tone);
+        }
+
+        private void RefreshGrids()
+        {
+            foreach (var row in _rows)
+                row.LastRead = _lastRead.TryGetValue(row.Document, out var r) ? Chip(r.Text, r.Tone) : "<span style=\"color:#9aa8b6\">—</span>";
+            grdDocuments.DataSource = null;
+            grdDocuments.DataSource = _rows;
+            grdTrace.DataSource = _traceRows.Select(r => new TraceGridRow(r)).ToList();
+            foreach (DataGridViewRow row in grdTrace.Rows)
+            {
+                // the mock tints the "after" rows: the token is the pool's again
+                if (row.DataBoundItem is TraceGridRow t && t.Step == "After")
+                    row.DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#f7fbf8");
             }
         }
 
-        private void btnShareLink_Click(object sender, EventArgs e)
+        private void Select(string documentId)
         {
-            var doc = Selected;
-            if (doc == null)
+            foreach (DataGridViewRow row in grdDocuments.Rows)
             {
-                _host.Report("Select a document first.", StatusTone.Idle);
-                return;
-            }
-
-            string absolute;
-            DateTimeOffset expires;
-            using (var command = Command.Begin("Document.Share " + doc.Id))
-            {
-                try
+                if (row.DataBoundItem is DocumentRow d && d.Document == documentId)
                 {
-                    // a link is issued only for a document this caller may read now
-                    var relative = _documents.IssueShareLink(command.Context, doc.Id, out expires);
-                    absolute = new Uri(new Uri(Application.Url), relative).ToString();
-                }
-                catch (NotAuthorizedException ex)
-                {
-                    pnlNotice.Show(ex.Message, StatusTone.Bad);
-                    _host.Report("Share link refused — audited", StatusTone.Bad);
+                    grdDocuments.CurrentCell = row.Cells[0];
                     return;
                 }
             }
+        }
 
-            // the command ends when the link is issued, not when the user closes the dialog
-            _host.Report($"Share link issued for {doc.Reference} · expires {expires:HH:mm} UTC", StatusTone.Ok);
-            new ShareLinkDialog(doc.Title, absolute, expires).ShowDialog();
+        private static readonly Dictionary<string, (string Fg, string Bg)> Tones = new()
+        {
+            ["ok"] = ("#1f9d6b", "#e8f7ef"),
+            ["bad"] = ("#c0392b", "#fdecea"),
+            ["warn"] = ("#b7791f", "#fdf3e1"),
+            ["idle"] = ("#5a6b7d", "#eef2f6"),
+        };
+
+        /// <summary>The mock's chip; the text is HTML-encoded, the colours come from a fixed list.</summary>
+        internal static string Chip(string text, string tone)
+        {
+            var (fg, bg) = Tones.TryGetValue(tone, out var t) ? t : Tones["idle"];
+            return $"<span style=\"font-size:11.5px;font-weight:800;color:{fg};background:{bg};border:1px solid {fg}55;border-radius:999px;padding:2px 10px;white-space:nowrap\">{WebUtility.HtmlEncode(text)}</span>";
+        }
+
+        /// <summary>A row of the documents list.</summary>
+        private sealed class DocumentRow
+        {
+            public DocumentRow(string document, string title, string folder)
+            {
+                this.Document = document;
+                this.Title = title;
+                this.Folder = folder;
+            }
+
+            public string Document { get; }
+            public string Title { get; }
+            public string Folder { get; }
+            public string LastRead { get; set; }
+        }
+
+        /// <summary>A row of the trace grid (HTML for the two coloured cells, encoded).</summary>
+        private sealed class TraceGridRow
+        {
+            public TraceGridRow(IdentityTraceRow r)
+            {
+                this.Document = r.Document;
+                this.Step = r.Step;
+                this.AppSubject = r.AppSubject;
+                this.RequestIdentity = r.RequestIdentity;
+                var user = r.EffectiveToken.Contains("Impersonation") || r.EffectiveToken.Contains("Delegation");
+                this.EffectiveToken = $"<span style=\"font-family:Consolas,monospace;font-size:11.5px;font-weight:700;color:{(user ? "#b7791f" : "#1f2d3a")}\">{WebUtility.HtmlEncode(r.EffectiveToken)}</span>";
+                this.Outcome = Chip(r.Outcome, r.Tone);
+            }
+
+            public string Document { get; }
+            public string Step { get; }
+            public string AppSubject { get; }
+            public string RequestIdentity { get; }
+            public string EffectiveToken { get; }
+            public string Outcome { get; }
         }
     }
 }

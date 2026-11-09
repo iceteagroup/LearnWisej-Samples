@@ -1,8 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <!--
-    AccessOps - Security & Auth Patterns course lab (one solution per module).
-    Run with:  dotnet run -f net10.0 with urls http://localhost:640N   (N = module number)
+    AccessOps - Security & Auth Patterns course, Module 1 (Identity Boundaries).
+    Run it from the module folder: see README.md (port 6401, http).
+
+    Debug builds compile the training-only pieces (TestVerifier, IdentityDiagnosticsView,
+    the identity trace). They sit inside #if DEBUG, so a Release build or publish does not
+    contain them at all: there is nothing to hide behind a route.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -21,9 +25,6 @@
     </Content>
     <Content Update="Web.config">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Content>
-    <Content Update="Data\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 

@@ -5,8 +5,7 @@
       "launchBrowser": false,
       "applicationUrl": "http://localhost:6415",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "Clients__accessops__Secret": "DEMO-ONLY-accessops-test-idp-secret"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     }
   }

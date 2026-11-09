@@ -1,0 +1,35 @@
+<!--
+  AccessOps · Module 2 · the scoped Windows-only settings for the intranet route.
+  From the course pack (code_snippets/iis/windows-auth.location.xml), unchanged.
+
+  Where it goes: applicationHost.config (%windir%\System32\inetsrv\config\applicationHost.config),
+  inside <configuration>, after <system.webServer>. The path is the IIS site or application the
+  lab publishes the intranet route to: the site "Lab Intranet" (HTTPS binding
+  accessops.contoso.test:443, its own application pool). If you publish it as an application under
+  another site instead, the path becomes "<site>/<application>" exactly as IIS Manager shows it.
+  Apply it with docs/iis-publish-and-rollback.md (appcmd), which also saves the rollback baseline.
+
+  Why applicationHost.config and not the app's web.config: anonymousAuthentication and
+  windowsAuthentication are locked (overrideModeDefault="Deny") at server level on a default IIS
+  install. Put them in the application's web.config and IIS answers HTTP 500.19 (configuration
+  section locked) - see docs/layered-diagnosis.md.
+
+  The public sign-in route (Module 4/5) is a different IIS application with Anonymous ENABLED and
+  Windows Authentication disabled; never apply this file to it.
+-->
+<location path="Lab Intranet">
+  <system.webServer>
+    <security>
+      <authentication>
+        <anonymousAuthentication enabled="false" />
+        <windowsAuthentication enabled="true" useKernelMode="true">
+          <providers>
+            <clear />
+            <add value="Negotiate" />
+            <add value="NTLM" />
+          </providers>
+        </windowsAuthentication>
+      </authentication>
+    </security>
+  </system.webServer>
+</location>

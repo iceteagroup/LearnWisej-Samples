@@ -1,0 +1,53 @@
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: null, expected: "/")
+  Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Correlation failed.", reason: "correlation")
+  Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Something else", reason: "other")
+  Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Unable to unprotect the message.State.", reason: "state")
+  Passed AccessOps.Tests.ExternalSignInTests.Handler_failures_become_allowlisted_reasons(message: "Message contains error: 'access_denied', error_des"···, reason: "access_denied")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/Default.html?record=17", expected: "/Default.html?record=17")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/\t/evil.example", expected: "/")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "evil.example", expected: "/")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "//evil.example", expected: "/")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "", expected: "/")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/\\evil.example", expected: "/")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "/", expected: "/")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "https://evil.example/x", expected: "/")
+  Passed AccessOps.Tests.ReturnUrlPolicyTests.Resolve(returnUrl: "https://partners.accessops.example/welcome", expected: "https://partners.accessops.example/welcome")
+  Passed AccessOps.Tests.ExternalSignInTests.The_mapper_refuses_before_any_grant(issuer: "https://evil.example", subject: "4f21-9ac0-dana-ellis", reason: "unknown_login")
+  Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "partner.ana@fabrikam.test", password: "Fabrikam-demo-17", expected: NotAllowedHere)
+  Passed AccessOps.Tests.GrantAndExportTests.F05_a_stale_tab_is_denied_after_sign_out_in_another_tab_with_zero_reads_and_no_new_grant
+  Passed AccessOps.Tests.ExternalSignInTests.The_mapper_refuses_before_any_grant(issuer: "http://localhost:6415", subject: "c77d-21b4-kai-berg", reason: "unapproved_tenant")
+  Passed AccessOps.Tests.GrantAndExportTests.Grant_ids_are_opaque_128_bit_random_values
+  Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "nobody@fabrikam.test", password: "Fabrikam-demo-17", expected: UnknownUser)
+  Passed AccessOps.Tests.ExternalSignInTests.The_mapper_refuses_before_any_grant(issuer: "http://localhost:6415", subject: "77b3-01de-jo-newman", reason: "unknown_login")
+  Passed AccessOps.Tests.GrantAndExportTests.Export_runs_the_repository_only_after_the_grant_and_the_tenant_pass
+  Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "partner.kai@northwind.test", password: "Northwind-demo-23", expected: TenantNotApproved)
+  Passed AccessOps.Tests.ExternalSignInTests.Issuer_and_subject_map_to_the_local_account_with_tenant_and_role_from_AccessOps_data
+  Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "svc.reports", password: "wrong-password", expected: BadCredential)
+  Passed AccessOps.Tests.GrantAndExportTests.A_grant_claim_naming_another_accounts_grant_is_denied
+  Passed AccessOps.Tests.ExternalSignInTests.F07_a_hand_off_handle_redeems_once_and_expires
+  Passed AccessOps.Tests.LoginServiceTests.Every_refusal_shows_the_same_sentence_and_creates_no_grant(user: "partner.old@fabrikam.test", password: "Fabrikam-demo-old", expected: Disabled)
+  Passed AccessOps.Tests.GrantAndExportTests.A_cookie_handle_redeems_once_and_expires
+  Passed AccessOps.Tests.ExternalSignInTests.One_sign_in_creates_exactly_one_grant
+  Passed AccessOps.Tests.LoginServiceTests.Unknown_names_are_counted_like_real_ones
+  Passed AccessOps.Tests.GrantAndExportTests.A_grant_expires_and_can_be_revoked
+  Passed AccessOps.Tests.HostEndpointTests.The_host_cookie_stops_working_when_its_grant_is_revoked_elsewhere
+  Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "/\\evil.example", location: "/")
+  Passed AccessOps.Tests.ExternalSignInTests.The_provider_sign_out_post_needs_an_antiforgery_token
+  Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "https://evil.example/", location: "/")
+  Passed AccessOps.Tests.LoginServiceTests.Twenty_failures_from_one_address_lock_the_address_for_every_name
+  Passed AccessOps.Tests.ExternalSignInTests.A_provider_denial_lands_on_the_sign_in_view_with_no_grant
+  Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "//evil.example", location: "/")
+  Passed AccessOps.Tests.LoginServiceTests.The_fifth_failure_locks_the_name_and_then_even_the_right_password_is_refused
+  Passed AccessOps.Tests.ExternalSignInTests.F06_a_forged_or_foreign_state_lands_on_the_sign_in_view_with_no_grant
+  Passed AccessOps.Tests.HostEndpointTests.F11_an_external_continuation_url_goes_home(returnUrl: "/Default.html?record=17", location: "/Default.html?record=17")
+  Passed AccessOps.Tests.LoginServiceTests.A_service_account_password_creates_exactly_one_grant_before_the_principal_exists
+  Passed AccessOps.Tests.ExternalSignInTests.The_challenge_asks_for_the_code_flow_with_PKCE_and_minimal_scopes
+  Passed AccessOps.Tests.LoginServiceTests.No_password_value_reaches_the_login_audit_the_audit_or_a_log_line
+  Passed AccessOps.Tests.LoginServiceTests.The_parked_sign_in_has_no_place_for_a_password_or_a_token
+  Passed AccessOps.Tests.HostEndpointTests.Cookie_hand_off_issues_a_Secure_HttpOnly_SameSite_Strict_ticket_and_sign_out_revokes_it
+  Passed AccessOps.Tests.HostEndpointTests.F11_a_forged_post_without_or_with_a_wrong_token_changes_nothing
+  Passed AccessOps.Tests.HostEndpointTests.F11_a_WebSocket_upgrade_from_a_foreign_origin_never_reaches_Wisej(origin: "https://localhost", expected: OK)
+  Passed AccessOps.Tests.HostEndpointTests.F11_a_WebSocket_upgrade_from_a_foreign_origin_never_reaches_Wisej(origin: null, expected: Forbidden)
+  Passed AccessOps.Tests.HostEndpointTests.F11_a_WebSocket_upgrade_from_a_foreign_origin_never_reaches_Wisej(origin: "https://evil.example", expected: Forbidden)
+Total tests: 51
+     Passed: 51

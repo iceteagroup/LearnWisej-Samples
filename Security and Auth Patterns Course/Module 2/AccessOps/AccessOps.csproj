@@ -1,8 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <!--
-    AccessOps - Security & Auth Patterns course lab (one solution per module).
-    Run with:  dotnet run -f net10.0 with urls http://localhost:640N   (N = module number)
+    AccessOps - Security & Auth Patterns course, Module 2 (IIS and Browser Integrated
+    Authentication): the intranet route behind Windows sign-in.
+    Run it from the module folder: see README.md (port 6402, http).
+
+    On this machine Windows sign-in is the Kestrel Negotiate handler
+    (Microsoft.AspNetCore.Authentication.Negotiate, a NuGet package, not part of the shared
+    framework). Under IIS the same code receives the principal from IIS Windows Authentication
+    (iis/windows-auth.location.xml, docs/iis-publish-and-rollback.md).
+
+    Debug builds compile the training-only pieces (IdentityDiagnosticsView, the identity trace).
+    They sit inside #if DEBUG, so a Release build or publish does not contain them at all.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -22,9 +31,6 @@
     <Content Update="Web.config">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>
-    <Content Update="Data\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +46,7 @@
   <ItemGroup>
     <PackageReference Include="Wisej-4" Version="4.1.7" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="10.0.14" />
   </ItemGroup>
 
 </Project>

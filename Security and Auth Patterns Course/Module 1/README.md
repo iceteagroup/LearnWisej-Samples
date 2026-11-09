@@ -1,106 +1,128 @@
 # AccessOps · Security & Auth Patterns · Module 1
 
-Local lab build for **Module 1 · The Wisej.NET Security Model**. The AccessOps shell as the
-walkthrough shows it - the blue app bar, the five areas, the employee directory and the
-"server said" strip - plus the written threat model every later module is measured against.
-The login page is a placeholder: it checks no credential and says so.
+**Identity Boundaries in Wisej.NET.** AccessOps opens on the blue `AccessOps · Sign in` window with the
+area strip `Departments · Employees · Documents · Approvals · Admin console`. After a demo sign-in the
+Documents screen of the walkthrough appears: a request bar with **Tenant** and **Record** boxes and the
+**Open** / **Export** buttons, the grid **Record · Title · Classification · Tenant** with tenant A's four
+documents (17 Supplier contract — Northwind renewal, 18 Q3 travel policy, 21 Board minutes — October,
+24 Onboarding checklist) and a status line that turns idle, ok (green), deny (red) or warn (amber). Every
+read goes through `DocumentService.Read(subject, tenant, recordId)`, which checks the current grant and
+the tenant before a read-counting repository runs. The admin console revokes and restores grants, shows
+the audit trail and `CountingDocumentRepository.ReadCount`, and in Debug builds opens the
+`AccessOps · Identity diagnostics` view (authentication type, `IsAuthenticated`, redacted subject, host
+request principal, effective OS identity).
+
+Solution: `AccessOps.slnx` = `AccessOps/` (Wisej.NET web app, `net10.0`, `Wisej-4` 4.1.7,
+`Microsoft.Data.Sqlite` 10.0.14) + `PolicyHarness/` (plain .NET console, no Wisej). Data (SQLite database,
+audit-pseudonym key) is created in `AccessOpsData/` beside the project, outside the web root, and is
+git-ignored. Modules 2 and 4 start from this folder.
 
 ## Run it
 
-```bash
-cd "Security and Auth Patterns Course/Module 1/AccessOps"
-dotnet run -f net10.0 --urls http://localhost:6401
+```powershell
+cd "Security and Auth Patterns Course\Module 1"
+dotnet build AccessOps.slnx
+dotnet run --project AccessOps --urls http://localhost:6401     # Debug build: http://localhost:6401
+dotnet run --project PolicyHarness                               # the policy without Wisej, IIS or an IdP
 ```
 
-Open <http://localhost:6401>. In Visual Studio, open `AccessOps.slnx` and press F5. The first run
-creates `Module 1/AccessOpsData/accessops.db` (outside the web root) from
-`AccessOps/Data/seed-employees.json`. Delete the folder to start again.
+No IIS, domain, identity provider or secret is needed. To start from fresh fixtures, stop the app and
+delete `AccessOpsData/`. The Debug console prints one `AccessOps.IdentityTrace` line per lifecycle point
+(startup, refresh, click, StartTask, Task.Run) — that is where the identity matrix comes from.
 
-## The screen
+### Demo accounts (invented, local only, Debug builds only)
 
-- **Sign in** - `txtUserName`, `txtPassword`, `btnSignIn` and the status line (`lblStatus`).
-- **Shell** - `AccessOps · Employees` in the app bar, the area strip *Departments · Employees ·
-  Documents · Approvals · Admin console*, the wire note on the right
-  (`Directory projection · name, department, role, manager`), the directory grid, the action strip
-  (*Open record*, *Download contract*, *Approve request*) and the `SERVER SAID` strip.
+| User name | Secret | Account | Grant |
+|---|---|---|---|
+| `reader.a` | `reader-demo-17` | `acct …7f3a`, tenant A | Reader grant `…21`, tenant A, read |
+| `unassigned` | `unassigned-demo` | `acct …19c8`, tenant A | none |
+| `admin` | `admin-demo-21` | `acct …d4b7`, tenant A | Admin grant `…44`, administer, no read |
+
+`TestVerifier` is a **training mock that never ships**: it holds SHA-256 hashes of these demo secrets and
+exists only inside `#if DEBUG`. A Release build has no verifier and answers every sign-in with
+"Sign-in is not available in this build." Module 4 replaces it with AccessOps' own credential store.
+
+### Prove the diagnostics view is not packaged
+
+```powershell
+dotnet publish AccessOps/AccessOps.csproj -c Release -o $env:TEMP\accessops-m1-release
+Select-String -Path $env:TEMP\accessops-m1-release\AccessOps.dll -Pattern IdentityDiagnosticsView,TestVerifier -SimpleMatch -Quiet   # False
+```
+
+Result recorded in `docs/release-check.md`.
 
 ## What to try
 
+Use two browser tabs (each tab is its own Wisej.NET session) or two browser profiles.
+
 | Action | Expected result |
 |---|---|
-| Click **Sign in** with empty fields | `Enter your user name and password.` |
-| Enter `<b>x</b>` as the user name and any password | `That user name and password combination is not valid.` - the markup is shown as text, the reason and the name are not |
-| Enter `dana.ruiz` and any password | The shell opens on Employees. Nobody is authenticated; there is no identity in the session yet |
-| Read the status strip | `Directory loaded · 6 rows, 4 fields each` |
-| Select Kwame Osei, click **Open record** | `Record 4187 opened · Kwame Osei · Finance · Manager — directory fields only` |
-| Click **Approvals** (or Departments, Documents, Admin console) | `Nothing loaded for this session` - empty screens the later modules fill |
-| In the browser console, run the snippet below | Four values per row: name, department, role, manager. No id, no salary band, no review note |
-| `fetch('/Default.json')` from the page | 404. Also 404 for `/appsettings.json` and `/Data/seed-employees.json` |
+| Tab 1: sign in as `reader.a` with a wrong secret | "Sign-in failed." (red) |
+| Tab 1: sign in as `reader.a` / `reader-demo-17` | The page reloads (new session ID), Documents shows four rows, "Tenant A · 4 documents · signed in as a Reader" |
+| Tab 1: Open with Tenant `A`, Record `17` | "Record 17 opened · Supplier contract — Northwind renewal" (green); ReadCount +1 |
+| Tab 1: Tenant `B`, Record `17`, Open (fixture **F02**) | "Access denied." (red), no record content; audit `open B / 17 denied tenant`; ReadCount +0 |
+| Tab 1: Tenant `A`, click row 17 | "Tenant A · record 17 selected" |
+| Tab 1: Export | "Record 17 exported · Supplier contract — Northwind renewal", `record-A-17.txt` downloads (the job ran on `Task.Run` with an explicit subject) |
+| Tab 2: Admin console (not signed in) | "Access denied."; in Debug the "Identity diagnostics" button is there |
+| Tab 2: Identity diagnostics (not signed in) | `(none)` · `False` · "none: host principal returned" · "not authenticated (Kestrel)" · the process account; "No override: the getter falls back to the host principal." |
+| Tab 1: Admin console → Identity diagnostics (as reader) | `Portal` · `True` · "acct …7f3a · tenant A" · same host principal and **same OS identity** as tab 2; "The session override answers Application.User." |
+| Tab 2: Documents → sign in as `admin` / `admin-demo-21`, then Admin console | Grants `…44 admin` and `…21 reader.a`, both Active; ReadCount; the audit list |
+| Tab 2: select grant `…21`, Revoke | "Reader grant …21 revoked." (amber); state Revoked; audit `grant.revoke` |
+| Tab 1 (screen untouched, Export still visible): Export (fixture **F05**) | "Access denied." (red); audit `export A / 17 denied grant`; ReadCount +0 |
+| Tab 2: Restore | "Reader grant …21 restored." (green) |
+| Tab 2: Fail next read, then Tab 1: Open | "The document could not be loaded. Try again later." (amber); the log has the exception with the correlation ID and no identity; audit `failed repository` |
+| New tab: sign in as `unassigned` / `unassigned-demo` | Documents: empty grid, "Access denied."; Open → "Access denied."; audit reason `grant`; ReadCount +0 |
+| `dotnet run --project PolicyHarness` | One allowed read and five denies (tenant boundary F02, missing role, unknown, expired, revoked) at zero repository calls — `docs/policy-harness-output.txt` |
 
-```js
-// what the browser holds for row 4 of the employee grid
-const reg = qx.core.ObjectRegistry.getRegistry(); let m;
-for (const k in reg) if (reg[k] && reg[k].classname === 'wisej.web.datagrid.DataModel') m = reg[k];
-JSON.stringify(m.getRowData(3).data);  // {"1":"Kwame Osei","2":"Finance","3":"Manager","4":"A. Lindqvist"}
-```
+## Lab deliverables → where
 
-## Lab tasks → where in the code / docs
-
-| Deliverable | Where |
+| Deliverable (plan) | Where |
 |---|---|
-| AccessOps solution with a placeholder login page | [AccessOps.slnx](AccessOps.slnx), [LoginPage.cs](AccessOps/Pages/LoginPage.cs) - success, validation and generic failure paths |
-| Empty screens for departments, employees, documents, approvals, admin console | [MainPage.cs](AccessOps/Pages/MainPage.cs), [EmptyAreaView.cs](AccessOps/Pages/EmptyAreaView.cs) |
-| The directory projection (what the server lets leave) | [EmployeeDirectoryService.cs](AccessOps/Services/EmployeeDirectoryService.cs), [EmployeesView.cs](AccessOps/Pages/EmployeesView.cs) |
-| `Default.json` cannot be downloaded | [Startup.cs](AccessOps/Startup.cs) - `app.UseWhen` around `app.UseFileServer()` |
-| Trust boundary diagram | [docs/TrustBoundaries.md](docs/TrustBoundaries.md) (Mermaid) |
-| Asset and entry point inventory | [docs/AssetAndEntryPointInventory.md](docs/AssetAndEntryPointInventory.md) |
-| Threat table with likelihood, impact and mitigation | [docs/ThreatTable.md](docs/ThreatTable.md) |
-| Security control placement map | [docs/ControlPlacementMap.md](docs/ControlPlacementMap.md) |
+| AccessOps solution with tenant A and B fixtures and a read-counting repository | `AccessOps.slnx`; fixtures in `AccessOps/Infrastructure/AccessOpsDatabase.cs` (tenants A/B, record 17 in both with different contents, reader / unassigned / admin accounts, grants); `AccessOps/Documents/CountingDocumentRepository.cs` (`ReadCount`) |
+| DocumentService resource gate with grant, tenant and record checks | `AccessOps/Documents/DocumentService.cs` (`Read`, `List`), `AccessOps/Security/GrantStore.cs` (`Find` reads the current row), `AccessOps/Security/AuditLog.cs` (append-only `audit` table) |
+| Identity diagnostics view, removed from the packaged build | `AccessOps/Pages/IdentityDiagnosticsView.cs`, `AccessOps/Identity/IdentityProbe.cs` (both `#if DEBUG`); proof in `docs/release-check.md` |
+| Four-column identity matrix for request, session, operation and outcome | `docs/identity-matrix.md`; trust note `docs/trust-and-identity.md` |
+| PolicyHarness run with one allowed read and two denies at zero repository calls | `PolicyHarness/Program.cs`; output `docs/policy-harness-output.txt` |
 
-## Verified in the browser pane
+Lab steps → code: sign-in click `Pages/SignInView.cs` (`btnSignIn_Click`) → `Identity/SignInFlow.cs`
+(pending key, `Application.Reload()`) → `Program.cs` `Application.ApplicationRefresh` →
+`Identity/ApplicationPrincipal.cs` (`RefreshSessionId()` first, then `Application.User`);
+`Application.StartTask` in `Pages/DocumentsView.cs` (`btnOpen_Click`); `Task.Run` with an explicit
+`Subject` in `Documents/ExportJob.cs`; `Identity/Subject.cs` (`From`, `Opaque`, `Redacted`).
 
-Run with the `accessops-m1` launch entry at 1400x900: all three login paths, the shell, the
-status texts above, the empty areas, the grid's client data model (4 values per row) and the 404s
-for `.json` paths. A deliberate experiment - one extra column bound to the id with
-`Visible = false` - put `"5":"4187"` into every client row, which is the lesson's point; the
-experiment was removed again. No browser console errors other than the 404s the checks requested.
+## Verified here / only in the lab environment
 
-## Answers to the review questions
+Verified on this machine (Windows 11 workgroup PC, .NET 10, Kestrel, browser pane at 1400x900):
+build (0 warnings, 0 errors), PolicyHarness, every row of "What to try" in two tabs, the session ID
+rotation on the sign-in reload (the browser's `sessionStorage` adopted the new ID), the trace for
+startup / click / StartTask / refresh / Task.Run, the Release publish without the diagnostics view and
+without a verifier.
 
-1. **Hidden salary column.** The browser holds the salary value of every loaded row in the grid's
-   data model; `Visible = false` only stops it being drawn (verified above with the id column). The
-   change that removes it from the wire is in the query: bind a projection that has no salary
-   property and add no column for it - `EmployeeDirectoryService.GetDirectory`.
-2. **Two people on one server.** They share everything static: the process, singletons such as
-   `AccessOpsDatabase` and `EmployeeDirectoryService` (which hold no user data), and any cache.
-   They do not share `Application.Session`, pages or controls. For one to see the other's current
-   department, that department would have to be stored somewhere shared - a static "current user",
-   a singleton field, or a cache keyed without the user.
-3. **Arguing against the top threat (T5, pay data in the widget state).** It would be wasted effort
-   if no screen ever bound a record type containing pay data - for example if pay lived in a
-   separate system AccessOps never queries. As long as the `employees` table carries salary bands,
-   one `SELECT *` bound to a grid re-creates the leak, so the projection rule stays.
+Not verifiable here (and not needed for Module 1): a host principal other than anonymous (IIS Windows
+Authentication is Module 2), a per-user Windows token (impersonation is Module 3).
 
-## Where this sample differs from the lesson
+## Where this sample differs from the lesson or video
 
-- **Wisej.NET version.** The course teaches the Wisej.NET 4.2 `Passkey` and `OAuthClient`
-  components in Modules 2 and 4. These samples target the released **Wisej-4 4.1.7**, which has
-  neither, so passkeys are not implemented and external sign-in uses ASP.NET Core's OpenID Connect
-  handler (Module 4). Module 1 itself uses nothing from 4.2.
-- **Status text.** The video's status reads `5 rows, 4 fields each`; the sample has six employees
-  (Anna Lindqvist, the managers' manager, is a real row so `A. Lindqvist` has someone to point to)
-  and reports `6 rows, 4 fields each`, counted from the grid. The video's wire note lists
-  `id, name, department, role`; the browser does not receive the id (no column), so the note reads
-  `name, department, role, manager`.
-- **The leaking run state.** The run scene first shows the grid bound to `SELECT *` with a hidden
-  salary column. The sample does not ship that bad version as a mode; the README snippet and the
-  recorded experiment show the same evidence on the real grid.
-- **The forged approve scene** (Dana's approve refused by `ApprovalService`) previews Module 3.
-  Module 1 has no identity and no approvals, so *Approve request* and *Download contract* are
-  disabled here; the refusal is built and tested in Module 3.
-- **Placeholder login.** The lab asks that the handler only sets the status line; the Module 2
-  starting point says the placeholder opens the console. The sample does both: the status line
-  reports the outcome, and a well-formed entry opens the shell with nobody signed in.
-- **The pay-band call** (`_pay.MayViewBands(me)`) in the code scene needs an identity and a
-  permission no lab in this course defines; salary bands simply never leave the server in these
-  samples.
+- **Sign-in screen, admin console:** the video shows only the Documents screen and the diagnostics view.
+  The sign-in card (User name, Secret, Sign in) and the admin console (grants, audit, ReadCount, "Fail
+  next read") are built in the same style because the lab needs them; the video shows the revocation only
+  as a callout ("Admin console · another session").
+- **ReadCount on screen:** the video draws `CountingDocumentRepository.ReadCount` as an overlay beside the
+  window; here it is in the admin console's repository strip.
+- **Selected-row status:** the run scene's "Tenant A · record 17 selected · the screen has not changed" is
+  narration of that moment; the app says "Tenant A · record 17 selected".
+- **Failure path:** an unexpected repository failure is produced with the test repository's
+  "Fail next read" seam (an injected exception), since nothing in a healthy SQLite file fails on demand.
+- **Grid selection:** Wisej's Bootstrap-4 theme draws the selected row grey with a focus outline, not the
+  mock's light blue with a left accent bar.
+- **ApplicationPrincipal:** the pack's `common/ApplicationPrincipal.cs` sets `Application.User` and then
+  calls `RefreshSessionId()`; this sample (like the lesson) rotates first, then sets the principal — and
+  only on a page load, because from a WebSocket click the browser never adopts the new ID.
+- **Audit inside the service:** the video's `ExportJob.cs` writes the audit event in the job; here
+  `DocumentService` writes one event per decision for every path, so the job cannot forget it.
+- **Grant display:** account IDs are shown with their last four characters (`acct …7f3a`), grant IDs with
+  their last two (`…21`), matching the video.
+- **PolicyHarness** targets `net10.0` (the pack's targets `net8.0`; the rule is identical) and adds the
+  pack's missing-role, unknown and expired cases next to F02 and the revoked grant.
+- **Effective OS identity** shows the real process account of whoever runs the sample (the video shows
+  the invented `DEVBOX\dev`).

@@ -3,7 +3,7 @@
     "AccessOps": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:6406",
+      "applicationUrl": "https://localhost:6406",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "WEBSITE_PATH": "$(MSBuildProjectDirectory)"

@@ -1,12 +1,8 @@
 {
-  "_comment": "TEST DOUBLE - DEMO USERS ONLY. Invented people with obviously-demo passwords for the AccessOps lab. Never reuse.",
+  "_comment": "TEST DOUBLE - DEMO USERS ONLY. Invented people with obviously-demo passwords for the AccessOps lab. Never reuse. 'tid' is the provider-side tenant; AccessOps never takes a tenant from it.",
   "users": [
-    { "subject": "4f21-9ac0-dana-ellis",  "email": "dana.ellis@contoso.example",   "password": "Demo-IdP-2026", "givenName": "Dana",  "familyName": "Ellis",  "jobTitle": "Department manager", "department": "Operations" },
-    { "subject": "77b3-01de-jo-newman",   "email": "jo.newman@contoso.example",    "password": "Demo-IdP-2026", "givenName": "Jo",    "familyName": "Newman", "jobTitle": "Analyst",            "department": "Operations" },
-    { "subject": "c901-5e2a-theo-grant",  "email": "theo.grant@contoso.example",   "password": "Demo-IdP-2026", "givenName": "Theo",  "familyName": "Grant",  "jobTitle": "Former contractor",  "department": "Facilities" },
-    { "subject": "5a10-77e1-ruth-okoye",  "email": "ruth.okoye@contoso.example",   "password": "Demo-IdP-2026", "givenName": "Ruth",  "familyName": "Okoye",  "jobTitle": "Finance officer",    "department": "Finance" },
-    { "subject": "8d42-0b3c-jordan-marsh", "email": "jordan.marsh@contoso.example", "password": "Demo-IdP-2026", "givenName": "Jordan", "familyName": "Marsh", "jobTitle": "Facilities coordinator", "department": "Facilities" },
-    { "subject": "3e77-41a0-jamie-mercer", "email": "jamie.mercer@contoso.example", "password": "Demo-IdP-2026", "givenName": "Jamie", "familyName": "Mercer", "jobTitle": "Finance manager", "department": "Finance" },
-    { "subject": "9b02-6c3d-sofia-reyes", "email": "sofia.reyes@contoso.example", "password": "Demo-IdP-2026", "givenName": "Sofia", "familyName": "Reyes", "jobTitle": "Access administrator", "department": "IT" }
+    { "subject": "4f21-9ac0-dana-ellis", "email": "dana.ellis@contoso.example", "password": "Demo-IdP-2026", "givenName": "Dana", "familyName": "Ellis", "tid": "contoso" },
+    { "subject": "c77d-21b4-kai-berg", "email": "kai.berg@northwind.example", "password": "Demo-IdP-2026", "givenName": "Kai", "familyName": "Berg", "tid": "northwind" },
+    { "subject": "77b3-01de-jo-newman", "email": "jo.newman@contoso.example", "password": "Demo-IdP-2026", "givenName": "Jo", "familyName": "Newman", "tid": "contoso" }
   ]
 }

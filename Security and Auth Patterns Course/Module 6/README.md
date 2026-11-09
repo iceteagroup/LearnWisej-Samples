@@ -1,136 +1,128 @@
 # AccessOps · Security & Auth Patterns · Module 6
 
-Local lab build for **Module 6 · Auditing, Secrets and Configuration**. The approvals screen from
-the walkthrough - *Approve*, *Reject*, `N audited today`, the banner *Request REQ-4471 approved.
-Recorded as audit entry N.* and the status `reference xxxx-xxxx` - backed by an append-only,
-hash-chained `audit_entry` table, a correlation ID minted per command and carried on every log line,
-secrets that live in user secrets / the environment instead of tracked files, and a log sink that
-redacts what must never be written.
+**Passkeys with the WebAuthn Extension.** The partner sign-in page is the walkthrough's
+`AccessOps · Partner sign-in`: "Sign in to AccessOps", "Partner route · approved partner tenants
+only", the blue **Sign in with a passkey** button, **Sign in with your organization** (the Module 5
+federation) and **Use your AccessOps password** (the Module 4 form, service accounts only), the grey
+"NO PASSKEY YET?" panel on the right with the lost-device note, a banner and the status strip
+`STATUS … reference xxxx-xxxx`. A passkey sign-in that passes every server-side check shows the
+records page with "Signed in as Dana Ellis. Your session was renewed." and "Passkey verified · grant
+issued"; every refusal shows "That passkey could not sign you in. Try again or use another sign-in
+method." (banner and an `AlertBox` with `allowHtml: false`). **My passkeys** (`AccessOps · My
+passkeys`) lists the signed-in user's own passkeys - Label · Added · Last used · Backup eligible -
+with **Add a passkey**, **Rename**, **Delete**, "Signed in as …" and the platform-authenticator hint.
 
-> **Wisej.NET version.** These samples target the released **Wisej-4 4.1.7**. The Wisej.NET 4.2
-> `Passkey` and `OAuthClient` components the course teaches in Modules 2 and 4 are not available;
-> passkeys are not implemented and external sign-in uses ASP.NET Core's OpenID Connect handler (see
-> Module 4). Module 6's lab moves *the OIDC client secret* out of source control - here that is the
-> secret of the ASP.NET Core OpenID Connect handler (`Oidc:ClientSecret`), not an `OAuthClient`
-> property.
+Solution `AccessOps.slnx` = `AccessOps/` (`net10.0`, `Wisej-4` 4.1.7, **`Wisej-4-WebAuthn` 4.1.7**,
+`Microsoft.AspNetCore.Authentication.OpenIdConnect` 10.0.14, `Microsoft.Data.Sqlite` 10.0.14) +
+`AccessOps.TestIdentityProvider/` (Contoso Identity on 6416, test double) + `AccessOps.Tests/` +
+`PolicyHarness/`. Started from a copy of Module 5. Data in `AccessOpsData/` (git-ignored).
 
-## Set the secrets once, then run - two servers
+## Run it
 
-The app refuses to start without its three secrets (`Oidc:ClientSecret is not configured…`). They
-live in your user profile, outside the repository:
-
-```bash
-cd "Security and Auth Patterns Course/Module 6/AccessOps"
-dotnet user-secrets set "ConnectionStrings:AccessOps" "Data Source=../AccessOpsData/accessops.db"
-dotnet user-secrets set "Oidc:ClientSecret" "<a long random value>"
-dotnet user-secrets set "ShareLinks:SigningKey" "<base64 of 32 random bytes>"
-
-cd "../AccessOps.TestIdentityProvider"
-dotnet user-secrets set "Clients:accessops:Secret" "<the same value as Oidc:ClientSecret>"
+```powershell
+cd "Security and Auth Patterns Course\Module 6"
+$secret = "lab-only-" + [guid]::NewGuid().ToString("N")
+dotnet user-secrets set "Clients:accessops:Secret" $secret --project AccessOps.TestIdentityProvider
+dotnet user-secrets set "Oidc:ClientSecret" $secret --project AccessOps
+dotnet build AccessOps.slnx
+dotnet run --project AccessOps.TestIdentityProvider --urls http://localhost:6416   # terminal 1
+dotnet run --project AccessOps --urls https://localhost:6406                       # terminal 2
+dotnet test AccessOps.slnx
+dotnet run --project PolicyHarness
 ```
 
-```bash
-cd "Security and Auth Patterns Course/Module 6/AccessOps.TestIdentityProvider"
-dotnet run --urls http://localhost:6416          # TEST DOUBLE - never deploy
+WebAuthn needs a secure context: `https://localhost:6406` (with a trusted dev certificate) or
+`http://localhost`. The relying party is in `appsettings.json` → `WebAuthn` (RP ID `localhost`, exact
+origins). If your browser does not trust the dev certificate, use the Development verification
+listener of Modules 4–5 **and** add its origin to the passkey list for that run only:
 
-cd "Security and Auth Patterns Course/Module 6/AccessOps"
-dotnet run -f net10.0 --urls http://localhost:6406
+```powershell
+$env:AccessOps__LocalHttpVerification = "true"; $env:AccessOps__AllowedOrigins__1 = "http://localhost:6446"
+$env:WebAuthn__AllowedOrigins__1 = "http://localhost:6446"
+dotnet run --project AccessOps --urls "https://localhost:6406;http://localhost:6446"
+# provider terminal: Clients__accessops__RedirectUris__1 / PostLogoutRedirectUris__1 = http://localhost:6446/...
 ```
 
-```bash
-cd "Security and Auth Patterns Course/Module 6"
-dotnet test          # 39 tests
-```
+Without a real authenticator (Windows Hello, Touch ID, a security key) you can drive the ceremonies
+with Chrome's **virtual authenticator** (DevTools → More tools → WebAuthn → "Enable virtual
+authenticator environment", CTAP2, internal, resident key, user verification) - that is how the
+ceremonies were run on the course machine.
 
-Module 7 uses the same user-secrets ids, so this is a one-time step for both modules. Work-account
-users: `jamie.mercer@…` (Finance manager, approves Ruth Okoye's requests) and `sofia.reyes@…`
-(Administrator: permission editor and audit trail); demo passwords in
-[users.json](AccessOps.TestIdentityProvider/Data/users.json).
+### Demo accounts (invented, local only)
+
+| Account | How to sign in | Notes |
+|---|---|---|
+| Dana Ellis - partner account A, tenant A | Contoso Identity `dana.ellis@contoso.example` / `Demo-IdP-2026`, then a passkey | Debug builds seed three **display fixtures** for her ("Work laptop · Windows Hello", "Security key · USB", "Phone · synced passkey"): their private keys were thrown away at seeding, so they can be renamed and deleted but can never sign in |
+| Jo Newman - partner account B, tenant A | Contoso Identity `jo.newman@contoso.example` / `Demo-IdP-2026` | account B of the A-for-B test |
+| Kai Berg - tenant C (not approved) | Contoso Identity `kai.berg@northwind.example` | refused (Module 5, F08) |
+| `svc.reports` | Use your AccessOps password → `Reports-demo-31` | service account (Module 4 form) |
 
 ## What to try
 
 | Action | Expected result |
 |---|---|
-| Jamie Mercer → Approvals, REQ-4471 → **Approve** | Banner *Request REQ-4471 approved. Recorded as audit entry N.*; status *Approved — audited* · `reference xxxx-xxxx`; `audited today` goes up by one |
-| **Reject** on the already-approved REQ-4471 | *That request could not be rejected. Reference xxxx-xxxx.* - a `Failed` audit row and a warning log line under that reference |
-| REQ-4104 (raised by someone who is not Jamie's report) → **Approve** | *You are not allowed to do that…*; status *Refused — audited*; a `Denied` row |
-| Sofia Reyes → Admin console: select Jamie Mercer, `ViewAuditTrail`, **Grant**, then **Revoke** | *Granted ViewAuditTrail for Jamie Mercer · audit entry N · takes effect at their next sign-in or re-resolve*; the change and its row commit together |
-| **Verify chain** | *Audit chain verified · every entry matches* |
-| Documents → **Download**, **Share link (1 h)**, open the link, tamper with it | `Document.Download`, `Document.Share`, `Document.ShareOpen` rows (`Allowed`, then `Denied` for the tampered link) |
-| `AccessOpsData/logs/accessops-YYYYMMDD.jsonl` | Every line of a command carries the same `CorrelationId` and `UserId`; no password, token, signature, cookie or e-mail address |
-| Start the app with a secret removed | It stops at start-up naming the missing key and where to supply it |
+| Open the sign-in page | three buttons, "NO PASSKEY YET?", status "Ready · partner route" |
+| Sign in with your organization → Dana → My passkeys | the three display fixtures; the hint says whether the browser offers a built-in authenticator (`WebAuthn.IsUserVerifyingPlatformAuthenticatorAvailableAsync`) |
+| Add a passkey → name it → OK → authenticator prompt | new row; banner `Passkey "…" added.`; log `passkey.create … alg ES256 … stored` |
+| Select a row → Rename → "Old phone" → OK | banner `Passkey renamed to "Old phone".`; audit `passkey.rename allowed` |
+| Select "Old phone" → Delete → Yes | banner `Passkey "Old phone" deleted. It can no longer sign in.`; audit `passkey.delete allowed` |
+| Records → Sign out → Sign in with a passkey (outcome 1) | "Signed in as Dana Ellis. Your session was renewed.", "Passkey verified · grant issued"; log `UV=True (extension property UV=False) · counter 1→2 · commit=Updated` and `RefreshSessionId() · rotated=True · method=passkey` |
+| Sign in with a passkey with the page's origin removed from `WebAuthn:AllowedOrigins` (outcome 3) | fixed sentence, `reason=OriginRejected`, no grant |
+| Sign in with a passkey and cancel the prompt / no authenticator (outcome 5) | fixed sentence (banner + AlertBox), `reason=BrowserFailed`, no grant |
+| A's credential for B (outcome 2), replayed response (outcome 4), store races | `dotnet test` - `PasskeyTests` (see `docs/passkeys.md`) |
+| An hour-old session → My passkeys | no "Add a passkey"; hint "Sign in again to add a passkey" |
 
-## Lab tasks → where in the code
+## Lab deliverables → where
 
-| Deliverable | Where |
+| Deliverable (plan) | Where |
 |---|---|
-| AuditService and append-only audit table | [AuditService.cs](AccessOps/Services/AuditService.cs) (only writer, gapless `seq`, SHA-256 chain, `VerifyChain`); table + no-update/no-delete triggers in [AccessOpsDatabase.cs](AccessOps/Infrastructure/AccessOpsDatabase.cs); callers `ApprovalService`, `PermissionEditorService`, `DocumentService`, `ShareLinkEndpoint`, `LoginAuditService`, `ExternalIdentityMapper`; [docs/AuditTrail.md](docs/AuditTrail.md) |
-| Correlation ID in every command and log line | [CommandContext.cs](AccessOps/Services/CommandContext.cs) (minted at the top of the handler, actor and address from `SessionContext`), [Command.cs](AccessOps/Pages/Command.cs) (`ILogger.BeginScope`), passed into every service call; [RedactingLogger.cs](AccessOps/Infrastructure/RedactingLogger.cs) writes the scope on each line |
-| Secrets moved to environment configuration | `UserSecretsId` in both csproj files, the start-up checks in [OpenIdConnectSetup.cs](AccessOps/Infrastructure/OpenIdConnectSetup.cs), `AccessOpsDatabase.FromConfiguration`, `ShareLinkService`; `launchSettings.json` and `appsettings.json` hold none; `.json` excluded from the file server in [Startup.cs](AccessOps/Startup.cs) |
-| Secret rotation procedure | [docs/SecretRotation.md](docs/SecretRotation.md) (owner, store, expiry, two-valid-credentials overlap per secret; `ShareLinks:PreviousSigningKey` implements the overlap for the signing key) |
-| Log redaction review | [docs/LogRedactionReview.md](docs/LogRedactionReview.md) - real lines from one approval and one download, every field marked |
-| Client address behind a proxy | `UseForwardedHeaders()` with `Hosting:KnownProxies` in [Startup.cs](AccessOps/Startup.cs) |
+| Passkey enrollment and sign-in with the WebAuthn extension | `Pages/CredentialReviewView.cs` (`btnEnrollPasskey_Click`: `WebAuthn.CreateAsync` with ES256 + RS256, `AttestationConveyancePreference.None`), `Pages/LoginPage.cs` (`btnPasskeySignIn_Click`: `WebAuthn.GetAsync(challenge, null, 60000)`), `Identity/PasskeyService.cs`, `Identity/RelyingPartySettings.cs`, `appsettings.json` `WebAuthn` |
+| Server-side assertion validation with one-time challenges | `Identity/PasskeyService.cs` (`CompleteSignIn`, `CheckAssertion`, `AuthenticatorFlags`, `CounterPolicy`), `Security/PasskeyChallengeStore.cs` (32 bytes, ceremony, account, 2 min, `TryConsume` once) |
+| PasskeyCredentialStore with atomic compare-and-swap commits | `Security/PasskeyCredentialStore.cs` (table `passkey_credentials`, unique RP ID + credential ID, `CommitUse` → Updated / Conflict / NotFound, final deletes), schema in `Infrastructure/AccessOpsDatabase.cs` |
+| Five outcomes: one valid sign-in and four rejections, with store race tests | `docs/passkeys.md`, `docs/run-trace.txt`, `AccessOps.Tests/PasskeyTests.cs`, `AccessOps.Tests/SyntheticAuthenticator.cs` |
+| Credential review page and account recovery plan | `Pages/CredentialReviewView.cs` (owner from `Application.User`), `docs/passkeys.md` (recovery plan) |
 
-## Verified
+Lab steps → code: 2 `RelyingPartySettings` + `WebAuthn` section; 3 `PasskeyCredentialStore`; 4
+`PasskeyChallengeStore`; 5 `CredentialReviewView.btnEnrollPasskey_Click`, `PasskeyService.MayEnroll` /
+`CompleteEnrollment`; 6 `LoginPage.btnPasskeySignIn_Click`, `PasskeyService.CompleteSignIn`, then
+`SignInHandoff.Park` (reload → `RefreshSessionId()` → `Application.User`); 7 `CredentialReviewView`,
+recovery plan; 8–9 `docs/passkeys.md`.
 
-- `dotnet build`: 0 errors, 0 warnings. `dotnet test`: 39/39, including `UPDATE`/`DELETE` refused
-  by the table, the chain naming the first altered row after the owner drops the trigger, the
-  approval and its row sharing a correlation ID, the `Denied` and `Failed` rows, the grant/revoke
-  transaction, the signing-key overlap and the sink test with a known secret marker.
-- Fresh start with no user secrets: `Unhandled exception. System.InvalidOperationException:
-  Oidc:ClientSecret is not configured…`. With the secrets set: `Audit chain check at start-up: intact`.
-- Browser pane (`accessops-m6` + temporary `accessops-idp-m6`): every row of *What to try*. Sign-out
-  ended both sessions (the provider asked for the password again), the share-link probes were
-  `fetch` calls from the page (200 `application/pdf`, tampered signature 404, extended expiry 404).
-  No console errors other than those two deliberate 404s; no server errors.
-- Found and fixed during the run: the admin grid lost its selection after a grant, so the next
-  **Revoke** landed on the first row (now the selection is kept); the refusal log printed `(null)`
-  for a work-account user's name (names removed from the line); the already-decided failure wrote
-  nothing (now a `Failed` row and a warning); the share command stayed open while the dialog was
-  shown (now it ends when the link is issued); work-account employees were missing from the admin
-  console (now listed as `work account`).
+## Verified here / by tests / needs a real authenticator
 
-## Answers to the review questions
+- **Live, in a headless Chrome with the virtual authenticator** (DevTools protocol, the same browser
+  engine as the pane): enrollment through `CreateAsync`, a passkey sign-in through `GetAsync` with
+  every server check and an `Updated` commit (outcome 1), the unapproved origin (outcome 3), the
+  cancelled/failed prompt (outcome 5), rename and delete on the review page, the platform hint, the
+  session-ID rotation after a passkey sign-in, the Module 5 organisation sign-in and both sign-outs.
+- **Live, in the browser pane:** the sign-in page, the review page with the hint ("This device offers a
+  built-in authenticator" - the PC has Windows Hello), the organisation sign-in. The pane was **not**
+  used to start a ceremony: it would open the Windows Hello dialog on this PC.
+- **By tests only (84 green):** account A's credential for account B (outcome 2), the replayed response
+  (outcome 4), the store races, RP ID hash / type / presence / verification / counter refusals,
+  enrollment refusals, owner-scoped rename and delete, RS256 keys, the log redaction rule.
+- **Needs Windows Hello / a security key / a phone:** a real platform or roaming authenticator, a synced
+  passkey with BackupEligibility set, attachment filtering (`AuthenticatorAttachment` serialization is
+  still unverified - AccessOps does not rely on it), `https://localhost:6406` in a browser that trusts
+  the dev certificate.
 
-1. **What the application's own login can still do.** It cannot change or delete a row, but it can
-   *insert*: append fabricated rows that never happened, with a correct `seq` and a correct hash,
-   because the hash is not a signature - anyone who can insert can compute it. The verification pass
-   does not flag those; it only proves that nothing *before* them was altered or removed. What
-   catches them is the business data disagreeing with the trail (an `Approval.Approve` row for a
-   request still `Pending`) and copying each day's last hash somewhere the login cannot write.
-   If the attacker has the *owner* login instead, they can drop the trigger and rewrite row 3; the
-   pass then names row 3 - its stored hash no longer matches its fields - and every row after it
-   fails too, so *Verify chain* reports `Audit chain BROKEN at entry 3`.
-2. **A background task after sign-out.** From the `CommandContext` the event handler minted and
-   passed into the service - it holds the correlation ID, the actor id and the address as plain
-   values, so work started with `Application.StartTask` keeps them after the session ends. A task
-   that reads `IAccessOpsSession.Current` instead gets `NotSignedInException` (or another user's
-   context, on a thread that is not the session's), and the audit row is written with no actor and
-   no correlation - the exact row an investigation needs.
-3. **The secret removed in a later commit.** It is still in the repository's history, every clone,
-   fork and CI cache. The incident is closed only when the secret has been rotated and the old value
-   revoked at the provider, the provider's logs have been checked for use of the old value, and the
-   new value lives only in the secret store - see the last section of
-   [SecretRotation.md](docs/SecretRotation.md).
+## Where this sample differs from the lesson or video
 
-## Where this sample differs from the lesson
-
-- **INSERT-only by triggers.** SQLite has no logins or grants; the sample refuses `UPDATE` and
-  `DELETE` with triggers and documents the `GRANT INSERT, SELECT` / `DENY UPDATE, DELETE` a server
-  database uses ([AuditTrail.md](docs/AuditTrail.md)).
-- **Correlation ID format.** `xxxx-xxxx` (32 random bits) as in the video's `7f3c-9ad2`, instead of
-  a full `Guid` or the W3C trace id; over the Wisej.NET WebSocket the trace id is per connection,
-  not per click.
-- **Audit numbers.** The video's row for the approval is entry 4471 in a long-running trail; a
-  fresh sample database starts at 1. The video's actor column shows `u-2081 · j.mercer`; the sample
-  shows the stable id only (`u-2201`) and keeps names out of the trail and the logs.
-- **The incident trace.** The video's trace includes an *Authorize allowed* line and an export
-  streamed by `DocumentService` inside the approval; the sample logs refusals, not every allowed
-  check, and an approval does not export a document.
-- **Background work.** No approval is finished by `Application.StartTask` in this sample; the
-  services take the `CommandContext` as a parameter so such a task would be correct (review
-  answer 2).
-- **Currency.** Amounts are shown as `€ 18,400` (the Module 3 seed); the video shows `£18,400`.
-- **OIDC client secret.** It is the ASP.NET Core OpenID Connect handler's secret, not the 4.2
-  `OAuthClient` component's (see the note at the top). Lab deliverable affected: *Secrets moved to
-  environment configuration* - satisfied with the handler's `Oidc:ClientSecret`.
+- **UserVerified:** the lesson's code reads `r.AuthenticatorData.UserVerified`. In Wisej-4-WebAuthn
+  4.1.7 that property comes from the wrong bit (bit 1 instead of bit 2) and is false for real
+  authenticators; AccessOps reads UV (and UP) from the signed `AuthenticatorData.Base64` flags byte.
+- **WebAuthn.Validate for ES256:** the lesson calls `WebAuthn.Validate(c.Key, …, r.Signature)` directly.
+  The 4.1.7 extension rejects genuine ES256 signatures whose r or s is shorter than 32 bytes (about 1 in
+  128); AccessOps passes the same r and s re-encoded (`Identity/Es256Signature.cs`, see `docs/passkeys.md`).
+- **"Partner account A":** the video's banner says "Signed in as partner account A"; the sample's
+  partner A is Dana Ellis (Module 5's partner), so the banner names her.
+- **Banner after a passkey sign-in:** the video shows it on the sign-in page; the Module 4 hand-off
+  reloads the tab, so it appears on the records page after the session ID was renewed.
+- **"Use your AccessOps password"** opens the Module 4 form, which since Module 5 accepts service
+  accounts only (`svc.reports`); the video's wording suggests partners use it too.
+- **My passkeys:** a **Records** button (to go back) was added to the mock's toolbar; the last grid
+  column (free notes in the video: "this device", "lost on …") is empty - AccessOps stores no notes.
+- **Display fixtures:** the review page's three rows are Debug-only fixtures whose private keys do not
+  exist (see Demo accounts).
+- **ResidentKey "preferred" / attachment Platform** are passed to `CreateAsync` (seven required
+  arguments); how the extension serializes the attachment enum is not verified, nothing depends on it.

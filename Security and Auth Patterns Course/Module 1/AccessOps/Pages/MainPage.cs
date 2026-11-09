@@ -1,117 +1,108 @@
-using System;
 using System.Collections.Generic;
 using System.Drawing;
+using AccessOps.Identity;
 using AccessOps.UI;
 using Wisej.Web;
 
 namespace AccessOps.Pages
 {
     /// <summary>
-    /// The AccessOps shell: app bar, the five areas, the area on show and the "server said"
-    /// strip. Module 1 builds the navigation only; Departments, Documents, Approvals and the
-    /// admin console are empty screens that later modules fill.
+    /// The AccessOps window: the blue app bar, the area strip
+    /// (Departments · Employees · Documents · Approvals · Admin console) and the screen on show.
+    /// Which screen an area shows depends on the session's subject, read from
+    /// <c>Application.User</c> each time - the page itself holds no identity.
     /// </summary>
     public class MainPage : Page
     {
         private static readonly string[] Areas = { "Departments", "Employees", "Documents", "Approvals", "Admin console" };
 
         private readonly AppBar _appBar = new AppBar();
-        private readonly Panel _tabs = new Panel();
-        private readonly Label _wireNote = new Label();
+        private readonly FlowLayoutPanel _strip = new FlowLayoutPanel();
         private readonly Panel _host = new Panel();
-        private readonly StatusStrip _status = new StatusStrip("SERVER SAID");
-        private readonly Dictionary<string, Label> _tabLabels = new Dictionary<string, Label>();
+        private readonly Dictionary<string, Label> _tabs = new Dictionary<string, Label>();
+        private string _area = "Documents";
 
-        public MainPage(string initialStatus = null)
+        public MainPage()
         {
             this.Name = "MainPage";
             this.Text = "AccessOps";
             this.BackColor = Color.White;
 
-            _tabs.Name = "pnlAreas";
-            _tabs.Dock = DockStyle.Top;
-            _tabs.Height = 46;
-            _tabs.BackColor = Theme.Strip;
-            _tabs.Padding = new Padding(14, 8, 14, 8);
-            _tabs.CssStyle = "border-bottom:1px solid #e4eaf1;";
+            _strip.Name = "pnlAreas";
+            _strip.Dock = DockStyle.Top;
+            _strip.Height = 34;
+            _strip.BackColor = Theme.Strip;
+            _strip.Padding = new Padding(10, 5, 10, 0);
+            _strip.FlowDirection = FlowDirection.LeftToRight;
+            _strip.WrapContents = false;
+            _strip.CssStyle = "border-bottom:1px solid #e0e7ef;";
 
-            _wireNote.Name = "lblWireNote";
-            _wireNote.Dock = DockStyle.Right;
-            _wireNote.AutoSize = true;
-            _wireNote.Font = Theme.Mono(11.5f);
-            _wireNote.ForeColor = Theme.Muted;
-            _wireNote.TextAlign = ContentAlignment.MiddleRight;
-            _tabs.Controls.Add(_wireNote);
-
-            // Dock order is the reverse of Controls.Add, so the tabs are added right to left.
-            for (int i = Areas.Length - 1; i >= 0; i--)
+            foreach (var area in Areas)
             {
-                var area = Areas[i];
                 var tab = new Label
                 {
                     Name = "tab" + area.Replace(" ", ""),
                     Text = area,
                     AutoSize = true,
-                    Dock = DockStyle.Left,
-                    Padding = new Padding(14, 0, 14, 0),
-                    Margin = new Padding(0, 0, 6, 0),
+                    Height = 24,
+                    Padding = new Padding(12, 0, 12, 0),
+                    Margin = new Padding(0, 0, 4, 0),
                     Font = Theme.Px(12.5f, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleCenter,
-                    Cursor = Cursors.Hand
+                    Cursor = Cursors.Hand,
+                    CssStyle = "border-radius:6px;"
                 };
                 tab.Click += (s, e) => ShowArea(area);
-                _tabLabels[area] = tab;
-                _tabs.Controls.Add(tab);
-                if (i > 0)
-                    _tabs.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 6 });
+                _tabs[area] = tab;
+                _strip.Controls.Add(tab);
             }
 
-            _host.Name = "pnlArea";
+            _host.Name = "pnlScreen";
             _host.Dock = DockStyle.Fill;
 
             this.Controls.Add(_host);
-            this.Controls.Add(_status);
-            this.Controls.Add(_tabs);
+            this.Controls.Add(_strip);
             this.Controls.Add(_appBar);
 
-            ShowArea("Employees");
-
-            if (initialStatus != null)
-                _status.Report(initialStatus, StatusTone.Idle);
+            ShowArea("Documents");
         }
 
-        internal void Report(string status, StatusTone tone, string note = null) => _status.Report(status, tone, note);
+        /// <summary>Called on the page load that established the principal.</summary>
+        internal void OnSignedIn() => ShowArea("Documents");
 
-        internal string WireNote
+        /// <summary>Puts a screen into the window and names it in the app bar.</summary>
+        internal void ShowScreen(string screenTitle, Control screen)
         {
-            get => _wireNote.Text;
-            set => _wireNote.Text = value;
-        }
-
-        private void ShowArea(string area)
-        {
-            _appBar.Area = area;
-
-            foreach (var pair in _tabLabels)
-            {
-                var active = pair.Key == area;
-                var admin = pair.Key == "Admin console";
-                pair.Value.ForeColor = admin ? Theme.BadInk : active ? Theme.Accent : Theme.Muted;
-                pair.Value.BackColor = admin ? Theme.BadWash : active ? Theme.AccentWash : Color.Transparent;
-                pair.Value.CssStyle = admin
-                    ? "border-radius:7px; border:1px dashed #e0563b;"
-                    : "border-radius:7px;";
-            }
+            _appBar.Screen = screenTitle;
 
             foreach (Control old in _host.Controls)
                 old.Dispose();
             _host.Controls.Clear();
 
-            Control view = area == "Employees"
-                ? new EmployeesView(this)
-                : new EmptyAreaView(this, area);
-            view.Dock = DockStyle.Fill;
-            _host.Controls.Add(view);
+            screen.Dock = DockStyle.Fill;
+            _host.Controls.Add(screen);
+        }
+
+        private void ShowArea(string area)
+        {
+            _area = area;
+            foreach (var pair in _tabs)
+            {
+                var active = pair.Key == area;
+                pair.Value.ForeColor = active ? Theme.Accent : Theme.Muted;
+                pair.Value.BackColor = active ? Theme.AccentWash : Color.Transparent;
+                pair.Value.Font = Theme.Px(12.5f, active ? FontStyle.Bold : FontStyle.Regular);
+            }
+
+            var subject = Subject.From(Application.User);
+            if (area == "Admin console")
+                ShowScreen("Admin console", new AdminConsoleView(this));
+            else if (subject.IsAnonymous)
+                ShowScreen("Sign in", new SignInView());
+            else if (area == "Documents")
+                ShowScreen("Documents", new DocumentsView());
+            else
+                ShowScreen(area, new EmptyAreaView());
         }
     }
 }

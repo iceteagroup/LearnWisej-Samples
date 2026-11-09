@@ -1,14 +1,21 @@
 using System;
 using AccessOps;
+using AccessOps.Documents;
+using AccessOps.Identity;
 using AccessOps.Infrastructure;
-using AccessOps.Services;
+using AccessOps.Security;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Wisej.Core;
 
-// AccessOps host. Wisej.NET 4 is an ordinary ASP.NET Core application: everything that is not
-// the Wisej.NET UI (an endpoint, a header, a limit) is configured here, in this one file.
+// AccessOps host, partner route. Wisej.NET 4 is an ordinary ASP.NET Core application: everything
+// with HTTP headers - the host cookie, antiforgery, the WebSocket origin check, continuation
+// URLs - is configured here, before app.UseWisej(). The Wisej.NET session itself carries the
+// application principal (Application.User) and never a cookie of ours.
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -16,48 +23,60 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     WebRootPath = "./"
 });
 
-// The data lives outside the web root: the web root is this project folder, the database is in
-// the module's AccessOpsData folder beside it.
+// Data outside the web root; process-wide services only (none of them holds a user).
 builder.Services.AddSingleton(sp => AccessOpsDatabase.FromConfiguration(builder.Configuration, builder.Environment.ContentRootPath));
-
-// Process-wide services. None of them holds a user: identity is read from the session of the
-// calling thread through IAccessOpsSession, every time.
-builder.Services.AddSingleton<IAccessOpsSession, WisejSession>();
-builder.Services.AddSingleton<PasswordService>();
+builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddSingleton(new PasswordHasher());
+builder.Services.AddSingleton<AuditLog>();
+builder.Services.AddSingleton<LoginAudit>();
+builder.Services.AddSingleton<AccountStore>();
+builder.Services.AddSingleton<GrantStore>();
 builder.Services.AddSingleton<LoginThrottle>();
-builder.Services.AddSingleton<LoginAuditService>();
-builder.Services.AddSingleton<EmployeeRepository>();
-builder.Services.AddSingleton<PermissionService>();
-builder.Services.AddSingleton<IAuthorize, Authorize>();
 builder.Services.AddSingleton<LoginService>();
 builder.Services.AddSingleton<SignOutService>();
-builder.Services.AddSingleton<EmployeeDirectoryService>();
-builder.Services.AddSingleton<DocumentRepository>();
+builder.Services.AddSingleton<CookieHandoffStore>();
+builder.Services.AddSingleton<CountingDocumentRepository>();
+builder.Services.AddSingleton<IDocumentRepository>(sp => sp.GetRequiredService<CountingDocumentRepository>());
 builder.Services.AddSingleton<DocumentService>();
-builder.Services.AddSingleton<ApprovalRepository>();
-builder.Services.AddSingleton<ApprovalService>();
-builder.Services.AddSingleton<AdminService>();
-builder.Services.AddSingleton<PermissionRefreshService>();
+builder.Services.AddSingleton<ExportService>();
 
-// External sign-in: the ASP.NET Core OpenID Connect handler (Infrastructure/OpenIdConnectSetup.cs)
-// and the one seam the pages use (IExternalSignIn).
-builder.AddAccessOpsOpenIdConnect();
-builder.Services.AddHttpClient();
-builder.Services.AddSingleton<ExternalIdentityMapper>();
-builder.Services.AddSingleton<IExternalSignIn, WisejExternalSignIn>();
-builder.Services.AddSingleton<HrProfileClient>();
+// The host authentication cookie (Secure, HttpOnly, SameSite=Strict) and antiforgery.
+// AccessOps:LocalHttpVerification is a Development-only switch for checking the sample on
+// http://localhost in a browser that does not trust the HTTPS development certificate.
+var localHttp = builder.Configuration.GetValue("AccessOps:LocalHttpVerification", false);
+if (localHttp && !builder.Environment.IsDevelopment())
+    throw new InvalidOperationException("AccessOps:LocalHttpVerification is allowed in the Development environment only.");
+builder.Services.AddAccessOpsHostAuthentication(requireHttps: !localHttp);
+
+// Behind a TLS-terminating proxy the scheme, host and client address come from forwarded headers -
+// honoured only from the proxies named in Hosting:KnownProxies (loopback by default).
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    foreach (var proxy in builder.Configuration.GetSection("Hosting:KnownProxies").Get<string[]>() ?? Array.Empty<string>())
+        o.KnownProxies.Add(System.Net.IPAddress.Parse(proxy));
+});
 
 var app = builder.Build();
 
 AppHost.Services = app.Services;
 
 var database = app.Services.GetRequiredService<AccessOpsDatabase>();
-database.EnsureCreated(app.Services.GetRequiredService<PasswordService>());
+database.EnsureCreated(app.Services.GetRequiredService<PasswordHasher>());
+Subject.UseOpaqueKey(database.LoadOrCreateOpaqueKey());
 app.Logger.LogInformation("AccessOps data folder: {DataRoot}", database.DataRoot);
 
-// ASP.NET Core endpoints beside the Wisej.NET app: /account/signin, /signin-oidc (the handler),
-// /account/signout. Mapped before app.UseWisej(); they have no Wisej.NET session.
-app.MapAccessOpsAccountEndpoints();
+app.UseForwardedHeaders();
+
+// Refuse a WebSocket upgrade from a foreign Origin before Wisej.NET sees it.
+app.UseAccessOpsOriginGuard();
+
+// The host cookie (and its grant check) for the endpoints below.
+app.UseAuthentication();
+app.UseAuthorization();
+
+// /auth/antiforgery, /auth/cookie, /auth/signout, /auth/status, /auth/continue
+app.MapAccessOpsAuthEndpoints();
 
 // Add Wisej.NET (HTTP + WebSocket endpoints).
 app.UseWisej();

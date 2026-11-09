@@ -1,7 +1,0 @@
-{
-  "_comment": "Employees already linked to an identity at the lab's test identity provider (issuer + subject). Anyone else who signs in there is provisioned with no roles on first login.",
-  "logins": [
-    { "issuer": "http://localhost:6414", "subject": "4f21-9ac0-dana-ellis", "employeeId": 2001 },
-    { "issuer": "http://localhost:6414", "subject": "c901-5e2a-theo-grant", "employeeId": 2002 }
-  ]
-}

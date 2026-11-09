@@ -10,8 +10,13 @@ namespace AccessOps
     /// </summary>
     internal static class AppHost
     {
+        /// <summary>The application's root service provider.</summary>
         public static IServiceProvider Services { get; set; }
 
+        /// <summary>A required service.</summary>
         public static T Get<T>() => Services.GetRequiredService<T>();
+
+        /// <summary>An optional service, or null when this build does not register it.</summary>
+        public static T Find<T>() where T : class => Services.GetService<T>();
     }
 }

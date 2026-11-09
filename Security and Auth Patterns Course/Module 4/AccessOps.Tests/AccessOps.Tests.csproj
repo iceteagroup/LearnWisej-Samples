@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Service-level tests for AccessOps. They need no browser and no Wisej.NET session: the services
-    read the caller through IAccessOpsSession, and these tests supply their own.
+    Service and endpoint tests for AccessOps (Module 4). No browser and no Wisej.NET session: the
+    services are plain classes over a temporary SQLite database, and the host endpoints run in
+    Microsoft.AspNetCore.TestHost with the same middleware as Startup.cs.
     Run with:  dotnet test   (from the module folder)
   -->
   <PropertyGroup>
@@ -11,12 +12,18 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <NoWarn>CA1416</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup>

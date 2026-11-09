@@ -1,170 +1,238 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
-using AccessOps.Services;
+using System.Net;
+using System.Text;
+using AccessOps.Documents;
+using AccessOps.Identity;
 using AccessOps.UI;
 using Wisej.Web;
 
 namespace AccessOps.Pages
 {
     /// <summary>
-    /// The signed-in console. Its navigation is built from <see cref="SessionContext.Permissions"/>:
-    /// an entry the permission set does not allow is not created at all. That is a courtesy - every
-    /// service the areas call checks the same permission again, on the server, on every call.
+    /// The signed-in partner console of the walkthrough ("AccessOps · Documents"): the side strip
+    /// Documents · Approvals · Sign out, the Documents heading with Export, the grid
+    /// ID · Title · Tenant · Class and the banner. It replaces the login view on the page load
+    /// that established the principal. It holds no identity of its own: every click reads
+    /// <c>Application.User</c> and <see cref="ExportService"/> rechecks the grant.
     /// </summary>
-    internal sealed class ConsolePage : Page, IAreaHost
+    public class ConsolePage : Page
     {
-        // area, and the permissions any one of which makes it appear
-        private static readonly (string Area, Permission[] Needs)[] Areas =
-        {
-            ("Dashboard", Array.Empty<Permission>()),
-            ("Documents", new[] { Permission.ViewDepartmentDocuments, Permission.ViewAllDocuments }),
-            ("Approvals", new[] { Permission.SubmitRequest, Permission.ApproveRequest }),
-            ("Employees", new[] { Permission.ApproveRequest, Permission.ManageUsers }),
-            ("Admin console", new[] { Permission.ManageUsers }),
-        };
+        private readonly DocumentService _documents = AppHost.Get<DocumentService>();
+        private readonly ExportService _export = AppHost.Get<ExportService>();
 
-        private readonly IAccessOpsSession _session = AppHost.Get<IAccessOpsSession>();
         private readonly AppBar _appBar = new AppBar();
-        private readonly Panel _nav = new Panel();
-        private readonly Label _navNote = new Label();
-        private readonly Panel _host = new Panel();
-        private readonly StatusStrip _status = new StatusStrip("STATUS");
-        private readonly Dictionary<string, Label> _navLabels = new Dictionary<string, Label>();
-        private string _wireNote = "";
+        private readonly Dictionary<string, Label> _nav = new Dictionary<string, Label>();
+        private readonly Label lblHeading = new Label();
+        private readonly Button btnExport = new Button();
+        private readonly DataGridView grdDocuments = new DataGridView();
+        private readonly Label lblBanner = new Label();
 
+        /// <summary>Creates the console for the session's principal.</summary>
         public ConsolePage()
         {
-            var me = _session.Current;   // throws when the session holds no identity
-
             this.Name = "ConsolePage";
             this.Text = "AccessOps";
             this.BackColor = Color.White;
 
-            _nav.Name = "pnlNav";
-            _nav.Dock = DockStyle.Top;
-            _nav.Height = 46;
-            _nav.BackColor = Theme.Strip;
-            _nav.Padding = new Padding(16, 8, 16, 8);
-            _nav.CssStyle = "border-bottom:1px solid #e4eaf1;";
+            // side strip
+            var side = new Panel
+            {
+                Name = "pnlNav",
+                Dock = DockStyle.Left,
+                Width = 150,
+                BackColor = Theme.Strip,
+                Padding = new Padding(10, 14, 10, 14),
+                CssStyle = "border-right:1px solid #e4eaf1;"
+            };
+            foreach (var item in new[] { "Sign out", "Approvals", "Documents" })   // docked top, added bottom-up
+            {
+                var label = new Label
+                {
+                    Name = "nav" + item.Replace(" ", ""),
+                    Text = item,
+                    Dock = DockStyle.Top,
+                    Height = 34,
+                    Padding = new Padding(12, 0, 12, 0),
+                    Font = Theme.Px(13f),
+                    ForeColor = Theme.Muted,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Cursor = Cursors.Hand,
+                    CssStyle = "border-radius:7px;"
+                };
+                label.Click += (s, e) => OnNav(item);
+                _nav[item] = label;
+                side.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 4 });
+                side.Controls.Add(label);
+            }
 
-            _host.Name = "pnlArea";
-            _host.Dock = DockStyle.Fill;
+            // main column
+            var main = new Panel { Name = "pnlMain", Dock = DockStyle.Fill, Padding = new Padding(16, 14, 16, 14) };
 
-            this.Controls.Add(_host);
-            this.Controls.Add(_status);
-            this.Controls.Add(_nav);
+            var header = new Panel { Name = "pnlHeader", Dock = DockStyle.Top, Height = 32 };
+            lblHeading.Name = "lblHeading";
+            lblHeading.Dock = DockStyle.Fill;
+            lblHeading.Font = Theme.Px(16f, FontStyle.Bold);
+            lblHeading.ForeColor = Theme.Ink;
+            lblHeading.TextAlign = ContentAlignment.MiddleLeft;
+            btnExport.Name = "btnExport";
+            btnExport.Text = "Export";
+            Theme.StyleButton(btnExport, primary: true, size: 13f);
+            btnExport.Dock = DockStyle.Right;
+            btnExport.Width = 84;
+            btnExport.Click += btnExport_Click;
+            header.Controls.Add(lblHeading);
+            header.Controls.Add(btnExport);
+
+            grdDocuments.Name = "grdDocuments";
+            grdDocuments.Dock = DockStyle.Top;
+            grdDocuments.Height = 26 + 3 * 30 + 4;
+            DataGridStyle.Apply(grdDocuments, rowHeight: 30);
+            grdDocuments.ColumnHeadersHeight = 26;
+            grdDocuments.CssStyle = "border:1px solid #e4eaf1; border-radius:8px;";
+            grdDocuments.Columns.Add(DataGridStyle.MonoColumn("colId", "ID", nameof(GridRow.Record), 54, Theme.Accent, bold: true));
+            grdDocuments.Columns.Add(DataGridStyle.Column("colTitle", "Title", nameof(GridRow.Title), 200, fill: true));
+            grdDocuments.Columns.Add(DataGridStyle.Column("colTenant", "Tenant", nameof(GridRow.TenantName), 90));
+            var cls = DataGridStyle.Column("colClass", "Class", nameof(GridRow.ClassBadge), 110);
+            cls.AllowHtml = true;   // the markup is built here from a fixed list, never from input
+            grdDocuments.Columns.Add(cls);
+
+            lblBanner.Name = "lblBanner";
+            lblBanner.Dock = DockStyle.Top;
+            lblBanner.Height = 38;
+            lblBanner.Padding = new Padding(12, 0, 12, 0);
+            lblBanner.Font = Theme.Px(13f, FontStyle.Bold);
+            lblBanner.TextAlign = ContentAlignment.MiddleLeft;
+            lblBanner.Visible = false;
+
+            main.Controls.Add(lblBanner);
+            main.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 10 });
+            main.Controls.Add(grdDocuments);
+            main.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 10 });
+            main.Controls.Add(header);
+
+            this.Controls.Add(main);
+            this.Controls.Add(side);
             this.Controls.Add(_appBar);
 
-            BuildNavigation(me);
-            ShowArea(Areas.First(a => Allowed(me, a.Needs)).Area);
+            OnNav("Documents");
         }
 
-        public void Report(string status, StatusTone tone, string note = null) => _status.Report(status, tone, note);
-
-        public string WireNote
+        private void OnNav(string item)
         {
-            get => _wireNote;
-            set => _wireNote = value;
-        }
-
-        private static bool Allowed(SessionContext me, Permission[] needs) => needs.Length == 0 || needs.Any(me.Has);
-
-        private void BuildNavigation(SessionContext me)
-        {
-            _nav.Controls.Clear();
-            _navLabels.Clear();
-
-            var visible = Areas.Where(a => Allowed(me, a.Needs)).ToList();
-
-            _navNote.Name = "lblNavNote";
-            _navNote.Dock = DockStyle.Right;
-            _navNote.AutoSize = true;
-            _navNote.Padding = new Padding(0, 0, 14, 0);
-            _navNote.Font = Theme.Mono(11.5f);
-            _navNote.ForeColor = Theme.Faint;
-            _navNote.TextAlign = ContentAlignment.MiddleRight;
-            _navNote.Text = $"{me.DisplayName} · {visible.Count} of {Areas.Length} entries · from SessionContext.Permissions";
-            _nav.Controls.Add(_navNote);
-
-            var btnSignOut = new Button { Name = "btnSignOut", Text = "Sign out", Dock = DockStyle.Right, Width = 84 };
-            Theme.StyleButton(btnSignOut, primary: false);
-            btnSignOut.Click += (s, e) => SignOutFlow.SignOut(SignOutReason.Explicit);
-            _nav.Controls.Add(btnSignOut);
-
-            for (int i = visible.Count - 1; i >= 0; i--)
+            if (item == "Sign out")
             {
-                var area = visible[i].Area;
-                var item = new Label
-                {
-                    Name = "nav" + area.Replace(" ", ""),
-                    Text = area,
-                    Dock = DockStyle.Left,
-                    AutoSize = true,
-                    Padding = new Padding(13, 0, 13, 0),
-                    Font = Theme.Px(12.5f, FontStyle.Bold),
-                    TextAlign = ContentAlignment.MiddleCenter,
-                    Cursor = Cursors.Hand
-                };
-                item.Click += (s, e) => ShowArea(area);
-                _navLabels[area] = item;
-                _nav.Controls.Add(item);
-                if (i > 0)
-                    _nav.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 8 });
-            }
-        }
-
-        private void ShowArea(string area)
-        {
-            // an administrator's "force re-resolve" takes effect at this session's next action
-            var reResolved = AppHost.Get<PermissionRefreshService>().RefreshIfRequested();
-            if (reResolved)
-            {
-                var me = _session.Current;
-                BuildNavigation(me);
-                if (!_navLabels.ContainsKey(area))
-                    area = "Dashboard";
+                SignOut();
+                return;
             }
 
-            _appBar.Area = area;
-            foreach (var pair in _navLabels)
+            foreach (var pair in _nav)
             {
-                var active = pair.Key == area;
+                var active = pair.Key == item;
                 pair.Value.ForeColor = active ? Theme.Accent : Theme.Muted;
                 pair.Value.BackColor = active ? Theme.AccentWash : Color.Transparent;
-                pair.Value.CssStyle = "border-radius:7px;";
+                pair.Value.Font = Theme.Px(13f, active ? FontStyle.Bold : FontStyle.Regular);
             }
 
-            foreach (Control old in _host.Controls)
-                old.Dispose();
-            _host.Controls.Clear();
+            _appBar.Screen = item;
+            lblHeading.Text = item;
+            Theme.ShowBanner(lblBanner, null, BannerTone.Info);
+            var documents = item == "Documents";
+            btnExport.Visible = documents;
+            grdDocuments.Visible = documents;
+            if (documents)
+                LoadDocuments();
+        }
 
-            Control view;
+        private void LoadDocuments()
+        {
+            var rows = _documents.List(Subject.From(Application.User));
+            if (rows == null)
+            {
+                grdDocuments.DataSource = null;
+                Theme.ShowBanner(lblBanner, DocumentResult.EndedMessage, BannerTone.Bad);
+                return;
+            }
+
+            grdDocuments.DataSource = rows.Select(r => new GridRow(r)).ToList();
+            if (grdDocuments.Rows.Count > 0)
+                grdDocuments.CurrentCell = grdDocuments.Rows[0].Cells[0];
+        }
+
+        // Export: the screen only asks. ExportService checks the grant from the principal's
+        // grant claim, the tenant and the record before the repository runs.
+        private void btnExport_Click(object sender, EventArgs e)
+        {
+            if (grdDocuments.CurrentRow?.DataBoundItem is not GridRow row)
+            {
+                Theme.ShowBanner(lblBanner, "Select a document.", BannerTone.Info);
+                return;
+            }
+
+            var result = _export.Export(Application.User, row.TenantId, row.Record);
+            if (!result.IsAllowed)
+            {
+                Theme.ShowBanner(lblBanner, result.Message, result.Decision == "failed" ? BannerTone.Info : BannerTone.Bad);
+                return;
+            }
+
+            var d = result.Document;
+            var text = $"{d.Title}\r\nTenant {d.Tenant} · record {d.Id} · {d.Classification}\r\n\r\n{d.Body}\r\n";
+            Application.Download(new MemoryStream(Encoding.UTF8.GetBytes(text)), $"record-{d.Tenant}-{d.Id}.txt");
+            Theme.ShowBanner(lblBanner, $"Record {d.Id} exported · {d.Title}", BannerTone.Ok);
+        }
+
+        // Sign-out: revoke the grants (every tab), clear the session identity, expire the host
+        // cookie through the HTTPS endpoint, then end the Wisej.NET session.
+        private async void SignOut()
+        {
+            var subject = Subject.From(Application.User);
+            AppHost.Get<SignOutService>().SignOut(subject, Application.UserHostAddress);
+            Application.User = null;
+            Application.Session[SignInHandoff.PendingKey] = null;
+
             try
             {
-                view = area switch
-                {
-                    "Dashboard" => new DashboardView(this, _session.Current),
-                    "Employees" => new EmployeesView(this),
-                    "Documents" => new DocumentsView(this),
-                    "Approvals" => new ApprovalsView(this),
-                    "Admin console" => new AdminView(this),
-                    _ => new EmptyAreaView(this, area)
-                };
+                // POST /auth/signout with an antiforgery token; the page function keeps the word
+                // "signout" for the next load. Awaited, so it runs before the session ends.
+                await Application.CallAsync("AccessOpsAuth.signOut", "signout");
             }
-            catch (NotAuthorizedException ex)
+            catch (Exception)
             {
-                // the navigation was stale or forged: the service said no
-                view = new EmptyAreaView(this, area);
-                _status.Report(ex.Message, StatusTone.Bad);
+                // the grant is already revoked; the host cookie's own grant check rejects it anyway
             }
 
-            view.Dock = DockStyle.Fill;
-            _host.Controls.Add(view);
+            Application.Exit();   // "autoReload": true -> the tab reloads into a new session
+        }
 
-            if (reResolved)
-                _status.Report("Permissions re-resolved by an administrator: " + _session.Current.Permissions, StatusTone.Warn);
+        /// <summary>A grid row: the list item plus display values. No body, no internal keys.</summary>
+        private sealed class GridRow
+        {
+            public GridRow(DocumentListItem item)
+            {
+                this.Record = item.Record;
+                this.Title = item.Title;
+                this.Classification = item.Classification;
+                this.TenantId = item.Tenant;
+            }
+
+            public int Record { get; }
+            public string Title { get; }
+            public string Classification { get; }
+            public string TenantId { get; }
+            public string TenantName => "Tenant " + this.TenantId;
+
+            public string ClassBadge
+            {
+                get
+                {
+                    var color = this.Classification == "Confidential" ? "#b42318" : "#1565d8";
+                    return $"<span style=\"font-size:10.5px;font-weight:800;color:{color}\">{WebUtility.HtmlEncode(this.Classification)}</span>";
+                }
+            }
         }
     }
 }

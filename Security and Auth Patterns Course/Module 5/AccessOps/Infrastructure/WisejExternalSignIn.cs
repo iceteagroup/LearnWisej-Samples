@@ -1,141 +1,102 @@
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using AccessOps.Services;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using AccessOps.Identity;
+using AccessOps.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Wisej.Web;
 
 namespace AccessOps.Infrastructure
 {
     /// <summary>
-    /// <see cref="IExternalSignIn"/> over the ASP.NET Core OpenID Connect handler (see
-    /// <see cref="OpenIdConnectSetup"/>). The Wisej.NET side of the round trip: start it with a
-    /// top-level navigation, and on the page load that follows the callback redeem the one-time
-    /// hand-off, map it, and establish the SessionContext (page load: the session ID is renewed
-    /// first). Tokens are kept in Application.Session - server memory - and never rendered.
+    /// The Wisej.NET half of partner federation. <see cref="Begin"/> navigates the tab to the
+    /// ASP.NET Core endpoint that issues the OpenID Connect challenge. After the provider and the
+    /// handler are done, the page load runs <see cref="TryCompleteOnPageLoad"/>: read the hand-off
+    /// handle with <c>Application.Cookies</c>, expire the cookie, redeem the handle once, map
+    /// issuer + subject, create exactly one grant, then the Module 4 hand-off
+    /// (<see cref="SignInHandoff.EstablishOnPageLoad"/>: new session ID, <c>Application.User</c>).
     /// </summary>
     public sealed class WisejExternalSignIn : IExternalSignIn
     {
-        private const string InfoKey = "ExternalSessionInfo";
-        private const string TokensKey = "ExternalTokens";
-
         private readonly ExternalHandoffStore _handoffs;
         private readonly ExternalIdentityMapper _mapper;
-        private readonly LoginService _login;
-        private readonly IAccessOpsSession _session;
-        private readonly IOptionsMonitor<OpenIdConnectOptions> _oidc;
+        private readonly GrantStore _grants;
+        private readonly LoginAudit _audit;
+        private readonly IClock _clock;
         private readonly IConfiguration _configuration;
-        private readonly IHttpClientFactory _http;
         private readonly ILogger<WisejExternalSignIn> _log;
 
-        public WisejExternalSignIn(ExternalHandoffStore handoffs, ExternalIdentityMapper mapper, LoginService login,
-            IAccessOpsSession session, IOptionsMonitor<OpenIdConnectOptions> oidc, IConfiguration configuration,
-            IHttpClientFactory http, ILogger<WisejExternalSignIn> log)
+        /// <summary>Creates the seam.</summary>
+        public WisejExternalSignIn(ExternalHandoffStore handoffs, ExternalIdentityMapper mapper, GrantStore grants,
+            LoginAudit audit, IClock clock, IConfiguration configuration, ILogger<WisejExternalSignIn> log)
         {
             _handoffs = handoffs;
             _mapper = mapper;
-            _login = login;
-            _session = session;
-            _oidc = oidc;
+            _grants = grants;
+            _audit = audit;
+            _clock = clock;
             _configuration = configuration;
-            _http = http;
             _log = log;
         }
 
+        /// <inheritdoc />
         public string ProviderName => _configuration["Oidc:ProviderName"] ?? "your organisation";
 
-        public ExternalSessionInfo Current => Application.Session[InfoKey] as ExternalSessionInfo;
-
+        /// <inheritdoc />
         public void Begin() => Application.Navigate(OpenIdConnectSetup.SignInPath.TrimStart('/'), "_self");
 
+        /// <inheritdoc />
         public ExternalCompletion TryCompleteOnPageLoad()
         {
             var handle = Application.Cookies[ExternalHandoffStore.CookieName];
             if (string.IsNullOrEmpty(handle))
                 return ExternalCompletion.None;
 
-            // the handle has done its job (and can only be redeemed once anyway): expire the cookie
+            // The handle has done its job (and redeems only once anyway): expire the HttpOnly cookie.
+            // Allowed here because this is a page load (Program.Main / ApplicationRefresh), not a WebSocket event.
             Application.Cookies.Add(ExternalHandoffStore.CookieName, "", null, DateTime.UtcNow.AddDays(-1),
-                Application.IsSecure, true, Wisej.Base.Cookie.SameSiteMode.Lax);
+                true, true, Wisej.Base.Cookie.SameSiteMode.Strict);
 
-            if (!_handoffs.TryRedeem(handle, out var identity, out var tokens))
+            var correlationId = AuditLog.NewCorrelationId();
+            var address = Subject.OpaqueValue("a-", Application.UserHostAddress ?? "unknown");
+
+            if (!_handoffs.TryRedeem(handle, out var identity))
+                return Refuse("replayed_handoff", "handoff", address, correlationId);
+
+            var mapped = _mapper.Map(identity);
+            var subjectKey = Subject.OpaqueValue("x-", identity.Issuer + "|" + identity.Subject);
+            if (!mapped.Succeeded)
+                return Refuse(mapped.Reason, subjectKey, address, correlationId);
+
+            // exactly one login grant for this sign-in
+            var account = mapped.Account;
+            var grant = _grants.Issue(account.Id, account.Tenant, account.Role);
+            _audit.Write(subjectKey, address, LoginOutcome.Succeeded, correlationId, grant.Display + " oidc");
+
+            var signIn = new VerifiedSignIn
             {
-                // replayed or expired hand-off: nothing is redeemed twice
-                _log.LogWarning("External sign-in hand-off not redeemable (replayed or expired)");
-                return ExternalCompletion.Rejected;
-            }
+                AccountId = account.Id,
+                TenantId = account.Tenant,
+                GrantId = grant.Id,
+                Roles = new[] { account.Role },
+                DisplayName = account.DisplayName,
+                Method = "oidc",
+                VerifiedAt = _clock.Now
+            };
 
-            var mapped = _mapper.Map(identity, _session.ClientAddress);
-            if (mapped.Outcome == ExternalMapOutcome.Rejected)
-            {
-                _log.LogWarning("External sign-in rejected for subject {Subject}: account disabled", identity.Subject);
-                return ExternalCompletion.Rejected;
-            }
+            if (!SignInHandoff.EstablishOnPageLoad(signIn))
+                return Refuse("grant_inactive", subjectKey, address, correlationId);
 
-            var result = _login.SignInExternal(mapped.EmployeeId, "OpenID Connect · " + identity.Provider);
-            if (!result.Succeeded)
-                return ExternalCompletion.Rejected;
-
-            Application.Session[InfoKey] = new ExternalSessionInfo(identity.Provider, identity.Issuer, identity.Subject,
-                mapped.Outcome == ExternalMapOutcome.Provisioned);
-            Application.Session[TokensKey] = tokens;
-            _log.LogInformation("Employee {EmployeeId} signed in via {Provider} ({Outcome})", mapped.EmployeeId, identity.Provider, mapped.Outcome);
+            _log.LogInformation("external sign-in completed · {Subject} → {Account} · tenant {Tenant} (AccessOps data) · grants total={Grants}",
+                identity.RedactedSubject, "acct …" + Redact.Tail(account.Id, 4), account.Tenant, _grants.CountAll());
             return ExternalCompletion.SignedIn;
         }
 
-        public async Task<string> GetAccessTokenAsync()
+        private ExternalCompletion Refuse(string reason, string subjectKey, string address, string correlationId)
         {
-            if (Application.Session[TokensKey] is not ExternalTokenSet tokens || tokens.AccessToken == null)
-                return null;
-
-            if (tokens.AccessTokenExpiresUtc - DateTime.UtcNow > TimeSpan.FromSeconds(60))
-                return tokens.AccessToken;
-
-            if (tokens.RefreshToken != null && await RefreshAsync(tokens))
-                return tokens.AccessToken;
-
-            Application.Session[TokensKey] = null;
-            return null;
-        }
-
-        private async Task<bool> RefreshAsync(ExternalTokenSet tokens)
-        {
-            try
-            {
-                var options = _oidc.Get(OpenIdConnectDefaults.AuthenticationScheme);
-                var metadata = await options.ConfigurationManager.GetConfigurationAsync(CancellationToken.None);
-                using var response = await _http.CreateClient().PostAsync(metadata.TokenEndpoint, new FormUrlEncodedContent(new Dictionary<string, string>
-                {
-                    ["grant_type"] = "refresh_token",
-                    ["refresh_token"] = tokens.RefreshToken,
-                    ["client_id"] = options.ClientId,
-                    ["client_secret"] = options.ClientSecret
-                }));
-                if (!response.IsSuccessStatusCode)
-                {
-                    _log.LogWarning("Token refresh refused by the provider ({Status})", (int)response.StatusCode);
-                    return false;
-                }
-
-                using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                var root = json.RootElement;
-                tokens.AccessToken = root.GetProperty("access_token").GetString();
-                tokens.RefreshToken = root.TryGetProperty("refresh_token", out var rt) ? rt.GetString() : tokens.RefreshToken;
-                tokens.AccessTokenExpiresUtc = DateTime.UtcNow.AddSeconds(root.TryGetProperty("expires_in", out var e) ? e.GetInt32() : 300);
-                _log.LogInformation("Access token refreshed in the back channel");
-                return true;
-            }
-            catch (HttpRequestException ex)
-            {
-                _log.LogWarning("Token refresh failed: provider unavailable ({Message})", ex.Message);
-                return false;
-            }
+            _audit.Write(subjectKey, address, LoginOutcome.ExternalRefused, correlationId, reason);
+            _log.LogWarning("external sign-in refused · reason={Reason} · grants total={Grants} · correlation={CorrelationId}",
+                reason, _grants.CountAll(), correlationId);
+            return ExternalCompletion.Rejected;
         }
     }
 }

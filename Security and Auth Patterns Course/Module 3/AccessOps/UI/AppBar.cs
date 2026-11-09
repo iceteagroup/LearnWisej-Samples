@@ -4,13 +4,12 @@ using Wisej.Web;
 namespace AccessOps.UI
 {
     /// <summary>
-    /// The blue Wisej.NET application bar: "AccessOps · {area}" on the left, the three window
-    /// glyphs on the right. Decoration only; it reports nothing and decides nothing.
+    /// The blue Wisej.NET application bar: "AccessOps · {screen}" on the left, the three window
+    /// glyphs on the right and nothing else (no identity, session or tenant chips).
     /// </summary>
     internal sealed class AppBar : Panel
     {
         private readonly Label _title;
-        private readonly Label _subtitle;
 
         public AppBar()
         {
@@ -24,20 +23,10 @@ namespace AccessOps.UI
             {
                 Name = "lblAppTitle",
                 Text = "AccessOps",
-                AutoSize = true,
-                Dock = DockStyle.Left,
+                AutoSize = false,
+                Dock = DockStyle.Fill,
                 ForeColor = Color.White,
-                Font = Theme.Px(14.5f, FontStyle.Bold),
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            _subtitle = new Label
-            {
-                Name = "lblAppArea",
-                AutoSize = true,
-                Dock = DockStyle.Left,
-                ForeColor = ColorTranslator.FromHtml("#dbe7fa"),
-                Font = Theme.Px(13f),
-                Padding = new Padding(9, 0, 0, 0),
+                Font = Theme.Px(15f, FontStyle.Bold),
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
@@ -45,33 +34,34 @@ namespace AccessOps.UI
             {
                 Name = "pnlWindowGlyphs",
                 Dock = DockStyle.Right,
-                Width = 84,
+                Width = 96,
                 FlowDirection = FlowDirection.LeftToRight,
                 Padding = new Padding(0, 11, 0, 0)
             };
-            foreach (var g in new[] { "—", "□", "✕" })
+            foreach (var g in new[] { "—", "☐", "✕" })
             {
                 glyphs.Controls.Add(new Label
                 {
                     Text = g,
                     AutoSize = false,
-                    Size = new Size(26, 18),
+                    Size = new Size(28, 18),
+                    Margin = new Padding(0),
                     ForeColor = Color.White,
                     Font = Theme.Px(13f),
                     TextAlign = ContentAlignment.MiddleCenter
                 });
             }
 
-            // Dock order is the reverse of Controls.Add: the subtitle docks after the title.
-            this.Controls.Add(glyphs);
-            this.Controls.Add(_subtitle);
+            // Dock order is the reverse of Controls.Add: the glyphs dock first (right), the title fills.
             this.Controls.Add(_title);
+            this.Controls.Add(glyphs);
         }
 
-        public string Area
+        /// <summary>The screen name after "AccessOps · ".</summary>
+        public string Screen
         {
-            get => _subtitle.Text;
-            set => _subtitle.Text = "· " + value;
+            get => _title.Text;
+            set => _title.Text = "AccessOps · " + value;
         }
     }
 }
