@@ -50,3 +50,5 @@ artifacts/
 *.log
 .DS_Store
 Thumbs.db
+# Wisej.NET Agent workspace (build catalog and one developer's own notes), created by the VS extension
+**/.wisej/
