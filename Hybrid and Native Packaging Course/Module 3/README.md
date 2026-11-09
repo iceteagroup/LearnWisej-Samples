@@ -23,6 +23,9 @@ dotnet build ..\FieldOps.Client\FieldOps.Client.csproj -f net9.0-windows10.0.190
 
 # 2b. the full client with the Local fallback: open FieldOps.slnx in Visual Studio, set
 #     FieldOps.Client as startup project, profile "Windows Machine" (MSIX), F5.
+#     FieldOps.slnx already marks the client Deploy and builds it as x64, which the MSIX
+#     profile needs (otherwise Visual Studio says "The project needs to be deployed before we
+#     can debug"); a packaged debug run also needs Windows Developer Mode switched on.
 
 # 3. a new order from dispatch (server push + local notification):
 Invoke-RestMethod -Method Post "http://localhost:6303/dispatch/assign?tech=dana"
