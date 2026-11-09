@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    Copy this file to WisejLicense.props (same folder) and put YOUR Wisej.NET framework licence key
+    in it: the key you would otherwise put in Web.config as "Wisej.LicenseKey". WisejLicense.props is
+    git-ignored. Alternative: set the WISEJ_LICENSE_KEY environment variable before building.
+    The packaged client needs it for the Local app; an unpackaged run uses the machine's developer licence.
+  -->
+  <PropertyGroup>
+    <WisejLicenseKey>your-wisej-net-licence-key</WisejLicenseKey>
+  </PropertyGroup>
+</Project>

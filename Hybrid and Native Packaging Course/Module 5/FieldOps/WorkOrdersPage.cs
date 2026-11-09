@@ -44,7 +44,9 @@ namespace FieldOps
 
             if (AppMode.IsLocal)
             {
-                SetStatus($"Working offline — {_orders.Count} orders saved on this laptop", Ops.Muted);
+                SetStatus(_orders.Count == 0
+                    ? "Working offline — no orders saved on this laptop yet. Open FieldOps once while connected: the list syncs to the device for the offline app."
+                    : $"Working offline — {_orders.Count} orders saved on this laptop", Ops.Muted);
                 return;
             }
 

@@ -24,6 +24,11 @@ public class OfflineStartup
 			? local
 			: "http://localhost:5000";
 
+		// The embedded server runs inside the package, where the machine's developer licence is out
+		// of reach: hand Wisej.NET the framework licence explicitly (see WisejLicense.props.example).
+		if (!string.IsNullOrEmpty(WisejLicense.Key))
+			Wisej.Web.Application.LicenseKey = WisejLicense.Key;
+
 		var server = new WebServer(url);   // EmbedIO
 		server.WithWisej();                // Wisej.EmbedIO: the FieldOps Wisej.NET app, on the device
 		server.Run(token);

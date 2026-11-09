@@ -50,4 +50,24 @@
     <PackageReference Include="Wisej-4-Hybrid" Version="4.1.7" />
   </ItemGroup>
 
+  <!--
+    The Wisej.NET framework licence of the embedded server. Inside a packaged client the Local app
+    cannot see the developer licence installed on the machine, so Wisej.NET reports "License Not
+    Found" unless Application.LicenseKey is set. The key is NEVER committed: it comes from
+    WisejLicense.props next to this file (git-ignored; copy WisejLicense.props.example) or from the
+    WISEJ_LICENSE_KEY environment variable, and is compiled into obj/ as WisejLicense.Key. Empty =
+    the developer licence of the machine, which is enough for an unpackaged run.
+  -->
+  <Import Project="WisejLicense.props" Condition="Exists('WisejLicense.props')" />
+  <PropertyGroup>
+    <WisejLicenseKey Condition="'$(WisejLicenseKey)' == ''">$(WISEJ_LICENSE_KEY)</WisejLicenseKey>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(BaseIntermediateOutputPath)WisejLicense.g.cs" Visible="false" />
+  </ItemGroup>
+  <Target Name="GenerateWisejLicense" BeforeTargets="BeforeBuild;CoreCompile">
+    <WriteLinesToFile File="$(BaseIntermediateOutputPath)WisejLicense.g.cs" Overwrite="true" WriteOnlyWhenDifferent="true"
+      Lines="// generated from WisejLicenseKey - do not commit;namespace FieldOps.Offline { internal static class WisejLicense { public const string Key = &quot;$(WisejLicenseKey)&quot;%3B } }" />
+  </Target>
+
 </Project>

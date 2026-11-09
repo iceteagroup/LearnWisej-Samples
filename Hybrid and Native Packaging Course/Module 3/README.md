@@ -36,6 +36,18 @@ your Wisej.NET Hybrid key in it (or set `WISEJ_HYBRID_LICENSE`). The file is git
 compiles the key into `obj/HybridLicense.g.cs` and `Startup.cs` passes it to `config.LicenseKey`.
 Without a key the client still runs, with a *Get a free Hybrid License from Wisej.com* band at the top.
 
+**Wisej.NET licence for the Local app.** The embedded server runs inside the package, where the
+machine's developer licence is out of reach, so the Local app shows *License Not Found* until the
+Wisej.NET framework key (the one Web.config calls `Wisej.LicenseKey`) is supplied: copy
+`FieldOps.Offline/WisejLicense.props.example` to `WisejLicense.props` (git-ignored) or set
+`WISEJ_LICENSE_KEY`; `OfflineStartup` passes it to `Application.LicenseKey`.
+
+**Where the Local app's orders come from.** The Local app shows only the orders a *connected* session
+saved on the device (`DeviceSync.SaveSnapshot`, run by the list page while connected). Start the
+FieldOps server first, launch the client and let it load the list, then stop the server: five
+seconds later the Local app opens with those orders. Launched with no server running, it starts
+empty and says so in the status strip.
+
 ## What to try
 
 | Action | Expected result |

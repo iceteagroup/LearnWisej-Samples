@@ -3,6 +3,10 @@
 # WISEJ_HYBRID_LICENSE environment variable.
 **/HybridLicense.props
 
+# The Wisej.NET framework licence of the Local app (Modules 3-6) never enters the repository
+# either: FieldOps.Offline/WisejLicense.props (copy WisejLicense.props.example) or WISEJ_LICENSE_KEY.
+**/WisejLicense.props
+
 # MSIX / APK output and local publish profiles with machine paths
 **/AppPackages/
 **/*.msix

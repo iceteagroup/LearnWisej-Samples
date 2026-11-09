@@ -35,6 +35,7 @@ Module N/
 
 - .NET 10 SDK (the web app) and the .NET MAUI workloads (`dotnet workload restore FieldOps.Client\FieldOps.Client.csproj`).
 - Windows: the Windows App SDK runtime; Windows Developer Mode to deploy the packaged client from Visual Studio.
+- A Wisej.NET framework licence key for the Local app in a packaged client (Modules 3-6): `FieldOps.Offline/WisejLicense.props` from its `.example`, or `WISEJ_LICENSE_KEY`. Unpackaged runs use the machine's developer licence.
 - Android: the Android SDK and an emulator (the emulator reaches your machine at `10.0.2.2`).
 - iOS and Mac Catalyst: a Mac with a compatible Xcode, the matching .NET SDK and MAUI workloads, and signing.
 
