@@ -7,12 +7,12 @@ the complete solution at the end of that module (cumulative by copy).
 
 | Module | Folder | Port | What it adds |
 |---|---|---|---|
-| 1 · Hosting Models Beyond the Browser | [Module 1](Module%201) | 6301 | `WorkOrder` + `WorkOrderService` (forward-only status rule, version check), list, detail and status flow, the `Device.Valid` photo gate; delivery comparison, decision record, capability design, architecture |
-| 2 · Progressive Web App Setup | [Module 2](Module%202) | 6302 | manifest + icons, `sw.js` (shell cache-first, session untouched), server-timed install offer, `offline.html` with the last synced summary, update bar + build-stamp check |
-| 3 · Desktop Clients for Windows and macOS | [Module 3](Module%203) | 6303 | `FieldOps.Client` (Hybrid client) + `FieldOps.Offline` (Local app); title bar, export with `Device.FileSystem`, new-order notification via server push, second window, Local fallback, MSIX |
-| 4 · Mobile Clients for Android and iOS | [Module 4](Module%204) | 6304 | Android/iOS targets, `FieldOpsServer` addresses, `ReloadOnForeground`, `Device.Lifecycle` + draft restore, one `NavigateBack` for `BackRequested` and the app-bar arrow, phone/tablet layout |
-| 5 · Device APIs with Wisej.Hybrid.Device | [Module 5](Module%205) | 6305 | `DeviceCapabilities`, `PermissionGate`, Take Photo / Upload, signature pad, Navigate (geolocation + maps), local reminder, capability matrix |
-| 6 · Signing, Distribution, Updates, Capstone | [Module 6](Module%206) | 6306 | signing configuration, distribution plan + store listing, `ClientReleasePolicy` + `Device.Versioning` check with the update screen, usage and crash telemetry, release checklist |
+| 1 | `Module 1` | 6301 | `WorkOrder` + `WorkOrderService` (forward-only status rule, version check), list, detail and status flow, the `Device.Valid` photo gate; delivery comparison, decision record, capability design, architecture |
+| 2 | `Module 2` | 6302 | manifest + icons, `sw.js` (shell cache-first, session untouched), server-timed install offer, `offline.html` with the last synced summary, update bar + build-stamp check |
+| 3 | `Module 3` | 6303 | `FieldOps.Client` (Hybrid client) + `FieldOps.Offline` (Local app); title bar, export with `Device.FileSystem`, new-order notification via server push, second window, Local fallback, MSIX |
+| 4 | `Module 4` | 6304 | Android/iOS targets, `FieldOpsServer` addresses, `ReloadOnForeground`, `Device.Lifecycle` + draft restore, one `NavigateBack` for `BackRequested` and the app-bar arrow, phone/tablet layout |
+| 5 | `Module 5` | 6305 | `DeviceCapabilities`, `PermissionGate`, Take Photo / Upload, signature pad, Navigate (geolocation + maps), local reminder, capability matrix |
+| 6 | `Module 6` | 6306 | signing configuration, distribution plan + store listing, `ClientReleasePolicy` + `Device.Versioning` check with the update screen, usage and crash telemetry, release checklist |
 
 ## Projects in a module
 
