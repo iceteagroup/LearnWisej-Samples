@@ -171,6 +171,9 @@ fact from the previous version of these samples (same packages, re-checked where
 - **Bug 2 - ES256:** `WebAuthn.Validate` rejects genuine ES256 signatures whose r or s is shorter than
   32 bytes (about 1 in 128). Workaround: re-encode r and s as 33-byte DER integers before calling it
   (`Identity/Es256Signature.cs`); 2,000 signed assertions pass afterwards (M6 test).
+- Since 2026-11-10 the course's Module 6 lesson, lab guide and video teach both workarounds
+  (`AuthenticatorFlags.Read`, `Es256Signature.ForValidate`), so they are no longer a sample-vs-lesson
+  difference; drop them when a fixed extension ships.
 - `CredentialsResponse` and its parts have public setters (synthetic responses in tests);
   `PublicKey(json)` accepts `{CredentialID, Data{"1","3","-1","-2","-3"}}`; `System.JSON.Stringify`
   round-trips it; the counter after `CreateAsync` over the virtual authenticator is 1;

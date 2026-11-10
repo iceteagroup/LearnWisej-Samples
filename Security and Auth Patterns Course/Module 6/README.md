@@ -108,12 +108,14 @@ recovery plan; 8–9 `docs/passkeys.md`.
 
 ## Where this sample differs from the lesson or video
 
-- **UserVerified:** the lesson's code reads `r.AuthenticatorData.UserVerified`. In Wisej-4-WebAuthn
-  4.1.7 that property comes from the wrong bit (bit 1 instead of bit 2) and is false for real
-  authenticators; AccessOps reads UV (and UP) from the signed `AuthenticatorData.Base64` flags byte.
-- **WebAuthn.Validate for ES256:** the lesson calls `WebAuthn.Validate(c.Key, …, r.Signature)` directly.
-  The 4.1.7 extension rejects genuine ES256 signatures whose r or s is shorter than 32 bytes (about 1 in
-  128); AccessOps passes the same r and s re-encoded (`Identity/Es256Signature.cs`, see `docs/passkeys.md`).
+- **Two Wisej-4-WebAuthn 4.1.7 defects (no longer a difference):** this sample found that
+  `AuthenticatorData.UserVerified` comes from the wrong flags bit (bit 1 instead of bit 2, so it is
+  false for real authenticators) and that `WebAuthn.Validate` rejects genuine ES256 signatures whose r
+  or s is shorter than 32 bytes (about 1 in 128). The lesson, lab guide and video were corrected on
+  2026-11-10 and now teach the same workarounds this sample uses: `AuthenticatorFlags.Read` on the
+  signed `AuthenticatorData.Base64` flags byte for UP / UV, and `Es256Signature.ForValidate` before
+  `Validate` (`Identity/Es256Signature.cs`, see `docs/passkeys.md`). Both are to be removed when a
+  fixed extension ships.
 - **"Partner account A":** the video's banner says "Signed in as partner account A"; the sample's
   partner A is Dana Ellis (Module 5's partner), so the banner names her.
 - **Banner after a passkey sign-in:** the video shows it on the sign-in page; the Module 4 hand-off
