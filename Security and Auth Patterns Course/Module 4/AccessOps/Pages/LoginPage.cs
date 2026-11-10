@@ -25,6 +25,7 @@ namespace AccessOps.Pages
         private readonly Button btnSignIn = new Button();
         private readonly Label lblStatus = new Label();
         private readonly Label lblServer = new Label();
+        private readonly Label lblDemo = new Label();
 
         /// <summary>Creates the login view; <paramref name="signedOut"/> shows the signed-out notice.</summary>
         public LoginPage(bool signedOut = false)
@@ -95,7 +96,20 @@ namespace AccessOps.Pages
             lblStatus.TextAlign = ContentAlignment.MiddleLeft;
             lblStatus.Visible = false;
 
+            // Debug builds name the seeded demo sign-ins under the form; a Release build has no
+            // password hashes and no hint (the literal is compiled out with the constant).
+            lblDemo.Name = "lblDemo";
+            lblDemo.Dock = DockStyle.Top;
+            lblDemo.Height = 40;
+            lblDemo.Font = Theme.Px(12f);
+            lblDemo.ForeColor = Theme.Faint;
+            lblDemo.AllowHtml = false;
+            lblDemo.Text = DemoHint ?? "";
+            lblDemo.Visible = DemoHint != null;
+
             // Dock order is the reverse of Controls.Add: add bottom-up.
+            form.Controls.Add(lblDemo);
+            form.Controls.Add(Spacer(10));
             form.Controls.Add(lblStatus);
             form.Controls.Add(Spacer(14));
             form.Controls.Add(buttonRow);
@@ -156,7 +170,15 @@ namespace AccessOps.Pages
 
         private static string ServerLine(int failures) => $"LoginThrottle · failures {failures} of {LoginThrottle.AccountLimit}";
 
-        private static Panel Spacer(int height) => new Panel { Dock = DockStyle.Top, Height = height };
+        // Spacers are transparent so the focused input's 3 px glow is not painted over by a white panel.
+        private static Panel Spacer(int height) => new Panel { Dock = DockStyle.Top, Height = height, BackColor = Color.Transparent };
+#if DEBUG
+        /// <summary>The demo sign-ins a Debug build seeds (README "Demo accounts"); null in Release.</summary>
+        private const string DemoHint = "Demo sign-in (Debug build): partner.ana@fabrikam.test / Fabrikam-demo-17";
+#else
+        private const string DemoHint = null;
+#endif
+
 
         // The click verifies and parks; it never rotates the session ID or sets Application.User.
         private void btnSignIn_Click(object sender, EventArgs e)

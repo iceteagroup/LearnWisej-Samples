@@ -50,6 +50,8 @@ ceremonies were run on the course machine.
 
 ### Demo accounts (invented, local only)
 
+A Debug build also prints the first demo sign-in under the sign-in form (`LoginPage.DemoHint`); the literal is compiled out of a Release build.
+
 | Account | How to sign in | Notes |
 |---|---|---|
 | Dana Ellis - partner account A, tenant A | Contoso Identity `dana.ellis@contoso.example` / `Demo-IdP-2026`, then a passkey | Debug builds seed three **display fixtures** for her ("Work laptop · Windows Hello", "Security key · USB", "Phone · synced passkey"): their private keys were thrown away at seeding, so they can be renamed and deleted but can never sign in |

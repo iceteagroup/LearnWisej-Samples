@@ -50,6 +50,8 @@ Release publish (one drop for both IIS applications, `"secure": true` written in
 
 ### Demo accounts (invented, local only)
 
+A Debug build also prints the first demo sign-in under the sign-in form (`LoginPage.DemoHint`); the literal is compiled out of a Release build.
+
 | Account | Route | How | Notes |
 |---|---|---|---|
 | your Windows account → `reader1` | intranet | Negotiate (silent on localhost) | Reader, tenant A; `--AccessOps:CurrentWindowsUser=visitor1` maps it to `visitor1` (no read right) |

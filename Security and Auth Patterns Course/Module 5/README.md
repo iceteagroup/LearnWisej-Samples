@@ -65,6 +65,8 @@ dotnet run --project AccessOps.TestIdentityProvider --urls http://localhost:6415
 
 ### Demo accounts (invented, local only)
 
+A Debug build also prints the first demo sign-in under the sign-in form (`LoginPage.DemoHint`); the literal is compiled out of a Release build.
+
 | Where | Sign-in | Secret | Maps to |
 |---|---|---|---|
 | Contoso Identity | `dana.ellis@contoso.example` | `Demo-IdP-2026` | Dana Ellis, tenant A, Reader (`external_logins`) |

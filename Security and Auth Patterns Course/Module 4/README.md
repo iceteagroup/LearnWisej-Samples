@@ -50,6 +50,8 @@ outside Development. Fresh fixtures: stop the app and delete `AccessOpsData/`.
 
 ### Demo accounts (invented, local only, Debug builds only)
 
+A Debug build also prints the first demo sign-in under the sign-in form (`LoginPage.DemoHint`); the literal is compiled out of a Release build.
+
 | User name | Password | Account | Result |
 |---|---|---|---|
 | `partner.ana@fabrikam.test` | `Fabrikam-demo-17` | Ana Ruiz, tenant A, Reader | signs in |

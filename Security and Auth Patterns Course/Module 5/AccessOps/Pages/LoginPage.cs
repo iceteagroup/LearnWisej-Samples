@@ -33,6 +33,7 @@ namespace AccessOps.Pages
         private readonly Label lblNotice = new Label();
         private readonly TextBox txtUserName = new TextBox();
         private readonly TextBox txtPassword = new TextBox();
+        private readonly Label lblDemo = new Label();
         private readonly Button btnSignIn = new Button();
         private readonly StatusStrip _status = new StatusStrip();
 
@@ -61,7 +62,7 @@ namespace AccessOps.Pages
             lblNotice.TextAlign = ContentAlignment.MiddleLeft;
             lblNotice.AllowHtml = false;
             lblNotice.Visible = false;
-            var noticeGap = new Panel { Dock = DockStyle.Top, Height = 12, Visible = false };
+            var noticeGap = new Panel { Dock = DockStyle.Top, Height = 12, Visible = false, BackColor = Color.Transparent };
 
             btnWorkAccount.Name = "btnWorkAccount";
             btnWorkAccount.Dock = DockStyle.Top;
@@ -90,7 +91,8 @@ namespace AccessOps.Pages
                        "<span style=\"flex:1;height:1px;background:#e4eaf1\"></span></div>"
             };
 
-            var row = new Panel { Name = "pnlServiceAccount", Dock = DockStyle.Top, Height = 34 };
+            // 4 px of padding keeps the focused input's glow inside the row (its pane clips overflow).
+            var row = new Panel { Name = "pnlServiceAccount", Dock = DockStyle.Top, Height = 42, Padding = new Padding(0, 4, 0, 4) };
             txtUserName.Name = "txtUserName";
             txtUserName.Watermark = "account name";
             Theme.StyleInput(txtUserName);
@@ -108,6 +110,17 @@ namespace AccessOps.Pages
             txtPassword.Dock = DockStyle.Left;
             txtPassword.Width = 250;
             txtPassword.MaxLength = 256;
+
+            // Debug builds name the seeded demo sign-ins under the form; a Release build has no
+            // password hashes and no hint (the literal is compiled out with the constant).
+            lblDemo.Name = "lblDemo";
+            lblDemo.Dock = DockStyle.Top;
+            lblDemo.Height = 40;
+            lblDemo.Font = Theme.Px(12f);
+            lblDemo.ForeColor = Theme.Faint;
+            lblDemo.AllowHtml = false;
+            lblDemo.Text = DemoHint ?? "";
+            lblDemo.Visible = DemoHint != null;
             btnSignIn.Name = "btnSignIn";
             btnSignIn.Text = "Sign in";
             Theme.StyleButton(btnSignIn, primary: false, size: 12.5f);
@@ -115,19 +128,21 @@ namespace AccessOps.Pages
             btnSignIn.Width = 78;
             btnSignIn.Click += btnSignIn_Click;
             row.Controls.Add(txtPassword);
-            row.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 10 });
+            row.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 10, BackColor = Color.Transparent });
             row.Controls.Add(txtUserName);
             row.Controls.Add(btnSignIn);
 
             // Dock order is the reverse of Controls.Add: add bottom-up.
+            form.Controls.Add(lblDemo);
+            form.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 8, BackColor = Color.Transparent });
             form.Controls.Add(row);
             form.Controls.Add(divider);
             form.Controls.Add(caption);
             form.Controls.Add(btnWorkAccount);
-            form.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 18 });
+            form.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 18, BackColor = Color.Transparent });
             form.Controls.Add(noticeGap);
             form.Controls.Add(lblNotice);
-            form.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 6 });
+            form.Controls.Add(new Panel { Dock = DockStyle.Top, Height = 6, BackColor = Color.Transparent });
             form.Controls.Add(subtitle);
             form.Controls.Add(heading);
 
@@ -150,6 +165,14 @@ namespace AccessOps.Pages
                     break;
             }
         }
+
+
+#if DEBUG
+        /// <summary>The demo sign-ins a Debug build seeds (README "Demo accounts"); null in Release.</summary>
+        private const string DemoHint = "Demo sign-ins (Debug build): work account dana.ellis@contoso.example / Demo-IdP-2026 · service account svc.reports / Reports-demo-31";
+#else
+        private const string DemoHint = null;
+#endif
 
         // Federation first: a top-level navigation to /account/signin, where the challenge happens.
         private void btnWorkAccount_Click(object sender, EventArgs e)

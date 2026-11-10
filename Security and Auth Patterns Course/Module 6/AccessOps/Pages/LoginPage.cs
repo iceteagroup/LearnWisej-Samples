@@ -39,6 +39,7 @@ namespace AccessOps.Pages
         private readonly Panel pnlPassword = new Panel();
         private readonly TextBox txtUserName = new TextBox();
         private readonly TextBox txtPassword = new TextBox();
+        private readonly Label lblDemo = new Label();
         private readonly Button btnSignIn = new Button();
         private readonly Banner _banner = new Banner();
         private readonly StatusStrip _status = new StatusStrip();
@@ -112,10 +113,11 @@ namespace AccessOps.Pages
             // the Module 4 form, kept for named service accounts only
             pnlPassword.Name = "pnlPassword";
             pnlPassword.Dock = DockStyle.Top;
-            pnlPassword.Height = 58;
+            pnlPassword.Height = 66;
             pnlPassword.Visible = false;
             var caption = new Label { Text = "SERVICE ACCOUNTS ONLY", Dock = DockStyle.Top, Height = 22, Font = Theme.Px(11.5f, FontStyle.Bold), ForeColor = ColorTranslator.FromHtml("#9aa9b8"), TextAlign = ContentAlignment.BottomLeft, CssStyle = "letter-spacing:.05em;" };
-            var row = new Panel { Dock = DockStyle.Top, Height = 34 };
+            // 4 px of padding keeps the focused input's glow inside the row (its pane clips overflow).
+            var row = new Panel { Dock = DockStyle.Top, Height = 42, Padding = new Padding(0, 4, 0, 4) };
             txtUserName.Name = "txtUserName";
             txtUserName.Watermark = "account name";
             Theme.StyleInput(txtUserName);
@@ -138,14 +140,27 @@ namespace AccessOps.Pages
             btnSignIn.Width = 78;
             btnSignIn.Click += btnSignIn_Click;
             row.Controls.Add(txtPassword);
-            row.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 10 });
+            row.Controls.Add(new Panel { Dock = DockStyle.Left, Width = 10, BackColor = Color.Transparent });
             row.Controls.Add(txtUserName);
             row.Controls.Add(btnSignIn);
             pnlPassword.Controls.Add(row);
             pnlPassword.Controls.Add(caption);
 
+            // Debug builds name the seeded demo sign-ins under the form; a Release build has no
+            // password hashes and no hint (the literal is compiled out with the constant).
+            lblDemo.Name = "lblDemo";
+            lblDemo.Dock = DockStyle.Top;
+            lblDemo.Height = 40;
+            lblDemo.Font = Theme.Px(12f);
+            lblDemo.ForeColor = Theme.Faint;
+            lblDemo.AllowHtml = false;
+            lblDemo.Text = DemoHint ?? "";
+            lblDemo.Visible = DemoHint != null;
+
             _banner.Dock = DockStyle.Bottom;
 
+            column.Controls.Add(lblDemo);
+            column.Controls.Add(Gap(8));
             column.Controls.Add(pnlPassword);
             column.Controls.Add(Gap(10));
             column.Controls.Add(btnPassword);
@@ -180,7 +195,15 @@ namespace AccessOps.Pages
             }
         }
 
-        private static Panel Gap(int height) => new Panel { Dock = DockStyle.Top, Height = height };
+        // Gaps are transparent so the focused input's 3 px glow is not painted over by a white panel.
+        private static Panel Gap(int height) => new Panel { Dock = DockStyle.Top, Height = height, BackColor = Color.Transparent };
+#if DEBUG
+        /// <summary>The demo sign-ins a Debug build seeds (README "Demo accounts"); null in Release.</summary>
+        private const string DemoHint = "Demo sign-ins (Debug build): organization account dana.ellis@contoso.example / Demo-IdP-2026, then enroll a passkey · AccessOps password svc.reports / Reports-demo-31";
+#else
+        private const string DemoHint = null;
+#endif
+
 
         private static void StyleWide(Button button, string name, string text, bool primary)
         {
