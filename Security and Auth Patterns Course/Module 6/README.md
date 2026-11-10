@@ -117,7 +117,10 @@ recovery plan; 8–9 `docs/passkeys.md`.
   2026-11-10 and now teach the same workarounds this sample uses: `AuthenticatorFlags.Read` on the
   signed `AuthenticatorData.Base64` flags byte for UP / UV, and `Es256Signature.ForValidate` before
   `Validate` (`Identity/Es256Signature.cs`, see `docs/passkeys.md`). Both are to be removed when a
-  fixed extension ships.
+  fixed extension ships: the defects were reported upstream (Standard-Extensions issue #3026) and
+  fixed in the extension's source on 2026-11-10, together with a garbled non-ASCII user handle and a
+  registration failure on authenticators that append extension outputs; the fix reaches a package
+  version later than 4.1.7.
 - **"Partner account A":** the video's banner says "Signed in as partner account A"; the sample's
   partner A is Dana Ellis (Module 5's partner), so the banner names her.
 - **Banner after a passkey sign-in:** the video shows it on the sign-in page; the Module 4 hand-off

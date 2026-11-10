@@ -173,7 +173,10 @@ fact from the previous version of these samples (same packages, re-checked where
   (`Identity/Es256Signature.cs`); 2,000 signed assertions pass afterwards (M6 test).
 - Since 2026-11-10 the course's Module 6 lesson, lab guide and video teach both workarounds
   (`AuthenticatorFlags.Read`, `Es256Signature.ForValidate`), so they are no longer a sample-vs-lesson
-  difference; drop them when a fixed extension ships.
+  difference; drop them when a fixed extension ships. Reported upstream as Standard-Extensions issue
+  #3026 and fixed in the extension's source on 2026-11-10 (UV from bit 2, DER r/s padded, rp.id and
+  "cross-platform" sent correctly, UTF-8 user handle, extension outputs after the COSE key accepted);
+  the fix ships with a package version later than 4.1.7.
 - `CredentialsResponse` and its parts have public setters (synthetic responses in tests);
   `PublicKey(json)` accepts `{CredentialID, Data{"1","3","-1","-2","-3"}}`; `System.JSON.Stringify`
   round-trips it; the counter after `CreateAsync` over the virtual authenticator is 1;
