@@ -90,11 +90,11 @@ Lab steps → code/docs: 0 Module 1 base + green harness; 2 publish to `Lab Intr
 ## Verified here / only in the lab environment
 
 Verified on this machine (Windows 11 Pro, `WORKGROUP`, local account, .NET 10.0.11 runtime, Kestrel,
-browser pane at 1400x900 and headless Chrome 1400x900, 2026-11-09):
+Chromium browser at 1400x900 and headless Chrome 1400x900, 2026-11-09):
 - build 0 warnings / 0 errors; PolicyHarness green; Release publish has no `IdentityDiagnosticsView`
   and ships `Microsoft.AspNetCore.Authentication.Negotiate.dll` with an in-process `web.config`;
 - the Negotiate challenge on Kestrel: anonymous `401 WWW-Authenticate: Negotiate` before
-  `Program.Main`; the **browser pane completed it silently** (Chromium, `localhost`), as did headless
+  `Program.Main`; the **Chromium browser completed it silently** (Chromium, `localhost`), as did headless
   Chrome with `--auth-server-allowlist=localhost`, `curl --negotiate -u :` and PowerShell
   `-UseDefaultCredentials`; the provider inside the token was `NTLM`; the WebSocket upgrade
   (`/ws.wx`) went through the same 401/401/101 handshake and Wisej used WebSocket;
@@ -134,7 +134,7 @@ proxies, extended protection, a second real Windows account.
   the video's `CONTOSO\re•••1` pattern; the challenge trace never contains a header value.
 - **`Application.User` on a WebSocket event** (observed): Wisej returns the `WindowsIdentity` captured
   on the page load, whose token Kestrel disposes with the HTTP connection that authenticated it: in the
-  browser pane `Name`/`User` threw `ObjectDisposedException` on the first click; in headless Chrome
+  Chromium browser `Name`/`User` threw `ObjectDisposedException` on the first click; in headless Chrome
   (connection still open) it was usable. So the sample maps the SID once in `Program.Main` and keeps
   the subject, and the diagnostics view shows the state as "Application.User token". Module 3 uses
   the WebSocket request's own identity (`IHttpContextAccessor`) instead.

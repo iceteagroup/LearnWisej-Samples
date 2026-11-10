@@ -111,7 +111,7 @@ Lab steps → code: 2 `appsettings.json` + user secrets + provider registration;
 ## Verified here / only in the lab environment
 
 Verified on this machine: build 0 warnings / 0 errors; 51 tests; PolicyHarness; every row of "What to
-try" - the success, F06, F07, F08 and the denial both in the browser pane (two tabs for the
+try" - the success, F06, F07, F08 and the denial both in the Chromium browser (two tabs for the
 revoked-grant row) and again in a scripted headless Chrome run on a fresh database whose logs are
 `docs/run-trace.txt`; sign-out ending the provider session (the next sign-in asked for credentials);
 a log grep for the client secret, `code=`, `state=`, `nonce=`, verifier, token names, the
@@ -119,7 +119,7 @@ protected-state prefix and the demo passwords: **0 hits** in both logs.
 
 Not verified here: a real identity provider, TLS on the provider (the lab provider is plain HTTP, hence
 `RequireHttpsMetadata: false`), a real TLS-terminating proxy in front of AccessOps, the UI walk on
-`https://localhost:6405` (the browser pane does not trust the dev certificate; the walk ran on the
+`https://localhost:6405` (the Chromium browser does not trust the dev certificate; the walk ran on the
 HTTP verification listener with its callback registered for that run only).
 
 ## Where this sample differs from the lesson or video

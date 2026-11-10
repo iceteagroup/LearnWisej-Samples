@@ -6,7 +6,7 @@ the area strip): four KPI cards - **Cases run · Denied at a boundary · Rerun p
 hit** - and the 12-case evidence matrix **# · Case · Route · Fixture · Boundary · Outcome · Repo
 calls · Evidence** with the outcome chips (Allow, Deny, Reverted, Rotated, One grant, Safe deny) and
 the evidence labels (Live, Harness, Fixture, Simulated). **Run the 12 cases** runs every case against
-the real services, the shared store and the running routes; the panel under the grid shows the
+the real services, the shared store and the running routes; the embedded browserl under the grid shows the
 selected case's alias, entry point, expected and actual result, correlation label and rerun plan.
 **Rehearse rollback** switches to the rollback view: the stages **Intranet baseline → Test tenant →
 Partners 10% → All partners**, the stop-condition banner and the six-step runbook (Step · Rollback
@@ -43,8 +43,7 @@ the same PC (silent Negotiate for localhost) and the partner route at `https://l
 (trusted dev certificate) or, in a browser that does not trust it, at `http://localhost:6447` - the
 Development-only listener of Modules 4-6 (`AccessOps:LocalHttpVerification`, refused outside
 Development; it also needs the two extra origins and the IdP's extra redirect URIs above). Without
-`--AccessOps:Route` the app refuses to start. The `.claude/launch.json` of the site repository has
-the same three commands (`accessops-idp-m7`, `accessops-m7`, `accessops-m7-intranet`).
+`--AccessOps:Route` the app refuses to start.
 
 Release publish (one drop for both IIS applications, `"secure": true` written into the published
 `Default.json`, six checks): `powershell -ExecutionPolicy Bypass -File tools\Publish-Release.ps1 -Output C:\Temp\accessops-release`.
@@ -111,8 +110,8 @@ chips, failed checks as `AlertBox.Show(…, allowHtml: false)`, details in the l
 ## Verified here / only in the lab environment
 
 Verified on this machine (Windows 11 Pro, `WORKGROUP`, one local account, .NET 10.0.11, Kestrel,
-browser pane 1400x900 + headless Chrome, 2026-11-09): `dotnet build` 0 warnings / 0 errors; 101 tests
-green; PolicyHarness green; both routes opened in the browser pane (intranet via Negotiate on 6408,
+Chromium browser 1400x900 + headless Chrome, 2026-11-09): `dotnet build` 0 warnings / 0 errors; 101 tests
+green; PolicyHarness green; both routes opened in the Chromium browser (intranet via Negotiate on 6408,
 partner via the 6447 listener); the 12 cases run through the review screen as listed in
 `docs/evidence-matrix.md` (12/12, then 10/12 with the injected replay defect); the rollback rehearsed
 (503 after 0.3 s, Reader allowed, stale tab denied, revocations kept) and restored; the partner process
@@ -125,7 +124,7 @@ the dll, `"secure": true` in the published Default.json).
 Only in the lab environment (Fixture / Harness / Simulated rows, rerun plans in the matrix): IIS
 Windows Authentication and the 500.19 lock, Kerberos and the SPN, the ACL flip between the pool and a
 different user, the second hop to a real share, a real authenticator (no passkey ceremony was started
-from the pane - it would open Windows Hello on this PC), a second physical node behind a balancer with
+from the embedded browser - it would open Windows Hello on this PC), a second physical node behind a balancer with
 sticky sessions and WebSocket (TCP) mode.
 
 ## Where this sample differs from the lesson or video

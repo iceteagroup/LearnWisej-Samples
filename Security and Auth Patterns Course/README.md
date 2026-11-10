@@ -48,7 +48,7 @@ dotnet test AccessOps.slnx
 ```
 
 Modules 4-7 run on `https://localhost:640N` with the ASP.NET Core development certificate. A browser
-that does not trust it (the in-app browser pane, for example) can use the **Development-only http
+that does not trust it (the in-app Chromium browser, for example) can use the **Development-only http
 listener** on `http://localhost:644N`: `AccessOps:LocalHttpVerification=true` plus the listener's
 origin in `AccessOps:AllowedOrigins` (and, for passkeys, `WebAuthn:AllowedOrigins`) and the test IdP's
 redirect URIs - the module READMEs give the exact commands. The switch is refused outside the
@@ -82,4 +82,4 @@ running these samples, by topic: structure and ports, packages, session and prin
 `WindowsIdentity.RunImpersonated`, cookies / antiforgery / origin checks and the ingress switch, the
 OpenID Connect handler (including a restart in the middle of a callback), the WebAuthn extension and
 its two 4.1.7 defects with their workarounds, the shared store across processes, logging correlation,
-grid and UI gotchas, and browser-pane testing. Each entry says how it was established.
+grid and UI gotchas, and embedded-browser testing. Each entry says how it was established.

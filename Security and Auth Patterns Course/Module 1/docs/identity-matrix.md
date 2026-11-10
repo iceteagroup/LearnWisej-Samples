@@ -3,7 +3,7 @@
 Four columns, as the lab asks: **request**, **session**, **operation**, **outcome**. Filled from the
 Debug build's identity trace (`AccessOps.IdentityTrace` log lines) and the identity diagnostics view,
 run on 2026-11-09 against Wisej-4 4.1.7 on .NET 10 / Kestrel, `http://localhost:6401`, in two browser
-sessions (two tabs of the browser pane: every tab is its own Wisej.NET session, because the session ID
+sessions (two tabs of the Chromium browser: every tab is its own Wisej.NET session, because the session ID
 lives in the tab's `sessionStorage`; two browser profiles behave the same way).
 
 Session IDs are shown cut to their last four characters, account IDs as `acct …7f3a`. No raw session

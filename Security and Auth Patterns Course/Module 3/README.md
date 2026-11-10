@@ -50,7 +50,7 @@ not clicked through in the app for this module).
 | Action | Expected result |
 |---|---|
 | Open the page | the list with four documents, "—" in Last read, empty Identity trace, status "Ready" |
-| Click **DOC-201** | rows `Before · ITGLLC2\you · Readable as pool`, `Inside · you · Impersonation · Read 18 KB`, `After · you · Scope closed` (tinted); chip **Read as user**; status (green) "DOC-201 opened · effective identity back to the pool" |
+| Click **DOC-201** | rows `Before · DEVBOX\you · Readable as pool`, `Inside · you · Impersonation · Read 18 KB`, `After · you · Scope closed` (tinted); chip **Read as user**; status (green) "DOC-201 opened · effective identity back to the pool" |
 | Click **DOC-202** | `Before · Access denied (ACL)`, `Inside · … · Impersonation · Access denied (ACL)`, `After · Reverted`; chip **Denied (ACL)**; status (red) "DOC-202 could not be opened with your Windows account. The request was logged." |
 | Click **DOC-203** (F03) | rows labelled `DOC-203 F03`: `Before · File missing`, `Inside · Impersonation · FileNotFoundException`, `After · Reverted`; chip **File missing**; status (amber) "DOC-203 could not be opened. The file is missing; the request was logged." |
 | Click **DOC-204** | one row `Policy · Denied before any scope`; chip **Not allowed**; status (red) "DOC-204 is outside your access. Nothing was opened."; audit `scoped-read B / DOC-204 denied tenant`, no `file.read` |
@@ -77,9 +77,9 @@ matrix marking + decision.
 ## Verified here / only in the lab environment
 
 Verified on this machine (Windows 11 Pro, `WORKGROUP`, one local account, .NET 10, Kestrel Negotiate,
-browser pane 1400x900 + headless Chrome, 2026-11-09): build 0 warnings / 0 errors; Release publish has
+Chromium browser 1400x900 + headless Chrome, 2026-11-09): build 0 warnings / 0 errors; Release publish has
 no `IdentityDiagnosticsView` / `ImpersonationObserver`; PolicyHarness green; all four "Show every path"
-outcomes in the browser pane with the exact status texts; `RunImpersonated` with the **WebSocket
+outcomes in the Chromium browser with the exact status texts; `RunImpersonated` with the **WebSocket
 request's** `WindowsIdentity` (via `IHttpContextAccessor`) gives `ImpersonationLevel = Impersonation`
 inside and reverts on return, on the ACL exception and on F03 (after = before); the policy denial opens no
 scope; an ACL denial on an existing file and a missing file are told apart; with `"impersonate": true` on
@@ -96,7 +96,7 @@ Authentication, the .NET Framework sandbox (`Application.UserIdentity`, default 
 - **Navigation:** the video window has a left menu (Dashboard · Documents · Approvals · Employees);
   the sample keeps the course's area strip (`Departments · Employees · Documents · Approvals · Admin console`).
 - **Identities in the trace:** the video shows `LAB\dana.ortiz` vs `IIS APPPOOL\AccessOps`; here the
-  pool and the user are the same account (`ITGLLC2\…`), and only `· Impersonation` marks the inside row.
+  pool and the user are the same account (`DEVBOX\…`), and only `· Impersonation` marks the inside row.
   Hence DOC-201 reads "Readable as pool" before the scope (video: "Access denied (ACL)"), and DOC-202 is
   denied before *and* inside (video intro chip "Read as pool"): local mode cannot flip the outcome.
 - **Before row for F03:** the video shows only Inside/After for DOC-203; the sample records Before too

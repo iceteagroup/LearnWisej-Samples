@@ -23,8 +23,8 @@ client secret to a log, or shows the reason on screen. The reasons come from a f
 
 | Result | Evidence |
 |---|---|
-| Local: grants revoked, Wisej.NET session ended | `login … outcome=SignedOut … +1 revoked`, `POST /auth/signout` expired the host cookie; a second tab signed in as Dana (browser pane walk) then got "Export denied · grant revoked" with note "repository reads: 0" (`export denied reason=grant … repositoryReads=+0`) |
-| Provider: session ended | `POST /account/signout · ending the provider session`, provider log `endsession: IdP session of 4f21-…-dana-ellis ended`, the tab came back to "You have signed out. Sign in to continue."; the **next sign-in asked for the e-mail and password** (headless run step 9 and the pane walk) |
+| Local: grants revoked, Wisej.NET session ended | `login … outcome=SignedOut … +1 revoked`, `POST /auth/signout` expired the host cookie; a second tab signed in as Dana (Chromium browser walk) then got "Export denied · grant revoked" with note "repository reads: 0" (`export denied reason=grant … repositoryReads=+0`) |
+| Provider: session ended | `POST /account/signout · ending the provider session`, provider log `endsession: IdP session of 4f21-…-dana-ellis ended`, the tab came back to "You have signed out. Sign in to continue."; the **next sign-in asked for the e-mail and password** (headless run step 9 and the embedded browser walk) |
 | Refresh tokens | not requested (`offline_access` is not in the scopes), so there was nothing to revoke; the provider's `/connect/revoke` exists for a client that keeps one |
 
 ## Fixtures used

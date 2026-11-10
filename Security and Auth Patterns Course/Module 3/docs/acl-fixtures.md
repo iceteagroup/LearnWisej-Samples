@@ -24,7 +24,7 @@ rights would let one identity read both files and void the evidence).
   their passwords are not lab material), and the sample creates no accounts.
 - First attempt: separate the process token from the signed-in token by **logon type** (deny
   `NETWORK` S-1-5-2 on `pool-only`, deny `INTERACTIVE` S-1-5-4 on `labuser-only`). Result: inside the
-  scope the token was `ITGLLC2\matte`, level `Impersonation`, **with the INTERACTIVE group** —
+  scope the token was `DEVBOX\dev`, level `Impersonation`, **with the INTERACTIVE group** —
   NTLM loopback on one machine hands the server a token of the caller's own interactive logon
   session, so both tokens hit the same deny and DOC-201 was denied before *and* inside. Logon-type
   ACLs cannot stand in for a second account on localhost.
@@ -35,8 +35,8 @@ rights would let one identity read both files and void the evidence).
 icacls after `Setup-Fixtures.ps1` (local mode, this machine):
 
 ```
-...\confidential               ITGLLC2\matte:(OI)(CI)(F)  NT AUTHORITY\SYSTEM:(OI)(CI)(F)  BUILTIN\Administrators:(OI)(CI)(F)
-...\confidential\pool-only     ITGLLC2\matte:(OI)(CI)(DENY)(RD)  ITGLLC2\matte:(I)(OI)(CI)(F)  SYSTEM:(I)(OI)(CI)(F)  Administrators:(I)(OI)(CI)(F)
-...\confidential\labuser-only  ITGLLC2\matte:(I)(OI)(CI)(F)  SYSTEM:(I)(OI)(CI)(F)  Administrators:(I)(OI)(CI)(F)
+...\confidential               DEVBOX\dev:(OI)(CI)(F)  NT AUTHORITY\SYSTEM:(OI)(CI)(F)  BUILTIN\Administrators:(OI)(CI)(F)
+...\confidential\pool-only     DEVBOX\dev:(OI)(CI)(DENY)(RD)  DEVBOX\dev:(I)(OI)(CI)(F)  SYSTEM:(I)(OI)(CI)(F)  Administrators:(I)(OI)(CI)(F)
+...\confidential\labuser-only  DEVBOX\dev:(I)(OI)(CI)(F)  SYSTEM:(I)(OI)(CI)(F)  Administrators:(I)(OI)(CI)(F)
 ...\confidential\tenant-b      (inherited from the root)
 ```

@@ -91,12 +91,12 @@ recovery plan; 8–9 `docs/passkeys.md`.
 ## Verified here / by tests / needs a real authenticator
 
 - **Live, in a headless Chrome with the virtual authenticator** (DevTools protocol, the same browser
-  engine as the pane): enrollment through `CreateAsync`, a passkey sign-in through `GetAsync` with
+  engine as the embedded browser): enrollment through `CreateAsync`, a passkey sign-in through `GetAsync` with
   every server check and an `Updated` commit (outcome 1), the unapproved origin (outcome 3), the
   cancelled/failed prompt (outcome 5), rename and delete on the review page, the platform hint, the
   session-ID rotation after a passkey sign-in, the Module 5 organisation sign-in and both sign-outs.
-- **Live, in the browser pane:** the sign-in page, the review page with the hint ("This device offers a
-  built-in authenticator" - the PC has Windows Hello), the organisation sign-in. The pane was **not**
+- **Live, in the Chromium browser:** the sign-in page, the review page with the hint ("This device offers a
+  built-in authenticator" - the PC has Windows Hello), the organisation sign-in. The embedded browser was **not**
   used to start a ceremony: it would open the Windows Hello dialog on this PC.
 - **By tests only (84 green):** account A's credential for account B (outcome 2), the replayed response
   (outcome 4), the store races, RP ID hash / type / presence / verification / counter refusals,

@@ -8,18 +8,18 @@ request that carries an `Authorization` header or receives a `WWW-Authenticate` 
 
 ## Observed on this machine — 2026-11-09, Kestrel + Negotiate, `http://localhost:6402`
 
-Client: the Claude desktop browser pane (Chromium), signed in to Windows as `ITGLLC2\matte`
-(local account, workgroup). **The pane completed the challenge silently** — no prompt; Chromium
+Client: a Chromium browser, signed in to Windows as `DEVBOX\dev`
+(local account, workgroup). **The browser completed the challenge silently** — no prompt; Chromium
 treats `localhost` as an intranet host and answers Negotiate with the logged-on user's credentials.
 
 ```
 challenge GET / request=(no Authorization header) -> 401 offered=Negotiate identity=anonymous
 challenge GET / request=Negotiate [redacted] -> 401 offered=Negotiate [redacted] identity=anonymous
-challenge GET /Default.html request=Negotiate [redacted] -> 200 offered=Negotiate [redacted] identity=NTLM · ITGLLC2\ma•••e
+challenge GET /Default.html request=Negotiate [redacted] -> 200 offered=Negotiate [redacted] identity=NTLM · DEVBOX\d•v
 challenge GET /resource.wx/qx.js request=(no Authorization header) -> 401 offered=Negotiate identity=anonymous
 challenge GET /resource.wx/qx.js request=Negotiate [redacted] -> 401 offered=Negotiate [redacted] identity=anonymous
-challenge GET /resource.wx/qx.js request=Negotiate [redacted] -> 200 offered=Negotiate [redacted] identity=NTLM · ITGLLC2\ma•••e
-trace point=Startup · Program.Main transport=HTTP load ... authType=NTLM isAuthenticated=True appSubject=acct …7f3a · tenant A host=NTLM · ITGLLC2\ma•••e
+challenge GET /resource.wx/qx.js request=Negotiate [redacted] -> 200 offered=Negotiate [redacted] identity=NTLM · DEVBOX\d•v
+trace point=Startup · Program.Main transport=HTTP load ... authType=NTLM isAuthenticated=True appSubject=acct …7f3a · tenant A host=NTLM · DEVBOX\d•v
 challenge GET /ws.wx request=(no Authorization header) -> 401 offered=Negotiate identity=anonymous
 challenge GET /ws.wx request=Negotiate [redacted] -> 401 offered=Negotiate [redacted] identity=anonymous
 trace point=Click · WebSocket (Open) transport=WebSocket ... authType=NTLM isAuthenticated=True
@@ -29,9 +29,9 @@ trace point=Click · WebSocket (Open) transport=WebSocket ... authType=NTLM isAu
 |---|---|---|---|---|
 | 1 `GET /` | none | **401** | `Negotiate` | host challenge (fixture **F01**, first half). `Program.Main` did not run. |
 | 2 `GET /` | `Negotiate [redacted]` (SPNEGO-wrapped NTLM negotiate message) | 401 | `Negotiate [redacted]` | NTLM is a three-leg handshake: the server sends its challenge |
-| 3 `GET /Default.html` | `Negotiate [redacted]` | **200** | `Negotiate [redacted]` (final server token) | authenticated: `NTLM · ITGLLC2\ma•••e` (F01, second half) |
+| 3 `GET /Default.html` | `Negotiate [redacted]` | **200** | `Negotiate [redacted]` (final server token) | authenticated: `NTLM · DEVBOX\d•v` (F01, second half) |
 | every new TCP connection (`qx.js`, `loader.svg`, …) | same three legs | 401, 401, 200 | | NTLM is per connection; later requests on an authenticated connection carry no header and are not traced |
-| WebSocket upgrade `GET /ws.wx` | same legs | 401, 401, then the upgrade | | the browser pane authenticates the WebSocket upgrade too; Wisej used WebSocket (`transport=WebSocket` on the click) |
+| WebSocket upgrade `GET /ws.wx` | same legs | 401, 401, then the upgrade | | the Chromium browser authenticates the WebSocket upgrade too; Wisej used WebSocket (`transport=WebSocket` on the click) |
 
 Facts from this run:
 

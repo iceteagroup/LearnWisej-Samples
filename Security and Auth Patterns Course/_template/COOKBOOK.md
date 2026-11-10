@@ -49,7 +49,7 @@ fact from the previous version of these samples (same packages, re-checked where
   `Application.Session` survived, a later F5 kept the same ID. From a WebSocket click the server
   switched IDs but the browser never adopted it (the next request created a new session) - earlier
   edition, re-confirmed in M1.
-- **The old ID is refused (M7):** in the browser pane the anonymous ID was saved, the user signed in
+- **The old ID is refused (M7):** in the Chromium browser the anonymous ID was saved, the user signed in
   (ID rotated), the old ID was written back into `sessionStorage["Wisej.SessionId"]` and the tab
   reloaded: the tab got a third, new ID and the anonymous sign-in page.
 - `Application.StartTask` (M1): `Application.User` returns the session override and `IsWebSocket` is
@@ -67,7 +67,7 @@ fact from the previous version of these samples (same packages, re-checked where
 - `Application.Exit()` with `"autoReload": true` reloads the tab into a new session; without it the
   4.1.7 client calls `window.close()` (earlier edition). `await Application.CallAsync(js)` waits for a
   JS promise (a fetch); `Application.Exit()` afterwards works (M4).
-- Each browser-pane tab is its own session; `sessionStorage.clear(); location.reload()` starts a fresh
+- Each browser tab is its own session; `sessionStorage.clear(); location.reload()` starts a fresh
   one (M1). Navigating a tab to the same URL kept its session (M7: a signed-in partner tab re-attached
   after the partner route was switched off and on).
 
@@ -83,9 +83,9 @@ fact from the previous version of these samples (same packages, re-checked where
 - `Application.User.Identity` is a `WindowsIdentity` with AuthenticationType "NTLM" in `Program.Main`
   on a workgroup PC (M2); `new HostFaultPage().Show()` from `Program.Main` makes it the main page (M2).
 - On a WebSocket event `Application.User` (without an app principal) is the identity captured on the
-  page load; its token belongs to the connection that signed in - in the pane `Name`/`User` threw
+  page load; its token belongs to the connection that signed in - in the embedded browser `Name`/`User` threw
   `ObjectDisposedException` on the first click (M2). Map the SID once in `Program.Main`.
-- Clients: the browser pane (Chromium) answers Negotiate for `http://localhost` silently; headless
+- Clients: the Chromium browser (Chromium) answers Negotiate for `http://localhost` silently; headless
   Chrome needs `--auth-server-allowlist=localhost`; `curl.exe --negotiate -u :` works; PowerShell 7
   `Invoke-WebRequest -UseDefaultCredentials` over http needs `-AllowUnencryptedAuthentication` (M2).
   A .NET `HttpClient` with `SocketsHttpHandler { Credentials = CredentialCache.DefaultCredentials }`
@@ -175,7 +175,7 @@ fact from the previous version of these samples (same packages, re-checked where
   `PublicKey(json)` accepts `{CredentialID, Data{"1","3","-1","-2","-3"}}`; `System.JSON.Stringify`
   round-trips it; the counter after `CreateAsync` over the virtual authenticator is 1;
   `IsUserVerifyingPlatformAuthenticatorAvailableAsync` returned true with a virtual authenticator and in
-  the pane on a Windows Hello PC (M6).
+  the embedded browser on a Windows Hello PC (M6).
 - `WebAuthn.GetAsync` sends no RP ID: register and sign in on the same host (M6).
 - M7 case 11 (software authenticator, real `PasskeyService`): valid → `Accepted`, replay →
   `ChallengeRejected`, account A's credential with account B's user handle → `NoMatchingKey`, deleted
@@ -232,17 +232,17 @@ fact from the previous version of these samples (same packages, re-checked where
   call shape (not re-checked there). M7 moved the literals inside the `#if DEBUG` block; the publish
   check then found 0 hits.
 
-## Browser-pane testing
+## Embedded-browser testing
 
-- The pane is small (screenshots ~314x202 for a 1400x900 viewport): read state with `get_page_text`,
+- The embedded browser is small (screenshots ~314x202 for a 1400x900 viewport): read state with `get_page_text`,
   `find`, `read_page` and `javascript_tool`; use headless Chrome (CDP, 1400x900) for screenshots and
   `Input.dispatchMouseEvent` at an element's `getBoundingClientRect()` centre to click Wisej buttons
   (M7: the review's toolbar buttons were not returned by `find`).
-- A background pane tab does not render a reloaded Wisej page until it is fronted (`tabs_select`) (M4).
-- The pane does not trust the HTTPS dev certificate (`ERR_CERT_AUTHORITY_INVALID`); M4-M7 offer the
+- A background browser tab does not render a reloaded Wisej page until it is fronted (`tabs_select`) (M4).
+- The embedded browser does not trust the HTTPS dev certificate (`ERR_CERT_AUTHORITY_INVALID`); M4-M7 offer the
   Development-only `AccessOps:LocalHttpVerification` listener on `http://localhost:644N` (refused outside
   Development); passkeys then need that origin in `WebAuthn:AllowedOrigins` and the IdP its redirect URI.
-- The pane has a five-server limit for `preview_start`; start extra servers with `dotnet run --no-build`
+- The embedded browser has a five-server limit for `preview_start`; start extra servers with `dotnet run --no-build`
   and an explicit `--urls`. Two routes of one project: build once, run both with `--no-build`, or the
   second build fails on the locked dll (M7).
 - Stopping a process by command-line match must exclude the shell that runs the match (the M7 run's

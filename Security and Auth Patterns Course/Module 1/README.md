@@ -92,7 +92,7 @@ Lab steps → code: sign-in click `Pages/SignInView.cs` (`btnSignIn_Click`) → 
 
 ## Verified here / only in the lab environment
 
-Verified on this machine (Windows 11 workgroup PC, .NET 10, Kestrel, browser pane at 1400x900):
+Verified on this machine (Windows 11 workgroup PC, .NET 10, Kestrel, Chromium browser at 1400x900):
 build (0 warnings, 0 errors), PolicyHarness, every row of "What to try" in two tabs, the session ID
 rotation on the sign-in reload (the browser's `sessionStorage` adopted the new ID), the trace for
 startup / click / StartTask / refresh / Task.Run, the Release publish without the diagnostics view and

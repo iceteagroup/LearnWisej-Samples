@@ -4,24 +4,24 @@ Columns as the lab asks: app subject, request identity, effective identity
 (`WindowsIdentity.GetCurrent()` → `Name`, `User`, `ImpersonationLevel`), outcome. Every identity the
 trace reads is disposed by the caller (`using`); the trace copies values only.
 
-## A · Observed on this machine — 2026-11-09 (Kestrel Negotiate, browser pane, `http://localhost:6403`)
+## A · Observed on this machine — 2026-11-09 (Kestrel Negotiate, Chromium browser, `http://localhost:6403`)
 
 Setup: `tools/Setup-Fixtures.ps1` in **local mode** (`acl-fixtures.md`). One Windows account
-(`ITGLLC2\matte`) runs the app *and* signs in from the browser, so "pool" and "user" are the same SID.
+(`DEVBOX\dev`) runs the app *and* signs in from the browser, so "pool" and "user" are the same SID.
 SIDs shortened to `S-1-5-21-…-1007`; the full values are in the app log only.
 
 | Document | Step | App subject | Request identity | Effective name · SID · level · logon group | Outcome |
 |---|---|---|---|---|---|
-| DOC-201 (`labuser-only`) | Before | acct …7f3a | ITGLLC2\matte | ITGLLC2\matte · …-1007 · None · INTERACTIVE | Readable as pool |
-| DOC-201 | Inside | acct …7f3a | ITGLLC2\matte | ITGLLC2\matte · …-1007 · **Impersonation** · INTERACTIVE | **Read 18 KB** (18426 bytes) |
-| DOC-201 | After | acct …7f3a | ITGLLC2\matte | ITGLLC2\matte · …-1007 · None · INTERACTIVE | Scope closed (same token as before: True) |
-| DOC-202 (`pool-only`, local: deny for this account) | Before | acct …7f3a | ITGLLC2\matte | … · None | Access denied (ACL) |
-| DOC-202 | Inside | acct …7f3a | ITGLLC2\matte | … · **Impersonation** | **Access denied (ACL)** — `UnauthorizedAccessException` |
-| DOC-202 | After | acct …7f3a | ITGLLC2\matte | … · None | Reverted (same token as before: True) |
-| DOC-203 F03 (`labuser-only`, missing) | Before | acct …7f3a | ITGLLC2\matte | … · None | File missing |
-| DOC-203 F03 | Inside | acct …7f3a | ITGLLC2\matte | … · **Impersonation** | `FileNotFoundException` |
-| DOC-203 F03 | After | acct …7f3a | ITGLLC2\matte | … · None | **Reverted** (same token as before: True) |
-| DOC-204 (`tenant-b`) | Policy | acct …7f3a | ITGLLC2\matte | … · None | **Denied before any scope** (reason `tenant`, no Before/Inside/After) |
+| DOC-201 (`labuser-only`) | Before | acct …7f3a | DEVBOX\dev | DEVBOX\dev · …-1007 · None · INTERACTIVE | Readable as pool |
+| DOC-201 | Inside | acct …7f3a | DEVBOX\dev | DEVBOX\dev · …-1007 · **Impersonation** · INTERACTIVE | **Read 18 KB** (18426 bytes) |
+| DOC-201 | After | acct …7f3a | DEVBOX\dev | DEVBOX\dev · …-1007 · None · INTERACTIVE | Scope closed (same token as before: True) |
+| DOC-202 (`pool-only`, local: deny for this account) | Before | acct …7f3a | DEVBOX\dev | … · None | Access denied (ACL) |
+| DOC-202 | Inside | acct …7f3a | DEVBOX\dev | … · **Impersonation** | **Access denied (ACL)** — `UnauthorizedAccessException` |
+| DOC-202 | After | acct …7f3a | DEVBOX\dev | … · None | Reverted (same token as before: True) |
+| DOC-203 F03 (`labuser-only`, missing) | Before | acct …7f3a | DEVBOX\dev | … · None | File missing |
+| DOC-203 F03 | Inside | acct …7f3a | DEVBOX\dev | … · **Impersonation** | `FileNotFoundException` |
+| DOC-203 F03 | After | acct …7f3a | DEVBOX\dev | … · None | **Reverted** (same token as before: True) |
+| DOC-204 (`tenant-b`) | Policy | acct …7f3a | DEVBOX\dev | … · None | **Denied before any scope** (reason `tenant`, no Before/Inside/After) |
 
 Screen messages (status line, four distinct, plain):
 

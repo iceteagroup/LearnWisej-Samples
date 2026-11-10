@@ -7,7 +7,7 @@ value below was observed here. The Kestrel column was observed on 2026-11-09.
 | Setting | Intranet route — IIS site `Lab Intranet` | Public route — IIS site `AccessOps Public` (Module 4/5) | Intranet route on this machine (Kestrel, observed) |
 |---|---|---|---|
 | Binding | `https *:443 accessops.contoso.test` | `https *:443 partners.contoso.test` (separate host name) | `http://localhost:6402` |
-| Application pool | `AccessOps Intranet`, No Managed Code, `ApplicationPoolIdentity` | its own pool | the `dotnet` process of the signed-in user `ITGLLC2\matte` |
+| Application pool | `AccessOps Intranet`, No Managed Code, `ApplicationPoolIdentity` | its own pool | the `dotnet` process of the signed-in user `DEVBOX\dev` |
 | Target framework | `net10.0`, ASP.NET Core in-process (ANCM V2) | same | `net10.0`, Kestrel |
 | `anonymousAuthentication` | `enabled="false"` | `enabled="true"` | no anonymous access: `FallbackPolicy = DefaultPolicy` |
 | `windowsAuthentication` | `enabled="true" useKernelMode="true"` | `enabled="false"` | Negotiate handler (`Microsoft.AspNetCore.Authentication.Negotiate` 10.0.14) |

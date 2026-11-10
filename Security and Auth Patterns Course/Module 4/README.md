@@ -34,7 +34,7 @@ dotnet run --project PolicyHarness
 
 `https://localhost:6404` needs the ASP.NET Core development certificate to be **trusted** by your
 browser (`dotnet dev-certs https --trust`, your decision). To check the sample in a browser that
-does not trust it (the course machine's browser pane did not), run a second, plain-HTTP listener
+does not trust it (the course machine's Chromium browser did not), run a second, plain-HTTP listener
 in Development only:
 
 ```powershell
@@ -99,15 +99,15 @@ Lab steps → code: 2 `LoginPage`/`LoginService`/`LoginThrottle`; 3 `GrantStore`
 
 ## Verified here / only in the lab environment
 
-Verified on this machine (Windows 11, .NET 10.0.303 SDK, Kestrel, browser pane at 1400x900 plus a
+Verified on this machine (Windows 11, .NET 10.0.303 SDK, Kestrel, Chromium browser at 1400x900 plus a
 headless Chrome for full-size screenshots): build 0 warnings / 0 errors; 36 tests; PolicyHarness;
 every row of "What to try" in two tabs on `http://localhost:6444` (the verification listener, see
 Run it); the raw WebSocket upgrades against `https://localhost:6404`; the Set-Cookie attributes in
 the log; the log grep for passwords (0 hits).
 
-Not verified here: the browser pane does not trust the HTTPS development certificate
+Not verified here: the Chromium browser does not trust the HTTPS development certificate
 (`ERR_CERT_AUTHORITY_INVALID`), so the UI walk ran on the HTTP verification listener; "two browser
-profiles" - the pane has one profile, so both tabs shared the cookie jar (the Wisej.NET sessions,
+profiles" - the embedded browser has one profile, so both tabs shared the cookie jar (the Wisej.NET sessions,
 the grants and the deny are per tab and were observed; the host-cookie side was checked per request
 and in `HostEndpointTests`). Counters behind a load balancer and a real TLS-terminating proxy
 (`UseForwardedHeaders` is configured for loopback only) are lab-environment items.

@@ -94,7 +94,7 @@ shipped `Default.json` (no `impersonate` key = false).
 
 | `impersonate` | Transport | Code path | Effective identity in the handler/task | Events observed |
 |---|---|---|---|---|
-| true | WebSocket | page loads and resource requests | `ITGLLC2\matte` level=None (process) | `ImpersonationBegin` → `ThreadBegin` → `ImpersonationEnd` → `ThreadEnd`, `Handled=False`, every request |
+| true | WebSocket | page loads and resource requests | `DEVBOX\dev` level=None (process) | `ImpersonationBegin` → `ThreadBegin` → `ImpersonationEnd` → `ThreadEnd`, `Handled=False`, every request |
 | true | WebSocket | click (scoped read) | process, level=None — except **inside** `RunImpersonated`: level=Impersonation | same order, thread 14, transport WebSocket |
 | true | WebSocket | `Application.StartTask` body | process, level=None; `Application.User` = NTLM, `IsAuthenticated` True | its own Begin/ThreadBegin/End/ThreadEnd on another thread (9), transport WebSocket |
 | true | HTTP only | click (scoped read) | process, level=None outside the scope; the scoped read worked (`Read 18 KB`) with the ajax request's token | Begin/ThreadBegin/End/ThreadEnd per request |
@@ -108,14 +108,14 @@ close in End, so the read needs its own `RunImpersonated` scope (lesson review q
 Log excerpt (logger `AccessOps.ImpersonationObserver`):
 
 ```
-ImpersonationBegin thread=14 transport=WebSocket handled=False effective=ITGLLC2\matte level=None
-ThreadBegin        thread=14 transport=WebSocket handled=-     effective=ITGLLC2\matte level=None
-ImpersonationBegin thread=9  transport=WebSocket handled=False effective=ITGLLC2\matte level=None   <- StartTask
-ThreadBegin        thread=9  transport=WebSocket handled=-     effective=ITGLLC2\matte level=None
+ImpersonationBegin thread=14 transport=WebSocket handled=False effective=DEVBOX\dev level=None
+ThreadBegin        thread=14 transport=WebSocket handled=-     effective=DEVBOX\dev level=None
+ImpersonationBegin thread=9  transport=WebSocket handled=False effective=DEVBOX\dev level=None   <- StartTask
+ThreadBegin        thread=9  transport=WebSocket handled=-     effective=DEVBOX\dev level=None
 ImpersonationEnd   thread=9  ...
 ThreadEnd          thread=9  ...
 identity-trace doc=DOC-201 step=Inside ... level=Impersonation outcome=Read 18 KB
-ImpersonationEnd   thread=14 transport=WebSocket handled=False effective=ITGLLC2\matte level=None
+ImpersonationEnd   thread=14 transport=WebSocket handled=False effective=DEVBOX\dev level=None
 ThreadEnd          thread=14 ...
 ```
 
@@ -125,7 +125,7 @@ The sample's reader runs in the Wisej click with the **current request's** `Http
 (`IHttpContextAccessor`): over WebSocket that is the socket's upgrade request, authenticated by the
 same Negotiate handshake (observed `/ws.wx 401 → 401 → 101`), and its token was live for every read
 here. `Application.User` on that click is *not* usable for this: it is the page-load identity and was
-already disposed in the browser pane (`ObjectDisposedException`, Module 2 README). The alternative
+already disposed in the Chromium browser (`ObjectDisposedException`, Module 2 README). The alternative
 the lesson names — an authorized ASP.NET Core endpoint mapped before `app.UseWisej()` that streams
 the file — keeps the token's lifetime equal to one HTTP request; use it when the read must not
 depend on the socket.
