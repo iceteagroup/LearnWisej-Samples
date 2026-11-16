@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>Wisej.NorthwindDashboard</RootNamespace>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.4" />
+  </ItemGroup>
+
+  <!-- Northwind data and country outlines are embedded so every deployment reads the same snapshot. -->
+  <ItemGroup>
+    <Content Remove="Data\northwind.json" />
+    <None Remove="Data\countries.geojson" />
+    <EmbeddedResource Include="Data\northwind.json" LogicalName="$(RootNamespace).Data.northwind.json" />
+    <EmbeddedResource Include="Data\countries.geojson" LogicalName="$(RootNamespace).Data.countries.geojson" />
+  </ItemGroup>
+
+  <!-- Wisej loads embedded mixins named {Assembly}.Themes.*.mixin.theme after the library mixins. -->
+  <ItemGroup>
+    <None Remove="Themes\Northwind.mixin.theme" />
+    <EmbeddedResource Include="Themes\Northwind.mixin.theme" LogicalName="$(RootNamespace).Themes.Northwind.mixin.theme" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+    <None Remove="Assets\**" />
+    <Content Include="Default.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Update="Default.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Update="ClientProfiles.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\**\*.svg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="MainPage.cs" SubType="Component" />
+    <Compile Update="MainPage.Designer.cs" DependentUpon="MainPage.cs" />
+    <Compile Update="Dialogs\OrderDialog.cs" SubType="Component" />
+    <Compile Update="Dialogs\OrderDialog.Designer.cs" DependentUpon="OrderDialog.cs" />
+    <Compile Update="Views\CustomersView.cs" SubType="Component" />
+    <Compile Update="Views\CustomersView.Designer.cs" DependentUpon="CustomersView.cs" />
+    <Compile Update="Views\FulfillmentView.cs" SubType="Component" />
+    <Compile Update="Views\FulfillmentView.Designer.cs" DependentUpon="FulfillmentView.cs" />
+    <Compile Update="Views\OrdersView.cs" SubType="Component" />
+    <Compile Update="Views\OrdersView.Designer.cs" DependentUpon="OrdersView.cs" />
+    <Compile Update="Views\OverviewView.cs" SubType="Component" />
+    <Compile Update="Views\OverviewView.Designer.cs" DependentUpon="OverviewView.cs" />
+    <Compile Update="Views\ProductsView.cs" SubType="Component" />
+    <Compile Update="Views\ProductsView.Designer.cs" DependentUpon="ProductsView.cs" />
+    <Compile Update="Views\SalesView.cs" SubType="Component" />
+    <Compile Update="Views\SalesView.Designer.cs" DependentUpon="SalesView.cs" />
+    <Compile Update="Views\TeamView.cs" SubType="Component" />
+    <Compile Update="Views\TeamView.Designer.cs" DependentUpon="TeamView.cs" />
+  </ItemGroup>
+
+</Project>

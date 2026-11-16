@@ -1,0 +1,22 @@
+/**
+ * Client profiles of the Northwind dashboard, narrow to broad: Wisej applies the
+ * first profile that matches the browser, and "Default" (the designed layout)
+ * when none does. They go by the browser's width, so resizing a desktop window
+ * switches them as well as a phone or a tablet does.
+ *
+ *	Phone:   one column of cards, the sidebar behind the menu button, the
+ *	         period selector on its own row under the title.
+ *	Tablet:  the sidebar as an icon rail, KPIs two by two, cards full width.
+ */
+{
+	"profiles": [
+		{
+			"name": "Phone",
+			"maxWidth": 767
+		},
+		{
+			"name": "Tablet",
+			"maxWidth": 1199
+		}
+	]
+}

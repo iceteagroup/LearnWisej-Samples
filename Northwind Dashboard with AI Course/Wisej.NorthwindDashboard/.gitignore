@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+.tools/
+.vs/
+TestResults/
+CommandCenter.config
+OpenObserve.config
+
+# The repository ignores NuGet packages; this sample restores Wisej-4 from its local folder.
+!packages/*
+!*.nupkg
+.nuget-packages/

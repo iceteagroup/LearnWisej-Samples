@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "Wisej.NorthwindDashboard": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "Default.html",
+      "applicationUrl": "http://localhost:6501",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+      }
+    }
+  }
+}

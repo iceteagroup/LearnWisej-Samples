@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "Wisej.NorthwindDashboard.SessionStartup.Start, Wisej.NorthwindDashboard",
+  "theme": "Bootstrap-4",
+  "culture": "en-US",
+  "debug": true
+}
