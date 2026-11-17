@@ -1,0 +1,16 @@
+{
+  "name": "Northwind.OverviewSales",
+  "colors": {
+    "sparkline-primary": "#1565d8",
+    "meterbar-primary": "#1565d8",
+    "meterbar-track": "#e4ebf3",
+    "meterbar-neutral": "#8a9bb0",
+    "meterbar-success": "#1f9d55",
+    "chartview-primary": "#1565d8",
+    "chartview-success": "#1f9d55",
+    "chartview-danger": "#d64545",
+    "chartview-grid": "#e4ebf3",
+    "chartview-label": "#5e7289",
+    "chartview-text": "#182c44"
+  }
+}

@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!--
+    Northwind Dashboard - Wisej.NET 4.2: Build a Northwind Dashboard with AI course lab (one project per module).
+    Multi-targets net10.0-windows (Visual Studio designer) and net10.0 (Kestrel). Run with:
+      dotnet run -f net10.0 with urls http://localhost:651N   (from this folder; N = module number)
+  -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0-windows;net10.0</TargetFrameworks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>NorthwindDashboard</RootNamespace>
+    <AssemblyName>NorthwindDashboard</AssemblyName>
+    <EmbeddedResourceUseDependentUponConvention>true</EmbeddedResourceUseDependentUponConvention>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Wisej-4" Version="4.1.4" />
+  </ItemGroup>
+
+  <!-- Northwind data and country outlines are embedded so every deployment reads the same snapshot. -->
+  <ItemGroup>
+    <Content Remove="Data\northwind.json" />
+    <None Remove="Data\countries.geojson" />
+    <EmbeddedResource Include="Data\northwind.json" LogicalName="$(RootNamespace).Data.northwind.json" />
+    <EmbeddedResource Include="Data\countries.geojson" LogicalName="$(RootNamespace).Data.countries.geojson" />
+  </ItemGroup>
+
+  <!-- Wisej loads embedded mixins named {Assembly}.Themes.*.mixin.theme after the library mixins. -->
+  <ItemGroup>
+    <None Remove="Themes\*.mixin.theme" />
+    <EmbeddedResource Include="Themes\*.mixin.theme" LogicalName="$(RootNamespace).Themes.%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Default.html" />
+    <None Remove="Assets\**" />
+    <Content Include="Default.html" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Update="Default.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="Assets\**\*.svg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Each page, view and dialog is a .cs + .Designer.cs pair; the designer file nests under its class. -->
+  <ItemGroup>
+    <Compile Update="**\*.Designer.cs" DependentUpon="$([System.String]::Copy('%(Filename)').Replace('.Designer', '')).cs" />
+    <Compile Update="MainPage.Areas.cs" DependentUpon="MainPage.cs" />
+  </ItemGroup>
+
+</Project>

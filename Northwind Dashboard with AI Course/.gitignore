@@ -1,0 +1,2 @@
+# One NuGet package cache shared by the seven module applications (see each NuGet.Config).
+.nuget-packages/

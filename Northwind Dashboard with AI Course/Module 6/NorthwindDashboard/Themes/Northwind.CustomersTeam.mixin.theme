@@ -1,0 +1,51 @@
+{
+  "name": "Northwind.CustomersTeam",
+  "colors": {
+    "orgchart-primary": "#1565d8",
+    "orgchart-border": "#dce6f0",
+    "orgchart-connector": "#c3cfdc",
+    "orgchart-text": "#182c44",
+    "orgchart-muted": "#5e7289",
+    "timeline-primary": "#1565d8",
+    "sparkline-primary": "#1565d8",
+    "orgchart-drop": "#eaf3ff",
+    "newcontrols-grid-primary": "#1565d8",
+    "chartview-primary": "#1565d8"
+  },
+  "appearances": {
+    "nw-appbar-menu": {
+      "inherit": "button",
+      "states": {
+        "default": {
+          "properties": {
+            "textColor": "white",
+            "padding": 0,
+            "center": true,
+            "height": 32
+          },
+          "styles": {
+            "backgroundColor": "transparent",
+            "width": 0,
+            "radius": 6
+          }
+        },
+        "hovered": {
+          "styles": {
+            "backgroundColor": "nw-appbar-button"
+          }
+        }
+      }
+    },
+    "orgchart-avatar": {
+      "inherit": "orgchart-avatar",
+      "states": {
+        "default": {
+          "properties": {
+            "backgroundColor": "#dbe9ff",
+            "font": "nw-overline"
+          }
+        }
+      }
+    }
+  }
+}

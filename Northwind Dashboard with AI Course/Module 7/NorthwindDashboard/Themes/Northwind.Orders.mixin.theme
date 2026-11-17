@@ -1,0 +1,186 @@
+{
+  "name": "Northwind.Orders",
+  "colors": {
+    "newcontrols-grid-primary": "#1565d8",
+    "newcontrols-grid-success": "#1f9d55",
+    "newcontrols-grid-danger": "#d64545",
+    "newcontrols-grid-neutral": "#5e7289",
+    "newcontrols-grid-border": "#dce6f0",
+    "newcontrols-grid-track": "#e4ebf3",
+    "newcontrols-grid-text": "#182c44",
+    "querybuilder-primary": "#1565d8",
+    "querybuilder-soft": "#f4f9ff",
+    "querybuilder-border": "#dce6f0",
+    "querybuilder-muted": "#5e7289",
+    "querybuilder-text": "#182c44",
+    "stepper-primary": "#1565d8",
+    "stepper-success": "#1f9d55",
+    "stepper-error": "#d64545",
+    "stepper-muted": "#5e7289",
+    "stepper-track": "#dce4ed",
+    "stepper-text": "#182c44",
+    "emptystate-border": "#c3cfdc",
+    "emptystate-muted": "#5e7289",
+    "emptystate-art": "#e4ebf3"
+  },
+  "appearances": {
+    "newcontrols-grid/chip": {
+      "states": {
+        "default": {
+          "properties": {
+            "padding": [
+              3,
+              8,
+              3,
+              8
+            ],
+            "textColor": "newcontrols-grid-neutral",
+            "backgroundColor": "#eef0f5",
+            "font": "newcontrols-grid-chip"
+          },
+          "styles": {
+            "radius": 999,
+            "width": 1,
+            "color": "transparent",
+            "style": "solid"
+          }
+        },
+        "soft-neutral": {
+          "properties": {
+            "textColor": "newcontrols-grid-neutral",
+            "backgroundColor": "#eef0f5"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "filled-neutral": {
+          "properties": {
+            "textColor": "white",
+            "backgroundColor": "newcontrols-grid-neutral"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "outline-neutral": {
+          "properties": {
+            "textColor": "newcontrols-grid-neutral",
+            "backgroundColor": "transparent"
+          },
+          "styles": {
+            "color": "newcontrols-grid-neutral"
+          }
+        },
+        "soft-primary": {
+          "properties": {
+            "textColor": "newcontrols-grid-primary",
+            "backgroundColor": "#eaf3ff"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "filled-primary": {
+          "properties": {
+            "textColor": "white",
+            "backgroundColor": "newcontrols-grid-primary"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "outline-primary": {
+          "properties": {
+            "textColor": "newcontrols-grid-primary",
+            "backgroundColor": "transparent"
+          },
+          "styles": {
+            "color": "newcontrols-grid-primary"
+          }
+        },
+        "soft-success": {
+          "properties": {
+            "textColor": "newcontrols-grid-success",
+            "backgroundColor": "#e0f5eb"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "filled-success": {
+          "properties": {
+            "textColor": "white",
+            "backgroundColor": "newcontrols-grid-success"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "outline-success": {
+          "properties": {
+            "textColor": "newcontrols-grid-success",
+            "backgroundColor": "transparent"
+          },
+          "styles": {
+            "color": "newcontrols-grid-success"
+          }
+        },
+        "soft-warning": {
+          "properties": {
+            "textColor": "newcontrols-grid-warning",
+            "backgroundColor": "#fff1df"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "filled-warning": {
+          "properties": {
+            "textColor": "white",
+            "backgroundColor": "newcontrols-grid-warning"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "outline-warning": {
+          "properties": {
+            "textColor": "newcontrols-grid-warning",
+            "backgroundColor": "transparent"
+          },
+          "styles": {
+            "color": "newcontrols-grid-warning"
+          }
+        },
+        "soft-danger": {
+          "properties": {
+            "textColor": "newcontrols-grid-danger",
+            "backgroundColor": "#ffe6ea"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "filled-danger": {
+          "properties": {
+            "textColor": "white",
+            "backgroundColor": "newcontrols-grid-danger"
+          },
+          "styles": {
+            "color": "transparent"
+          }
+        },
+        "outline-danger": {
+          "properties": {
+            "textColor": "newcontrols-grid-danger",
+            "backgroundColor": "transparent"
+          },
+          "styles": {
+            "color": "newcontrols-grid-danger"
+          }
+        }
+      }
+    }
+  }
+}

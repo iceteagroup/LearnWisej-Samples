@@ -1,0 +1,7 @@
+{
+  "url": "Default.html",
+  "startup": "NorthwindDashboard.SessionStartup.Start, NorthwindDashboard",
+  "theme": "Bootstrap-4",
+  "culture": "en-US",
+  "debug": true
+}

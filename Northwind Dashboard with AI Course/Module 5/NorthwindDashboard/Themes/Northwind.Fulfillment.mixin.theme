@@ -1,0 +1,73 @@
+{
+  "name": "Northwind.Fulfillment",
+  "colors": {
+    "radialgauge-primary": "#1565d8",
+    "radialgauge-success": "#1f9d55",
+    "radialgauge-warning": "#e0961a",
+    "radialgauge-danger": "#d64545",
+    "radialgauge-neutral": "#8a9bb0",
+    "radialgauge-track": "#e4ebf3",
+    "radialgauge-value": "#182c44",
+    "radialgauge-label": "#5e7289",
+    "kanban-primary": "#1565d8",
+    "kanban-hover": "#f4f9ff",
+    "kanban-drop": "#eaf3ff",
+    "kanban-text": "#182c44",
+    "kanban-muted": "#5e7289",
+    "kanban-border": "#dce6f0",
+    "kanban-success": "#1f9d55",
+    "kanban-warning": "#e0961a",
+    "kanban-danger": "#d64545",
+    "scheduler-primary": "#1565d8",
+    "scheduler-soft": "#f4f9ff",
+    "scheduler-text": "#182c44",
+    "scheduler-muted": "#5e7289",
+    "scheduler-border": "#dce6f0",
+    "scheduler-success": "#1f9d55",
+    "scheduler-warning": "#e0961a",
+    "scheduler-danger": "#d64545",
+    "ganttview-border": "#dce6f0",
+    "ganttview-muted": "#5e7289",
+    "timeline-primary": "#1565d8",
+    "timeline-success": "#1f9d55",
+    "timeline-connector": "#dce6f0",
+    "timeline-time": "#5e7289",
+    "timeline-detail": "#5e7289",
+    "actioncard-primary": "#1565d8",
+    "actioncard-primary-soft": "#eaf3ff",
+    "actioncard-border": "#dce6f0",
+    "actioncard-text": "#182c44",
+    "actioncard-muted": "#5e7289",
+    "meterbar-primary": "#1565d8",
+    "meterbar-track": "#e4ebf3",
+    "newcontrols-grid-primary": "#1565d8",
+    "meterbar-success": "#1f9d55",
+    "meterbar-warning": "#e0961a",
+    "meterbar-danger": "#d64545",
+    "meterbar-neutral": "#8a9bb0",
+    "actioncard-success": "#1f9d55",
+    "actioncard-warning": "#e0961a",
+    "actioncard-danger": "#d64545",
+    "timeline-neutral": "#8a9bb0",
+    "ganttview-grid": "#eef1f6"
+  },
+  "appearances": {
+    "ganttview": {
+      "inherit": "ganttview",
+      "states": {
+        "default": {
+          "properties": {
+            "textColor": "#182c44",
+            "barColors": [
+              "#8a9bb0",
+              "#1565d8",
+              "#1f9d55",
+              "#e0961a",
+              "#d64545"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Northwind.Fulfillment",
+  "colors": {
+    "radialgauge-primary": "#1565d8",
+    "radialgauge-success": "#1f9d55",
+    "radialgauge-warning": "#e0961a",
+    "radialgauge-danger": "#d64545",
+    "radialgauge-neutral": "#8a9bb0",
+    "radialgauge-track": "#e4ebf3",
+    "radialgauge-value": "#182c44",
+    "radialgauge-label": "#5e7289"
+  }
+}

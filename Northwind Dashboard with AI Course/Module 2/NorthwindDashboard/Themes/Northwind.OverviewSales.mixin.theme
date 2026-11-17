@@ -1,0 +1,10 @@
+{
+  "name": "Northwind.OverviewSales",
+  "colors": {
+    "sparkline-primary": "#1565d8",
+    "meterbar-primary": "#1565d8",
+    "meterbar-track": "#e4ebf3",
+    "meterbar-neutral": "#8a9bb0",
+    "meterbar-success": "#1f9d55"
+  }
+}

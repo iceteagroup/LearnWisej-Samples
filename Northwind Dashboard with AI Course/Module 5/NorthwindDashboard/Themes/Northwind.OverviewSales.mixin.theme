@@ -1,0 +1,26 @@
+{
+  "name": "Northwind.OverviewSales",
+  "colors": {
+    "sparkline-primary": "#1565d8",
+    "meterbar-primary": "#1565d8",
+    "meterbar-track": "#e4ebf3",
+    "meterbar-neutral": "#8a9bb0",
+    "meterbar-success": "#1f9d55",
+    "chartview-primary": "#1565d8",
+    "chartview-success": "#1f9d55",
+    "chartview-danger": "#d64545",
+    "chartview-grid": "#e4ebf3",
+    "chartview-label": "#5e7289",
+    "chartview-text": "#182c44",
+    "timeline-primary": "#1565d8",
+    "timeline-success": "#1f9d55",
+    "timeline-danger": "#d64545",
+    "timeline-connector": "#dce6f0",
+    "timeline-time": "#5e7289",
+    "timeline-detail": "#5e7289",
+    "heatmapcalendar-primary": "#1565d8",
+    "heatmapcalendar-selection": "#1565d8",
+    "heatmapcalendar-empty": "#e4ebf3",
+    "heatmapcalendar-label": "#5e7289"
+  }
+}

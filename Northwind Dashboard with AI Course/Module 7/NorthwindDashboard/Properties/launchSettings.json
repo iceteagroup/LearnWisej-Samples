@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "NorthwindDashboard": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "Default.html",
+      "applicationUrl": "http://localhost:6517",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "WEBSITE_PATH": "$(MSBuildProjectDirectory)"
+      }
+    }
+  }
+}
