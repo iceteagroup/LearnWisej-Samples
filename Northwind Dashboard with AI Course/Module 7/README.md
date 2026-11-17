@@ -26,6 +26,26 @@ the Wisej.NET package from the course's `Wisej.NorthwindDashboard/packages` fold
 and ignored by git. The customer map loads its tiles from OpenStreetMap, so it needs an internet
 connection.
 
+## How the modules come together
+
+This is the full application, and every piece of it was built in an earlier module. Nothing here is
+a rewrite: each module added files and switched an entry in `MainPage.Areas.cs` from a placeholder to
+its view. Run it and find each piece before you trace an interaction through it.
+
+| Built in | Piece | Where it lives here |
+|---|---|---|
+| [Module 1](../Module%201) | The shell, the `SegmentedButton` period selector, the `CommandPalette`, the first `KpiPanel` cards, the customer `MapView`, the session's one `DashboardContext` | `MainPage.cs`, `MainPage.Areas.cs`, `Views/DashboardView.cs`, `Views/OverviewView.cs`, `Views/CustomersView.cs`, `Data/` |
+| [Module 2](../Module%202) | `Sparkline` trends and the on-time gauge on the cards, the order-stage `MeterBar`, the shipper `RadialGauge`s | `Views/OverviewView.cs`, `Views/FulfillmentView.cs` |
+| [Module 3](../Module%203) | Sales and its five `ChartView` charts; a country bar opens Customers | `Views/SalesView.cs`, `Views/CustomersView.cs` |
+| [Module 4](../Module%204) | Orders: `ChipGroup`, `QueryBuilder`, the six new grid column types, `EmptyState`, the order dialog with its `Stepper` | `Views/OrdersView.cs`, `Views/GridRows.cs`, `Dialogs/OrderDialog.cs` |
+| [Module 5](../Module%205) | Fulfillment as `KanbanBoard`, `SchedulerView` and `GanttView`; Products with `ActionCardList`; `Timeline` and `HeatmapCalendar` on Overview | `Views/FulfillmentView.cs`, `Views/ProductsView.cs`, `Views/OverviewView.cs` |
+| [Module 6](../Module%206) | The Customers explorer, Team with `OrgChart` and `AvatarGroup`, the responsive shell | `Views/CustomersView.cs`, `Views/TeamView.cs`, `Views/CardLayout.cs`, `ClientProfiles.json`, `MainPage.cs` |
+| Module 7 | The Overview category chart, products and order numbers in the palette | `Views/OverviewView.cs`, `MainPage.cs` |
+
+What makes seven views one application is that each of them reads the same `DashboardContext`: a
+period change, a card moved on the board or a purchase on a reorder card reaches every view that
+shows the affected figures, including the ones that were hidden when it happened.
+
 ## What this module adds
 
 Everything in [Module 6](../Module%206) is still here. New in this module:
