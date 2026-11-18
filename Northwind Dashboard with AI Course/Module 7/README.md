@@ -46,6 +46,9 @@ What makes seven views one application is that each of them reads the same `Dash
 period change, a card moved on the board or a purchase on a reorder card reaches every view that
 shows the affected figures, including the ones that were hidden when it happened.
 
+After this module, [`../REFERENCE-APPLICATION.md`](../REFERENCE-APPLICATION.md) places this
+application beside the original one, `Wisej.NorthwindDashboard`, and shows where each piece lives in it.
+
 ## What this module adds
 
 Everything in [Module 6](../Module%206) is still here. New in this module:

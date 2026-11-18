@@ -8,7 +8,8 @@ fixture numbers.
 
 Beside the seven module applications, the course has a finished reference application,
 **Wisej.NorthwindDashboard**: the dashboard the lessons' source references point at. It is described
-[below](#the-reference-application).
+[below](#the-reference-application), and [`REFERENCE-APPLICATION.md`](REFERENCE-APPLICATION.md) shows,
+file by file, where the work of the seven modules lives in it.
 
 | Module | Folder | Port | What it adds |
 |---|---|---|---|
@@ -145,6 +146,10 @@ The reference application's own [`README.md`](Wisej.NorthwindDashboard/README.md
 rules, the theme mixin and the responsive layout (Phone and Tablet client profiles) in detail.
 
 ### How the module applications differ from it
+
+[`REFERENCE-APPLICATION.md`](REFERENCE-APPLICATION.md) is the full comparison: the module that builds
+each part, the files and members to look for in the reference application, what each view has in
+one application only, and what to try with the two running side by side. In short:
 
 The module applications keep the shell of the walkthrough videos: a blue application bar, a
 150-pixel sidebar and a status strip that names the event path of the last interaction. Their views
