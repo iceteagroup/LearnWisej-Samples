@@ -50,6 +50,11 @@ the seven module applications, and one in the reference application's folder. Ke
 the `NuGet.Config` files together. See
 [`Wisej.NorthwindDashboard/packages/README.md`](Wisej.NorthwindDashboard/packages/README.md).
 
+Clone the repository into a short path such as `C:\src`. The package cache is inside the course
+folder, so in a deeply nested folder some package paths pass the 260-character limit of Windows and
+the build stops with "Could not copy the file ... because it was not found". Moving the clone to a
+shorter path and building again fixes it.
+
 ## Data and session state
 
 The Northwind data (`Data/northwind.json`, converted from Microsoft's `instnwnd.sql`, MIT license)
